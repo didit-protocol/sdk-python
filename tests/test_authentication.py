@@ -246,6 +246,10 @@ def test_audience_is_checked_when_given(auth: Authentication, key: SigningKey) -
     )
     listed = key.sign(access_claims(aud=["other", APPLICATION_ID]))
     assert auth.verify_access_token(listed, APPLICATION_ID).aud == ["other", APPLICATION_ID]
+    for odd in (7, {"aud": APPLICATION_ID}, [7, None]):
+        with pytest.raises(TokenVerificationError) as info:
+            auth.verify_access_token(key.sign(access_claims(aud=odd)), APPLICATION_ID)
+        assert info.value.reason == "invalid_audience"
     no_aud = key.sign(access_claims(aud=REMOVE))
     assert auth.verify_access_token(no_aud).sub == IDENTITY_ID
     assert reason(lambda: auth.verify_access_token(no_aud, APPLICATION_ID)) == "missing_claim"
@@ -578,7 +582,7 @@ def test_jwks_ignores_entries_without_a_kid(
 def test_documented_paths_are_used_when_discovery_omits_them(
     auth: Authentication, issuer: FakeIssuer, key: SigningKey
 ) -> None:
-    del issuer.discovery["jwks_uri"]
+    issuer.discovery["jwks_uri"] = "https://[::1"
     issuer.discovery["token_endpoint"] = "not a url"
     issuer.reply("POST", "/token/", 200, TOKEN_RESPONSE)
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
