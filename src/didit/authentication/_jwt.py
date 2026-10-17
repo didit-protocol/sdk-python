@@ -109,7 +109,8 @@ def _check_type(header: Mapping[str, Any], kind: TokenKind) -> None:
     # ID tokens are signed with typ JWT; refusing at+jwt keeps an access token from passing as one.
     if typ is not None and (not isinstance(typ, str) or typ.lower() not in _ID_TYPES):
         _fail(
-            "invalid_type", f"The token is not an ID token: its header typ is {_shown(typ)}, not 'JWT'."
+            "invalid_type",
+            f"The token is not an ID token: its header typ is {_shown(typ)}, not 'JWT'.",
         )
 
 
@@ -134,7 +135,9 @@ def parse_token(token: object, kind: TokenKind) -> ParsedToken:
             f"The token is signed with {_shown(alg)}; only ES256 is accepted.",
         )
     if "crit" in header:
-        _fail("malformed", "The token header has critical extensions (crit), which are not supported.")
+        _fail(
+            "malformed", "The token header has critical extensions (crit), which are not supported."
+        )
     _check_type(header, kind)
     kid = header.get("kid")
     if not isinstance(kid, str) or not kid:

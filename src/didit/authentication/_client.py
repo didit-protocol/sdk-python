@@ -131,7 +131,9 @@ class _AuthenticationBase:
     ) -> None:
         self.issuer = normalise_issuer(issuer)
         if client_id is not None and (not isinstance(client_id, str) or not client_id.strip()):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ConfigurationError("client_id is empty: pass your application id or leave it out.")
+            raise ConfigurationError(
+                "client_id is empty: pass your application id or leave it out."
+            )
         self.client_id = client_id.strip() if client_id else None
         if isinstance(leeway, bool) or not isinstance(leeway, (int, float)) or not leeway >= 0:  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ConfigurationError("leeway must be 0 or more seconds.")
@@ -353,23 +355,6 @@ class _AuthenticationBase:
         return cast("ModelT", validate_response(model, parsed.claims))
 
 
-_VERIFY_ACCESS_TOKEN_DOC = """Verify an access token offline and return its claims.
-
-        Checks, in order: the header (``alg`` ES256 only, so ``none``, HS*, RS*,
-        PS*, EdDSA and every other algorithm are refused; ``typ`` ``at+jwt``), the
-        ES256 signature against the issuer's published key with the token's
-        ``kid``, then ``iss`` (equal to the issuer), ``sub``, ``exp``, ``nbf`` and
-        ``iat`` (with ``leeway`` seconds of clock skew) and, when an audience is
-        given or ``client_id`` is configured, ``aud``.
-
-        An offline check cannot see a session revoked a moment ago: access
-        tokens expire within five minutes. Call ``get_session`` when the action
-        needs an instant revocation check.
-
-        Raises :class:`TokenVerificationError` with a machine-readable ``reason``.
-        """
-
-
 class Authentication(_AuthenticationBase):
     """Didit Authentication for your backend: verify the tokens your application's
     issuer signs and call its token, session and step-up endpoints.
@@ -447,15 +432,30 @@ class Authentication(_AuthenticationBase):
 
     # Tokens -----------------------------------------------------------------
 
-    def verify_access_token(self, token: str, audience: Audience | None = None) -> AccessTokenClaims:
+    def verify_access_token(
+        self, token: str, audience: Audience | None = None
+    ) -> AccessTokenClaims:
+        """Verify an access token offline and return its claims.
+
+        Checks, in order: the header (``alg`` ES256 only, so ``none``, HS*, RS*,
+        PS*, EdDSA and every other algorithm are refused; ``typ`` ``at+jwt``), the
+        ES256 signature against the issuer's published key with the token's
+        ``kid``, then ``iss`` (equal to the issuer), ``sub``, ``exp``, ``nbf`` and
+        ``iat`` (with ``leeway`` seconds of clock skew) and, when ``audience`` is
+        given or ``client_id`` is configured, ``aud``.
+
+        An offline check cannot see a session revoked a moment ago: access
+        tokens expire within five minutes. Call ``get_session`` when the action
+        needs an instant revocation check.
+
+        Raises :class:`TokenVerificationError` with a machine-readable ``reason``.
+        """
         expected = self._audience(audience, required=False)
         parsed = parse_token(token, "access")
         key_set = self._key_set_for(parsed.kid)
         return self._finish(
             parsed, key_set, AccessTokenClaims, kind="access", audience=expected, nonce=None
         )
-
-    verify_access_token.__doc__ = _VERIFY_ACCESS_TOKEN_DOC
 
     def verify_id_token(
         self, token: str, *, nonce: str | None, audience: Audience | None = None
@@ -660,14 +660,27 @@ class AsyncAuthentication(_AuthenticationBase):
     async def verify_access_token(
         self, token: str, audience: Audience | None = None
     ) -> AccessTokenClaims:
+        """Verify an access token offline and return its claims.
+
+        Checks, in order: the header (``alg`` ES256 only, so ``none``, HS*, RS*,
+        PS*, EdDSA and every other algorithm are refused; ``typ`` ``at+jwt``), the
+        ES256 signature against the issuer's published key with the token's
+        ``kid``, then ``iss`` (equal to the issuer), ``sub``, ``exp``, ``nbf`` and
+        ``iat`` (with ``leeway`` seconds of clock skew) and, when ``audience`` is
+        given or ``client_id`` is configured, ``aud``.
+
+        An offline check cannot see a session revoked a moment ago: access
+        tokens expire within five minutes. Call ``get_session`` when the action
+        needs an instant revocation check.
+
+        Raises :class:`TokenVerificationError` with a machine-readable ``reason``.
+        """
         expected = self._audience(audience, required=False)
         parsed = parse_token(token, "access")
         key_set = await self._key_set_for(parsed.kid)
         return self._finish(
             parsed, key_set, AccessTokenClaims, kind="access", audience=expected, nonce=None
         )
-
-    verify_access_token.__doc__ = _VERIFY_ACCESS_TOKEN_DOC
 
     async def verify_id_token(
         self, token: str, *, nonce: str | None, audience: Audience | None = None

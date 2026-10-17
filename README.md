@@ -57,9 +57,11 @@ More in [`examples/`](examples/): standalone ID verification, AML screening, tra
 Methods follow the API's resources: `client.<resource>.<method>(...)`. Path ids are positional arguments; everything else is a keyword argument.
 
 ```python
+from pathlib import Path
+
 client.sessions.list(status="Approved", limit=50)
 client.sessions.imports.create(file=open("users.csv", "rb"), import_type="user_verification")
-client.id_verification.verify(front_image="front.jpg", back_image="back.jpg")
+client.id_verification.verify(front_image=Path("front.jpg"), back_image=Path("back.jpg"))
 client.aml.screen(full_name="Maria Garcia", date_of_birth="1992-03-14")
 client.users.retrieve("user-123")
 client.workflows.list()
@@ -90,7 +92,7 @@ transaction = client.transactions.create(
     subject={"entity_type": "individual", "vendor_data": "user-12345", "full_name": "Maria Garcia"},
 )
 client.transactions.rules.list()
-client.transactions.travel_rule.confirm_ownership(transaction.uuid, confirmed=True)
+client.transactions.travel_rule.confirm_ownership("your-txn-001", confirmed=True)
 client.wallet_screening.screen(wallet_address="bc1q...", blockchain="BTC")
 client.travel_rule.list_vasps(search="exchange")
 client.travel_rule.wallet_addresses.create(address="bc1q...", chain="BTC")
@@ -173,7 +175,7 @@ Next links are followed only on the API's own origin; the API key is never sent 
 
 ## Files and binary responses
 
-Upload parameters accept a path, bytes, an open binary file, or a tuple `(filename, content)` or `(filename, content, content_type)`. Endpoints that return files (session PDFs, network reports, wallet screening PDFs) return `bytes`; stream large ones:
+Upload parameters accept a path (`pathlib.Path`), bytes, an open binary file, or a tuple `(filename, content)` or `(filename, content, content_type)`. Endpoints that return files (session PDFs, network reports, wallet screening PDFs) return `bytes`; stream large ones:
 
 ```python
 pdf = client.sessions.generate_pdf(session_id)
