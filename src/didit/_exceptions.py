@@ -184,6 +184,10 @@ def _request_id(headers: httpx.Headers) -> str | None:
 def _error_message(status: int, body: object) -> str:
     detail: Any = None
     if isinstance(body, dict):
+        error, description = body.get("error"), body.get("error_description")  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        if isinstance(error, str) and error and isinstance(description, str) and description:
+            # OAuth 2.0 errors (RFC 6749 section 5.2): the code and what it means.
+            body = {"detail": f"{error}: {description}", **body}  # pyright: ignore[reportUnknownVariableType]
         for key in ("detail", "message", "error", "error_description"):
             value = body.get(key)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if isinstance(value, str) and value:

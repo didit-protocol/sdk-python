@@ -14,9 +14,10 @@ import logging
 import threading
 import time
 import urllib.parse
+import weakref
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from types import TracebackType
 from typing import Any, TypeVar, Union, cast
 
@@ -99,9 +100,14 @@ def _required_text(value: object, name: str) -> str:
 def _amount_text(amount: Amount) -> str:
     if isinstance(amount, bool) or not isinstance(amount, (str, int, float, Decimal)):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError("amount must be a decimal string, an int, a float or a Decimal.")
+    try:
+        value = Decimal(repr(amount)) if isinstance(amount, float) else Decimal(amount)
+    except InvalidOperation as exc:
+        raise ValueError(f"amount must be a decimal number, got {amount!r}.") from exc
+    if not value.is_finite():
+        raise ValueError(f"amount must be a finite number, got {amount!r}.")
     if isinstance(amount, str):
-        return amount
-    value = Decimal(repr(amount)) if isinstance(amount, float) else Decimal(amount)
+        return amount.strip()
     return format(value, "f")
 
 
@@ -289,12 +295,45 @@ class _AuthenticationBase:
             raise APIResponseValidationError(
                 response=response, message="The issuer's discovery document is not a JSON object."
             )
-        if discovery.issuer is not None and discovery.issuer != self.issuer:
+        if discovery.issuer is None:
+            raise APIResponseValidationError(
+                response=response,
+                message=f"The discovery document at {call.url} names no issuer.",
+            )
+        if discovery.issuer != self.issuer:
             raise ConfigurationError(
                 f"The discovery document at {call.url} names the issuer {discovery.issuer!r}, "
                 f"not {self.issuer!r}. Configure Authentication with {discovery.issuer!r} "
                 "(an application's issuer changes when its custom domain is activated)."
             )
+        # Codes and refresh tokens go to the token endpoint, and the keys decide which
+        # tokens are trusted: neither may downgrade to plain http, and tokens never
+        # leave the issuer's own origin.
+        issuer = httpx.URL(self.issuer)
+        for name, value, same_origin in (
+            ("token_endpoint", discovery.token_endpoint, True),
+            ("jwks_uri", discovery.jwks_uri, False),
+        ):
+            if value is None:
+                continue
+            url = httpx.URL(value)
+            if url.scheme != "https" and url.scheme != issuer.scheme:
+                raise APIResponseValidationError(
+                    response=response,
+                    message=f"The discovery document's {name} {value!r} does not use https.",
+                )
+            if same_origin and (url.scheme, url.host, url.port) != (
+                issuer.scheme,
+                issuer.host,
+                issuer.port,
+            ):
+                raise APIResponseValidationError(
+                    response=response,
+                    message=(
+                        f"The discovery document's {name} {value!r} is not on the issuer's "
+                        f"origin {self.issuer!r}."
+                    ),
+                )
         return self._cache.store_discovery(discovery, response.headers)
 
     def _store_key_set(self, call: _Call, response: httpx.Response) -> KeySet:
@@ -587,6 +626,7 @@ class Authentication(_AuthenticationBase):
         with self._lock:
             if not self._cache.needs_key_set_fetch(kid):
                 return self._cache.current_key_set()
+            self._cache.start_key_set_fetch()
             call = self._jwks_call(self._discovery_locked())
             return self._store_key_set(call, self._send(call))
 
@@ -618,7 +658,11 @@ class AsyncAuthentication(_AuthenticationBase):
             )
         self._owns_client = http_client is None
         self._client = http_client or httpx.AsyncClient(follow_redirects=False)
-        self._lock = asyncio.Lock()
+        # An asyncio.Lock belongs to one event loop; keep one per loop so that the
+        # instance also works across several asyncio.run() calls.
+        self._locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
+            weakref.WeakKeyDictionary()
+        )
 
     @classmethod
     def from_publishable_key(
@@ -754,11 +798,18 @@ class AsyncAuthentication(_AuthenticationBase):
         self._log(request, response, started)
         return response
 
+    def _async_lock(self) -> asyncio.Lock:
+        loop = asyncio.get_running_loop()
+        lock = self._locks.get(loop)
+        if lock is None:
+            lock = self._locks.setdefault(loop, asyncio.Lock())
+        return lock
+
     async def _discovery(self) -> Discovery:
         discovery = self._cache.discovery()
         if discovery is not None:
             return discovery
-        async with self._lock:
+        async with self._async_lock():
             return await self._discovery_locked()
 
     async def _discovery_locked(self) -> Discovery:
@@ -772,8 +823,9 @@ class AsyncAuthentication(_AuthenticationBase):
         key_set = self._cache.key_set_with(kid)
         if key_set is not None:
             return key_set
-        async with self._lock:
+        async with self._async_lock():
             if not self._cache.needs_key_set_fetch(kid):
                 return self._cache.current_key_set()
+            self._cache.start_key_set_fetch()
             call = self._jwks_call(await self._discovery_locked())
             return self._store_key_set(call, await self._send(call))

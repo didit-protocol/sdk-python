@@ -176,9 +176,15 @@ def _numeric_date(claims: Mapping[str, Any], name: str) -> float:
     if name not in claims:
         _fail("missing_claim", f"The token has no {name} claim.")
     value = claims[name]
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+    seconds = math.nan
+    if not isinstance(value, bool) and isinstance(value, (int, float)):
+        try:
+            seconds = float(value)
+        except OverflowError:  # an integer beyond any float
+            seconds = math.nan
+    if not math.isfinite(seconds):
         _fail("malformed", f"The token's {name} claim is not a number of seconds.")
-    return float(value)
+    return seconds
 
 
 def _audiences(value: object) -> list[str]:
