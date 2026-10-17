@@ -39,6 +39,36 @@ def _write(path: pathlib.Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=1, ensure_ascii=False), "utf-8")
 
 
+def _spec_operation(openapi_dir: pathlib.Path, key: str) -> tuple[pathlib.Path, Any, Any]:
+    """The spec file, its document and the operation behind an overlay key."""
+    file = openapi_dir / ("account.json" if key.startswith("account ") else "verification.json")
+    http_method, path = key.removeprefix("account ").split(" ", 1)
+    doc = _read(file)
+    return file, doc, doc["paths"][path][http_method.lower()]
+
+
+def _naming(openapi_dir: pathlib.Path, key: str) -> Any:
+    """An operation's naming: its own x-didit-sdk (upstream wins), else the overlay entry.
+
+    Tests never assume where the naming lives: once upstream carries x-didit-sdk, the spec
+    sync drops the overlay entries (DESIGN section 3).
+    """
+    _, _, op = _spec_operation(openapi_dir, key)
+    return op.get("x-didit-sdk") or _read(openapi_dir / "overlay.json")["operations"][key]
+
+
+def _change_naming(openapi_dir: pathlib.Path, key: str, **changes: Any) -> None:
+    """Change an operation's naming where it lives (upstream x-didit-sdk, else the overlay)."""
+    file, doc, op = _spec_operation(openapi_dir, key)
+    if op.get("x-didit-sdk"):
+        op["x-didit-sdk"].update(changes)
+        _write(file, doc)
+    else:
+        overlay = _read(openapi_dir / "overlay.json")
+        overlay["operations"][key].update(changes)
+        _write(openapi_dir / "overlay.json", overlay)
+
+
 # Naming -----------------------------------------------------------------------------
 
 
@@ -157,25 +187,19 @@ def test_stale_overlay_entry_fails(openapi: pathlib.Path) -> None:
 
 
 def test_duplicate_method_names_fail(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["method"] = "create"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", method="create")
     with pytest.raises(CodegenError, match=r"both map to sessions\.create"):
         load(openapi)
 
 
 def test_method_clashing_with_a_nested_resource_fails(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["method"] = "imports"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", method="imports")
     with pytest.raises(CodegenError, match="clashes with the nested resource"):
         load(openapi)
 
 
 def test_application_scope_needs_the_prefix(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["scope"] = "application"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", scope="application")
     with pytest.raises(CodegenError, match="scope application"):
         load(openapi)
 
