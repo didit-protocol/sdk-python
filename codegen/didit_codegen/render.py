@@ -97,12 +97,8 @@ def _imports_for(defs: list[TypeDef], registry: Registry, module: str) -> list[s
                 uses_field = True
     lines: list[str] = ["from __future__ import annotations", ""]
     std: list[str] = []
-    if DATETIME in deps and DATE in deps:
-        std.append("from datetime import date, datetime")
-    elif DATETIME in deps:
-        std.append("from datetime import datetime")
-    elif DATE in deps:
-        std.append("from datetime import date")
+    if DATETIME in deps or DATE in deps:
+        std.append("import datetime as _dt")
     typing_names = sorted(
         n
         for n, marker in (("Literal", LITERAL), ("Mapping", MAPPING), ("Sequence", SEQUENCE))
@@ -479,8 +475,7 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
     out.append("from __future__ import annotations\n\n")
     std = []
     if deps & {DATETIME, DATE}:
-        names = [n for n, m in (("date", DATE), ("datetime", DATETIME)) if m in deps]
-        std.append(f"from datetime import {', '.join(names)}")
+        std.append("import datetime as _dt")
     std.append("from functools import cached_property")
     typing_names = ["TYPE_CHECKING", "cast"] if node.children else ["cast"]
     typing_names += [n for n, m in (("Literal", LITERAL), ("Mapping", MAPPING), ("Sequence", SEQUENCE)) if m in deps]

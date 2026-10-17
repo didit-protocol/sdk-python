@@ -267,9 +267,9 @@ class TypeBuilder:
         if kind == "string":
             fmt = schema.get("format")
             if fmt == "date-time":
-                return Ann("datetime", frozenset({DATETIME}))
+                return Ann("_dt.datetime", frozenset({DATETIME}))
             if fmt == "date":
-                return Ann("date", frozenset({DATE}))
+                return Ann("_dt.date", frozenset({DATE}))
             if fmt == "binary":
                 return Ann("bytes")
             return Ann("str")
@@ -334,9 +334,9 @@ class TypeBuilder:
         if kind == "string":
             fmt = schema.get("format")
             if fmt == "date-time":
-                return Ann("str | datetime", frozenset({DATETIME}))
+                return Ann("str | _dt.datetime", frozenset({DATETIME}))
             if fmt == "date":
-                return Ann("str | date", frozenset({DATE}))
+                return Ann("str | _dt.date", frozenset({DATE}))
             if fmt == "binary":
                 return Ann("FileTypes", frozenset({FILE_TYPES}))
             return Ann("str")
