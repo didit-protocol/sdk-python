@@ -6,13 +6,13 @@ import io
 import mimetypes
 import os
 import pathlib
-from typing import Any, Tuple, Union, cast
+from typing import Any, Union, cast
 
 from ._types import FileContent, FileTypes
 
 __all__ = ["is_file_input", "to_httpx_file"]
 
-HttpxFile = Tuple[Union[str, None], bytes, Union[str, None]]
+HttpxFile = tuple[Union[str, None], bytes, Union[str, None]]
 
 
 def is_file_input(value: object) -> bool:

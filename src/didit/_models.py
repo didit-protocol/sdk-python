@@ -12,7 +12,7 @@ import datetime as _dt
 import functools
 import logging
 import types
-from typing import Annotated, Any, Dict, List, Literal, Union, cast, get_args, get_origin
+from typing import Annotated, Any, Literal, Union, cast, get_args, get_origin
 
 import pydantic
 import typing_extensions
@@ -60,7 +60,7 @@ class BaseModel(pydantic.BaseModel):
         return cls.model_construct(**values)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _adapter(type_: Any) -> pydantic.TypeAdapter[Any]:
     return pydantic.TypeAdapter(type_)
 
@@ -96,12 +96,12 @@ def construct_type(type_: Any, value: object) -> object:
             except pydantic.ValidationError:
                 return type_.construct_lenient(cast("dict[str, Any]", value))
         return value
-    if origin in (list, List):
+    if origin in (list, list):
         if isinstance(value, list):
             (inner,) = get_args(type_) or (Any,)
             return [construct_type(inner, item) for item in cast("list[object]", value)]
         return value
-    if origin in (dict, Dict):
+    if origin in (dict, dict):
         if isinstance(value, dict):
             args = get_args(type_)
             inner = args[1] if len(args) == 2 else Any

@@ -129,12 +129,13 @@ target-version = "py310"
 src = ["src", "tests", "codegen"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM", "RUF", "S", "PT", "TID", "T20"]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM", "RUF", "S", "PT", "T20"]
 ignore = [
   "E501",
   "UP007",
   "UP045",
   "RUF022",
+  "RUF036",
 ]
 
 [tool.ruff.lint.per-file-ignores]

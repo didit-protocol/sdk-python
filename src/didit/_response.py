@@ -10,13 +10,10 @@ from __future__ import annotations
 
 import contextvars
 import functools
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from types import TracebackType
 from typing import (
-    AsyncIterator,
-    Awaitable,
-    Callable,
     Generic,
-    Iterator,
     Literal,
     TypeVar,
     cast,

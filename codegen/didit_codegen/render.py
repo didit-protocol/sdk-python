@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from typing import Any
 
 from .naming import resource_class
 from .ops import Method
@@ -125,7 +124,7 @@ def _imports_for(defs: list[TypeDef], registry: Registry, module: str) -> list[s
         lines.extend(third)
         lines.append("")
     first: list[str] = []
-    if "model" in kinds:
+    if any(td.kind == "model" and not td.bases for td in defs):
         first.append("from didit._models import BaseModel")
     if FILE_TYPES in deps:
         first.append("from didit._types import FileTypes")
@@ -477,30 +476,35 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
     if deps & {DATETIME, DATE}:
         std.append("import datetime as _dt")
     std.append("from functools import cached_property")
-    typing_names = ["TYPE_CHECKING", "cast"] if node.children else ["cast"]
+    has_methods = bool(node.methods)
+    typing_names = (["TYPE_CHECKING"] if node.children else []) + (["cast"] if has_methods else [])
     typing_names += [n for n, m in (("Literal", LITERAL), ("Mapping", MAPPING), ("Sequence", SEQUENCE)) if m in deps]
-    std.append(f"from typing import {', '.join(sorted(typing_names, key=lambda s: (s != 'TYPE_CHECKING', s.lower())))}")
+    if typing_names:
+        std.append(f"from typing import {', '.join(sorted(typing_names, key=lambda s: (s != 'TYPE_CHECKING', s.lower())))}")
     out.append("\n".join(std) + "\n\n")
-    out.append("import httpx\n")
+    if has_methods:
+        out.append("import httpx\n")
     if has_deprecated:
         out.append("from typing_extensions import deprecated\n")
-    out.append("\n")
+    if has_methods or has_deprecated:
+        out.append("\n")
     first = []
     if has_page:
         first.append("from didit._pagination import AsyncPaginator, SyncPage")
     first.append("from didit._resource import AsyncAPIResource, SyncAPIResource")
-    first.append(
-        "from didit._response import (\n"
-        "    async_to_raw_response_wrapper,\n"
-        "    async_to_streamed_response_wrapper,\n"
-        "    to_raw_response_wrapper,\n"
-        "    to_streamed_response_wrapper,\n"
-        ")"
-    )
-    types_names = ["NOT_GIVEN", "Body", "Headers", "NotGiven", "Query"]
-    if FILE_TYPES in deps:
-        types_names.append("FileTypes")
-    first.append(f"from didit._types import {', '.join(sorted(types_names, key=lambda s: (not s.isupper(), s)))}")
+    if has_methods:
+        first.append(
+            "from didit._response import (\n"
+            "    async_to_raw_response_wrapper,\n"
+            "    async_to_streamed_response_wrapper,\n"
+            "    to_raw_response_wrapper,\n"
+            "    to_streamed_response_wrapper,\n"
+            ")"
+        )
+        types_names = ["NOT_GIVEN", "Body", "Headers", "NotGiven", "Query"]
+        if FILE_TYPES in deps:
+            types_names.append("FileTypes")
+        first.append(f"from didit._types import {', '.join(sorted(types_names, key=lambda s: (not s.isupper(), s)))}")
     mixin = RESOURCE_MIXINS.get(node.path)
     if mixin:
         first.append(f"from {mixin[0]} import {mixin[1]}")
@@ -596,7 +600,7 @@ def _render_root(roots: dict[str, ResourceNode]) -> str:
     out.append("from functools import cached_property\nfrom typing import TYPE_CHECKING\n\n")
     out.append("from didit._base_client import AsyncAPIClient, SyncAPIClient\n\n")
     out.append("if TYPE_CHECKING:\n")
-    for name, node in sorted(roots.items()):
+    for node in sorted(roots.values(), key=lambda n: n.path):
         out.append(f"    from {node.module} import Async{node.cls}, {node.cls}\n")
     out.append('\n__all__ = ["AsyncRootResources", "SyncRootResources"]\n\n')
     for is_async in (False, True):

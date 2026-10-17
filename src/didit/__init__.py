@@ -10,7 +10,12 @@ See https://docs.didit.me and the README for the full guide.
 """
 
 from . import types, webhooks
-from ._base_client import DEFAULT_ACCOUNT_BASE_URL, DEFAULT_BASE_URL, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT
+from ._base_client import (
+    DEFAULT_ACCOUNT_BASE_URL,
+    DEFAULT_BASE_URL,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_TIMEOUT,
+)
 from ._client import AsyncDidit, Didit
 from ._exceptions import (
     APIConnectionError,

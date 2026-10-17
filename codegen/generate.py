@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from didit_codegen.cli import main  # noqa: E402
+from didit_codegen.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

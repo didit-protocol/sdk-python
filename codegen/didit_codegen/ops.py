@@ -97,9 +97,7 @@ def _has_binary(spec_schema: Json, op: Operation) -> set[str]:
         return out
     for name, prop in schema.get("properties", {}).items():
         prop = op.spec.resolve(prop)
-        if prop.get("format") == "binary":
-            out.add(name)
-        elif prop.get("type") == "array" and op.spec.resolve(prop.get("items", {})).get("format") == "binary":
+        if prop.get("format") == "binary" or (prop.get("type") == "array" and op.spec.resolve(prop.get("items", {})).get("format") == "binary"):
             out.add(name)
     return out
 

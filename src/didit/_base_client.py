@@ -13,8 +13,9 @@ import json
 import logging
 import random
 import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import httpx
 

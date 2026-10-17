@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import TracebackType
-from typing import Mapping
 
 import httpx
 from typing_extensions import Self

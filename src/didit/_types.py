@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from typing import IO, TYPE_CHECKING, Literal, Mapping, Tuple, Union
+from collections.abc import Mapping
+from typing import IO, TYPE_CHECKING, Literal, Union
 
 import httpx
 from typing_extensions import final, override
@@ -63,8 +64,8 @@ else:
 
 FileTypes = Union[
     FileContent,
-    Tuple[Union[str, None], FileContent],
-    Tuple[Union[str, None], FileContent, Union[str, None]],
+    tuple[Union[str, None], FileContent],
+    tuple[Union[str, None], FileContent, Union[str, None]],
 ]
 """A file, optionally with a file name and a content type: ``content``,
 ``(filename, content)`` or ``(filename, content, content_type)``."""

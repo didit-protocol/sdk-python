@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from ._events import WebhookEvent
 from ._verify import DEFAULT_TOLERANCE, HeadersLike, verify, verify_parsed

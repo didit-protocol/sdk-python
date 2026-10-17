@@ -50,7 +50,6 @@ MODEL_RESERVED = frozenset(
         # Builtins used in annotations, which a class attribute would shadow.
         "bool",
         "bytes",
-        "dict",
         "float",
         "int",
         "list",

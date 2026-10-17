@@ -6,7 +6,8 @@ import hashlib
 import hmac
 import re
 import time
-from typing import Any, Iterable, Mapping, Sequence, Tuple, Union, cast
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, Union, cast
 
 from .._exceptions import ConfigurationError, WebhookVerificationError
 from ._canonical import canonical_json, parse_body
@@ -17,7 +18,7 @@ __all__ = ["DEFAULT_TOLERANCE", "HeadersLike", "verify", "verify_parsed"]
 DEFAULT_TOLERANCE = 300
 _HEX = re.compile(r"^[0-9a-f]{64}\Z")
 
-HeadersLike = Union[Mapping[str, Any], Iterable[Tuple[str, str]]]
+HeadersLike = Union[Mapping[str, Any], Iterable[tuple[str, str]]]
 """The request headers: any mapping (Django ``request.headers``, Starlette and
 Flask headers, ``dict``) or a list of ``(name, value)`` pairs. Names are
 matched case-insensitively."""
@@ -29,10 +30,7 @@ _SIMPLE = ("x-signature-simple", "x-signature-simple-previous")
 
 def _normalise_headers(headers: HeadersLike) -> dict[str, str]:
     pairs: Iterable[tuple[Any, Any]]
-    if isinstance(headers, Mapping):
-        pairs = cast("Mapping[Any, Any]", headers).items()
-    else:
-        pairs = headers
+    pairs = cast("Mapping[Any, Any]", headers).items() if isinstance(headers, Mapping) else headers
     out: dict[str, str] = {}
     for raw_name, raw_value in pairs:
         name = str(raw_name).lower()
@@ -124,10 +122,7 @@ def verify(
     :class:`didit.ConfigurationError` for an empty secret.
     """
     keys = _secrets(secret)
-    if isinstance(raw_body, str):
-        raw = raw_body.encode("utf-8")
-    else:
-        raw = bytes(raw_body)
+    raw = raw_body.encode("utf-8") if isinstance(raw_body, str) else bytes(raw_body)
     payload = parse_body(raw)
     normalised = _normalise_headers(headers)
     _timestamp(payload, normalised, tolerance, time.time())

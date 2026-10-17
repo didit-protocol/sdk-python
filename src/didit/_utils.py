@@ -7,7 +7,8 @@ import json
 import os
 import platform
 import urllib.parse
-from typing import Any, Iterable, Mapping, cast
+from collections.abc import Iterable, Mapping
+from typing import Any, cast
 
 from ._files import HttpxFile, to_httpx_file
 from ._types import NotGiven

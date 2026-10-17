@@ -6,15 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Awaitable, Callable, Generator, Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Generator,
     Generic,
-    Iterator,
     TypeVar,
     cast,
 )
