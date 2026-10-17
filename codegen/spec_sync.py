@@ -312,8 +312,9 @@ def sync(
             "sha256": hashlib.sha256(data).hexdigest(),
             "fetched_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
-    source_path.write_text(json.dumps(source, indent=1, ensure_ascii=False) + "\n", "utf-8")
-    overlay_path.write_text(json.dumps(overlay, indent=1, sort_keys=False, ensure_ascii=False) + "\n", "utf-8")
+    # Same layout as the seeded files (one-space indent, no trailing newline), so diffs stay small.
+    source_path.write_text(json.dumps(source, indent=1, ensure_ascii=False), "utf-8")
+    overlay_path.write_text(json.dumps(overlay, indent=1, ensure_ascii=False), "utf-8")
     deprecated_path.write_text(json.dumps(deprecated, indent=1, ensure_ascii=False) + "\n", "utf-8")
     return True, "\n".join(lines).rstrip() + "\n"
 
