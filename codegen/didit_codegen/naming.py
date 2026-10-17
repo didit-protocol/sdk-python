@@ -45,7 +45,7 @@ def snake(text: str) -> str:
 
 def identifier(name: str, *, taken: frozenset[str] = frozenset()) -> str:
     """A valid, non-keyword Python identifier for ``name``; ``from`` -> ``from_``."""
-    out = name if name.isidentifier() else snake(name)
+    out = name if name.isidentifier() and name.isascii() else snake(name)
     if out.startswith("_"):
         out = out.lstrip("_") or "value"
         if not out.isidentifier():
