@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 
 from .naming import resource_class
@@ -321,6 +322,15 @@ def render_resources(roots: dict[str, ResourceNode], registry: Registry) -> dict
     return files
 
 
+_SHADOWED = re.compile(r"(?<![\w.])(list|dict)\[")
+
+
+def builtin_safe(expr: str) -> str:
+    """Resource classes have methods named ``list``, so annotations there spell
+    the builtins as ``builtins.list``."""
+    return _SHADOWED.sub(lambda m: f"builtins.{m.group(1)}[", expr)
+
+
 def _sig_args(method: Method) -> list[str]:
     args = ["self"]
     for arg in method.path_args:
@@ -329,14 +339,14 @@ def _sig_args(method: Method) -> list[str]:
     if method.whole_body is not None:
         wb = method.whole_body
         if wb.required:
-            args.append(f"{wb.py}: {wb.annotation.expr}")
+            args.append(f"{wb.py}: {builtin_safe(wb.annotation.expr)}")
         else:
-            args.append(f"{wb.py}: {wb.annotation.expr} | NotGiven = NOT_GIVEN")
+            args.append(f"{wb.py}: {builtin_safe(wb.annotation.expr)} | NotGiven = NOT_GIVEN")
     for arg in method.kwargs:
         if arg.required:
-            args.append(f"{arg.py}: {arg.annotation.expr}")
+            args.append(f"{arg.py}: {builtin_safe(arg.annotation.expr)}")
         else:
-            args.append(f"{arg.py}: {arg.annotation.expr} | NotGiven = NOT_GIVEN")
+            args.append(f"{arg.py}: {builtin_safe(arg.annotation.expr)} | NotGiven = NOT_GIVEN")
     if method.idempotency:
         args.append("idempotency_key: str | NotGiven = NOT_GIVEN")
     args.extend(
@@ -395,12 +405,10 @@ def _call(method: Method, is_async: bool) -> str:
     fn = "request_page" if page else "request"
     lines.append(f'"{op.http_method}"')
     lines.append(json.dumps(op.path))
+    lines.append(f"cast_to={builtin_safe(method.response.cast_to)}")
     if method.response.kind == "page":
-        lines.append(f"cast_to={method.response.cast_to}")
         assert method.response.item is not None
-        lines.append(f"item_type={method.response.item.expr}")
-    else:
-        lines.append(f"cast_to={method.response.cast_to}")
+        lines.append(f"item_type={builtin_safe(method.response.item.expr)}")
     if method.path_args:
         pp = ", ".join(f"{json.dumps(a.wire)}: {a.py}" for a in method.path_args)
         lines.append(f"path_params={{{pp}}}")
@@ -455,8 +463,8 @@ def _return_type(method: Method, is_async: bool) -> str:
     if method.response.kind == "page":
         assert method.response.item is not None
         wrapper = "AsyncPaginator" if is_async else "SyncPage"
-        return f"{wrapper}[{method.response.item.expr}]"
-    return method.response.annotation.expr
+        return f"{wrapper}[{builtin_safe(method.response.item.expr)}]"
+    return builtin_safe(method.response.annotation.expr)
 
 
 def _render_method(method: Method, is_async: bool) -> str:
@@ -605,7 +613,10 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
                 out.append(f"        from {child.module} import {prefix}{child.cls}With{kind}\n\n")
                 out.append(f"        return {prefix}{child.cls}With{kind}(self._resource.{name})\n")
             out.append("\n")
-    return "".join(out)
+    text = "".join(out)
+    if "builtins." in text:
+        text = text.replace("from __future__ import annotations\n\n", "from __future__ import annotations\n\nimport builtins\n", 1)
+    return text
 
 
 def _resource_doc(node: ResourceNode) -> str:

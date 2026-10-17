@@ -70,7 +70,7 @@ class _BasePage(Generic[ItemT]):
         body = cast("dict[str, Any]", data)
         parsed = validate_response(cast_to, body)
         raw_results = body.get("results")
-        results = cast("list[Any]", validate_response(list[item_type], raw_results or []))  # type: ignore[valid-type]
+        results = cast("list[Any]", validate_response(list[item_type], raw_results or []))
         count = body.get("count")
         return {
             "results": results,
@@ -139,7 +139,7 @@ class SyncPage(_BasePage[ItemT]):
                 return
             page = page.get_next_page()
 
-    def __iter__(self) -> Iterator[ItemT]:  # type: ignore[override]
+    def __iter__(self) -> Iterator[ItemT]:
         for page in self.iter_pages():
             yield from page.results
 

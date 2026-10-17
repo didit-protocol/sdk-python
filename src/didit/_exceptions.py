@@ -175,7 +175,7 @@ _REQUEST_ID_HEADERS = ("x-request-id", "request-id", "x-amzn-requestid", "x-corr
 
 def _request_id(headers: httpx.Headers) -> str | None:
     for name in _REQUEST_ID_HEADERS:
-        value = headers.get(name)
+        value: str | None = headers.get(name)
         if value:
             return value
     return None

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from functools import cached_property
 from typing import cast
 
@@ -51,7 +52,7 @@ class AccountOrganizations(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[Organization]:
+    ) -> builtins.list[Organization]:
         """List My Organizations.
 
         List organizations the authenticated user belongs to. Each entry's `uuid` is the `org_id` used on the application endpoints.
@@ -65,11 +66,11 @@ class AccountOrganizations(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[Organization]",
+            "builtins.list[Organization]",
             self._client.request(
                 "get",
                 "/organizations/me/",
-                cast_to=list[Organization],
+                cast_to=builtins.list[Organization],
                 auth="account_token",
                 api="account",
                 extra_headers=extra_headers,
@@ -103,7 +104,7 @@ class AsyncAccountOrganizations(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[Organization]:
+    ) -> builtins.list[Organization]:
         """List My Organizations.
 
         List organizations the authenticated user belongs to. Each entry's `uuid` is the `org_id` used on the application endpoints.
@@ -117,11 +118,11 @@ class AsyncAccountOrganizations(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[Organization]",
+            "builtins.list[Organization]",
             await self._client.request(
                 "get",
                 "/organizations/me/",
-                cast_to=list[Organization],
+                cast_to=builtins.list[Organization],
                 auth="account_token",
                 api="account",
                 extra_headers=extra_headers,

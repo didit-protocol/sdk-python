@@ -73,13 +73,13 @@ class _SessionEvent(WebhookEventBase):
 class SessionStatusUpdatedEvent(_SessionEvent):
     """``status.updated``: a verification session changed status."""
 
-    webhook_type: Literal["status.updated"] = "status.updated"  # type: ignore[assignment]
+    webhook_type: Literal["status.updated"] = "status.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class SessionDataUpdatedEvent(_SessionEvent):
     """``data.updated``: the data of a verification session changed."""
 
-    webhook_type: Literal["data.updated"] = "data.updated"  # type: ignore[assignment]
+    webhook_type: Literal["data.updated"] = "data.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class _UserEvent(WebhookEventBase):
@@ -91,13 +91,13 @@ class _UserEvent(WebhookEventBase):
 class UserStatusUpdatedEvent(_UserEvent):
     """``user.status.updated``."""
 
-    webhook_type: Literal["user.status.updated"] = "user.status.updated"  # type: ignore[assignment]
+    webhook_type: Literal["user.status.updated"] = "user.status.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class UserDataUpdatedEvent(_UserEvent):
     """``user.data.updated``."""
 
-    webhook_type: Literal["user.data.updated"] = "user.data.updated"  # type: ignore[assignment]
+    webhook_type: Literal["user.data.updated"] = "user.data.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class _BusinessEvent(WebhookEventBase):
@@ -109,19 +109,19 @@ class _BusinessEvent(WebhookEventBase):
 class BusinessStatusUpdatedEvent(_BusinessEvent):
     """``business.status.updated``."""
 
-    webhook_type: Literal["business.status.updated"] = "business.status.updated"  # type: ignore[assignment]
+    webhook_type: Literal["business.status.updated"] = "business.status.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class BusinessDataUpdatedEvent(_BusinessEvent):
     """``business.data.updated``."""
 
-    webhook_type: Literal["business.data.updated"] = "business.data.updated"  # type: ignore[assignment]
+    webhook_type: Literal["business.data.updated"] = "business.data.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class ActivityCreatedEvent(WebhookEventBase):
     """``activity.created``."""
 
-    webhook_type: Literal["activity.created"] = "activity.created"  # type: ignore[assignment]
+    webhook_type: Literal["activity.created"] = "activity.created"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class _TransactionEvent(WebhookEventBase):
@@ -140,19 +140,19 @@ class _TransactionEvent(WebhookEventBase):
 class TransactionCreatedEvent(_TransactionEvent):
     """``transaction.created``."""
 
-    webhook_type: Literal["transaction.created"] = "transaction.created"  # type: ignore[assignment]
+    webhook_type: Literal["transaction.created"] = "transaction.created"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class TransactionStatusUpdatedEvent(_TransactionEvent):
     """``transaction.status.updated``."""
 
-    webhook_type: Literal["transaction.status.updated"] = "transaction.status.updated"  # type: ignore[assignment]
+    webhook_type: Literal["transaction.status.updated"] = "transaction.status.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class TravelRuleStatusUpdatedEvent(WebhookEventBase):
     """``travel_rule.status.updated``."""
 
-    webhook_type: Literal["travel_rule.status.updated"] = "travel_rule.status.updated"  # type: ignore[assignment]
+    webhook_type: Literal["travel_rule.status.updated"] = "travel_rule.status.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
     transaction_id: str | None = None
     txn_id: str | None = None
     travel_rule_status: str | None = None
@@ -163,14 +163,14 @@ class TravelRuleStatusUpdatedEvent(WebhookEventBase):
 class WorkflowComplianceChangedEvent(WebhookEventBase):
     """``workflow.compliance_changed``."""
 
-    webhook_type: Literal["workflow.compliance_changed"] = "workflow.compliance_changed"  # type: ignore[assignment]
+    webhook_type: Literal["workflow.compliance_changed"] = "workflow.compliance_changed"  # pyright: ignore[reportIncompatibleVariableOverride]
     workflow_id: str | None = None
 
 
 class KybRegistrySearchResolvedEvent(WebhookEventBase):
     """``kyb.registry_search.resolved``."""
 
-    webhook_type: Literal["kyb.registry_search.resolved"] = "kyb.registry_search.resolved"  # type: ignore[assignment]
+    webhook_type: Literal["kyb.registry_search.resolved"] = "kyb.registry_search.resolved"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class UnknownEvent(WebhookEventBase):

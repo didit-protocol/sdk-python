@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from functools import cached_property
 from typing import Literal, cast
 
@@ -55,7 +56,7 @@ class WebhooksDestinations(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[WebhooksDestinationsListResponseItem]:
+    ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
         List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list — fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
@@ -69,11 +70,11 @@ class WebhooksDestinations(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[WebhooksDestinationsListResponseItem]",
+            "builtins.list[WebhooksDestinationsListResponseItem]",
             self._client.request(
                 "get",
                 "/v3/webhook/destinations/",
-                cast_to=list[WebhooksDestinationsListResponseItem],
+                cast_to=builtins.list[WebhooksDestinationsListResponseItem],
                 auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -285,7 +286,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[WebhooksDestinationsListResponseItem]:
+    ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
         List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list — fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
@@ -299,11 +300,11 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[WebhooksDestinationsListResponseItem]",
+            "builtins.list[WebhooksDestinationsListResponseItem]",
             await self._client.request(
                 "get",
                 "/v3/webhook/destinations/",
-                cast_to=list[WebhooksDestinationsListResponseItem],
+                cast_to=builtins.list[WebhooksDestinationsListResponseItem],
                 auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,

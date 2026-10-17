@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 import datetime as _dt
 from functools import cached_property
 from typing import TYPE_CHECKING, Literal, Mapping, Sequence, cast
@@ -940,7 +941,7 @@ class Cases(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[dict[str, object]]:
+    ) -> builtins.list[builtins.dict[str, object]]:
         """List case AML hits.
 
         List AML screening hits for the case's subject. Same shape as the hits returned by POST /v3/aml/.
@@ -955,11 +956,11 @@ class Cases(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[dict[str, object]]",
+            "builtins.list[builtins.dict[str, object]]",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/aml/",
-                cast_to=list[dict[str, object]],
+                cast_to=builtins.list[builtins.dict[str, object]],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
@@ -2097,7 +2098,7 @@ class AsyncCases(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[dict[str, object]]:
+    ) -> builtins.list[builtins.dict[str, object]]:
         """List case AML hits.
 
         List AML screening hits for the case's subject. Same shape as the hits returned by POST /v3/aml/.
@@ -2112,11 +2113,11 @@ class AsyncCases(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[dict[str, object]]",
+            "builtins.list[builtins.dict[str, object]]",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/aml/",
-                cast_to=list[dict[str, object]],
+                cast_to=builtins.list[builtins.dict[str, object]],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from functools import cached_property
 from typing import cast
 
@@ -52,7 +53,7 @@ class CasesChecklist(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[CaseChecklistItem]:
+    ) -> builtins.list[CaseChecklistItem]:
         """List case checklist.
 
         List the case's checklist items, copied from the blueprint's content_config.checklist.items at creation, ordered.
@@ -67,11 +68,11 @@ class CasesChecklist(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[CaseChecklistItem]",
+            "builtins.list[CaseChecklistItem]",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/checklist/",
-                cast_to=list[CaseChecklistItem],
+                cast_to=builtins.list[CaseChecklistItem],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
@@ -150,7 +151,7 @@ class AsyncCasesChecklist(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[CaseChecklistItem]:
+    ) -> builtins.list[CaseChecklistItem]:
         """List case checklist.
 
         List the case's checklist items, copied from the blueprint's content_config.checklist.items at creation, ordered.
@@ -165,11 +166,11 @@ class AsyncCasesChecklist(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[CaseChecklistItem]",
+            "builtins.list[CaseChecklistItem]",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/checklist/",
-                cast_to=list[CaseChecklistItem],
+                cast_to=builtins.list[CaseChecklistItem],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",

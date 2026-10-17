@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from functools import cached_property
 from typing import Literal, cast
 
@@ -52,7 +53,7 @@ class CasesLinks(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[CaseLink]:
+    ) -> builtins.list[CaseLink]:
         """List case links.
 
         List sessions, business sessions, and transactions attached to the case.
@@ -67,11 +68,11 @@ class CasesLinks(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[CaseLink]",
+            "builtins.list[CaseLink]",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/",
-                cast_to=list[CaseLink],
+                cast_to=builtins.list[CaseLink],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
@@ -190,7 +191,7 @@ class AsyncCasesLinks(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> list[CaseLink]:
+    ) -> builtins.list[CaseLink]:
         """List case links.
 
         List sessions, business sessions, and transactions attached to the case.
@@ -205,11 +206,11 @@ class AsyncCasesLinks(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "list[CaseLink]",
+            "builtins.list[CaseLink]",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/",
-                cast_to=list[CaseLink],
+                cast_to=builtins.list[CaseLink],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
