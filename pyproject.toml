@@ -1,0 +1,157 @@
+[project]
+name = "didit-sdk"
+version = "0.1.0"
+description = "The official Didit Python library: identity verification (KYC), business verification (KYB), AML, liveness, transaction monitoring, Travel Rule and customer authentication."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Didit", email = "support@didit.me" }]
+requires-python = ">=3.10"
+dependencies = [
+  "httpx>=0.27,<1",
+  "pydantic>=2.7,<3",
+  "typing-extensions>=4.10",
+]
+keywords = [
+  "didit",
+  "identity verification",
+  "kyc",
+  "kyb",
+  "aml",
+  "liveness",
+  "transaction monitoring",
+  "travel rule",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+auth = ["cryptography>=42"]
+
+[project.urls]
+Homepage = "https://didit.me"
+Documentation = "https://docs.didit.me"
+Repository = "https://github.com/didit-protocol/sdk-python"
+Issues = "https://github.com/didit-protocol/sdk-python/issues"
+Changelog = "https://github.com/didit-protocol/sdk-python/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  "cryptography>=42",
+  "mypy>=1.13",
+  "pyright>=1.1.390",
+  "pytest>=8",
+  "pytest-cov>=5",
+  "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/didit"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/codegen",
+  "/openapi",
+  "/docs",
+  "/README.md",
+  "/LICENSE",
+  "/CHANGELOG.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "codegen/tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "live: talks to the Didit sandbox; runs only when DIDIT_SANDBOX_API_KEY is set",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["didit"]
+omit = [
+  "*/didit/resources/*",
+  "*/didit/types/*",
+]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "@overload",
+  "raise NotImplementedError",
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/didit", "tests", "codegen", "examples"]
+mypy_path = ["src", "codegen"]
+explicit_package_bases = true
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["fastapi", "fastapi.*", "flask", "flask.*", "django", "django.*", "starlette", "starlette.*", "uvicorn"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The framework examples are type-checked without the frameworks installed.
+module = ["examples.webhooks.*"]
+disallow_untyped_decorators = false
+disallow_any_unimported = false
+warn_return_any = false
+
+[tool.pyright]
+include = ["src/didit", "tests", "codegen"]
+strict = ["src/didit"]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"
+reportMissingTypeStubs = false
+reportPrivateUsage = false
+reportUnnecessaryIsInstance = false
+reportImportCycles = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests", "codegen"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM", "RUF", "S", "PT", "T20"]
+ignore = [
+  "E501",
+  "UP007",
+  "UP045",
+  "RUF022",
+  "RUF036",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S108", "S311", "S603"]
+"codegen/**" = ["S101", "T20", "S603"]
+"examples/**" = ["T20", "S104", "S105"]
+"src/didit/resources/**" = ["UP006", "UP035", "RUF001", "RUF002", "RUF003"]
+"src/didit/types/**" = ["UP006", "UP035", "RUF001", "RUF002", "RUF003", "E741"]
+"tests/generated/**" = ["RUF001", "RUF003", "E741", "SIM101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["didit", "didit_codegen", "tests", "spec_sync"]

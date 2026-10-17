@@ -1,0 +1,4 @@
+{
+ "description": "Operations removed from the upstream API contract that the SDK still exposes, as deprecated methods, for one more minor version (docs/DESIGN.md section 3.1). Written by codegen/spec_sync.py; each entry holds the fully dereferenced operation, its x-didit-sdk naming, removed_on and deprecated_since. Delete an entry in the next minor release.",
+ "operations": {}
+}

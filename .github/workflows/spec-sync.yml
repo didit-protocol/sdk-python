@@ -1,0 +1,123 @@
+# Spec sync (docs/DESIGN.md section 3.1).
+#
+# Downloads the upstream OpenAPI documents into openapi/, regenerates the SDK, runs the
+# checks and opens (or updates) one pull request titled
+# "chore(spec): sync API spec YYYY-MM-DD" on the branch chore/spec-sync.
+#
+# Token: pull requests opened with the default GITHUB_TOKEN do not trigger CI (GitHub does
+# not start workflows from events caused by GITHUB_TOKEN). To get CI on the sync pull
+# request, add a repository secret SPEC_SYNC_TOKEN (a fine-grained token with Contents and
+# Pull requests read and write on this repository only). Without it the workflow falls
+# back to GITHUB_TOKEN; then close and reopen the pull request, or push to its branch, to
+# start CI.
+name: Spec sync
+
+on:
+  schedule:
+    - cron: "23 6 * * *" # daily, 06:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spec-sync
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  sync:
+    name: Sync the API spec
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      FORCE_COLOR: "1"
+      UV_FROZEN: "1"
+    steps:
+      - name: Prepare
+        id: prepare
+        # The summary lives outside the checkout so that it is never committed.
+        run: |
+          echo "SUMMARY=$RUNNER_TEMP/spec-sync-summary.md" >> "$GITHUB_ENV"
+          echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # create-pull-request configures its own credentials from its token input.
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Download the upstream OpenAPI documents
+        id: sync
+        # Writes changed=true|false to $GITHUB_OUTPUT and a markdown summary of the added,
+        # removed and changed operations to $SUMMARY.
+        run: uv run python codegen/spec_sync.py --summary "$SUMMARY"
+      - name: Regenerate the SDK and run the checks
+        id: checks
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          failed=false
+          {
+            echo
+            echo "## Checks"
+            echo
+          } >> "$SUMMARY"
+          run_check() {
+            name="$1"
+            shift
+            echo "::group::$name"
+            if "$@"; then
+              echo "- [x] $name" >> "$SUMMARY"
+            else
+              echo "- [ ] $name: **failed**, see the workflow run" >> "$SUMMARY"
+              echo "::error::$name failed"
+              failed=true
+            fi
+            echo "::endgroup::"
+          }
+          run_check "Regenerate (codegen/generate.py)" uv run python codegen/generate.py
+          run_check "ruff check" uv run ruff check .
+          run_check "ruff format --check" uv run ruff format --check .
+          run_check "mypy --strict" uv run mypy
+          run_check "pyright" uv run pyright
+          run_check "pytest" uv run pytest -m "not live"
+          {
+            echo
+            echo "Opened by [spec sync run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+            echo "Generated code comes from codegen/ and openapi/; do not edit it by hand."
+          } >> "$SUMMARY"
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+      - name: Open or update the spec sync pull request
+        if: steps.sync.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.SPEC_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: chore/spec-sync
+          delete-branch: true
+          title: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
+          commit-message: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
+          body-path: ${{ env.SUMMARY }}
+          # A sync that fails a check still opens the pull request, as a draft, so the fix
+          # (usually an openapi/overlay.json entry) can be pushed to the same branch.
+          draft: ${{ steps.checks.outputs.failed == 'true' }}
+          # Only the spec copies and the generated layer; nothing else is committed.
+          add-paths: |
+            openapi
+            src/didit/types
+            src/didit/resources
+            tests/generated
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+      - name: Fail the run when a check failed
+        if: steps.checks.outputs.failed == 'true'
+        run: |
+          echo "::error::The spec sync pull request was opened, but at least one check failed. See the Checks section of the pull request."
+          exit 1
