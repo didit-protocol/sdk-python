@@ -34,7 +34,7 @@ def test_travel_rule_create_widget_session() -> None:
             status=201,
             response_json={
                 "widget_session_id": "00000000-0000-4000-8000-000000000003",
-                "token": "sample",
+                "token": "sample-token",
                 "url": "sample",
                 "expires_at": "2026-01-01T00:00:00Z",
             },

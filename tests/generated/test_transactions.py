@@ -168,7 +168,7 @@ def test_transactions_create_sdk_token() -> None:
             auth="api_key",
             json_body={"vendor_data": "user-042", "ttl_seconds": 900, "max_uses": 3},
             status=201,
-            response_json={"sdk_token": "q7Zt...urlsafe", "expires_at": "2026-07-07T12:15:00Z"},
+            response_json={"sdk_token": "sample-token", "expires_at": "2026-07-07T12:15:00Z"},
         ),
         lambda c: c.transactions.create_sdk_token(
             vendor_data="user-042", ttl_seconds=900, max_uses=3

@@ -210,6 +210,25 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
     return True
 
 
+_SECRET_KEY = re.compile(r"token|secret|api_?key|password|private_?key|credential", re.IGNORECASE)
+_JWT = re.compile(r"^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$")
+
+
+def scrub(value: Json, key: str | None = None) -> Json:
+    """Replace credential-like example values with synthetic ones, so that generated
+    tests never carry anything a secret scanner (or a reader) could take for a secret."""
+    if isinstance(value, dict):
+        return {k: scrub(v, k) for k, v in value.items()}
+    if isinstance(value, list):
+        return [scrub(v, key) for v in value]
+    if isinstance(value, str):
+        if _JWT.match(value):
+            return "sample-token"
+        if key is not None and _SECRET_KEY.search(key) and value:
+            return "sample-" + ("token" if "token" in key.lower() else "secret")
+    return value
+
+
 def literal(value: Json) -> str:
     """A Python literal for a JSON value."""
     if isinstance(value, bytes):
@@ -318,7 +337,7 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
             chosen[name] = b"file-content"
     for arg in body_args:
         if arg.wire in chosen:
-            out.append((arg, chosen[arg.wire]))
+            out.append((arg, scrub(chosen[arg.wire], arg.wire)))
     for arg in (a for a in method.kwargs if a.location == "query"):
         if (
             arg.has_example
@@ -330,7 +349,7 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
             value = sample(spec, arg.schema, request=True, full=False)
             if value is None:
                 continue
-        out.append((arg, value))
+        out.append((arg, scrub(value, arg.wire)))
     return out
 
 
@@ -352,8 +371,8 @@ def _response_value(method: Method) -> tuple[int, Json, bool]:
     spec = method.op.spec
     if resp.kind in ("model", "page"):
         if resp.has_example and resp.example is not None:
-            return resp.status, resp.example, False
-        return resp.status, sample(spec, resp.schema, request=False), True
+            return resp.status, scrub(resp.example), False
+        return resp.status, scrub(sample(spec, resp.schema, request=False)), True
     return resp.status, None, False
 
 
