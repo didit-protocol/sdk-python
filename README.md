@@ -221,18 +221,30 @@ Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdat
 
 ## Authentication
 
-[Didit Authentication](https://docs.didit.me) gives your application its own OpenID Connect issuer for your end users (early access; production with the 2026-11-01 release). The `didit.authentication` module verifies the tokens it issues in your backend. It never uses the API key. Install it with `pip install "didit-sdk[auth]"`.
+[Didit Authentication](https://docs.didit.me) gives your application its own OpenID Connect issuer for your end users (early access; production with the 2026-11-01 release). The `didit.authentication` module verifies the tokens that issuer signs, in your backend, and calls its token, session and step-up endpoints. It never uses the API key. Install it with `pip install "didit-sdk[auth]"`.
 
 ```python
-from didit.authentication import Authentication
+from didit.authentication import Authentication, TokenVerificationError
 
-auth = Authentication.from_publishable_key("pk_live_...")  # or Authentication("https://<slug>.auth.didit.me")
+# The publishable key (pk_live_... or pk_test_...) carries the issuer URL;
+# Authentication("https://<slug>.auth.didit.me") works too. client_id is your application id.
+auth = Authentication.from_publishable_key("pk_live_...", client_id="<application id>")
 
-claims = auth.verify_access_token(token)   # ES256, typ at+jwt, iss, exp, nbf, iat (60 s leeway)
-print(claims.sub, claims.sid, claims.org)
+try:
+    claims = auth.verify_access_token(access_token)
+except TokenVerificationError as err:
+    ...  # err.reason: "expired", "invalid_signature", "invalid_audience", ...
+print(claims.sub, claims.sid, claims.vendor_data, claims.org)
 ```
 
-The module also covers ID tokens with a nonce, PKCE, state and nonce helpers, the code exchange and refresh, session status and revocation, and step-up verification. `AsyncAuthentication` offers the same with `await`. See [`examples/authentication.py`](examples/authentication.py).
+- `verify_access_token(token, audience=None)` accepts ES256 only (never `none`, HS* or RS*), requires the header `typ: at+jwt`, checks `iss`, `aud` (the given audience, else `client_id`), `exp`, `nbf` and `iat` with 60 s leeway, and the signature against the issuer's keys. Discovery and keys are fetched on first use and cached as the issuer says (5 minutes today); an unknown key id triggers at most one refetch per minute.
+- `verify_id_token(token, nonce=..., audience=None)` does the same for ID tokens and checks the nonce of the sign-in (pass `nonce=None` for an ID token from a refresh, which has none).
+- `create_pkce()`, `create_state()` and `create_nonce()` for the sign-in redirect; `exchange_code(code, code_verifier=..., redirect_uri=...)` and `refresh(refresh_token)` for tokens. Serialise refreshes for one session: reusing a consumed refresh token revokes the session.
+- `get_session(access_token)` asks the issuer whether the session is still live (instant revocation check); `revoke_session(access_token)` signs the person out.
+- `create_step_up(access_token, action="payout", amount="250.00", currency="EUR", return_to=...)` and `retrieve_step_up(access_token, step_up_id)`: act on a sensitive action only when `step_up.approved` is true.
+- `AsyncAuthentication` has the same methods with `await`. One instance per process is the intended use.
+
+See [`examples/authentication.py`](examples/authentication.py).
 
 ## Language notes
 
