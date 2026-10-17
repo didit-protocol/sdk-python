@@ -174,3 +174,57 @@ def test_not_a_page() -> None:
     api = MockAPI().json(200, [])
     with pytest.raises(didit.DiditError):
         api.client().businesses.list()
+
+
+def _looping_api() -> MockAPI:
+    loop = f"{BASE}?limit=1&offset=1"
+    return MockAPI().add(*[lambda _r: httpx.Response(200, json=_page(["1"], loop))] * 5)
+
+
+def test_a_repeated_next_link_stops_instead_of_looping() -> None:
+    api = _looping_api()
+    with pytest.raises(didit.DiditError, match="twice"):
+        list(api.client().businesses.list(limit=1))
+    assert len(api.requests) == 2
+
+    async def run() -> None:
+        with pytest.raises(didit.DiditError, match="twice"):
+            async for _ in api.async_client().businesses.list(limit=1):
+                pass
+
+    api = _looping_api()
+    asyncio.run(run())
+    assert len(api.requests) == 2
+
+
+def test_a_relative_next_link_is_resolved_against_the_page_url() -> None:
+    api = (
+        MockAPI()
+        .json(200, _page(["1"], "/v3/businesses/?limit=1&offset=1"))
+        .json(200, _page(["2"], "?limit=1&offset=2"))
+        .json(200, _page(["3"], None))
+    )
+    ids = [b.didit_internal_id for b in api.client().businesses.list(limit=1)]
+    assert ids == ["1", "2", "3"]
+    assert [str(r.url) for r in api.requests[1:]] == [
+        f"{BASE}?limit=1&offset=1",
+        f"{BASE}?limit=1&offset=2",
+    ]
+    assert all(r.headers["x-api-key"] == API_KEY for r in api.requests)
+
+
+def test_a_list_that_is_not_json_raises_a_validation_error() -> None:
+    for response in (
+        httpx.Response(200, text="<html>maintenance</html>", headers={"content-type": "text/html"}),
+        httpx.Response(204),
+    ):
+        api = MockAPI().add(response)
+        with pytest.raises(didit.APIResponseValidationError, match="paginated JSON object"):
+            api.client().businesses.list()
+
+    async def run() -> None:
+        api = MockAPI().add(httpx.Response(200, text="not json"))
+        with pytest.raises(didit.APIResponseValidationError):
+            await api.async_client().businesses.list()
+
+    asyncio.run(run())
