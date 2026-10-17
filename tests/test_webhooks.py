@@ -140,11 +140,11 @@ def test_vectors_cover_every_outcome() -> None:
         ({"x": -2.5}, '{"x":-2.5}'),
         ({"x": 9007199254740993}, '{"x":9007199254740993}'),
         ({"x": [1.0, 2.5, None, True, False]}, '{"x":[1,2.5,null,true,false]}'),
-        ({"s": "José \U0001f600"}, '{"s":"José \U0001f600"}'),
-        ({"s": "a b c\u007f/"}, '{"s":"a b c\u007f/"}'),
+        ({"s": "Jos\u00e9 \U0001f600"}, '{"s":"Jos\u00e9 \U0001f600"}'),
+        ({"s": "a\u2028b\u2029c\u007f/"}, '{"s":"a\u2028b\u2029c\u007f/"}'),
         ({"s": 'q"\\\n\r\t\b\f\u0007\u001f'}, '{"s":"q\\"\\\\\\n\\r\\t\\b\\f\\u0007\\u001f"}'),
         # Keys sort by code point, not by UTF-16 code unit (U+FB00 < U+1F600).
-        ({"\U0001f600": 1, "ﬀ": 2, "é": 3}, '{"é":3,"ﬀ":2,"\U0001f600":1}'),
+        ({"\U0001f600": 1, "\ufb00": 2, "\u00e9": 3}, '{"\u00e9":3,"\ufb00":2,"\U0001f600":1}'),
     ],
 )
 def test_canonical_json(value: object, expected: str) -> None:
@@ -172,7 +172,7 @@ def test_valid_delivery_returns_typed_event(frozen_time: list[float]) -> None:
 
 
 def test_reencoded_body_still_verifies_with_v2(frozen_time: list[float]) -> None:
-    payload = _payload(metadata={"name": "José", "score": 87.0})
+    payload = _payload(metadata={"name": "Jos\u00e9", "score": 87.0})
     body, headers = _delivery(payload)
     # Middleware that re-encodes the JSON (different key order, unescaped Unicode, 87.0).
     reencoded = json.dumps(json.loads(body), ensure_ascii=False, indent=2).replace("87", "87.0")
