@@ -17,7 +17,7 @@ from typing import (
 
 import httpx
 
-from ._exceptions import DiditError
+from ._exceptions import APIResponseValidationError, DiditError
 from ._models import BaseModel, validate_response
 from ._response import response_mode
 
@@ -64,9 +64,20 @@ class _BasePage(Generic[ItemT]):
         self._item_type = item_type
 
     @staticmethod
-    def _fields(data: object, cast_to: Any, item_type: Any) -> dict[str, Any]:
+    def _fields(response: httpx.Response, cast_to: Any, item_type: Any) -> dict[str, Any]:
+        try:
+            data: object = response.json() if response.content else None
+        except ValueError:
+            data = None
         if not isinstance(data, dict):
-            raise DiditError("Expected a paginated JSON object with a 'results' list.")
+            raise APIResponseValidationError(
+                response=response,
+                message=(
+                    f"Expected a paginated JSON object with a 'results' list from "
+                    f"{response.request.method} {response.request.url.path}, got "
+                    f"{response.headers.get('content-type', 'no content type')}."
+                ),
+            )
         body = cast("dict[str, Any]", data)
         parsed = validate_response(cast_to, body)
         raw_results = body.get("results")
@@ -82,6 +93,16 @@ class _BasePage(Generic[ItemT]):
 
     def has_next_page(self) -> bool:
         return bool(self.next) and bool(self.results)
+
+    def _check_not_seen(self, seen: set[str]) -> None:
+        # A server that keeps returning a link it already returned would make
+        # auto-pagination loop forever.
+        if self.next in seen:
+            raise DiditError(
+                f"The API returned the pagination link {self.next!r} twice; "
+                "stopping instead of looping forever."
+            )
+        seen.add(cast("str", self.next))
 
     def __repr__(self) -> str:
         return (
@@ -105,7 +126,7 @@ class SyncPage(_BasePage[ItemT]):
         item_type: Any,
     ) -> SyncPage[Any]:
         page: SyncPage[Any] = cls(
-            **cls._fields(response.json(), cast_to, item_type),
+            **cls._fields(response, cast_to, item_type),
             prepared=prepared,
             cast_to=cast_to,
             item_type=item_type,
@@ -133,10 +154,12 @@ class SyncPage(_BasePage[ItemT]):
 
     def iter_pages(self) -> Iterator[SyncPage[ItemT]]:
         page: SyncPage[ItemT] = self
+        seen: set[str] = set()
         while True:
             yield page
             if not page.has_next_page():
                 return
+            page._check_not_seen(seen)
             page = page.get_next_page()
 
     def __iter__(self) -> Iterator[ItemT]:
@@ -159,7 +182,7 @@ class AsyncPage(_BasePage[ItemT]):
         item_type: Any,
     ) -> AsyncPage[Any]:
         page: AsyncPage[Any] = cls(
-            **cls._fields(response.json(), cast_to, item_type),
+            **cls._fields(response, cast_to, item_type),
             prepared=prepared,
             cast_to=cast_to,
             item_type=item_type,
@@ -187,10 +210,12 @@ class AsyncPage(_BasePage[ItemT]):
 
     async def iter_pages(self) -> AsyncIterator[AsyncPage[ItemT]]:
         page: AsyncPage[ItemT] = self
+        seen: set[str] = set()
         while True:
             yield page
             if not page.has_next_page():
                 return
+            page._check_not_seen(seen)
             page = await page.get_next_page()
 
     async def __aiter__(self) -> AsyncIterator[ItemT]:

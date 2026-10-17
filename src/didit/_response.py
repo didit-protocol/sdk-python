@@ -8,9 +8,10 @@ the body first, for large binary downloads.
 
 from __future__ import annotations
 
+import contextlib
 import contextvars
 import functools
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Generator, Iterator
 from types import TracebackType
 from typing import (
     Generic,
@@ -22,7 +23,11 @@ from typing import (
 import httpx
 from typing_extensions import ParamSpec
 
-from ._exceptions import _request_id  # pyright: ignore[reportPrivateUsage]
+from ._exceptions import (
+    APIConnectionError,
+    APITimeoutError,
+    _request_id,  # pyright: ignore[reportPrivateUsage]
+)
 
 __all__ = [
     "APIResponse",
@@ -42,6 +47,17 @@ ResponseMode = Literal["parsed", "raw", "stream"]
 response_mode: contextvars.ContextVar[ResponseMode] = contextvars.ContextVar(
     "didit_response_mode", default="parsed"
 )
+
+
+@contextlib.contextmanager
+def _reading(response: httpx.Response) -> Generator[None, None, None]:
+    """Turn an error while reading a streamed body into the SDK's own errors."""
+    try:
+        yield
+    except httpx.TimeoutException as exc:
+        raise APITimeoutError(request=response.request) from exc
+    except httpx.HTTPError as exc:
+        raise APIConnectionError(request=response.request) from exc
 
 
 class _BaseAPIResponse(Generic[R]):
@@ -98,34 +114,38 @@ class APIResponse(_BaseAPIResponse[R]):
 
     def parse(self) -> R:
         if not self._parsed:
-            self.http_response.read()
+            self.read()
             self._parsed.append(self._parse(self.http_response))
         return self._parsed[0]
 
     def read(self) -> bytes:
-        return self.http_response.read()
+        with _reading(self.http_response):
+            return self.http_response.read()
 
     def text(self) -> str:
-        self.http_response.read()
+        self.read()
         return self.http_response.text
 
     def json(self) -> object:
-        self.http_response.read()
+        self.read()
         return self.http_response.json()
 
     def iter_bytes(self, chunk_size: int | None = None) -> Iterator[bytes]:
-        return self.http_response.iter_bytes(chunk_size)
+        with _reading(self.http_response):
+            yield from self.http_response.iter_bytes(chunk_size)
 
     def iter_text(self, chunk_size: int | None = None) -> Iterator[str]:
-        return self.http_response.iter_text(chunk_size)
+        with _reading(self.http_response):
+            yield from self.http_response.iter_text(chunk_size)
 
     def iter_lines(self) -> Iterator[str]:
-        return self.http_response.iter_lines()
+        with _reading(self.http_response):
+            yield from self.http_response.iter_lines()
 
     def write_to_file(self, path: str) -> None:
         """Stream the body to ``path``."""
         with open(path, "wb") as fh:
-            for chunk in self.http_response.iter_bytes():
+            for chunk in self.iter_bytes():
                 fh.write(chunk)
 
     def close(self) -> None:
@@ -137,34 +157,41 @@ class AsyncAPIResponse(_BaseAPIResponse[R]):
 
     async def parse(self) -> R:
         if not self._parsed:
-            await self.http_response.aread()
+            await self.read()
             self._parsed.append(self._parse(self.http_response))
         return self._parsed[0]
 
     async def read(self) -> bytes:
-        return await self.http_response.aread()
+        with _reading(self.http_response):
+            return await self.http_response.aread()
 
     async def text(self) -> str:
-        await self.http_response.aread()
+        await self.read()
         return self.http_response.text
 
     async def json(self) -> object:
-        await self.http_response.aread()
+        await self.read()
         return self.http_response.json()
 
-    def iter_bytes(self, chunk_size: int | None = None) -> AsyncIterator[bytes]:
-        return self.http_response.aiter_bytes(chunk_size)
+    async def iter_bytes(self, chunk_size: int | None = None) -> AsyncIterator[bytes]:
+        with _reading(self.http_response):
+            async for chunk in self.http_response.aiter_bytes(chunk_size):
+                yield chunk
 
-    def iter_text(self, chunk_size: int | None = None) -> AsyncIterator[str]:
-        return self.http_response.aiter_text(chunk_size)
+    async def iter_text(self, chunk_size: int | None = None) -> AsyncIterator[str]:
+        with _reading(self.http_response):
+            async for chunk in self.http_response.aiter_text(chunk_size):
+                yield chunk
 
-    def iter_lines(self) -> AsyncIterator[str]:
-        return self.http_response.aiter_lines()
+    async def iter_lines(self) -> AsyncIterator[str]:
+        with _reading(self.http_response):
+            async for line in self.http_response.aiter_lines():
+                yield line
 
     async def write_to_file(self, path: str) -> None:
         """Stream the body to ``path``."""
         with open(path, "wb") as fh:
-            async for chunk in self.http_response.aiter_bytes():
+            async for chunk in self.iter_bytes():
                 fh.write(chunk)
 
     async def close(self) -> None:
