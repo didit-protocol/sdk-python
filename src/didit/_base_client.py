@@ -25,7 +25,7 @@ from ._exceptions import (
     APITimeoutError,
     ConfigurationError,
     DiditError,
-    _request_id,
+    _request_id,  # pyright: ignore[reportPrivateUsage]
     make_status_error,
 )
 from ._files import HttpxFile

@@ -22,7 +22,7 @@ from typing import (
 import httpx
 from typing_extensions import ParamSpec
 
-from ._exceptions import _request_id
+from ._exceptions import _request_id  # pyright: ignore[reportPrivateUsage]
 
 __all__ = [
     "APIResponse",

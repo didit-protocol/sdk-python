@@ -117,13 +117,13 @@ class SyncPage(_BasePage[ItemT]):
         """Fetch the next page. The link must point at the API's own origin."""
         if not self.next:
             raise DiditError("This is the last page.")
-        prepared = self._client._next_page_request(self._prepared, self.next)
+        prepared = self._client._next_page_request(self._prepared, self.next)  # pyright: ignore[reportPrivateUsage]
         cast_to, item_type, client = self._cast_to, self._item_type, self._client
         token = response_mode.set("parsed")
         try:
             return cast(
                 "SyncPage[ItemT]",
-                client._send(
+                client._send(  # pyright: ignore[reportPrivateUsage]
                     prepared,
                     lambda r: SyncPage.from_response(client, prepared, r, cast_to, item_type),
                 ),
@@ -171,13 +171,13 @@ class AsyncPage(_BasePage[ItemT]):
         """Fetch the next page. The link must point at the API's own origin."""
         if not self.next:
             raise DiditError("This is the last page.")
-        prepared = self._client._next_page_request(self._prepared, self.next)
+        prepared = self._client._next_page_request(self._prepared, self.next)  # pyright: ignore[reportPrivateUsage]
         cast_to, item_type, client = self._cast_to, self._item_type, self._client
         token = response_mode.set("parsed")
         try:
             return cast(
                 "AsyncPage[ItemT]",
-                await client._send(
+                await client._send(  # pyright: ignore[reportPrivateUsage]
                     prepared,
                     lambda r: AsyncPage.from_response(client, prepared, r, cast_to, item_type),
                 ),

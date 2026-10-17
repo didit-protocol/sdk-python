@@ -227,5 +227,5 @@ def parse_event(payload: dict[str, Any], verified_by: VerifiedBy = "none") -> We
         event = validate_response(cls, payload)
         if not isinstance(event, cls):
             event = cls.model_construct(**payload)
-    event._verified_by = verified_by
+    event._verified_by = verified_by  # pyright: ignore[reportPrivateUsage]
     return event  # type: ignore[return-value]

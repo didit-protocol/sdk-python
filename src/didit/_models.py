@@ -88,7 +88,7 @@ def construct_type(type_: Any, value: object) -> object:
         if isinstance(value, list):
             lists = [m for m in members if get_origin(m) is list]
             if lists:
-                return construct_type(lists[0], value)
+                return construct_type(lists[0], value)  # pyright: ignore[reportPrivateUsage]
         if isinstance(value, dict):
             models = [m for m in members if isinstance(m, type) and issubclass(m, BaseModel)]
             if models:
