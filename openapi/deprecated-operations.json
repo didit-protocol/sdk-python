@@ -1,4 +1,4 @@
 {
- "description": "Operations removed from the upstream API contract that the SDK still exposes, as deprecated methods, for one more minor version (docs/DESIGN.md section 3.1). Written by codegen/spec_sync.py; each entry holds the fully dereferenced operation, its x-didit-sdk naming, removed_on and deprecated_since. Delete an entry in the next minor release.",
- "operations": {}
+ "description": "Public SDK methods kept for one more minor version after the API contract dropped them (docs/DESIGN.md section 3.1). Written by codegen/spec_sync.py, keyed by resource.method. reason is removed (the operation left the contract) or renamed (its x-didit-sdk naming changed; replacement names the new method). Each entry holds the fully dereferenced operation, so it never depends on the current documents. tests/test_contract.py fails once the package version reaches remove_in: delete the entry and regenerate in that release.",
+ "methods": {}
 }

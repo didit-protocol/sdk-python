@@ -18,16 +18,16 @@ class FaceMatchCompareParams(TypedDict, total=False):
     """Reference face image to compare against (e.g. an ID document portrait or a previously enrolled photo). Same format and size limits as `user_image`."""
 
     face_match_score_decline_threshold: float
-    """Similarity threshold (0–100) that drives the response `status`. A computed score **at or below** this value sets `status` to `Declined` and adds a `LOW_FACE_MATCH_SIMILARITY` warning; a score strictly above it returns `Approved`. Default `30` is permissive — raise it (e.g. `50`–`60`) for stricter verification. Values outside 0–100 return `400`."""
+    """Similarity threshold (0–100) that drives the response `status`. A computed score **at or below** this value sets `status` to `Declined` and adds a `LOW_FACE_MATCH_SIMILARITY` warning; a score strictly above it returns `Approved`. Default `30` is permissive - raise it (e.g. `50`–`60`) for stricter verification. Values outside 0–100 return `400`."""
 
     rotate_image: bool
-    """When `true`, the service tries the input images in 90-degree increments (0, 90, 180, 270) and uses the orientation that yields the best face detection — useful for mobile captures with missing EXIF orientation. Adds latency, so only enable it if you cannot guarantee upright images."""
+    """When `true`, the service tries the input images in 90-degree increments (0, 90, 180, 270) and uses the orientation that yields the best face detection - useful for mobile captures with missing EXIF orientation. Adds latency, so only enable it if you cannot guarantee upright images."""
 
     save_api_request: bool
-    """When `true` (default), persists the call as an API-type session — visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, and announced through a `status.updated` webhook. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
+    """When `true` (default), persists the call as an API-type session - visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, and announced through a `status.updated` webhook. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
 
     vendor_data: str
     """Optional opaque string (your internal user id, email, UUID…) stored on the persisted session and echoed back in the response. Use it to correlate API calls with your own records and to filter sessions later."""
 
     metadata: Mapping[str, object]
-    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"login"}`) — it is parsed into an object."""
+    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"login"}`) - it is parsed into an object."""

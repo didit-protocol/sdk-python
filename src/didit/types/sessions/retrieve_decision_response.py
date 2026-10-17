@@ -637,7 +637,7 @@ class SessionsRetrieveDecisionResponseAmlScreenings(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this AML screening. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this AML screening. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     total_hits: int | None = None
     """Total number of matches found"""
@@ -648,7 +648,7 @@ class SessionsRetrieveDecisionResponseAmlScreenings(BaseModel):
     hits: list[SessionsRetrieveDecisionResponseAmlScreeningsHits] | None = None
 
     score: float | None = None
-    """Overall AML screening score — the highest risk score across all hits (float, 0-100). `null` until computed."""
+    """Overall AML screening score - the highest risk score across all hits (float, 0-100). `null` until computed."""
 
     screened_data: SessionsRetrieveDecisionResponseAmlScreeningsScreenedData | None = None
 
@@ -684,14 +684,14 @@ class SessionsRetrieveDecisionResponseContactDetails(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseDatabaseValidationsErrors(BaseModel):
-    """The upstream service's error object spread as-is — its keys vary by service (commonly a message/code and any provider-specific details) — plus `service_id` identifying the service that errored."""
+    """The upstream service's error object spread as-is - its keys vary by service (commonly a message/code and any provider-specific details) - plus `service_id` identifying the service that errored."""
 
     service_id: str | None = None
     """Identifier of the registry service that errored."""
 
 
 class SessionsRetrieveDecisionResponseDatabaseValidationsScreenedData(BaseModel):
-    """The input data used for validation. Fields vary by country — see the Database Validation docs (`/core-technology/database-validation/overview`) for country-specific formats."""
+    """The input data used for validation. Fields vary by country - see the Database Validation docs (`/core-technology/database-validation/overview`) for country-specific formats."""
 
     last_name: str | None = None
 
@@ -793,13 +793,13 @@ class SessionsRetrieveDecisionResponseDatabaseValidations(BaseModel):
     """Unique identifier for this database validation step in the workflow graph."""
 
     issuing_state: str | None = None
-    """ISO 3166-1 alpha-3 code of the country whose government/registry sources were queried (e.g. `BRA`, `MEX`, `ESP`, `NGA`, `IDN`). Database Validation covers 60+ countries across the Americas, Europe, Africa, the Middle East and Asia-Pacific, plus global multi-country sources — coverage expands regularly, so treat the value as an open set rather than a fixed enum."""
+    """ISO 3166-1 alpha-3 code of the country whose government/registry sources were queried (e.g. `BRA`, `MEX`, `ESP`, `NGA`, `IDN`). Database Validation covers 60+ countries across the Americas, Europe, Africa, the Middle East and Asia-Pacific, plus global multi-country sources - coverage expands regularly, so treat the value as an open set rather than a fixed enum."""
 
     validation_type: Literal["one_by_one", "two_by_two", "not_enabled"] | str | None = None
     """How the result was corroborated: `one_by_one` (single-service outcome), `two_by_two` (two or more distinct services independently full-matched the identification number), or `not_enabled` (persisted when no service produced a usable match). The value is never `null`. Dedicated biometric 2x2 validation modes are currently available for `ECU` and `PER`."""
 
     screened_data: SessionsRetrieveDecisionResponseDatabaseValidationsScreenedData | None = None
-    """The input data used for validation. Fields vary by country — see the Database Validation docs (`/core-technology/database-validation/overview`) for country-specific formats."""
+    """The input data used for validation. Fields vary by country - see the Database Validation docs (`/core-technology/database-validation/overview`) for country-specific formats."""
 
     validations: list[SessionsRetrieveDecisionResponseDatabaseValidationsValidations] | None = None
     """One entry per registry service that returned a validation payload. Each entry identifies the service (`service_id`, `service_name`) and carries the per-field `validation` comparison, the service `outcome_code` / `outcome_detail` when reported, and the normalised registry record in `source_data`."""
@@ -813,7 +813,7 @@ class SessionsRetrieveDecisionResponseDatabaseValidations(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this database validation. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this database validation. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     warnings: list[SessionsRetrieveDecisionResponseDatabaseValidationsWarnings] | None = None
     """Warnings related to the database validation."""
@@ -994,7 +994,7 @@ class SessionsRetrieveDecisionResponseDocumentVerificationsItemsDocumentMetadata
     """Whether metadata indicates the file passed through a known image/PDF editor."""
 
     has_different_creation_mod_date: bool | None = None
-    """Whether creation and modification dates differ — a possible (but not conclusive) editing signal."""
+    """Whether creation and modification dates differ - a possible (but not conclusive) editing signal."""
 
     overlay_manipulation: (
         SessionsRetrieveDecisionResponseDocumentVerificationsItemsDocumentMetadataOverlayManipulation
@@ -1033,7 +1033,7 @@ class SessionsRetrieveDecisionResponseDocumentVerificationsItems(BaseModel):
         | str
         | None
     ) = None
-    """Alias of `document_type` — the group name used by `groups` and `required_groups`."""
+    """Alias of `document_type` - the group name used by `groups` and `required_groups`."""
 
     file_url: str | None = None
     """Short-lived presigned link to the uploaded file. `null` for analyst-created document request placeholders (`is_requested = true`) that have not been fulfilled yet."""
@@ -1120,7 +1120,7 @@ class SessionsRetrieveDecisionResponseEmailVerificationsBreaches(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseEmailVerificationsLifecycleDetails(BaseModel):
-    """Event-specific payload. Send events carry `status`, `reason`; code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `EMAIL_VERIFICATION_APPROVED`)."""
+    """Event-specific payload. Send events carry `status`, `reason`; code-check events carry `code_tried`, `status`; final status events carry `reason` - or `null` when there is no reason to report (e.g. `EMAIL_VERIFICATION_APPROVED`)."""
 
     status: str | None = None
 
@@ -1135,7 +1135,7 @@ class SessionsRetrieveDecisionResponseEmailVerificationsLifecycle(BaseModel):
     timestamp: _dt.datetime | None = None
 
     details: SessionsRetrieveDecisionResponseEmailVerificationsLifecycleDetails | None = None
-    """Event-specific payload. Send events carry `status`, `reason`; code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `EMAIL_VERIFICATION_APPROVED`)."""
+    """Event-specific payload. Send events carry `status`, `reason`; code-check events carry `code_tried`, `status`; final status events carry `reason` - or `null` when there is no reason to report (e.g. `EMAIL_VERIFICATION_APPROVED`)."""
 
     fee: float | None = None
 
@@ -1158,7 +1158,7 @@ class SessionsRetrieveDecisionResponseEmailVerificationsMatches(BaseModel):
     api_service: str | None = None
 
     source: Literal["session", "list_entry"] | str | None = None
-    """Where this match came from. `session` means another verification session in your application matched on this value. `list_entry` means the value was hit against an org-managed list (allowlist/blocklist) — see the management API lists overview at `/management-api/lists/overview` for how to manage those lists."""
+    """Where this match came from. `session` means another verification session in your application matched on this value. `list_entry` means the value was hit against an org-managed list (allowlist/blocklist) - see the management API lists overview at `/management-api/lists/overview` for how to manage those lists."""
 
 
 class SessionsRetrieveDecisionResponseEmailVerificationsWarnings(BaseModel):
@@ -1206,7 +1206,7 @@ class SessionsRetrieveDecisionResponseEmailVerifications(BaseModel):
     status: Literal["Not Finished", "Approved", "Declined", "In Review", "Expired"] | str | None = (
         None
     )
-    """Feature-level status of this email verification step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this email verification step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     email: str | None = None
     """The email address being verified"""
@@ -1236,11 +1236,11 @@ class SessionsRetrieveDecisionResponseEmailVerifications(BaseModel):
     """Chronological list of events in the email verification lifecycle."""
 
     matches: list[SessionsRetrieveDecisionResponseEmailVerificationsMatches] | None = None
-    """Matches found for this email address. Each match has a `source`: `session` (another verification session in your application matched on the same email, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the email is on an org-managed allow/block list — see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
+    """Matches found for this email address. Each match has a `source`: `session` (another verification session in your application matched on the same email, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the email is on an org-managed allow/block list - see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
 
 
 class SessionsRetrieveDecisionResponseExpectedDetails(BaseModel):
-    """Expected details supplied at session creation — used for cross-validation against extracted data (KYC) or to pre-fill the company registry search (KYB). Echoes back exactly the keys that were provided; `null` when none were supplied. KYC sessions carry the person fields; Business (KYB) sessions carry `company_name`, `registry_country` and `registration_number`."""
+    """Expected details supplied at session creation - used for cross-validation against extracted data (KYC) or to pre-fill the company registry search (KYB). Echoes back exactly the keys that were provided; `null` when none were supplied. KYC sessions carry the person fields; Business (KYB) sessions carry `company_name`, `registry_country` and `registration_number`."""
 
     first_name: str | None = None
     """User's first name. For example, `John`."""
@@ -1329,7 +1329,7 @@ class SessionsRetrieveDecisionResponseFaceMatchesWarnings(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseFaceMatches(BaseModel):
-    """One face-match report — the full report."""
+    """One face-match report - the full report."""
 
     node_id: str | None = None
     """Workflow graph node id of the face-match step that produced this report."""
@@ -1337,7 +1337,7 @@ class SessionsRetrieveDecisionResponseFaceMatches(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this face-match step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this face-match step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     score: float | None = None
     """Confidence score of the face match"""
@@ -1511,7 +1511,7 @@ class SessionsRetrieveDecisionResponseIdVerificationsDocumentSelfieFaceMatches(B
 
 
 class SessionsRetrieveDecisionResponseIdVerificationsExtraFields(BaseModel):
-    """Additional document fields. Includes document-specific attributes (e.g. `dl_categories`, `blood_group`, `sponsor`, `employer`, `dl_class_code_b_from`, `dl_class_code_b_to`). Driver license class validity dates are returned as `dl_class_code_<class>_from` and `dl_class_code_<class>_to`, and per-class restriction/information codes (e.g. column 12 of UK licences) as `dl_class_code_<class>_notes`. When the document carries names, address, or place of birth in multiple scripts, this object also includes alternate-script versions of those fields. The workflow setting `preferred_characters` (`latin` or `non_latin`) controls which script populates the top-level fields (`first_name`, `last_name`, `full_name`, `address`, `place_of_birth`); the opposite script lands here as `first_name_non_latin` / `last_name_non_latin` / `full_name_non_latin` / `middle_name_non_latin` / `address_non_latin` / `place_of_birth_non_latin` (when `preferred_characters` is `latin`) or with a `_latin` suffix (when `preferred_characters` is `non_latin`). Keys appear only when the OCR actually extracts a real alternate-script value — a field whose alternate value is in the same script as the preferred set (for example, a Cyrillic-labelled field whose OCR value came back in Latin homoglyphs) is skipped. When `preferred_characters` is `latin` but the document only carries non-Latin text, Didit transliterates the extracted values and exposes `first_name_latin` / `last_name_latin` / etc. as a fallback."""
+    """Additional document fields. Includes document-specific attributes (e.g. `dl_categories`, `blood_group`, `sponsor`, `employer`, `dl_class_code_b_from`, `dl_class_code_b_to`). Driver license class validity dates are returned as `dl_class_code_<class>_from` and `dl_class_code_<class>_to`, and per-class restriction/information codes (e.g. column 12 of UK licences) as `dl_class_code_<class>_notes`. When the document carries names, address, or place of birth in multiple scripts, this object also includes alternate-script versions of those fields. The workflow setting `preferred_characters` (`latin` or `non_latin`) controls which script populates the top-level fields (`first_name`, `last_name`, `full_name`, `address`, `place_of_birth`); the opposite script lands here as `first_name_non_latin` / `last_name_non_latin` / `full_name_non_latin` / `middle_name_non_latin` / `address_non_latin` / `place_of_birth_non_latin` (when `preferred_characters` is `latin`) or with a `_latin` suffix (when `preferred_characters` is `non_latin`). Keys appear only when the OCR actually extracts a real alternate-script value - a field whose alternate value is in the same script as the preferred set (for example, a Cyrillic-labelled field whose OCR value came back in Latin homoglyphs) is skipped. When `preferred_characters` is `latin` but the document only carries non-Latin text, Didit transliterates the extracted values and exposes `first_name_latin` / `last_name_latin` / etc. as a fallback."""
 
     dl_categories: list[str] | None = None
 
@@ -1536,7 +1536,7 @@ class SessionsRetrieveDecisionResponseIdVerificationsExtraFields(BaseModel):
     """Place of birth in the non-Latin script when `preferred_characters=latin` and a non-Latin version is present on the document."""
 
     first_name_latin: str | None = None
-    """First name in Latin script. Populated when `preferred_characters=non_latin` and a Latin version is present on the document, or — as a transliteration fallback — when `preferred_characters=latin` but the document only carries non-Latin text."""
+    """First name in Latin script. Populated when `preferred_characters=non_latin` and a Latin version is present on the document, or - as a transliteration fallback - when `preferred_characters=latin` but the document only carries non-Latin text."""
 
     last_name_latin: str | None = None
     """Surname in Latin script. Same rules as `first_name_latin`."""
@@ -1979,7 +1979,7 @@ class SessionsRetrieveDecisionResponseIdVerifications(BaseModel):
     status: Literal["Not Finished", "Approved", "Declined", "In Review", "Expired"] | str | None = (
         None
     )
-    """Feature-level status of this ID verification step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this ID verification step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     document_type: str | None = None
     """Type of identity document"""
@@ -2066,7 +2066,7 @@ class SessionsRetrieveDecisionResponseIdVerifications(BaseModel):
     """ISO nationality code"""
 
     extra_fields: SessionsRetrieveDecisionResponseIdVerificationsExtraFields | None = None
-    """Additional document fields. Includes document-specific attributes (e.g. `dl_categories`, `blood_group`, `sponsor`, `employer`, `dl_class_code_b_from`, `dl_class_code_b_to`). Driver license class validity dates are returned as `dl_class_code_<class>_from` and `dl_class_code_<class>_to`, and per-class restriction/information codes (e.g. column 12 of UK licences) as `dl_class_code_<class>_notes`. When the document carries names, address, or place of birth in multiple scripts, this object also includes alternate-script versions of those fields. The workflow setting `preferred_characters` (`latin` or `non_latin`) controls which script populates the top-level fields (`first_name`, `last_name`, `full_name`, `address`, `place_of_birth`); the opposite script lands here as `first_name_non_latin` / `last_name_non_latin` / `full_name_non_latin` / `middle_name_non_latin` / `address_non_latin` / `place_of_birth_non_latin` (when `preferred_characters` is `latin`) or with a `_latin` suffix (when `preferred_characters` is `non_latin`). Keys appear only when the OCR actually extracts a real alternate-script value — a field whose alternate value is in the same script as the preferred set (for example, a Cyrillic-labelled field whose OCR value came back in Latin homoglyphs) is skipped. When `preferred_characters` is `latin` but the document only carries non-Latin text, Didit transliterates the extracted values and exposes `first_name_latin` / `last_name_latin` / etc. as a fallback."""
+    """Additional document fields. Includes document-specific attributes (e.g. `dl_categories`, `blood_group`, `sponsor`, `employer`, `dl_class_code_b_from`, `dl_class_code_b_to`). Driver license class validity dates are returned as `dl_class_code_<class>_from` and `dl_class_code_<class>_to`, and per-class restriction/information codes (e.g. column 12 of UK licences) as `dl_class_code_<class>_notes`. When the document carries names, address, or place of birth in multiple scripts, this object also includes alternate-script versions of those fields. The workflow setting `preferred_characters` (`latin` or `non_latin`) controls which script populates the top-level fields (`first_name`, `last_name`, `full_name`, `address`, `place_of_birth`); the opposite script lands here as `first_name_non_latin` / `last_name_non_latin` / `full_name_non_latin` / `middle_name_non_latin` / `address_non_latin` / `place_of_birth_non_latin` (when `preferred_characters` is `latin`) or with a `_latin` suffix (when `preferred_characters` is `non_latin`). Keys appear only when the OCR actually extracts a real alternate-script value - a field whose alternate value is in the same script as the preferred set (for example, a Cyrillic-labelled field whose OCR value came back in Latin homoglyphs) is skipped. When `preferred_characters` is `latin` but the document only carries non-Latin text, Didit transliterates the extracted values and exposes `first_name_latin` / `last_name_latin` / etc. as a fallback."""
 
     mrz: SessionsRetrieveDecisionResponseIdVerificationsMrz | None = None
     """Parsed Machine-Readable Zone (MRZ) fields extracted from the document. `null` if no MRZ was detected."""
@@ -2188,7 +2188,7 @@ class SessionsRetrieveDecisionResponseIpAnalysesMatches(BaseModel):
     """Sequential number of the matching session."""
 
     vendor_data: str | None = None
-    """`vendor_data` of the matching session — always different from the current session's vendor user."""
+    """`vendor_data` of the matching session - always different from the current session's vendor user."""
 
     verification_date: _dt.datetime | None = None
     """Creation date of the matching session (`YYYY-MM-DDTHH:MM:SSZ`)."""
@@ -2199,10 +2199,10 @@ class SessionsRetrieveDecisionResponseIpAnalysesMatches(BaseModel):
     match_source: (
         Literal["ip_address", "persistent_id", "legacy_fp", "recovered_high"] | str | None
     ) = None
-    """How this match was reached: `ip_address` (shared IP address — network co-location, not a device-identity claim), `persistent_id` (exact stored persistent device identifier), `legacy_fp` (legacy `didit-fp-*` device-fingerprint hash), or `recovered_high` (high-confidence fuzzy fingerprint-recovery hit). Lower-confidence recovery candidates surface as risk warnings only, never in this array."""
+    """How this match was reached: `ip_address` (shared IP address - network co-location, not a device-identity claim), `persistent_id` (exact stored persistent device identifier), `legacy_fp` (legacy `didit-fp-*` device-fingerprint hash), or `recovered_high` (high-confidence fuzzy fingerprint-recovery hit). Lower-confidence recovery candidates surface as risk warnings only, never in this array."""
 
     matched_value: str | None = None
-    """The value that matched: the shared IP address, the persistent device identifier or legacy fingerprint hash, or — for `recovered_high` — the UUID of the recovered device."""
+    """The value that matched: the shared IP address, the persistent device identifier or legacy fingerprint hash, or - for `recovered_high` - the UUID of the recovered device."""
 
     status: str | None = None
     """Lifecycle status of the matching session."""
@@ -2214,7 +2214,7 @@ class SessionsRetrieveDecisionResponseIpAnalysesMatches(BaseModel):
     """Standalone API service of the matching session; `null` for workflow sessions."""
 
     source: Literal["session"] | str | None = None
-    """Always `session` for device/IP matches — every match is another verification session in your application."""
+    """Always `session` for device/IP matches - every match is another verification session in your application."""
 
     device_info: SessionsRetrieveDecisionResponseIpAnalysesMatchesDeviceInfo | None = None
     """Device details observed on the matching session."""
@@ -2232,7 +2232,7 @@ class SessionsRetrieveDecisionResponseIpAnalysesMatches(BaseModel):
     """Cosine similarity of the fingerprint-recovery match, rounded to 4 decimals. Present only when `match_source` is `recovered_high`."""
 
     tls_ja4_corroborated: bool | None = None
-    """Whether the TLS JA4 fingerprints of the two observations agree — a server-observed signal the browser cannot spoof. Present only when `match_source` is `recovered_high`."""
+    """Whether the TLS JA4 fingerprints of the two observations agree - a server-observed signal the browser cannot spoof. Present only when `match_source` is `recovered_high`."""
 
     recovery_gate_reason: str | None = None
     """Why the recovery match passed the false-positive hard gate: `hardware_root_match` (a hardware-rooted device identifier matched exactly) or, on configurations that admit probe-only evidence, `exact_composite_plus_<n>_families` / `very_high_similarity_plus_<n>_families`. Present only when `match_source` is `recovered_high`."""
@@ -2302,7 +2302,7 @@ class SessionsRetrieveDecisionResponseIpAnalyses(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this Device & IP Analysis entry. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this Device & IP Analysis entry. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     device_brand: str | None = None
     """Brand of the device used"""
@@ -2487,7 +2487,7 @@ class SessionsRetrieveDecisionResponseKeyPeopleChecksRegistryBeneficialOwners(Ba
     """Per-feature progress of the child verification session, e.g. `[{"feature": "ID_VERIFICATION", "status": "Approved"}]`. `null` when the child session has no resolvable feature list."""
 
     didit_internal_id: str | None = None
-    """Stable internal identifier of the verified individual behind the child session — useful for cross-session linking. `null` when no child session exists or the user has not been resolved yet."""
+    """Stable internal identifier of the verified individual behind the child session - useful for cross-session linking. `null` when no child session exists or the user has not been resolved yet."""
 
     kyc_document_type: str | None = None
     """Document type presented in the child KYC session (e.g. `P`, `ID`, `DL`). `null` until the child session has an ID verification result."""
@@ -2514,7 +2514,7 @@ class SessionsRetrieveDecisionResponseKeyPeopleChecksRegistryBeneficialOwners(Ba
     """For corporate UBOs: the owning entity's own beneficial owners, as raw objects extracted from the registry. Empty array when not applicable."""
 
     effective_ownership_percent: float | None = None
-    """Parsed numeric ownership percentage — the max bound when available, otherwise the min bound. `null` when neither bound could be parsed."""
+    """Parsed numeric ownership percentage - the max bound when available, otherwise the min bound. `null` when neither bound could be parsed."""
 
     voting_min_shares: str | None = None
 
@@ -2642,7 +2642,7 @@ class SessionsRetrieveDecisionResponseKeyPeopleChecksRegistryOfficers(BaseModel)
     """Per-feature progress of the child verification session, e.g. `[{"feature": "ID_VERIFICATION", "status": "Approved"}]`. `null` when the child session has no resolvable feature list."""
 
     didit_internal_id: str | None = None
-    """Stable internal identifier of the verified individual behind the child session — useful for cross-session linking. `null` when no child session exists or the user has not been resolved yet."""
+    """Stable internal identifier of the verified individual behind the child session - useful for cross-session linking. `null` when no child session exists or the user has not been resolved yet."""
 
     kyc_document_type: str | None = None
     """Document type presented in the child KYC session (e.g. `P`, `ID`, `DL`). `null` until the child session has an ID verification result."""
@@ -2742,7 +2742,7 @@ class SessionsRetrieveDecisionResponseKeyPeopleChecksSubmittedParties(BaseModel)
     entity_type: Literal["person", "company"] | str | None = None
 
     source: Literal["USER"] | str | None = None
-    """Always `USER` here — this bucket only contains parties entered or confirmed by the end user in the Key People flow (registry-discovered people appear under `registry`)."""
+    """Always `USER` here - this bucket only contains parties entered or confirmed by the end user in the Key People flow (registry-discovered people appear under `registry`)."""
 
     name: str | None = None
 
@@ -2978,7 +2978,7 @@ class SessionsRetrieveDecisionResponseLivenessChecksWarnings(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseLivenessChecks(BaseModel):
-    """One liveness report — the full report for a single liveness pass."""
+    """One liveness report - the full report for a single liveness pass."""
 
     node_id: str | None = None
     """Workflow graph node id of the liveness step that produced this report."""
@@ -2986,7 +2986,7 @@ class SessionsRetrieveDecisionResponseLivenessChecks(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this liveness step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this liveness step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     method: str | None = None
     """Method used for liveness detection"""
@@ -3004,7 +3004,7 @@ class SessionsRetrieveDecisionResponseLivenessChecks(BaseModel):
     """Estimated age of the person"""
 
     matches: list[SessionsRetrieveDecisionResponseLivenessChecksMatches] | None = None
-    """Similar faces found by the duplicate-face search (top matches, blocklisted/allowlisted entries first). Each entry's `source` tells you where the matching face came from: `session` (another verification session), `imported` (a face uploaded against a vendor user), `list_entry` (an org-managed allow/block list face), or `retained_template` (an image-free biometric template stored on a User, listed under `/v3/biometric-templates/`). `session_id`, `session_number`, `status` and `api_service` are `null` for non-session sources. `imported` matches still populate `vendor_data`, `verification_date` and — when the vendor user has a name on file — `user_details` (with `full_name` only) from the vendor-user record; `retained_template` matches populate `vendor_user_id`, `vendor_data`, `biometric_template_id` and `verification_date`, while their image and identity fields are `null`; `list_entry` matches return all of these as `null`."""
+    """Similar faces found by the duplicate-face search (top matches, blocklisted/allowlisted entries first). Each entry's `source` tells you where the matching face came from: `session` (another verification session), `imported` (a face uploaded against a vendor user), `list_entry` (an org-managed allow/block list face), or `retained_template` (an image-free biometric template stored on a User, listed under `/v3/biometric-templates/`). `session_id`, `session_number`, `status` and `api_service` are `null` for non-session sources. `imported` matches still populate `vendor_data`, `verification_date` and - when the vendor user has a name on file - `user_details` (with `full_name` only) from the vendor-user record; `retained_template` matches populate `vendor_user_id`, `vendor_data`, `biometric_template_id` and `verification_date`, while their image and identity fields are `null`; `list_entry` matches return all of these as `null`."""
 
     warnings: list[SessionsRetrieveDecisionResponseLivenessChecksWarnings] | None = None
 
@@ -3096,7 +3096,7 @@ class SessionsRetrieveDecisionResponseNfcVerificationsWarnings(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseNfcVerifications(BaseModel):
-    """One NFC report — the full report for a single ePassport chip read."""
+    """One NFC report - the full report for a single ePassport chip read."""
 
     node_id: str | None = None
     """Workflow graph node id of the NFC step that produced this report. Use it to correlate the report with the workflow definition."""
@@ -3104,7 +3104,7 @@ class SessionsRetrieveDecisionResponseNfcVerifications(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this NFC step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this NFC step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     is_nfc_skipped: bool | None = None
     """`true` when this NFC step was explicitly skipped instead of read; `skip_reason` says why."""
@@ -3147,7 +3147,7 @@ class SessionsRetrieveDecisionResponsePhoneVerificationsCarrier(BaseModel):
 
 
 class SessionsRetrieveDecisionResponsePhoneVerificationsLifecycleDetails(BaseModel):
-    """Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`; delivery events carry `channel`, `status`; code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`)."""
+    """Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`; delivery events carry `channel`, `status`; code-check events carry `code_tried`, `status`; final status events carry `reason` - or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`)."""
 
     status: str | None = None
 
@@ -3166,7 +3166,7 @@ class SessionsRetrieveDecisionResponsePhoneVerificationsLifecycle(BaseModel):
     timestamp: _dt.datetime | None = None
 
     details: SessionsRetrieveDecisionResponsePhoneVerificationsLifecycleDetails | None = None
-    """Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`; delivery events carry `channel`, `status`; code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`)."""
+    """Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`; delivery events carry `channel`, `status`; code-check events carry `code_tried`, `status`; final status events carry `reason` - or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`)."""
 
     fee: float | None = None
 
@@ -3189,7 +3189,7 @@ class SessionsRetrieveDecisionResponsePhoneVerificationsMatches(BaseModel):
     api_service: str | None = None
 
     source: Literal["session", "list_entry"] | str | None = None
-    """Where this match came from. `session` means another verification session in your application matched on this value. `list_entry` means the value was hit against an org-managed list (allowlist/blocklist) — see the management API lists overview at `/management-api/lists/overview` for how to manage those lists."""
+    """Where this match came from. `session` means another verification session in your application matched on this value. `list_entry` means the value was hit against an org-managed list (allowlist/blocklist) - see the management API lists overview at `/management-api/lists/overview` for how to manage those lists."""
 
 
 class SessionsRetrieveDecisionResponsePhoneVerificationsWarnings(BaseModel):
@@ -3237,7 +3237,7 @@ class SessionsRetrieveDecisionResponsePhoneVerifications(BaseModel):
     status: Literal["Not Finished", "Approved", "Declined", "In Review", "Expired"] | str | None = (
         None
     )
-    """Feature-level status of this phone verification step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this phone verification step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     phone_number_prefix: str | None = None
     """Country calling code prefix"""
@@ -3278,7 +3278,7 @@ class SessionsRetrieveDecisionResponsePhoneVerifications(BaseModel):
     """List of warnings related to phone verification"""
 
     matches: list[SessionsRetrieveDecisionResponsePhoneVerificationsMatches] | None = None
-    """Matches found for this phone number. Each match has a `source`: `session` (another verification session in your application matched on the same number, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the number is on an org-managed allow/block list — see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
+    """Matches found for this phone number. Each match has a `source`: `session` (another verification session in your application matched on the same number, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the number is on an org-managed allow/block list - see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
 
 
 class SessionsRetrieveDecisionResponsePoaVerificationsDocumentMetadataOverlayManipulationManipulatedRegions(
@@ -3373,7 +3373,7 @@ class SessionsRetrieveDecisionResponsePoaVerificationsDocumentMetadata(BaseModel
     """Whether the file metadata indicates processing by a known document editor."""
 
     has_different_creation_mod_date: bool | None = None
-    """Whether the creation and modification dates differ — a common manipulation signal."""
+    """Whether the creation and modification dates differ - a common manipulation signal."""
 
 
 class SessionsRetrieveDecisionResponsePoaVerificationsExtraFields(BaseModel):
@@ -3478,7 +3478,7 @@ class SessionsRetrieveDecisionResponsePoaVerifications(BaseModel):
     status: (
         Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"] | str | None
     ) = None
-    """Feature-level status of this Proof of Address step. Independent of the top-level session `status` — a session can reach its overall decision while an individual feature stays `In Review`."""
+    """Feature-level status of this Proof of Address step. Independent of the top-level session `status` - a session can reach its overall decision while an individual feature stays `In Review`."""
 
     document_file: str | None = None
     """URL of the proof of address document"""
@@ -3905,7 +3905,7 @@ class SessionsRetrieveDecisionResponseRegistryChecksCompany(BaseModel):
 
 
 class SessionsRetrieveDecisionResponseRegistryChecks(BaseModel):
-    """One company registry check — the full company-registry payload enriched with ownership structure and warnings. Present only when `session_kind = business`."""
+    """One company registry check - the full company-registry payload enriched with ownership structure and warnings. Present only when `session_kind = business`."""
 
     status: str | None = None
     """Feature lifecycle status."""
@@ -3964,7 +3964,7 @@ class SessionsRetrieveDecisionResponseResubmissions(BaseModel):
 
 class SessionsRetrieveDecisionResponseReviews(BaseModel):
     user: str | None = None
-    """Who performed the review. Usually the console reviewer's identifier (their email), but the value is `"API Client"` for status updates made with an API key and `"Unknown"` when no actor could be resolved — so do not parse this field as an email address."""
+    """Who performed the review. Usually the console reviewer's identifier (their email), but the value is `"API Client"` for status updates made with an API key and `"Unknown"` when no actor could be resolved - so do not parse this field as an email address."""
 
     new_status: str | None = None
 
@@ -3978,7 +3978,7 @@ class SessionsRetrieveDecisionResponse(BaseModel):
     """The unique identifier of the session for which to retrieve verification results."""
 
     session_kind: Literal["user", "business"] | str | None = None
-    """Discriminator indicating whether this is a User Verification (KYC) or Business Verification (KYB) session. When `user`, the KYC feature arrays (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `database_validations`, ...) apply and the business arrays are absent. When `business`, the payload instead carries `registry_checks`, `document_verifications`, `key_people_checks` plus the shared arrays (`aml_screenings`, `phone_verifications`, `email_verifications`, `ip_analyses`, `questionnaire_responses`). **Omitted when `include=events` is passed** — the events shape only exists for user sessions, so the discriminator is dropped from that variant."""
+    """Discriminator indicating whether this is a User Verification (KYC) or Business Verification (KYB) session. When `user`, the KYC feature arrays (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `database_validations`, ...) apply and the business arrays are absent. When `business`, the payload instead carries `registry_checks`, `document_verifications`, `key_people_checks` plus the shared arrays (`aml_screenings`, `phone_verifications`, `email_verifications`, `ip_analyses`, `questionnaire_responses`). **Omitted when `include=events` is passed** - the events shape only exists for user sessions, so the discriminator is dropped from that variant."""
 
     session_number: int | None = None
     """The number of the session."""
@@ -4002,10 +4002,10 @@ class SessionsRetrieveDecisionResponse(BaseModel):
         | str
         | None
     ) = None
-    """Overall lifecycle status of the session — the rolled-up workflow result. Terminal values are `Approved`, `Declined`, `In Review`, `Expired`, `Kyc Expired`, and `Abandoned`; `Not Started`, `In Progress`, `Awaiting User`, and `Resubmitted` indicate the session is still moving through the workflow."""
+    """Overall lifecycle status of the session - the rolled-up workflow result. Terminal values are `Approved`, `Declined`, `In Review`, `Expired`, `Kyc Expired`, and `Abandoned`; `Not Started`, `In Progress`, `Awaiting User`, and `Resubmitted` indicate the session is still moving through the workflow."""
 
     workflow_id: str | None = None
-    """Stable identifier of the workflow group that produced this session. Workflows are versioned — this value identifies the workflow itself, not the specific version."""
+    """Stable identifier of the workflow group that produced this session. Workflows are versioned - this value identifies the workflow itself, not the specific version."""
 
     features: list[str] | None = None
     """List of verification features configured for this session, as display names: `ID_VERIFICATION`, `NFC`, `LIVENESS`, `FACE_MATCH`, `POA`, `PHONE`, `EMAIL_VERIFICATION`, `AML`, `IP_ANALYSIS`, `DATABASE_VALIDATION`, `QUESTIONNAIRE`, `AGE_ESTIMATION`, `FACE_SEARCH` (Business Verification sessions use the KYB feature set: `KYB_REGISTRY`, `KYB_DOCUMENTS`, `KYB_KEY_PEOPLE`, `AML`, `PHONE`, `EMAIL_VERIFICATION`, `IP_ANALYSIS`, `QUESTIONNAIRE`). With `include=events` each entry becomes an object `{feature, node_id}` instead of a plain string, and the email feature is renamed: it appears as `EMAIL` in events mode instead of the `EMAIL_VERIFICATION` used here."""
@@ -4017,7 +4017,7 @@ class SessionsRetrieveDecisionResponse(BaseModel):
     """The metadata of the session."""
 
     expected_details: SessionsRetrieveDecisionResponseExpectedDetails | None = None
-    """Expected details supplied at session creation — used for cross-validation against extracted data (KYC) or to pre-fill the company registry search (KYB). Echoes back exactly the keys that were provided; `null` when none were supplied. KYC sessions carry the person fields; Business (KYB) sessions carry `company_name`, `registry_country` and `registration_number`."""
+    """Expected details supplied at session creation - used for cross-validation against extracted data (KYC) or to pre-fill the company registry search (KYB). Echoes back exactly the keys that were provided; `null` when none were supplied. KYC sessions carry the person fields; Business (KYB) sessions carry `company_name`, `registry_country` and `registration_number`."""
 
     contact_details: SessionsRetrieveDecisionResponseContactDetails | None = None
     """Contact details supplied when the session was created (used for notification emails, prefilled phone/email verification, and communication language). `null` when neither an email nor a phone number was provided."""
@@ -4026,7 +4026,7 @@ class SessionsRetrieveDecisionResponse(BaseModel):
     """The callback URL of the session."""
 
     id_verifications: list[SessionsRetrieveDecisionResponseIdVerifications] | None = None
-    """**Array of ID verification (OCR) reports** produced by ID-document steps in the workflow graph. Always a JSON array — read `id_verifications[0]` and iterate if your workflow can run more than one ID check (for example a primary check plus a step-up). `null` until at least one ID step has produced data. Each item is the full report, including `node_id`, feature-level `status`, extracted document fields, image URLs, quality scores, MRZ, address parsing, cross-session matches, and `warnings[]`."""
+    """**Array of ID verification (OCR) reports** produced by ID-document steps in the workflow graph. Always a JSON array - read `id_verifications[0]` and iterate if your workflow can run more than one ID check (for example a primary check plus a step-up). `null` until at least one ID step has produced data. Each item is the full report, including `node_id`, feature-level `status`, extracted document fields, image URLs, quality scores, MRZ, address parsing, cross-session matches, and `warnings[]`."""
 
     nfc_skip_reason: (
         Literal[
@@ -4043,39 +4043,39 @@ class SessionsRetrieveDecisionResponse(BaseModel):
     """Why NFC chip verification did not run, populated whenever the workflow includes an NFC step. `null` while NFC is pending or when the chip was actually read. Values: `USER_SKIPPED` - the user chose to skip on an NFC-capable device (allowed by `allow_nfc_skip`); `DOCUMENT_WITHOUT_CHIP` - the document has no readable NFC chip (not an ICAO 9303 electronic document); `CHIP_CERTIFICATE_UNAVAILABLE` - the issuing country's signing certificate (CSCA) covering the document's issue period is unavailable, so the chip signature cannot be verified; `DEVICE_WITHOUT_NFC` - the device reported no NFC reader; `INTEGRATION_WITHOUT_NFC_ACCESS` - the verification ran without a native SDK (e.g. in a web browser), which has no access to the phone's NFC reader; `MRZ_KEY_UNAVAILABLE` - the chip access key could not be derived from the document's MRZ."""
 
     nfc_verifications: list[SessionsRetrieveDecisionResponseNfcVerifications] | None = None
-    """**Array of NFC / ePassport reports** produced by NFC steps in the workflow graph. **This is always a JSON array, never a singular `nfc` object** — read `nfc_verifications[0]` and iterate if your workflow can run NFC more than once. `null` until at least one NFC step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `chip_data`, `authenticity` (SOD + DG integrity), `certificate_summary`, and `warnings[]`. When the NFC step was bypassed before it could ever be offered (chipless document, missing certificate, no NFC capability reported, unreadable MRZ key), this stays `null` and `nfc_skip_reason` explains why; a skip at the step itself (user tapped skip, or the reader turned out unavailable at scan time) still produces a report with `is_nfc_skipped: true`."""
+    """**Array of NFC / ePassport reports** produced by NFC steps in the workflow graph. **This is always a JSON array, never a singular `nfc` object** - read `nfc_verifications[0]` and iterate if your workflow can run NFC more than once. `null` until at least one NFC step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `chip_data`, `authenticity` (SOD + DG integrity), `certificate_summary`, and `warnings[]`. When the NFC step was bypassed before it could ever be offered (chipless document, missing certificate, no NFC capability reported, unreadable MRZ key), this stays `null` and `nfc_skip_reason` explains why; a skip at the step itself (user tapped skip, or the reader turned out unavailable at scan time) still produces a report with `is_nfc_skipped: true`."""
 
     liveness_checks: list[SessionsRetrieveDecisionResponseLivenessChecks] | None = None
-    """**Array of liveness reports** produced by liveness steps in the workflow graph. Always a JSON array — never a singular `liveness` object. `null` until at least one liveness step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `method`, `score`, `reference_image`, `video_url`, optional `age_estimation`, cross-session `matches[]`, and `warnings[]`."""
+    """**Array of liveness reports** produced by liveness steps in the workflow graph. Always a JSON array - never a singular `liveness` object. `null` until at least one liveness step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `method`, `score`, `reference_image`, `video_url`, optional `age_estimation`, cross-session `matches[]`, and `warnings[]`."""
 
     face_matches: list[SessionsRetrieveDecisionResponseFaceMatches] | None = None
-    """**Array of face-match reports** produced by face-match steps in the workflow graph. Always a JSON array — never a singular `face_match` object. `null` until at least one face-match step has produced data. Each item is the full report, including `node_id`, feature-level `status`, similarity `score`, `source_image`, `target_image`, and `warnings[]`."""
+    """**Array of face-match reports** produced by face-match steps in the workflow graph. Always a JSON array - never a singular `face_match` object. `null` until at least one face-match step has produced data. Each item is the full report, including `node_id`, feature-level `status`, similarity `score`, `source_image`, `target_image`, and `warnings[]`."""
 
     phone_verifications: list[SessionsRetrieveDecisionResponsePhoneVerifications] | None = None
-    """**Array of phone verification reports** — always a JSON array, never a singular `phone` object. `null` until at least one phone step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the phone number and country metadata, `lifecycle[]`, `matches[]`, and `warnings[]`."""
+    """**Array of phone verification reports** - always a JSON array, never a singular `phone` object. `null` until at least one phone step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the phone number and country metadata, `lifecycle[]`, `matches[]`, and `warnings[]`."""
 
     email_verifications: list[SessionsRetrieveDecisionResponseEmailVerifications] | None = None
-    """**Array of email verification reports** — always a JSON array, never a singular `email` object. `null` until at least one email step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the email address, breach data, `lifecycle[]`, `matches[]`, and `warnings[]`."""
+    """**Array of email verification reports** - always a JSON array, never a singular `email` object. `null` until at least one email step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the email address, breach data, `lifecycle[]`, `matches[]`, and `warnings[]`."""
 
     poa_verifications: list[SessionsRetrieveDecisionResponsePoaVerifications] | None = None
-    """**Array of Proof of Address (POA) reports** — always a JSON array, never a singular `poa` object. `null` until at least one POA step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the document file URL, issuer, dates, parsed address, and `warnings[]`."""
+    """**Array of Proof of Address (POA) reports** - always a JSON array, never a singular `poa` object. `null` until at least one POA step has produced data. Each item is the full report, including `node_id`, feature-level `status`, the document file URL, issuer, dates, parsed address, and `warnings[]`."""
 
     document_ai_documents: list[SessionsRetrieveDecisionResponseDocumentAiDocuments] | None = None
-    """**Document AI reports grouped by workflow node** — always a JSON array, never a singular object. `null` until at least one Document AI step has produced data. Present only when `session_kind = user`. Each item is a node group with an aggregate `status`, the `node_id`, an `items[]` array of the per-document results (extracted data keyed by the configured field key), and `warnings`."""
+    """**Document AI reports grouped by workflow node** - always a JSON array, never a singular object. `null` until at least one Document AI step has produced data. Present only when `session_kind = user`. Each item is a node group with an aggregate `status`, the `node_id`, an `items[]` array of the per-document results (extracted data keyed by the configured field key), and `warnings`."""
 
     questionnaire_responses: list[SessionsRetrieveDecisionResponseQuestionnaireResponses] | None = (
         None
     )
-    """**Array of questionnaire response reports** — always a JSON array, never a singular `questionnaire` object. `null` until at least one questionnaire step has produced data. Each item is the full report, including `node_id`, the questionnaire metadata, sections with form elements, and the user's answers."""
+    """**Array of questionnaire response reports** - always a JSON array, never a singular `questionnaire` object. `null` until at least one questionnaire step has produced data. Each item is the full report, including `node_id`, the questionnaire metadata, sections with form elements, and the user's answers."""
 
     aml_screenings: list[SessionsRetrieveDecisionResponseAmlScreenings] | None = None
-    """**Array of AML screening reports** — always a JSON array, never a singular `aml` object. `null` until at least one AML step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `total_hits`, `entity_type`, `hits[]`, `score`, `screened_data`, `is_ongoing_monitoring_enabled`, and `warnings[]`."""
+    """**Array of AML screening reports** - always a JSON array, never a singular `aml` object. `null` until at least one AML step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `total_hits`, `entity_type`, `hits[]`, `score`, `screened_data`, `is_ongoing_monitoring_enabled`, and `warnings[]`."""
 
     ip_analyses: list[SessionsRetrieveDecisionResponseIpAnalyses] | None = None
-    """**Array of Device & IP Analysis reports** — always a JSON array, never a singular `ip_analysis` object. `null` until at least one IP-analysis step has produced data. Each item is the full report, including `node_id`, feature-level `status`, IP and geolocation data, device fingerprint, and `warnings[]`. Entries with duplicate `(node_id, ip_address, device_fingerprint)` are deduplicated server-side."""
+    """**Array of Device & IP Analysis reports** - always a JSON array, never a singular `ip_analysis` object. `null` until at least one IP-analysis step has produced data. Each item is the full report, including `node_id`, feature-level `status`, IP and geolocation data, device fingerprint, and `warnings[]`. Entries with duplicate `(node_id, ip_address, device_fingerprint)` are deduplicated server-side."""
 
     database_validations: list[SessionsRetrieveDecisionResponseDatabaseValidations] | None = None
-    """**Array of Database Validation reports** — always a JSON array, never a singular `database_validation` object. `null` until at least one DB validation step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `screened_data`, the per-service `validations[]` (each with its registry `source_data`), and `warnings[]`. The `screened_data` and `source_data` fields vary by country:
+    """**Array of Database Validation reports** - always a JSON array, never a singular `database_validation` object. `null` until at least one DB validation step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `screened_data`, the per-service `validations[]` (each with its registry `source_data`), and `warnings[]`. The `screened_data` and `source_data` fields vary by country:
 
     **ARG (Argentina)**: screened_data: {document_number, selfie, gender, first_name, last_name}. source_data: {identification_number, first_name, last_name, full_name, date_of_birth, date_of_death, tax_id, tax_id_type, face_match_score, sit_1_since, banks, last_position, highest_position, rejected_checks}. Uses RENAPER biometric face-match validation. Gender is auto-inferred from face analysis or given name when not present in the document (e.g., driver licenses)
 

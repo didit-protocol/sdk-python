@@ -25,7 +25,7 @@ class SessionsReviewsCreateParams(TypedDict, total=False):
         | str
         | None
     )
-    """Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status — use the update-status endpoint for that."""
+    """Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status - use the update-status endpoint for that."""
 
     comment: str | None
     """Optional free-text note (no enforced length limit). Stored verbatim; `@email` mentions are not processed on this endpoint."""

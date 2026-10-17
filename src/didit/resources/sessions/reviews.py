@@ -70,7 +70,7 @@ class SessionsReviews(SyncAPIResource):
         ``GET /v3/sessions/{session_id}/reviews/``
 
         Args:
-          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key — cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
+          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
           limit: Page size. Defaults to `50`.
           offset: Number of entries to skip from the start of the (ordered) feed. Defaults to `0`. The `next` / `previous` URLs in the response carry the right values for walking the feed.
           ordering: Sort order. The feed defaults to newest first (`-created_at`); pass `created_at` to read it oldest first. Unknown values are silently ignored (default order is used); other serializer field names are also accepted.
@@ -123,17 +123,17 @@ class SessionsReviews(SyncAPIResource):
     ) -> SessionsReviewsCreateResponse:
         """Add a review note to a session's audit trail.
 
-        Append a note to a User Verification (KYC) session's review / activity feed. **This endpoint only records an entry — it never changes the session.** The session's `status` is left untouched, no status-transition validation runs, and no webhook fires. To actually approve, decline, or re-open a session (which also writes a fully-attributed `STATUS_UPDATED` entry to this feed), use `PATCH /v3/session/{session_id}/update-status/` instead.
+        Append a note to a User Verification (KYC) session's review / activity feed. **This endpoint only records an entry - it never changes the session.** The session's `status` is left untouched, no status-transition validation runs, and no webhook fires. To actually approve, decline, or re-open a session (which also writes a fully-attributed `STATUS_UPDATED` entry to this feed), use `PATCH /v3/session/{session_id}/update-status/` instead.
 
-        Both body fields are optional and an empty JSON object is accepted. `new_status` is stored purely as a label on the entry and accepts any of the ten session status values (case-sensitive). `@email` mentions inside `comment` are stored as plain text only — they trigger no notifications on this endpoint, and the entry's `mentioned_emails` stays empty.
+        Both body fields are optional and an empty JSON object is accepted. `new_status` is stored purely as a label on the entry and accepts any of the ten session status values (case-sensitive). `@email` mentions inside `comment` are stored as plain text only - they trigger no notifications on this endpoint, and the entry's `mentioned_emails` stays empty.
 
         Note on attribution: entries created here carry no actor information. In the feed they show `actor_display: "Unknown"`, `actor_type: "CONSOLE_USER"`, and `activity_type: "STATUS_UPDATED"` (storage defaults), and the `201` body's `user` field is `"Unknown"`.
 
         ``POST /v3/sessions/{session_id}/reviews/``
 
         Args:
-          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key — cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
-          new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status — use the update-status endpoint for that.
+          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
+          new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status - use the update-status endpoint for that.
           comment: Optional free-text note (no enforced length limit). Stored verbatim; `@email` mentions are not processed on this endpoint.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -196,7 +196,7 @@ class AsyncSessionsReviews(AsyncAPIResource):
         ``GET /v3/sessions/{session_id}/reviews/``
 
         Args:
-          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key — cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
+          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
           limit: Page size. Defaults to `50`.
           offset: Number of entries to skip from the start of the (ordered) feed. Defaults to `0`. The `next` / `previous` URLs in the response carry the right values for walking the feed.
           ordering: Sort order. The feed defaults to newest first (`-created_at`); pass `created_at` to read it oldest first. Unknown values are silently ignored (default order is used); other serializer field names are also accepted.
@@ -249,17 +249,17 @@ class AsyncSessionsReviews(AsyncAPIResource):
     ) -> SessionsReviewsCreateResponse:
         """Add a review note to a session's audit trail.
 
-        Append a note to a User Verification (KYC) session's review / activity feed. **This endpoint only records an entry — it never changes the session.** The session's `status` is left untouched, no status-transition validation runs, and no webhook fires. To actually approve, decline, or re-open a session (which also writes a fully-attributed `STATUS_UPDATED` entry to this feed), use `PATCH /v3/session/{session_id}/update-status/` instead.
+        Append a note to a User Verification (KYC) session's review / activity feed. **This endpoint only records an entry - it never changes the session.** The session's `status` is left untouched, no status-transition validation runs, and no webhook fires. To actually approve, decline, or re-open a session (which also writes a fully-attributed `STATUS_UPDATED` entry to this feed), use `PATCH /v3/session/{session_id}/update-status/` instead.
 
-        Both body fields are optional and an empty JSON object is accepted. `new_status` is stored purely as a label on the entry and accepts any of the ten session status values (case-sensitive). `@email` mentions inside `comment` are stored as plain text only — they trigger no notifications on this endpoint, and the entry's `mentioned_emails` stays empty.
+        Both body fields are optional and an empty JSON object is accepted. `new_status` is stored purely as a label on the entry and accepts any of the ten session status values (case-sensitive). `@email` mentions inside `comment` are stored as plain text only - they trigger no notifications on this endpoint, and the entry's `mentioned_emails` stays empty.
 
         Note on attribution: entries created here carry no actor information. In the feed they show `actor_display: "Unknown"`, `actor_type: "CONSOLE_USER"`, and `activity_type: "STATUS_UPDATED"` (storage defaults), and the `201` body's `user` field is `"Unknown"`.
 
         ``POST /v3/sessions/{session_id}/reviews/``
 
         Args:
-          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key — cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
-          new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status — use the update-status endpoint for that.
+          session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
+          new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status - use the update-status endpoint for that.
           comment: Optional free-text note (no enforced length limit). Stored verbatim; `@email` mentions are not processed on this endpoint.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

@@ -81,7 +81,7 @@ class IdVerificationVerifyResponseIdVerificationFrontImageQualityScore(BaseModel
 
 
 class IdVerificationVerifyResponseIdVerificationMrz(BaseModel):
-    """Parsed machine-readable zone. An **empty object** (`{}`) when the document has no MRZ or it could not be read — also check the `warnings` list in that case. Dates inside the MRZ use the raw `YYMMDD` format."""
+    """Parsed machine-readable zone. An **empty object** (`{}`) when the document has no MRZ or it could not be read - also check the `warnings` list in that case. Dates inside the MRZ use the raw `YYMMDD` format."""
 
     surname: str | None = None
 
@@ -198,7 +198,7 @@ class IdVerificationVerifyResponseIdVerificationWarnings(BaseModel):
     """Extra context for some risks (e.g. `POSSIBLE_DUPLICATED_USER` includes `duplicated_session_id`); `null` for most."""
 
     log_type: Literal["error", "warning", "information"] | str | None = None
-    """Severity. `error` warnings drive `status` to `Declined`; `information` entries are advisory and never decline on their own. (`warning` is not produced by this endpoint — its options only accept `DECLINE` or `NO_ACTION`.)"""
+    """Severity. `error` warnings drive `status` to `Declined`; `information` entries are advisory and never decline on their own. (`warning` is not produced by this endpoint - its options only accept `DECLINE` or `NO_ACTION`.)"""
 
     short_description: str | None = None
     """Human-readable one-line summary of the risk."""
@@ -209,7 +209,7 @@ class IdVerificationVerifyResponseIdVerificationWarnings(BaseModel):
 
 class IdVerificationVerifyResponseIdVerification(BaseModel):
     status: Literal["Approved", "Declined"] | str | None = None
-    """`Approved` when no warning resolves to a decline; `Declined` otherwise — the `warnings` list explains why."""
+    """`Approved` when no warning resolves to a decline; `Declined` otherwise - the `warnings` list explains why."""
 
     document_type: str | None = None
     """Detected document type display name: `Identity Card`, `Passport`, `Driver's License`, `Residence Permit`, `Health Insurance Card`, or `Tax Card`. `null` when the document could not be classified."""
@@ -294,7 +294,7 @@ class IdVerificationVerifyResponseIdVerification(BaseModel):
     """Document-specific extras that have no dedicated column (e.g. `first_surname`/`second_surname` on Spanish IDs, license classes on driving licenses)."""
 
     mrz: IdVerificationVerifyResponseIdVerificationMrz | None = None
-    """Parsed machine-readable zone. An **empty object** (`{}`) when the document has no MRZ or it could not be read — also check the `warnings` list in that case. Dates inside the MRZ use the raw `YYMMDD` format."""
+    """Parsed machine-readable zone. An **empty object** (`{}`) when the document has no MRZ or it could not be read - also check the `warnings` list in that case. Dates inside the MRZ use the raw `YYMMDD` format."""
 
     parsed_address: IdVerificationVerifyResponseIdVerificationParsedAddress | None = None
     """Structured, geocoded breakdown of `address`. `null` when the document carries no address or it could not be parsed."""

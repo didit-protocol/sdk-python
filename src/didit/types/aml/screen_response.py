@@ -80,7 +80,7 @@ class AmlScreenResponseAmlHitsPepMatches(BaseModel):
 
 
 class AmlScreenResponseAmlHitsScoreBreakdown(BaseModel):
-    """How `match_score` was computed. Name, date of birth, and country each contribute `<component>_score` × `<component>_weight_normalized` points; weights are re-normalized when a component is missing from the screened data. The document number is not weighted — it acts as a 'golden key': `MATCH` overrides the score to 100, `NEUTRAL` leaves it unchanged, `HARD_MISMATCH` applies a penalty."""
+    """How `match_score` was computed. Name, date of birth, and country each contribute `<component>_score` × `<component>_weight_normalized` points; weights are re-normalized when a component is missing from the screened data. The document number is not weighted - it acts as a 'golden key': `MATCH` overrides the score to 100, `NEUTRAL` leaves it unchanged, `HARD_MISMATCH` applies a penalty."""
 
     name_score: int | None = None
     """Raw name similarity (0–100)."""
@@ -125,11 +125,11 @@ class AmlScreenResponseAmlHitsScoreBreakdown(BaseModel):
     """Human-readable description of the document-number effect."""
 
     total_score: int | None = None
-    """Final weighted match score (0–100) — mirrors `match_score`."""
+    """Final weighted match score (0–100) - mirrors `match_score`."""
 
 
 class AmlScreenResponseAmlHits(BaseModel):
-    """One screening hit. `match_score` (0–100) measures identity confidence — hits below `aml_match_score_threshold` are tagged `review_status: "False Positive"` and excluded from the risk assessment; hits at or above it are `"Unreviewed"` possible matches. `risk_score` (0–100) measures how risky the matched entity is and drives the top-level `aml.score`."""
+    """One screening hit. `match_score` (0–100) measures identity confidence - hits below `aml_match_score_threshold` are tagged `review_status: "False Positive"` and excluded from the risk assessment; hits at or above it are `"Unreviewed"` possible matches. `risk_score` (0–100) measures how risky the matched entity is and drives the top-level `aml.score`."""
 
     id: str | None = None
     """Stable identifier of the matched entity in the screening datasets."""
@@ -198,10 +198,10 @@ class AmlScreenResponseAmlHits(BaseModel):
     review_status: (
         Literal["False Positive", "Unreviewed", "Confirmed Match", "Inconclusive"] | str | None
     ) = None
-    """`False Positive` — `match_score` below `aml_match_score_threshold`, excluded from risk assessment. `Unreviewed` — possible match awaiting review. `Confirmed Match` / `Inconclusive` — set manually by a reviewer (via the Business Console) on saved sessions; that review capability is not part of this spec."""
+    """`False Positive` - `match_score` below `aml_match_score_threshold`, excluded from risk assessment. `Unreviewed` - possible match awaiting review. `Confirmed Match` / `Inconclusive` - set manually by a reviewer (via the Business Console) on saved sessions; that review capability is not part of this spec."""
 
     score_breakdown: AmlScreenResponseAmlHitsScoreBreakdown | None = None
-    """How `match_score` was computed. Name, date of birth, and country each contribute `<component>_score` × `<component>_weight_normalized` points; weights are re-normalized when a component is missing from the screened data. The document number is not weighted — it acts as a 'golden key': `MATCH` overrides the score to 100, `NEUTRAL` leaves it unchanged, `HARD_MISMATCH` applies a penalty."""
+    """How `match_score` was computed. Name, date of birth, and country each contribute `<component>_score` × `<component>_weight_normalized` points; weights are re-normalized when a component is missing from the screened data. The document number is not weighted - it acts as a 'golden key': `MATCH` overrides the score to 100, `NEUTRAL` leaves it unchanged, `HARD_MISMATCH` applies a penalty."""
 
 
 class AmlScreenResponseAmlScreenedData(BaseModel):
@@ -227,7 +227,7 @@ class AmlScreenResponseAmlWarnings(BaseModel):
     """Extra context for the warning, when available."""
 
     log_type: str | None = None
-    """`warning`, `information`, or `error` — how the risk affected the outcome."""
+    """`warning`, `information`, or `error` - how the risk affected the outcome."""
 
     short_description: str | None = None
     """One-line human-readable summary."""

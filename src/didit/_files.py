@@ -9,9 +9,41 @@ from typing import Any, Union, cast
 
 from ._types import FileContent, FileTypes
 
-__all__ = ["to_httpx_file"]
+__all__ = ["guess_content_type", "to_httpx_file"]
 
 HttpxFile = tuple[Union[str, None], bytes, Union[str, None]]
+
+# The upload types the API accepts. ``mimetypes`` alone depends on the host (the
+# Windows registry, /etc/mime.types), so these never vary between machines.
+_CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".tif": "image/tiff",
+    ".tiff": "image/tiff",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+    ".gif": "image/gif",
+    ".bmp": "image/bmp",
+    ".pdf": "application/pdf",
+    ".zip": "application/zip",
+    ".csv": "text/csv",
+    ".ndjson": "application/x-ndjson",
+    ".json": "application/json",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mov": "video/quicktime",
+}
+
+
+def guess_content_type(filename: str) -> str:
+    """The content type for ``filename``, the same on every operating system for
+    the types the API accepts."""
+    known = _CONTENT_TYPES.get(os.path.splitext(filename)[1].lower())
+    if known is not None:
+        return known
+    return mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
 
 def to_httpx_file(value: FileTypes) -> HttpxFile:
@@ -59,5 +91,5 @@ def to_httpx_file(value: FileTypes) -> HttpxFile:
     if filename is None:
         filename = "upload"
     if content_type is None:
-        content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        content_type = guess_content_type(filename)
     return filename, data, content_type

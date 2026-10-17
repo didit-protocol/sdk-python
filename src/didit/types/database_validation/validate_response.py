@@ -58,7 +58,7 @@ class DatabaseValidationValidateResponseDatabaseValidationValidationsVariant1(Ba
         | str
         | None
     ) = None
-    """Vendor-neutral outcome of the registry lookup. `MATCH`/`PARTIAL_MATCH`/`NO_MATCH` describe the comparison; `DOCUMENT_NOT_FOUND` means the identifier is not in the registry; `INCONCLUSIVE` means the registry could not confirm either way (routed to review — NOT a no-match); `BIOMETRIC_NO_MATCH` is a definitive face mismatch while `BIOMETRIC_IMAGE_UNUSABLE` is a technical image problem (retake the selfie); `DECEASED`/`MINOR_BLOCKED` are registry-policy outcomes; `DOCUMENT_SUPERSEDED` means the identity matched but the edition of the document presented is not the one on file (a newer edition has been issued); `INVALID_DOCUMENT_FORMAT`/`INVALID_INPUT` mean the registry itself rejected the data it was sent; `REGISTRY_UNAVAILABLE`/`REGISTRY_ERROR` indicate upstream failures."""
+    """Vendor-neutral outcome of the registry lookup. `MATCH`/`PARTIAL_MATCH`/`NO_MATCH` describe the comparison; `DOCUMENT_NOT_FOUND` means the identifier is not in the registry; `INCONCLUSIVE` means the registry could not confirm either way (routed to review - NOT a no-match); `BIOMETRIC_NO_MATCH` is a definitive face mismatch while `BIOMETRIC_IMAGE_UNUSABLE` is a technical image problem (retake the selfie); `DECEASED`/`MINOR_BLOCKED` are registry-policy outcomes; `DOCUMENT_SUPERSEDED` means the identity matched but the edition of the document presented is not the one on file (a newer edition has been issued); `INVALID_DOCUMENT_FORMAT`/`INVALID_INPUT` mean the registry itself rejected the data it was sent; `REGISTRY_UNAVAILABLE`/`REGISTRY_ERROR` indicate upstream failures."""
 
     outcome_detail: str | None = None
     """Raw upstream status detail backing the outcome code (e.g. an HTTP or registry status code)."""
@@ -78,7 +78,7 @@ class DatabaseValidationValidateResponseDatabaseValidationWarnings(BaseModel):
     """Extra context for the warning, when available."""
 
     log_type: str | None = None
-    """`warning`, `information`, or `error` — how the risk affected the outcome."""
+    """`warning`, `information`, or `error` - how the risk affected the outcome."""
 
     short_description: str | None = None
     """One-line human-readable summary."""

@@ -142,7 +142,7 @@ class EmailVerificationCheckResponseEmail(BaseModel):
     """Chronological audit trail of the verification. Event `type` is one of `EMAIL_VERIFICATION_MESSAGE_SENT`, `EMAIL_VERIFICATION_RETRY_MESSAGE_SENT`, `VALID_CODE_ENTERED`, `INVALID_CODE_ENTERED`, `EMAIL_VERIFICATION_APPROVED`, `EMAIL_VERIFICATION_DECLINED`, `EMAIL_VERIFICATION_IN_REVIEW`, `EMAIL_VERIFICATION_EXPIRED`."""
 
     matches: list[EmailVerificationCheckResponseEmailMatches] | None = None
-    """Other sessions of your application (KYC, KYB, or API) where the same email address was used by a different user (different `vendor_data`). Up to 5 entries; a synthetic list-entry blocklist match is prepended when present (and only when no session-derived blocklisted email exists) — session-derived matches keep created_at order. Empty array when there are no matches."""
+    """Other sessions of your application (KYC, KYB, or API) where the same email address was used by a different user (different `vendor_data`). Up to 5 entries; a synthetic list-entry blocklist match is prepended when present (and only when no session-derived blocklisted email exists) - session-derived matches keep created_at order. Empty array when there are no matches."""
 
     email_social: EmailSocialFootprint | None = None
     """Social footprint of the email address: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the email address was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
@@ -150,10 +150,10 @@ class EmailVerificationCheckResponseEmail(BaseModel):
 
 class EmailVerificationCheckResponse(BaseModel):
     request_id: str | None = None
-    """On `Approved`/`Declined`: the session id of the matched verification — identical to the `request_id` returned by `POST /v3/email/send/`. On `Failed` and `Expired or Not Found`: a random one-off UUID that cannot be looked up later."""
+    """On `Approved`/`Declined`: the session id of the matched verification - identical to the `request_id` returned by `POST /v3/email/send/`. On `Failed` and `Expired or Not Found`: a random one-off UUID that cannot be looked up later."""
 
     status: Literal["Approved", "Declined", "Failed", "Expired or Not Found"] | str | None = None
-    """`Approved` — correct code, no declining risk. `Declined` — terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — no pending verification for this address in the last 5 minutes."""
+    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this address in the last 5 minutes."""
 
     message: str | None = None
     """Human-readable explanation of the outcome, including the number of attempts remaining after a wrong code."""

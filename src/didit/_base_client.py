@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import email.utils
-import json
 import logging
 import random
 import time
@@ -34,10 +33,10 @@ from ._response import APIResponse, AsyncAPIResponse, response_mode
 from ._types import NOT_GIVEN, Headers, NotGiven, Query, Timeout
 from ._utils import (
     client_header,
+    encode_json,
     encode_path,
     multipart_fields,
     query_params,
-    strip_not_given,
     user_agent,
 )
 
@@ -85,8 +84,7 @@ class PreparedRequest:
     auth: AuthKind
     origin: str
     params: list[tuple[str, str]] = field(default_factory=lambda: [])
-    json_body: object = None
-    has_json_body: bool = False
+    json_content: bytes | None = None
     data: dict[str, str] | None = None
     files: list[tuple[str, HttpxFile]] | None = None
     headers: Mapping[str, str | None] = field(default_factory=lambda: {})
@@ -252,8 +250,7 @@ class BaseClient:
         if extra_query:
             all_query.extend(query_params(extra_query))
 
-        json_body: object = None
-        has_json_body = False
+        json_content: bytes | None = None
         data: dict[str, str] | None = None
         files: list[tuple[str, HttpxFile]] | None = None
         if body is not None or extra_body:
@@ -267,8 +264,7 @@ class BaseClient:
             if use_multipart:
                 data, files = multipart_fields(merged, file_fields)
             else:
-                json_body = strip_not_given(merged)
-                has_json_body = True
+                json_content = encode_json(merged)
 
         merged_headers: dict[str, str | None] = {
             k: v for k, v in (headers or {}).items() if not isinstance(v, NotGiven)
@@ -281,8 +277,7 @@ class BaseClient:
             auth=auth,
             origin=origin_of(base),
             params=all_query,
-            json_body=json_body,
-            has_json_body=has_json_body,
+            json_content=json_content,
             data=data,
             files=files,
             headers=merged_headers,
@@ -302,40 +297,57 @@ class BaseClient:
             )
 
     def _next_page_request(self, prepared: PreparedRequest, next_url: str) -> PreparedRequest:
-        """The request for a page's ``next`` link, refused if it leaves the API origin."""
-        if origin_of(next_url) != prepared.origin:
+        """The request for a page's ``next`` link, refused if it leaves the API origin.
+
+        A relative link is resolved against the URL of the page that returned it.
+        """
+        current = httpx.URL(prepared.url, params=prepared.params or None)
+        try:
+            absolute = current.join(next_url)
+        except httpx.InvalidURL as exc:
+            raise DiditError(f"The API returned an invalid pagination link: {exc}") from exc
+        if absolute.scheme not in ("http", "https") or origin_of(absolute) != prepared.origin:
             raise DiditError(
-                f"Refusing to follow a pagination link to another origin ({origin_of(next_url)}); "
+                f"Refusing to follow a pagination link to another origin ({origin_of(absolute)}); "
                 f"the API key is only sent to {prepared.origin}."
             )
-        return replace(prepared, url=next_url, params=[])
+        return replace(prepared, url=str(absolute), params=[])
 
     def _build_httpx_request(
         self, prepared: PreparedRequest, client: httpx.Client | httpx.AsyncClient
     ) -> httpx.Request:
-        headers: dict[str, str] = {
-            "Accept": prepared.accept,
-            "User-Agent": user_agent(),
-            "X-Didit-Client": client_header(),
-        }
-        headers.update(self.default_headers)
-        # Credentials are only ever attached for the origin the request was built for.
-        if prepared.auth == "api_key" and self.api_key:
-            headers["x-api-key"] = self.api_key
-        elif prepared.auth == "account_token" and self.account_token:
-            headers["Authorization"] = f"Bearer {self.account_token}"
-        for name, value in prepared.headers.items():
+        # Header names are case-insensitive: a later value replaces an earlier one
+        # whatever its case, so no header is ever sent twice.
+        headers: dict[str, str] = {}
+        removed: set[str] = set()
+
+        def put(name: str, value: str | None) -> None:
             for existing in [k for k in headers if k.lower() == name.lower()]:
                 del headers[existing]
-            if value is not None:
+            if value is None:
+                removed.add(name.lower())
+            else:
+                removed.discard(name.lower())
                 headers[name] = value
 
+        put("Accept", prepared.accept)
+        put("User-Agent", user_agent())
+        put("X-Didit-Client", client_header())
+        for name, default in self.default_headers.items():
+            put(name, default)
+        # Credentials are only ever attached for the origin the request was built for.
+        if prepared.auth == "api_key" and self.api_key:
+            put("x-api-key", self.api_key)
+        elif prepared.auth == "account_token" and self.account_token:
+            put("Authorization", f"Bearer {self.account_token}")
+        for name, override in prepared.headers.items():
+            put(name, override)
+
         kwargs: dict[str, Any] = {"headers": headers, "params": prepared.params or None}
-        if prepared.has_json_body:
-            headers["Content-Type"] = "application/json"
-            kwargs["content"] = json.dumps(
-                prepared.json_body, separators=(",", ":"), allow_nan=False
-            ).encode()
+        if prepared.json_content is not None:
+            if not any(k.lower() == "content-type" for k in headers):
+                headers["Content-Type"] = "application/json"
+            kwargs["content"] = prepared.json_content
         elif prepared.files is not None or prepared.data is not None:
             if prepared.files:
                 kwargs["files"] = prepared.files
@@ -345,7 +357,12 @@ class BaseClient:
                 kwargs["files"] = [(k, (None, v)) for k, v in (prepared.data or {}).items()]
         timeout = self.timeout if isinstance(prepared.timeout, NotGiven) else prepared.timeout
         kwargs["timeout"] = timeout
-        return client.build_request(prepared.method, prepared.url, **kwargs)
+        request = client.build_request(prepared.method, prepared.url, **kwargs)
+        # httpx adds its own defaults (User-Agent, ...); honour an explicit removal.
+        for name in removed:
+            if name in request.headers:
+                del request.headers[name]
+        return request
 
     # Response handling ------------------------------------------------------
 
@@ -359,6 +376,12 @@ class BaseClient:
         except ValueError:
             body = response.text or None
         return make_status_error(response, body, redact=self._redactions())
+
+    @staticmethod
+    def _transport_error(request: httpx.Request, exc: httpx.HTTPError) -> DiditError:
+        if isinstance(exc, httpx.TimeoutException):
+            return APITimeoutError(request=request)
+        return APIConnectionError(request=request)
 
     @staticmethod
     def _parse(response: httpx.Response, cast_to: Any) -> Any:
@@ -482,57 +505,47 @@ class SyncAPIClient(BaseClient):
         while True:
             request = self._build_httpx_request(prepared, self._client)
             started = time.monotonic()
+            retry_status = False
             try:
                 response = self._client.send(request, stream=True, follow_redirects=False)
-            except httpx.TimeoutException as exc:
-                if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
-                    delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, "timed out", delay, self.max_retries - retries_taken)
-                    retries_taken += 1
-                    time.sleep(delay)
-                    continue
-                raise APITimeoutError(request=request) from exc
+                elapsed = time.monotonic() - started
+                self._log_response(request, response, started)
+                retry_status = (
+                    not response.is_success
+                    and retries_taken < self.max_retries
+                    and should_retry_status(request.method, response.status_code)
+                )
+                if retry_status:
+                    response.close()
+                elif mode != "stream" or not response.is_success:
+                    # Reading the body can fail like sending did (a stalled or
+                    # dropped connection), so it is handled the same way.
+                    try:
+                        response.read()
+                    finally:
+                        response.close()
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
                     self._log_retry(
-                        request, type(exc).__name__, delay, self.max_retries - retries_taken
+                        request, _describe(exc), delay, self.max_retries - retries_taken
                     )
                     retries_taken += 1
                     time.sleep(delay)
                     continue
-                raise APIConnectionError(request=request) from exc
+                raise self._transport_error(request, exc) from exc
 
-            elapsed = time.monotonic() - started
-            self._log_response(request, response, started)
+            if retry_status:
+                delay = retry_delay(retries_taken, response.headers)
+                self._log_retry(
+                    request, f"HTTP {response.status_code}", delay, self.max_retries - retries_taken
+                )
+                retries_taken += 1
+                time.sleep(delay)
+                continue
             if not response.is_success:
-                if retries_taken < self.max_retries and should_retry_status(
-                    request.method, response.status_code
-                ):
-                    response.close()
-                    delay = retry_delay(retries_taken, response.headers)
-                    self._log_retry(
-                        request,
-                        f"HTTP {response.status_code}",
-                        delay,
-                        self.max_retries - retries_taken,
-                    )
-                    retries_taken += 1
-                    time.sleep(delay)
-                    continue
-                try:
-                    response.read()
-                finally:
-                    response.close()
                 raise self._status_error(response)
-
-            if mode == "stream":
-                return APIResponse(response, parse, retries_taken, elapsed)
-            try:
-                response.read()
-            finally:
-                response.close()
-            if mode == "raw":
+            if mode == "stream" or mode == "raw":
                 return APIResponse(response, parse, retries_taken, elapsed)
             return parse(response)
 
@@ -615,59 +628,53 @@ class AsyncAPIClient(BaseClient):
         while True:
             request = self._build_httpx_request(prepared, self._client)
             started = time.monotonic()
+            retry_status = False
             try:
                 response = await self._client.send(request, stream=True, follow_redirects=False)
-            except httpx.TimeoutException as exc:
-                if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
-                    delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, "timed out", delay, self.max_retries - retries_taken)
-                    retries_taken += 1
-                    await asyncio.sleep(delay)
-                    continue
-                raise APITimeoutError(request=request) from exc
+                elapsed = time.monotonic() - started
+                self._log_response(request, response, started)
+                retry_status = (
+                    not response.is_success
+                    and retries_taken < self.max_retries
+                    and should_retry_status(request.method, response.status_code)
+                )
+                if retry_status:
+                    await response.aclose()
+                elif mode != "stream" or not response.is_success:
+                    # Reading the body can fail like sending did (a stalled or
+                    # dropped connection), so it is handled the same way.
+                    try:
+                        await response.aread()
+                    finally:
+                        await response.aclose()
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
                     self._log_retry(
-                        request, type(exc).__name__, delay, self.max_retries - retries_taken
+                        request, _describe(exc), delay, self.max_retries - retries_taken
                     )
                     retries_taken += 1
                     await asyncio.sleep(delay)
                     continue
-                raise APIConnectionError(request=request) from exc
+                raise self._transport_error(request, exc) from exc
 
-            elapsed = time.monotonic() - started
-            self._log_response(request, response, started)
+            if retry_status:
+                delay = retry_delay(retries_taken, response.headers)
+                self._log_retry(
+                    request, f"HTTP {response.status_code}", delay, self.max_retries - retries_taken
+                )
+                retries_taken += 1
+                await asyncio.sleep(delay)
+                continue
             if not response.is_success:
-                if retries_taken < self.max_retries and should_retry_status(
-                    request.method, response.status_code
-                ):
-                    await response.aclose()
-                    delay = retry_delay(retries_taken, response.headers)
-                    self._log_retry(
-                        request,
-                        f"HTTP {response.status_code}",
-                        delay,
-                        self.max_retries - retries_taken,
-                    )
-                    retries_taken += 1
-                    await asyncio.sleep(delay)
-                    continue
-                try:
-                    await response.aread()
-                finally:
-                    await response.aclose()
                 raise self._status_error(response)
-
-            if mode == "stream":
-                return AsyncAPIResponse(response, parse, retries_taken, elapsed)
-            try:
-                await response.aread()
-            finally:
-                await response.aclose()
-            if mode == "raw":
+            if mode == "stream" or mode == "raw":
                 return AsyncAPIResponse(response, parse, retries_taken, elapsed)
             return parse(response)
+
+
+def _describe(exc: httpx.HTTPError) -> str:
+    return "timed out" if isinstance(exc, httpx.TimeoutException) else type(exc).__name__
 
 
 def _prepare_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:

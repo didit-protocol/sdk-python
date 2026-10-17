@@ -178,7 +178,7 @@ class KybListUbosResponseKybRegistry(BaseModel):
     """Normalized company status as reported by the registry."""
 
     data_resolved: bool | None = None
-    """`true` once the registry returned the full profile. `false` when the registry was still processing after polling — the stored record completes automatically once the registry resolves."""
+    """`true` once the registry returned the full profile. `false` when the registry was still processing after polling - the stored record completes automatically once the registry resolves."""
 
     company_name: str | None = None
 
@@ -205,7 +205,7 @@ class KybListUbosResponseKybRegistry(BaseModel):
     """Registry verification status, when available."""
 
     is_from_registry: bool | None = None
-    """Always `true` for this endpoint — the profile was retrieved from an official registry."""
+    """Always `true` for this endpoint - the profile was retrieved from an official registry."""
 
     fetch_status: Literal["pending", "resolved"] | str | None = None
     """Registry fetch lifecycle. Mirrored by `data_resolved`."""
@@ -237,7 +237,7 @@ class KybListUbosResponseKybRegistry(BaseModel):
     """Registry/jurisdiction the company is registered with, when reported."""
 
     vat_number: str | None = None
-    """EU VAT number, when collected during the hosted registry step or edited afterwards. At select time this is typically not yet set — VAT and tax ID validation runs when the end user submits the registry step in the hosted flow."""
+    """EU VAT number, when collected during the hosted registry step or edited afterwards. At select time this is typically not yet set - VAT and tax ID validation runs when the end user submits the registry step in the hosted flow."""
 
     vat_validation_status: (
         Literal[
@@ -509,7 +509,7 @@ class KybListUbosResponse202KybRegistry(BaseModel):
     """Normalized company status as reported by the registry."""
 
     data_resolved: bool | None = None
-    """`true` once the registry returned the full profile. `false` when the registry was still processing after polling — the stored record completes automatically once the registry resolves."""
+    """`true` once the registry returned the full profile. `false` when the registry was still processing after polling - the stored record completes automatically once the registry resolves."""
 
     company_name: str | None = None
 
@@ -536,7 +536,7 @@ class KybListUbosResponse202KybRegistry(BaseModel):
     """Registry verification status, when available."""
 
     is_from_registry: bool | None = None
-    """Always `true` for this endpoint — the profile was retrieved from an official registry."""
+    """Always `true` for this endpoint - the profile was retrieved from an official registry."""
 
     fetch_status: Literal["pending", "resolved"] | str | None = None
     """Registry fetch lifecycle. Mirrored by `data_resolved`."""
@@ -568,7 +568,7 @@ class KybListUbosResponse202KybRegistry(BaseModel):
     """Registry/jurisdiction the company is registered with, when reported."""
 
     vat_number: str | None = None
-    """EU VAT number, when collected during the hosted registry step or edited afterwards. At select time this is typically not yet set — VAT and tax ID validation runs when the end user submits the registry step in the hosted flow."""
+    """EU VAT number, when collected during the hosted registry step or edited afterwards. At select time this is typically not yet set - VAT and tax ID validation runs when the end user submits the registry step in the hosted flow."""
 
     vat_validation_status: (
         Literal[

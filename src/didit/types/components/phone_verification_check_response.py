@@ -146,10 +146,10 @@ class PhoneVerificationCheckResponsePhone(BaseModel):
 
 class PhoneVerificationCheckResponse(BaseModel):
     request_id: str | None = None
-    """On `Approved`/`Declined`: the session id of the matched verification — identical to the `request_id` returned by `POST /v3/phone/send/`. On `Failed` and `Expired or Not Found`: a random one-off UUID that cannot be looked up later."""
+    """On `Approved`/`Declined`: the session id of the matched verification - identical to the `request_id` returned by `POST /v3/phone/send/`. On `Failed` and `Expired or Not Found`: a random one-off UUID that cannot be looked up later."""
 
     status: Literal["Approved", "Declined", "Failed", "Expired or Not Found"] | str | None = None
-    """`Approved` — correct code, no declining risk. `Declined` — terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — no pending verification for this number in the last 5 minutes."""
+    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this number in the last 5 minutes."""
 
     message: str | None = None
     """Human-readable explanation of the outcome, including the number of attempts remaining after a wrong code."""

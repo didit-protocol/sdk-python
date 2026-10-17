@@ -19,7 +19,7 @@ class WebhooksMixin:
         self,
         raw_body: bytes | bytearray | memoryview | str,
         headers: HeadersLike,
-        secret: str | Sequence[str],
+        secret: str | Sequence[str] | None,
         *,
         tolerance: int = DEFAULT_TOLERANCE,
         allow_simple: bool = False,
@@ -31,7 +31,7 @@ class WebhooksMixin:
         self,
         payload: Mapping[str, Any],
         headers: HeadersLike,
-        secret: str | Sequence[str],
+        secret: str | Sequence[str] | None,
         *,
         tolerance: int = DEFAULT_TOLERANCE,
     ) -> WebhookEvent:

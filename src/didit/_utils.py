@@ -10,11 +10,15 @@ import urllib.parse
 from collections.abc import Iterable, Mapping
 from typing import Any, cast
 
+import pydantic
+
+from ._exceptions import DiditError
 from ._files import HttpxFile, to_httpx_file
 from ._types import NotGiven
 from ._version import __version__
 
 __all__ = [
+    "encode_json",
     "encode_path",
     "env",
     "is_given",
@@ -38,7 +42,10 @@ def env(name: str) -> str | None:
 
 
 def strip_not_given(value: object) -> Any:
-    """Drop omitted (``NOT_GIVEN``) values and encode dates as ISO 8601 text."""
+    """Drop omitted (``NOT_GIVEN``) values, encode dates as ISO 8601 text and turn
+    response models back into the JSON the API sent (so a result can be posted again)."""
+    if isinstance(value, pydantic.BaseModel):
+        return value.model_dump(mode="json", by_alias=True, exclude_unset=True, warnings=False)
     if isinstance(value, Mapping):
         items = cast("Mapping[str, object]", value).items()
         return {k: strip_not_given(v) for k, v in items if not isinstance(v, NotGiven)}
@@ -47,6 +54,15 @@ def strip_not_given(value: object) -> Any:
     if isinstance(value, (_dt.datetime, _dt.date)):
         return value.isoformat()
     return value
+
+
+def encode_json(value: object) -> bytes:
+    """Compact JSON for a request body; raises :class:`DiditError` for values JSON
+    cannot carry (``NaN``, ``Infinity``, arbitrary objects) before anything is sent."""
+    try:
+        return json.dumps(strip_not_given(value), separators=(",", ":"), allow_nan=False).encode()
+    except (TypeError, ValueError) as exc:
+        raise DiditError(f"The request body cannot be sent as JSON: {exc}") from exc
 
 
 def _scalar_text(value: object) -> str:
@@ -92,7 +108,7 @@ def multipart_fields(
             else:
                 files.append((key, to_httpx_file(cast("Any", value))))
         elif isinstance(value, (Mapping, list, tuple)):
-            data[key] = json.dumps(strip_not_given(cast(object, value)), separators=(",", ":"))
+            data[key] = encode_json(cast(object, value)).decode()
         else:
             data[key] = _scalar_text(value)
     return data, files

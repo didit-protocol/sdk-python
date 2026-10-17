@@ -596,8 +596,179 @@ def test_discovery_must_name_the_configured_issuer(
     issuer.discovery["issuer"] = "https://login.example.com"
     with pytest.raises(ConfigurationError, match=r"names the issuer 'https://login\.example\.com'"):
         auth.verify_access_token(key.sign(access_claims()))
+    # OpenID Connect Discovery 1.0 section 4.3: the issuer must be present too.
     del issuer.discovery["issuer"]
+    assert auth.refresh is not None
+    issuer.reply("POST", "/token/", 200, TOKEN_RESPONSE)
+    with pytest.raises(APIResponseValidationError, match="names no issuer"):
+        auth.refresh(REFRESH_TOKEN)
+    assert issuer.count("/token/") == 0
+    issuer.discovery["issuer"] = ISSUER
+    assert auth.refresh(REFRESH_TOKEN).token_type == "Bearer"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("token_endpoint", "http://acme.auth.didit.me/token/", "does not use https"),
+        ("token_endpoint", "https://evil.example/steal", "not on the issuer's origin"),
+        ("token_endpoint", f"{ISSUER}:8443/token/", "not on the issuer's origin"),
+        (
+            "jwks_uri",
+            f"http://{ISSUER.removeprefix('https://')}/.well-known/jwks.json",
+            "does not use https",
+        ),
+    ],
+)
+def test_discovery_endpoints_must_stay_on_https_and_the_issuer(
+    auth: Authentication, issuer: FakeIssuer, field: str, value: str, message: str
+) -> None:
+    issuer.discovery[field] = value
+    issuer.reply("POST", "/token/", 200, TOKEN_RESPONSE)
+    with pytest.raises(APIResponseValidationError, match=message):
+        auth.refresh(REFRESH_TOKEN)
+    # Nothing went to the refused URL: only the discovery document was read.
+    assert [r.url.path for r in issuer.requests] == [DISCOVERY]
+
+
+def test_keys_may_live_on_another_https_host(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    issuer.discovery["jwks_uri"] = "https://keys.example.com/jwks.json"
+    seen: list[str] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        if request.url.host == "keys.example.com":
+            return httpx.Response(200, json={"keys": [key.jwk()]})
+        return issuer.handle(request)
+
+    with httpx.Client(transport=httpx.MockTransport(handle)) as http:
+        auth = configure(Authentication(ISSUER, http_client=http), clock)
+        assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+    assert seen[-1] == "https://keys.example.com/jwks.json"
+
+
+def test_failed_key_fetches_are_rate_limited_too(
+    auth: Authentication, issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    keys_path = "/keys/flaky.json"
+    issuer.discovery["jwks_uri"] = f"{ISSUER}{keys_path}"
+    up = [False]
+
+    def flaky(_: httpx.Request) -> httpx.Response:
+        if up[0]:
+            return httpx.Response(200, json={"keys": [key.jwk()]})
+        return httpx.Response(500, json={"detail": "down"})
+
+    issuer.route("GET", keys_path, flaky)
+    with pytest.raises(InternalServerError):
+        auth.verify_access_token(key.sign(access_claims()))
+    # Random kids (an attacker, or a burst during an outage) do not refetch for a
+    # minute: they fail fast as a connection problem, not as an invalid token.
+    for index in range(10):
+        clock.advance(1)
+        stranger = SigningKey.generate(f"k_random_{index}").sign(access_claims())
+        with pytest.raises(APIConnectionError, match="less than a minute ago") as info:
+            auth.verify_access_token(stranger)
+        assert not isinstance(info.value, TokenVerificationError)
+        assert info.value.request.url == f"{ISSUER}{keys_path}"
+    assert issuer.count(keys_path) == 1
+    # Once a minute has passed the SDK tries again, and recovers when the issuer does.
+    clock.advance(50)
+    up[0] = True
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+    assert issuer.count(keys_path) == 2
+    # With a fresh key set, an unknown kid right after a failed refetch waits a minute too.
+    clock.advance(60)
+    up[0] = False
+    with pytest.raises(InternalServerError):
+        auth.verify_access_token(SigningKey.generate("k_new").sign(access_claims()))
+    clock.advance(1)
+    newer = SigningKey.generate("k_newer").sign(access_claims())
+    assert reason(lambda: auth.verify_access_token(newer)) == "unknown_key"
+    assert issuer.count(keys_path) == 3
+    # Known keys keep verifying from the cache meanwhile.
+    assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+
+
+def test_async_failed_key_fetches_fail_fast(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    issuer.discovery["jwks_uri"] = f"{ISSUER}/keys/down.json"
+    issuer.reply("GET", "/keys/down.json", 503, {"detail": "down"})
+
+    async def run() -> None:
+        auth = configure(AsyncAuthentication(ISSUER, http_client=issuer.async_client()), clock)
+        with pytest.raises(InternalServerError):
+            await auth.verify_access_token(key.sign(access_claims()))
+        clock.advance(30)
+        with pytest.raises(APIConnectionError, match="less than a minute ago"):
+            await auth.verify_access_token(key.sign(access_claims()))
+
+    asyncio.run(run())
+    assert issuer.count("/keys/down.json") == 1
+
+
+def test_a_failed_discovery_counts_as_a_failed_key_fetch(
+    auth: Authentication, issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    discovery = issuer.discovery
+    issuer.discovery = cast(Any, None)  # the issuer answers "null"
+    with pytest.raises(APIResponseValidationError):
+        auth.verify_access_token(key.sign(access_claims()))
+    with pytest.raises(APIConnectionError, match="less than a minute ago"):
+        auth.verify_access_token(key.sign(access_claims()))
+    assert issuer.count(DISCOVERY) == 1
+    issuer.discovery = discovery
+    clock.advance(60)
+    assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+
+
+def test_configuration_errors_and_cancellation_are_not_cached_as_failures(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    issuer.discovery["issuer"] = "https://login.example.com"
+    with issuer.client() as http:
+        auth = configure(Authentication(ISSUER, http_client=http), clock)
+        for _ in range(2):  # raised every time, never masked by the failure cache
+            with pytest.raises(ConfigurationError):
+                auth.verify_access_token(key.sign(access_claims()))
+    assert issuer.count(DISCOVERY) == 2
+    issuer.discovery["issuer"] = ISSUER
+    issuer.jwks_delay = 0.2
+
+    async def run() -> None:
+        auth = configure(AsyncAuthentication(ISSUER, http_client=issuer.async_client()), clock)
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(auth.verify_access_token(key.sign(access_claims())), 0.05)
+        # The cancelled fetch does not lock anyone out: the next call fetches again.
+        issuer.jwks_delay = 0.0
+        assert (await auth.verify_access_token(key.sign(access_claims()))).sub == IDENTITY_ID
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("claim", ["exp", "nbf", "iat"])
+def test_huge_numeric_dates_are_malformed(
+    auth: Authentication, key: SigningKey, claim: str
+) -> None:
+    token = key.sign(access_claims(**{claim: 10**400}))
+    assert reason(lambda: auth.verify_access_token(token)) == "malformed"
+
+
+def test_async_authentication_works_across_event_loops(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    async def verify_twice(auth: AsyncAuthentication) -> None:
+        tokens = [key.sign(access_claims()) for _ in range(2)]
+        await asyncio.gather(*(auth.verify_access_token(t) for t in tokens))
+
+    auth = configure(AsyncAuthentication(ISSUER, http_client=issuer.async_client()), clock)
+    asyncio.run(verify_twice(auth))
+    clock.advance(600)  # the cache expired: the next loop has to fetch, under its own lock
+    auth._cache._discovery = None
+    asyncio.run(verify_twice(auth))
 
 
 @pytest.mark.parametrize(
@@ -1099,6 +1270,20 @@ def test_step_up_argument_errors(auth: Authentication, issuer: FakeIssuer) -> No
     for amount in (True, [1], object()):
         with pytest.raises(TypeError, match="amount"):
             auth.create_step_up(ACCESS_TOKEN, action="payout", amount=cast(Any, amount))
+    for bad in (
+        float("nan"),
+        float("inf"),
+        Decimal("NaN"),
+        "Infinity",
+        "12,50",
+        "",
+        "1_000",
+        "1e3",
+        "\u0661\u0660",
+        "NaN",
+    ):
+        with pytest.raises(ValueError, match="amount"):
+            auth.create_step_up(ACCESS_TOKEN, action="payout", amount=bad)
     with pytest.raises(ValueError, match="action"):
         auth.create_step_up(ACCESS_TOKEN, action="")
     with pytest.raises(ValueError, match="step_up_id"):
@@ -1150,6 +1335,12 @@ def test_step_up_id_is_percent_encoded(auth: Authentication, issuer: FakeIssuer)
     ("status", "body", "error", "message"),
     [
         (400, {"error": "invalid_grant"}, BadRequestError, "HTTP 400: invalid_grant"),
+        (
+            400,
+            {"error": "invalid_grant", "error_description": "The refresh token was already used."},
+            BadRequestError,
+            "HTTP 400: invalid_grant: The refresh token was already used.",
+        ),
         (400, {"non_field_errors": ["invalid_request"]}, BadRequestError, "HTTP 400"),
         (401, {"detail": "invalid_token"}, AuthenticationError, "HTTP 401: invalid_token"),
         (
@@ -1186,6 +1377,38 @@ def test_status_errors(
         assert info.value.request_id == "req_synthetic"
     # Token requests are never retried.
     assert issuer.count("/token/") == 1
+
+
+def test_errors_keep_no_bearer_token_on_their_request(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply("GET", "/session/", 401, {"detail": "invalid_token"})
+    with pytest.raises(AuthenticationError) as info:
+        auth.get_session(ACCESS_TOKEN)
+    assert info.value.response.request.headers["authorization"] == "[redacted]"
+    issuer.route("GET", "/session/", lambda _r: httpx.Response(200, text="<html>"))
+    with pytest.raises(APIResponseValidationError) as html:
+        auth.get_session(ACCESS_TOKEN)
+    assert html.value.response.request.headers["authorization"] == "[redacted]"
+
+
+def test_errors_keep_no_token_request_body(auth: Authentication, issuer: FakeIssuer) -> None:
+    issuer.reply("POST", "/token/", 400, {"error": "invalid_grant"})
+    with pytest.raises(BadRequestError) as info:
+        auth.refresh(REFRESH_TOKEN)
+    kept = info.value.response.request
+    assert kept.url == f"{ISSUER}/token/"
+    assert REFRESH_TOKEN.encode() not in kept.read()
+
+    def stall(_: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("stalled")
+
+    issuer.route("POST", "/token/", stall)
+    with pytest.raises(APITimeoutError) as timeout:
+        auth.exchange_code(CODE, code_verifier=CODE_VERIFIER, redirect_uri=REDIRECT_URI)
+    body = timeout.value.request.read()
+    assert CODE.encode() not in body
+    assert CODE_VERIFIER.encode() not in body
 
 
 def test_echoed_secrets_are_redacted(auth: Authentication, issuer: FakeIssuer) -> None:

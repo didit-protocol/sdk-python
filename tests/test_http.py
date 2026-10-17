@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import email.utils
 import time
+from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
 import httpx
@@ -132,6 +133,118 @@ def test_connection_and_timeout_errors() -> None:
     api = MockAPI().add(httpx.ReadTimeout("slow"))
     with pytest.raises(didit.APITimeoutError):
         api.client(max_retries=0).sessions.retrieve_decision("s")
+
+
+class _BrokenBody(httpx.SyncByteStream, httpx.AsyncByteStream):
+    """A body that starts arriving and then stalls or drops."""
+
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    def __iter__(self) -> Iterator[bytes]:
+        yield b'{"session_id": "'
+        raise self.error
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        yield b'{"session_id": "'
+        raise self.error
+
+
+def _broken(status: int, error: Exception) -> Any:
+    return lambda _request: httpx.Response(status, stream=_BrokenBody(error))
+
+
+@pytest.mark.parametrize(
+    ("error", "cls"),
+    [
+        (httpx.ReadTimeout("stalled"), didit.APITimeoutError),
+        (httpx.RemoteProtocolError("peer closed"), didit.APIConnectionError),
+        (httpx.ReadError("reset"), didit.APIConnectionError),
+    ],
+)
+def test_errors_while_reading_the_body_are_sdk_errors_and_retried_for_get(
+    error: Exception, cls: type[didit.APIConnectionError]
+) -> None:
+    api = MockAPI().add(_broken(200, error), _broken(200, error), _broken(200, error))
+    with pytest.raises(cls) as info:
+        api.client().sessions.retrieve_decision("s")
+    assert len(api.requests) == 3
+    assert info.value.request.headers["x-api-key"] == "[redacted]"
+    # A GET whose body broke is retried and can then succeed.
+    api = MockAPI().add(_broken(200, error)).json(200, {"session_id": "s"})
+    assert api.client().sessions.retrieve_decision("s").session_id == "s"
+    # An error response whose body broke is a connection error too.
+    api = MockAPI().add(_broken(404, error))
+    with pytest.raises(cls):
+        api.client(max_retries=0).sessions.retrieve_decision("s")
+
+
+def test_a_post_whose_body_broke_is_not_retried() -> None:
+    api = MockAPI().add(_broken(201, httpx.ReadTimeout("stalled")))
+    with pytest.raises(didit.APITimeoutError):
+        api.client().sessions.create(workflow_id="w-1")
+    assert len(api.requests) == 1
+
+
+def test_async_errors_while_reading_the_body() -> None:
+    async def run() -> None:
+        api = MockAPI().add(*[_broken(200, httpx.ReadTimeout("stalled"))] * 3)
+        with pytest.raises(didit.APITimeoutError):
+            await api.async_client().sessions.retrieve_decision("s")
+        assert len(api.requests) == 3
+        api = MockAPI().add(_broken(201, httpx.RemoteProtocolError("dropped")))
+        with pytest.raises(didit.APIConnectionError):
+            await api.async_client().sessions.create(workflow_id="w-1")
+        assert len(api.requests) == 1
+
+    asyncio.run(run())
+
+
+def test_streamed_body_errors_are_sdk_errors() -> None:
+    api = MockAPI().add(_broken(200, httpx.ReadError("reset")))
+    client = api.client()
+    with (
+        client.sessions.with_streaming_response.generate_pdf("s") as response,
+        pytest.raises(didit.APIConnectionError),
+    ):
+        b"".join(response.iter_bytes())
+
+    async def run() -> None:
+        api = MockAPI().add(_broken(200, httpx.ReadTimeout("stalled")))
+        async with api.async_client().sessions.with_streaming_response.generate_pdf(
+            "s"
+        ) as response:
+            with pytest.raises(didit.APITimeoutError):
+                await response.read()
+
+    asyncio.run(run())
+
+
+def test_errors_keep_no_credentials_on_their_request() -> None:
+    api = MockAPI().add(httpx.Response(400, json={"detail": "bad"}))
+    with pytest.raises(didit.BadRequestError) as info:
+        api.client().sessions.retrieve_decision("s")
+    assert info.value.response.request.headers["x-api-key"] == "[redacted]"
+    assert API_KEY not in repr(info.value.response.request.headers)
+    api = MockAPI().add(httpx.ConnectError("refused"))
+    with pytest.raises(didit.APIConnectionError) as conn:
+        api.client(max_retries=0).sessions.retrieve_decision("s")
+    assert conn.value.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(httpx.Response(200, text="<html>", headers={"content-type": "text/html"}))
+    with pytest.raises(didit.APIResponseValidationError) as html:
+        api.client().sessions.retrieve_decision("s")
+    assert html.value.response.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(httpx.Response(200, text="<html>"))
+    with pytest.raises(didit.APIResponseValidationError) as page:
+        api.client().businesses.list()
+    assert page.value.response.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(_broken(200, httpx.ReadTimeout("stalled")))
+    with (
+        api.client().sessions.with_streaming_response.generate_pdf("s") as response,
+        pytest.raises(didit.APITimeoutError) as streamed,
+    ):
+        response.read()
+    assert streamed.value.request.headers["x-api-key"] == "[redacted]"
 
 
 # Retry policy ---------------------------------------------------------------------

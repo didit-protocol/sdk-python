@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import mimetypes
 import pathlib
 import re
 
@@ -11,7 +12,7 @@ import httpx
 import pytest
 
 import didit
-from didit._files import to_httpx_file
+from didit._files import guess_content_type, to_httpx_file
 from didit.types import SessionImportJob
 from tests.mock_api import MockAPI
 
@@ -87,6 +88,28 @@ def test_file_inputs() -> None:
         to_httpx_file(42)  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="file tuple"):
         to_httpx_file(("a", b"b", "c", "d"))  # type: ignore[arg-type]
+
+
+def test_content_types_do_not_depend_on_the_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    # On Windows mimetypes reads the registry, which often lacks .webp and .heic.
+    monkeypatch.setattr(mimetypes, "guess_type", lambda *_a, **_k: (None, None))
+    expected = {
+        "selfie.webp": "image/webp",
+        "front.JPG": "image/jpeg",
+        "back.jpeg": "image/jpeg",
+        "scan.tif": "image/tiff",
+        "scan.tiff": "image/tiff",
+        "card.png": "image/png",
+        "photo.heic": "image/heic",
+        "bill.pdf": "application/pdf",
+        "bundle.zip": "application/zip",
+        "users.csv": "text/csv",
+        "users.ndjson": "application/x-ndjson",
+        "notes.unknownext": "application/octet-stream",
+    }
+    for name, content_type in expected.items():
+        assert guess_content_type(name) == content_type
+        assert to_httpx_file((name, b"x"))[2] == content_type
 
 
 def test_json_or_multipart_operation_picks_the_encoding() -> None:

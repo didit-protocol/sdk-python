@@ -85,7 +85,7 @@ class ReviewItem(BaseModel):
     """Free-text note attached to the entry, or `null`."""
 
     mentioned_emails: list[str] | None = None
-    """Console users `@email`-mentioned in the comment. Always empty for entries created via this API — mention processing is a Console-only feature."""
+    """Console users `@email`-mentioned in the comment. Always empty for entries created via this API - mention processing is a Console-only feature."""
 
     previous_value: dict[str, object] | None = None
     """Snapshot of the changed data before the action, e.g. `{"status": "In Review"}` on a status change. `null` when nothing was changed."""

@@ -253,7 +253,7 @@ class TransactionDetailPaymentMethods(BaseModel):
     label: str | None = None
 
     fingerprint: str | None = None
-    """SHA-256 over `type:account_id:issuing_country` — stable identifier to correlate reuse of the same instrument."""
+    """SHA-256 over `type:account_id:issuing_country` - stable identifier to correlate reuse of the same instrument."""
 
     account_id: str | None = None
     """Account identifier (IBAN, wallet address, card token, …)."""
@@ -493,7 +493,7 @@ class TransactionDetail(BaseModel):
     """Alerts raised by rules and providers."""
 
     rule_runs: list[TransactionDetailRuleRuns] | None = None
-    """Per-rule execution results — which rule fired, with what score impact."""
+    """Per-rule execution results - which rule fired, with what score impact."""
 
     provider_results: list[TransactionDetailProviderResults] | None = None
     """Raw provider payloads (AML screening, blockchain analytics, etc.)."""

@@ -77,10 +77,10 @@ class ProofOfAddressVerifyResponsePoaWarnings(BaseModel):
     """Feature that raised the warning. Always `PROOF_OF_ADDRESS` on this endpoint."""
 
     additional_data: dict[str, object] | None = None
-    """Extra context for some risks — e.g. `POA_DOCUMENT_EXPIRED` includes `expiration_reason` (`printed_expiration` or `age_window`), `document_type`, `document_subtype`, and `issue_date`, plus `expiration_date` on the `printed_expiration` path or `max_age_months` on the `age_window` path; `SUSPECTED_DOCUMENT_MANIPULATION` includes `reason` and `detection_method`. `null` for most risks."""
+    """Extra context for some risks - e.g. `POA_DOCUMENT_EXPIRED` includes `expiration_reason` (`printed_expiration` or `age_window`), `document_type`, `document_subtype`, and `issue_date`, plus `expiration_date` on the `printed_expiration` path or `max_age_months` on the `age_window` path; `SUSPECTED_DOCUMENT_MANIPULATION` includes `reason` and `detection_method`. `null` for most risks."""
 
     log_type: Literal["error", "information"] | str | None = None
-    """Severity. `error` warnings drive `status` to `Declined`; `information` entries are advisory and never decline on their own. (`warning` is not produced by this endpoint — its options only accept `DECLINE` or `NO_ACTION`.)"""
+    """Severity. `error` warnings drive `status` to `Declined`; `information` entries are advisory and never decline on their own. (`warning` is not produced by this endpoint - its options only accept `DECLINE` or `NO_ACTION`.)"""
 
     short_description: str | None = None
     """Human-readable one-line summary of the risk."""
@@ -91,10 +91,10 @@ class ProofOfAddressVerifyResponsePoaWarnings(BaseModel):
 
 class ProofOfAddressVerifyResponsePoa(BaseModel):
     status: Literal["Approved", "Declined"] | str | None = None
-    """`Approved` when no warning resolves to a decline; `Declined` otherwise — the `warnings` list explains why."""
+    """`Approved` when no warning resolves to a decline; `Declined` otherwise - the `warnings` list explains why."""
 
     issuing_state: str | None = None
-    """Country the document was issued in, as extracted from the document — usually ISO 3166-1 alpha-3 (e.g. `ARG`)."""
+    """Country the document was issued in, as extracted from the document - usually ISO 3166-1 alpha-3 (e.g. `ARG`)."""
 
     document_type: (
         Literal[
@@ -107,10 +107,10 @@ class ProofOfAddressVerifyResponsePoa(BaseModel):
         | str
         | None
     ) = None
-    """Detected document category. `UNKNOWN` means the document could not be classified as an acceptable Proof of Address and auto-declines with `INVALID_DOCUMENT_TYPE`. Never null — classification failures fall back to `UNKNOWN`."""
+    """Detected document category. `UNKNOWN` means the document could not be classified as an acceptable Proof of Address and auto-declines with `INVALID_DOCUMENT_TYPE`. Never null - classification failures fall back to `UNKNOWN`."""
 
     document_subtype: str | None = None
-    """Finer-grained classification within `document_type` — e.g. `ELECTRICITY_BILL`, `WATER_BILL`, `GAS_BILL`, `INTERNET_BILL`, `PHONE_BILL` (utility bills); `ACCOUNT_STATEMENT`, `CREDIT_CARD_STATEMENT` (bank statements); `TAX_ASSESSMENT`, `RESIDENCY_CERTIFICATE` (government documents). `UNKNOWN` when no subtype could be determined. Never null — classification failures fall back to `UNKNOWN`."""
+    """Finer-grained classification within `document_type` - e.g. `ELECTRICITY_BILL`, `WATER_BILL`, `GAS_BILL`, `INTERNET_BILL`, `PHONE_BILL` (utility bills); `ACCOUNT_STATEMENT`, `CREDIT_CARD_STATEMENT` (bank statements); `TAX_ASSESSMENT`, `RESIDENCY_CERTIFICATE` (government documents). `UNKNOWN` when no subtype could be determined. Never null - classification failures fall back to `UNKNOWN`."""
 
     document_language: str | None = None
     """Detected document language (ISO 639-1)."""
@@ -119,7 +119,7 @@ class ProofOfAddressVerifyResponsePoa(BaseModel):
     """Company or organization that issued the document. `null` adds `ISSUER_NOT_IDENTIFIED`."""
 
     issue_date: _dt.date | None = None
-    """Document issue date (`YYYY-MM-DD`). `null` when it could not be extracted — that declines with `UNABLE_TO_EXTRACT_ISSUE_DATE` on this endpoint."""
+    """Document issue date (`YYYY-MM-DD`). `null` when it could not be extracted - that declines with `UNABLE_TO_EXTRACT_ISSUE_DATE` on this endpoint."""
 
     expiration_date: _dt.date | None = None
     """Explicit expiry/validity date printed on the document, when present. Independent of the `poa_document_age_months` age check."""

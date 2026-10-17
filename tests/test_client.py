@@ -99,6 +99,45 @@ def test_extra_headers_add_and_remove() -> None:
     assert api.last_json() == {"workflow_id": "w-1", "new_field": 1}
 
 
+def test_header_names_are_merged_case_insensitively() -> None:
+    api = MockAPI().json(201, SESSION).json(201, SESSION)
+    client = api.client(
+        default_headers={"accept": "text/plain", "user-agent": "me/1", "X-API-KEY": "other"}
+    )
+    client.sessions.create(
+        workflow_id="w-1", extra_headers={"content-type": "application/json; charset=utf-8"}
+    )
+    raw = api.last.headers.raw
+    names = [name.lower() for name, _ in raw]
+    assert len(names) == len(set(names)), names
+    assert api.last.headers["accept"] == "text/plain"
+    assert api.last.headers["user-agent"] == "me/1"
+    assert api.last.headers["x-api-key"] == API_KEY  # the client's key wins
+    assert api.last.headers["content-type"] == "application/json; charset=utf-8"
+    # Removing User-Agent removes it: httpx does not put its own one back.
+    client.sessions.create(workflow_id="w-1", extra_headers={"user-agent": None})
+    assert "user-agent" not in api.last.headers
+
+
+def test_bodies_json_cannot_carry_fail_before_sending() -> None:
+    api = MockAPI()
+    client = api.client()
+    for bad in (float("nan"), float("inf"), object()):
+        with pytest.raises(didit.DiditError, match="cannot be sent as JSON"):
+            client.sessions.create(workflow_id="w-1", metadata={"x": bad})
+    assert api.requests == []
+
+
+def test_response_models_can_be_sent_back() -> None:
+    from didit._models import validate_response
+    from didit.types import SessionImportJob
+
+    job = validate_response(SessionImportJob, {"uuid": "j-1", "status": "pending", "extra": 1})
+    api = MockAPI().json(201, SESSION)
+    api.client().sessions.create(workflow_id="w-1", metadata={"job": job})
+    assert api.last_json()["metadata"] == {"job": {"uuid": "j-1", "status": "pending", "extra": 1}}
+
+
 def test_omitted_and_null_values() -> None:
     api = MockAPI().json(201, SESSION)
     client = api.client()

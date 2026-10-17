@@ -109,13 +109,13 @@ class Workflows(SyncAPIResource):
     ) -> builtins.dict[str, object]:
         """Create workflow.
 
-        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` — any other key (including `workflow_type`) is rejected with a 400. Not idempotent — each call creates a new workflow. Maximum 50 workflows per application.
+        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Not idempotent - each call creates a new workflow. Maximum 50 workflows per application.
 
         ``POST /v3/workflows/``
 
         Args:
           features: Verification features in execution order. The API links each item to the next one and adds one final status node automatically.
-          workflow_label: Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted — always set it so workflows stay distinguishable.
+          workflow_label: Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted - always set it so workflows stay distinguishable.
           is_default: Set this workflow as the default for new sessions.
           status: Omit this field to create a published workflow ready for sessions. Use `draft` only when you want to save without publishing.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
@@ -253,7 +253,7 @@ class Workflows(SyncAPIResource):
     ) -> builtins.dict[str, object]:
         """Update workflow.
 
-        Update a workflow. Versioning depends on the `status` field you send and the current state of the version: (1) no `status` on a **published** version → the published version is updated in place (same `uuid`, same `version`); (2) no `status` on a **draft** → the draft is updated and immediately published; (3) `status: "published"` on a **published** version → a NEW published version is created under the same `workflow_id` (new `uuid`, `version` + 1) and returned, and any existing draft in the group is deleted; (4) `status: "draft"` keeps a draft as a draft (autosave) but is rejected with 400 on a published version (`"Cannot revert a published version to draft."`). The body accepts the same strict field whitelist as create — unknown keys are rejected with 400.
+        Update a workflow. Versioning depends on the `status` field you send and the current state of the version: (1) no `status` on a **published** version → the published version is updated in place (same `uuid`, same `version`); (2) no `status` on a **draft** → the draft is updated and immediately published; (3) `status: "published"` on a **published** version → a NEW published version is created under the same `workflow_id` (new `uuid`, `version` + 1) and returned, and any existing draft in the group is deleted; (4) `status: "draft"` keeps a draft as a draft (autosave) but is rejected with 400 on a published version (`"Cannot revert a published version to draft."`). The body accepts the same strict field whitelist as create - unknown keys are rejected with 400.
 
         ``PATCH /v3/workflows/{settings_uuid}/``
 
@@ -381,13 +381,13 @@ class AsyncWorkflows(AsyncAPIResource):
     ) -> builtins.dict[str, object]:
         """Create workflow.
 
-        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` — any other key (including `workflow_type`) is rejected with a 400. Not idempotent — each call creates a new workflow. Maximum 50 workflows per application.
+        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Not idempotent - each call creates a new workflow. Maximum 50 workflows per application.
 
         ``POST /v3/workflows/``
 
         Args:
           features: Verification features in execution order. The API links each item to the next one and adds one final status node automatically.
-          workflow_label: Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted — always set it so workflows stay distinguishable.
+          workflow_label: Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted - always set it so workflows stay distinguishable.
           is_default: Set this workflow as the default for new sessions.
           status: Omit this field to create a published workflow ready for sessions. Use `draft` only when you want to save without publishing.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
@@ -525,7 +525,7 @@ class AsyncWorkflows(AsyncAPIResource):
     ) -> builtins.dict[str, object]:
         """Update workflow.
 
-        Update a workflow. Versioning depends on the `status` field you send and the current state of the version: (1) no `status` on a **published** version → the published version is updated in place (same `uuid`, same `version`); (2) no `status` on a **draft** → the draft is updated and immediately published; (3) `status: "published"` on a **published** version → a NEW published version is created under the same `workflow_id` (new `uuid`, `version` + 1) and returned, and any existing draft in the group is deleted; (4) `status: "draft"` keeps a draft as a draft (autosave) but is rejected with 400 on a published version (`"Cannot revert a published version to draft."`). The body accepts the same strict field whitelist as create — unknown keys are rejected with 400.
+        Update a workflow. Versioning depends on the `status` field you send and the current state of the version: (1) no `status` on a **published** version → the published version is updated in place (same `uuid`, same `version`); (2) no `status` on a **draft** → the draft is updated and immediately published; (3) `status: "published"` on a **published** version → a NEW published version is created under the same `workflow_id` (new `uuid`, `version` + 1) and returned, and any existing draft in the group is deleted; (4) `status: "draft"` keeps a draft as a draft (autosave) but is rejected with 400 on a published version (`"Cannot revert a published version to draft."`). The body accepts the same strict field whitelist as create - unknown keys are rejected with 400.
 
         ``PATCH /v3/workflows/{settings_uuid}/``
 

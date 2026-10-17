@@ -194,7 +194,7 @@ class WalletScreeningScreenPdfParamsSourceOfFunds(TypedDict, total=False):
 
 
 class WalletScreeningScreenPdfParams(TypedDict, total=False):
-    """Same shape as the `POST /v3/wallet-screening/` response — pass that response body back verbatim, including `report_signature`."""
+    """Same shape as the `POST /v3/wallet-screening/` response - pass that response body back verbatim, including `report_signature`."""
 
     provider: Required[str]
     """Provider that performed the screening (e.g. `merklescience`, `crystal`)."""
@@ -280,4 +280,4 @@ class WalletScreeningScreenPdfParams(TypedDict, total=False):
     """The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it."""
 
     report_signature: Required[str]
-    """Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own — repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost."""
+    """Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own - repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost."""

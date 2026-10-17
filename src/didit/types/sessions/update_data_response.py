@@ -69,7 +69,7 @@ class SessionsUpdateDataResponse(BaseModel):
     """Family name(s). Also feeds the recomputed `full_name`."""
 
     gender: Literal["M", "F", "U"] | str | None = None
-    """Sex as printed on the document: `M` (male), `F` (female), or `U` (unknown). Any other value — including `X` — returns `400`."""
+    """Sex as printed on the document: `M` (male), `F` (female), or `U` (unknown). Any other value - including `X` - returns `400`."""
 
     address: str | None = None
     """Free-text address as printed on the document. When this value changes (non-sandbox sessions only) and the structured address is still missing or incomplete, the server re-geocodes it in the background of the same request and may overwrite `parsed_address` with the geocoder result."""
@@ -78,7 +78,7 @@ class SessionsUpdateDataResponse(BaseModel):
     """Place of birth as printed on the document."""
 
     nationality: str | None = None
-    """Nationality as printed on the document. Free text up to 32 characters — typically an ISO 3166-1 alpha-3 code (e.g. `ESP`), but not validated as one."""
+    """Nationality as printed on the document. Free text up to 32 characters - typically an ISO 3166-1 alpha-3 code (e.g. `ESP`), but not validated as one."""
 
     marital_status: Literal["SINGLE", "MARRIED", "DIVORCED", "WIDOWED", "UNKNOWN"] | str | None = (
         None

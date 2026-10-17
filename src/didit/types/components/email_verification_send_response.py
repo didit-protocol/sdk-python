@@ -13,7 +13,7 @@ class EmailVerificationSendResponse(BaseModel):
     """Session id of the verification. A `Retry` send returns the same `request_id` as the original send. This id appears in the Business Console, is returned again by a finalized `POST /v3/email/check/`, and can be passed to `GET /v3/session/{sessionId}/decision/`."""
 
     status: Literal["Success", "Retry", "Undeliverable"] | str | None = None
-    """`Success` — OTP emailed to a new verification (billed). `Retry` — fresh OTP emailed for the pending verification created by a previous send (free). `Undeliverable` — the address failed deliverability validation or the message could not be sent; the verification is immediately finalized as `Declined` and nothing is billed."""
+    """`Success` - OTP emailed to a new verification (billed). `Retry` - fresh OTP emailed for the pending verification created by a previous send (free). `Undeliverable` - the address failed deliverability validation or the message could not be sent; the verification is immediately finalized as `Declined` and nothing is billed."""
 
     reason: Literal["email_can_not_be_delivered"] | str | None = None
     """`email_can_not_be_delivered` when `status` is `Undeliverable`; `null` otherwise."""

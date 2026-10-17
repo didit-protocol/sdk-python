@@ -147,7 +147,7 @@ def load(openapi_dir: pathlib.Path) -> Model:
     deprecated_path = openapi_dir / "deprecated-operations.json"
     deprecated: dict[str, Json] = {}
     if deprecated_path.exists():
-        deprecated = dict(json.loads(deprecated_path.read_text("utf-8")).get("operations", {}))
+        deprecated = dict(json.loads(deprecated_path.read_text("utf-8")).get("methods", {}))
 
     operations: list[Operation] = []
     seen_keys: set[str] = set()
@@ -199,31 +199,7 @@ def load(openapi_dir: pathlib.Path) -> Model:
             "openapi/deprecated-operations.json, or delete the entries:\n  " + "\n  ".join(stale)
         )
 
-    for key, entry in sorted(deprecated.items()):
-        if key in seen_keys:
-            continue
-        api = "account" if key.startswith("account ") else "verification"
-        method, path = key.removeprefix("account ").split(" ", 1)
-        doc = {"openapi": "3.0.0", "paths": {}, "components": {"schemas": {}}}
-        spec = Spec(f"{api} (deprecated)", doc)
-        op = entry["operation"]
-        operations.append(
-            Operation(
-                key=key,
-                api=api,
-                http_method=method.lower(),
-                path=path,
-                op=op,
-                path_item={},
-                spec=spec,
-                sdk=SdkNaming.parse(key, entry["x-didit-sdk"]),
-                deprecated=True,
-                deprecation_note=entry.get("note")
-                or f"Removed from the API contract on {entry.get('removed_on', 'an unknown date')}.",
-                parameters=list(op.get("parameters", [])),
-            )
-        )
-
+    operations.extend(_deprecated_operations(deprecated, operations))
     _check_unique(operations)
     for operation in operations:
         if operation.sdk.scope == "application" and not operation.path.startswith(
@@ -233,6 +209,56 @@ def load(openapi_dir: pathlib.Path) -> Model:
                 f"{operation.key}: scope application needs a path under {APPLICATION_PREFIX}."
             )
     return Model(specs=specs, operations=operations)
+
+
+def _deprecated_operations(deprecated: dict[str, Json], live: list[Operation]) -> list[Operation]:
+    """The methods ``openapi/deprecated-operations.json`` keeps for one more minor
+    version: operations removed upstream and the old names of renamed ones.
+
+    Each entry holds its own dereferenced copy of the operation, so it does not
+    depend on what the current documents still contain.
+    """
+    live_names = {(op.sdk.resource, op.sdk.method): op.key for op in live if op.sdk.server}
+    out: list[Operation] = []
+    for name, entry in sorted(deprecated.items()):
+        where = f"openapi/deprecated-operations.json {name}"
+        sdk = SdkNaming.parse(where, entry.get("x-didit-sdk"))
+        if f"{sdk.resource}.{sdk.method}" != name:
+            raise CodegenError(f"{where}: the entry name must equal its resource.method.")
+        provider = live_names.get((sdk.resource, sdk.method))
+        if provider is not None:
+            raise CodegenError(
+                f"{where}: {provider} provides {name} again, so it is no longer deprecated; "
+                "delete this entry from openapi/deprecated-operations.json."
+            )
+        key = str(entry.get("operation_key", ""))
+        api = "account" if key.startswith("account ") else "verification"
+        method, _, path = key.removeprefix("account ").partition(" ")
+        if method.lower() not in HTTP_METHODS or not path.startswith("/"):
+            raise CodegenError(f"{where}: operation_key {key!r} is not 'METHOD /path'.")
+        replacement = entry.get("replacement")
+        default_note = (
+            f"Renamed to {replacement}; this name is removed in version {entry.get('remove_in')}."
+            if replacement
+            else f"Removed from the API contract; this method is removed in version {entry.get('remove_in')}."
+        )
+        op = entry["operation"]
+        out.append(
+            Operation(
+                key=key,
+                api=api,
+                http_method=method.lower(),
+                path=path,
+                op=op,
+                path_item={},
+                spec=Spec(f"{api} (deprecated)", {"openapi": "3.0.0", "paths": {}}),
+                sdk=sdk,
+                deprecated=True,
+                deprecation_note=entry.get("note") or default_note,
+                parameters=list(op.get("parameters", [])),
+            )
+        )
+    return out
 
 
 def _merge_parameters(spec: Spec, shared: list[Json], own: list[Json]) -> list[Json]:

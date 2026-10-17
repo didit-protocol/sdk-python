@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdatePoaDataParams", "SessionsUpdatePoaDataParamsPoaParsedA
 
 
 class SessionsUpdatePoaDataParamsPoaParsedAddress(TypedDict, total=False):
-    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` — any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` — you cannot set it directly."""
+    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` - you cannot set it directly."""
 
     address_type: str | None
     """Free-form address classification (e.g. `home`)."""
@@ -31,7 +31,7 @@ class SessionsUpdatePoaDataParamsPoaParsedAddress(TypedDict, total=False):
 
 
 class SessionsUpdatePoaDataParams(TypedDict, total=False):
-    """All fields optional — send only what you want to change."""
+    """All fields optional - send only what you want to change."""
 
     issuing_state: str | None
     """Country that issued the POA document, ISO 3166-1 alpha-3. Case-insensitive (normalized to uppercase); invalid codes return `400`."""
@@ -46,10 +46,10 @@ class SessionsUpdatePoaDataParams(TypedDict, total=False):
         ]
         | str
     )
-    """POA document category. Values are uppercase — lowercase variants like `utility_bill` return `400`."""
+    """POA document category. Values are uppercase - lowercase variants like `utility_bill` return `400`."""
 
     document_language: str | None
-    """Language of the document, typically an ISO 639-1 code (e.g. `es`). Free text — not validated as a language code."""
+    """Language of the document, typically an ISO 639-1 code (e.g. `es`). Free text - not validated as a language code."""
 
     issuer: str | None
     """Organization that issued the document (utility company, bank, government agency)."""
@@ -67,4 +67,4 @@ class SessionsUpdatePoaDataParams(TypedDict, total=False):
     """Document-specific extras, merged key-by-key. Nine keys map to dedicated POA columns: `bank_account_number`, `bank_iban`, `bank_sort_code`, `bank_routing_number`, `bank_swift_bic`, `bank_branch_name`, `bank_branch_address`, `document_phone_number`, and `additional_names` (must be a list of strings or `null`, otherwise `400`). Any other key is stored as a custom extra field. Per-key semantics: a value sets the key; `null` or `""` deletes it. Must be a JSON object, otherwise `400`."""
 
     poa_parsed_address: SessionsUpdatePoaDataParamsPoaParsedAddress | None
-    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` — any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` — you cannot set it directly."""
+    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` - you cannot set it directly."""

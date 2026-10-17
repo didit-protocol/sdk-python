@@ -92,10 +92,29 @@ def test_sdk_naming_validation() -> None:
 # Loading ------------------------------------------------------------------------------
 
 
+def _count_operations(openapi_dir: pathlib.Path) -> tuple[int, int]:
+    """All operations and the server ones, counted straight from the JSON."""
+    overlay = _read(openapi_dir / "overlay.json")["operations"]
+    total = server = 0
+    for name, prefix in (("verification.json", ""), ("account.json", "account ")):
+        for path, item in _read(openapi_dir / name)["paths"].items():
+            for method in ("get", "put", "post", "delete", "patch", "head", "options"):
+                if method in item:
+                    total += 1
+                    naming = (
+                        item[method].get("x-didit-sdk")
+                        or overlay[f"{prefix}{method.upper()} {path}"]
+                    )
+                    server += bool(naming["server"])
+    deprecated = len(_read(openapi_dir / "deprecated-operations.json")["methods"])
+    return total + deprecated, server + deprecated
+
+
 def test_repository_specs_load() -> None:
     model = load(REPO / "openapi")
-    assert len(model.operations) == 266
-    assert len(model.server_operations) == 257
+    total, server = _count_operations(REPO / "openapi")
+    assert len(model.operations) == total
+    assert len(model.server_operations) == server
     assert {op.api for op in model.server_operations} == {"verification", "account"}
 
 
@@ -175,12 +194,47 @@ def test_generation_is_deterministic_and_marked() -> None:
 
 def test_every_server_operation_becomes_one_method() -> None:
     model, builder, methods = build(REPO / "openapi")
-    assert len(methods) == len(model.server_operations) == 257
+    assert len(methods) == len(model.server_operations) == _count_operations(REPO / "openapi")[1]
     kinds = {m.response.kind for m in methods}
     assert kinds == {"model", "page", "bytes", "none"}
-    assert sum(1 for m in methods if m.response.kind == "page") == 27
-    assert sum(1 for m in methods if m.body_mode in ("multipart", "auto")) == 11
-    assert sum(1 for m in methods if m.op.sdk.scope == "application") == 106
+    # Counted from the JSON, independently of the generator.
+    pages = multipart = scoped = 0
+
+    def binary(schema: Any, spec: Any) -> set[str]:
+        props = spec.resolve(schema).get("properties", {})
+        out = set()
+        for name, prop in props.items():
+            prop = spec.resolve(prop)
+            item = spec.resolve(prop.get("items", {}))
+            if "binary" in (prop.get("format"), item.get("format")):
+                out.add(name)
+        return out
+
+    for op in model.server_operations:
+        props = (
+            op.spec.resolve(
+                ((op.op.get("responses") or {}).get("200") or {})
+                .get("content", {})
+                .get("application/json", {})
+                .get("schema", {})
+            )
+            or {}
+        ).get("properties", {})
+        pages += {"count", "next", "previous", "results"} <= set(props)
+        content = (op.op.get("requestBody") or {}).get("content", {})
+        if "multipart/form-data" in content:
+            files = binary(content["multipart/form-data"].get("schema", {}), op.spec)
+            if "application/json" in content:
+                json_schema = op.spec.resolve(content["application/json"].get("schema", {}))
+                files -= set(json_schema.get("properties", {}))
+            multipart += bool(files)
+        scoped += op.sdk.scope == "application"
+    assert sum(1 for m in methods if m.response.kind == "page") == pages
+    assert sum(1 for m in methods if m.body_mode in ("multipart", "auto")) == multipart
+    assert sum(1 for m in methods if m.op.sdk.scope == "application") == scoped
+    assert pages
+    assert multipart
+    assert scoped
     names = set(builder.registry.defs)
     assert "SessionsCreateParams" in names
     assert "SessionsCreateParamsContactDetails" in names
@@ -208,13 +262,19 @@ def test_removed_operation_stays_as_a_deprecated_method(openapi: pathlib.Path) -
     shutil.copy(openapi / "account.json", upstream / "account.json")
 
     downloads = {name: (upstream / name).read_bytes() for name in spec_sync.UPSTREAM}
-    changed, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
+    changed, summary = spec_sync.sync(
+        openapi, downloads, today=NOW.date(), now=NOW, version="0.4.2"
+    )
     assert changed
-    assert "billing.retrieve_balance" in summary
+    assert "billing.retrieve_balance` was removed upstream" in summary
     assert "## Breaking changes" in summary
-    deprecated = _read(openapi / "deprecated-operations.json")["operations"]
-    assert "GET /v3/billing/balance/" in deprecated
-    assert deprecated["GET /v3/billing/balance/"]["removed_on"] == "2026-10-18"
+    deprecated = _read(openapi / "deprecated-operations.json")["methods"]
+    entry = deprecated["billing.retrieve_balance"]
+    assert entry["reason"] == "removed"
+    assert entry["operation_key"] == "GET /v3/billing/balance/"
+    assert entry["since"] == "2026-10-18"
+    assert entry["deprecated_since"] == "0.4.2"
+    assert entry["remove_in"] == "0.5.0"
     assert "$ref" not in json.dumps(deprecated)
     assert "GET /v3/billing/balance/" not in _read(openapi / "overlay.json")["operations"]
 
@@ -222,6 +282,250 @@ def test_removed_operation_stays_as_a_deprecated_method(openapi: pathlib.Path) -
     billing = files["src/didit/resources/billing.py"]
     assert "@deprecated(" in billing
     assert "def retrieve_balance(" in billing
+    assert "removed in version 0.5.0" in billing
+
+
+def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"] = {
+        **overlay["GET /v3/billing/balance/"],
+        "method": "get_balance",
+    }
+    downloads = {
+        "verification.json": json.dumps(spec).encode(),
+        "account.json": (openapi / "account.json").read_bytes(),
+    }
+    changed, summary = spec_sync.sync(
+        openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0"
+    )
+    assert changed
+    breaking = summary.split("## Breaking changes", 1)[1].split("##", 1)[0]
+    assert "`billing.retrieve_balance` was renamed upstream to `billing.get_balance`" in breaking
+    assert "until version 0.2.0" in breaking
+    entry = _read(openapi / "deprecated-operations.json")["methods"]["billing.retrieve_balance"]
+    assert entry["reason"] == "renamed"
+    assert entry["replacement"] == "billing.get_balance"
+
+    files = generate(openapi)
+    billing = files["src/didit/resources/billing.py"]
+    assert "def get_balance(" in billing
+    assert "def retrieve_balance(" in billing
+    assert "Renamed to billing.get_balance" in billing
+    # The old response type stays importable next to the new one.
+    types = "".join(t for p, t in files.items() if p.startswith("src/didit/types/"))
+    assert "class BillingRetrieveBalanceResponse(" in types
+    assert "class BillingGetBalanceResponse(" in types
+
+    # Renamed back: the old name is live again (its alias is dropped), and the
+    # interim name it shipped under becomes the deprecated alias in turn.
+    spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"]["method"] = "retrieve_balance"
+    downloads["verification.json"] = json.dumps(spec).encode()
+    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.1")
+    assert "`billing.retrieve_balance` is provided again" in summary
+    methods = _read(openapi / "deprecated-operations.json")["methods"]
+    assert list(methods) == ["billing.get_balance"]
+    assert methods["billing.get_balance"]["replacement"] == "billing.retrieve_balance"
+    load(openapi)
+
+
+def _sync(openapi: pathlib.Path, spec: Any) -> str:
+    downloads = {
+        "verification.json": json.dumps(spec).encode(),
+        "account.json": (openapi / "account.json").read_bytes(),
+    }
+    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
+    return summary
+
+
+def _breaking(summary: str) -> str:
+    return summary.split("## Breaking changes", 1)[1].split("\n## ", 1)[0]
+
+
+def _name_op(spec: Any, overlay: Any, path: str, http_method: str, **naming: Any) -> None:
+    key = f"{http_method.upper()} {path}"
+    spec["paths"][path][http_method]["x-didit-sdk"] = {**overlay[key], **naming}
+
+
+def test_swapped_names_are_breaking(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="top_up")
+    _name_op(spec, overlay, "/v3/billing/top-up/", "post", method="retrieve_balance")
+    breaking = _breaking(_sync(openapi, spec))
+    assert "`billing.top_up` now calls `GET /v3/billing/balance/` instead of" in breaking
+    assert "`billing.retrieve_balance` now calls `POST /v3/billing/top-up/`" in breaking
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+
+
+def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="current_balance")
+    spec["paths"]["/v3/billing/balance-v2/"] = {
+        "get": {
+            "responses": {"200": {"description": "ok"}},
+            "x-didit-sdk": {**overlay["GET /v3/billing/balance/"]},
+        }
+    }
+    breaking = _breaking(_sync(openapi, spec))
+    assert (
+        "`billing.retrieve_balance` now calls `GET /v3/billing/balance-v2/` instead of "
+        "`GET /v3/billing/balance/`" in breaking
+    )
+
+
+def test_a_moved_operation_reports_what_changed(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    item = spec["paths"].pop("/v3/billing/balance/")
+    item["get"]["x-didit-sdk"] = overlay["GET /v3/billing/balance/"]
+    item["get"]["parameters"] = [
+        {"name": "currency", "in": "query", "required": True, "schema": {"type": "string"}}
+    ]
+    item["get"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "array",
+        "items": {"type": "object"},
+    }
+    spec["paths"]["/v4/billing/balance/"] = item
+    summary = _sync(openapi, spec)
+    breaking = _breaking(summary)
+    assert "`billing.retrieve_balance` moved from `GET /v3/billing/balance/`" in breaking
+    assert "parameter added: currency (query, required)" in breaking
+    assert "response: type object -> array" in breaking
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+
+
+def test_an_operation_that_stops_being_a_server_operation_is_removed(
+    openapi: pathlib.Path,
+) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", auth="device_token", server=False)
+    breaking = _breaking(_sync(openapi, spec))
+    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) is removed" in breaking
+    # Never kept: server SDKs do not expose device-token operations (DESIGN 4).
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+    files = generate(openapi)
+    assert "def retrieve_balance(" not in files["src/didit/resources/billing.py"]
+
+
+def test_an_operation_that_loses_its_naming_is_called_out(openapi: pathlib.Path) -> None:
+    # Upstream named the operation (so the overlay no longer does), then drops it.
+    old = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")
+    naming = overlay["operations"].pop("GET /v3/billing/balance/")
+    old["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"] = naming
+    _write(openapi / "verification.json", old)
+    _write(openapi / "overlay.json", overlay)
+    spec = _read(openapi / "verification.json")
+    del spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"]
+    summary = _sync(openapi, spec)
+    assert "lost its SDK naming" in summary
+    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) has no SDK naming" in _breaking(
+        summary
+    )
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+    with pytest.raises(CodegenError, match="no SDK naming"):
+        load(openapi)
+
+
+def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> None:
+    old = _read(openapi / "verification.json")
+    old["components"]["schemas"]["LegacyUnusedThing"] = {"type": "object"}
+    _write(openapi / "verification.json", old)
+    spec = _read(openapi / "verification.json")
+    del spec["components"]["schemas"]["LegacyUnusedThing"]
+    schemas = spec["components"]["schemas"]
+    # The reviewer's case: a nested component property changes type.
+    schemas["DocumentAIDetectedCode"]["properties"]["type"] = {"type": "integer"}
+    prop = "type"
+    downloads = {
+        "verification.json": json.dumps(spec).encode(),
+        "account.json": (openapi / "account.json").read_bytes(),
+    }
+    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
+    breaking = summary.split("## Breaking changes", 1)[1].split("## ", 1)[0]
+    assert f".{prop}: type string -> integer (breaking)" in breaking
+    assert "schema `LegacyUnusedThing` removed" in breaking
+
+
+def test_schema_diff_rules() -> None:
+    def diff(old: Any, new: Any, *, request: bool) -> list[tuple[str, bool]]:
+        notes: list[tuple[str, bool]] = []
+        spec_sync.diff_schema(old, new, "x", request=request, notes=notes)
+        return notes
+
+    status = {"type": "string", "enum": ["a", "b"]}
+    assert diff(status, {**status, "enum": ["a"]}, request=True) == [
+        ('x: values removed ["b"]', True)
+    ]
+    assert diff(status, {**status, "enum": ["a"]}, request=False) == [
+        ('x: values removed ["b"]', False)
+    ]
+    obj = {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"]}
+    assert diff(obj, {**obj, "required": []}, request=False) == [
+        ("x.a: no longer always present", True)
+    ]
+    assert diff({**obj, "required": []}, obj, request=True) == [("x.a: now required", True)]
+    assert diff({"type": "integer"}, {"type": "number"}, request=True) == [
+        ("x: type integer -> number", False)
+    ]
+    assert diff({"type": "string"}, {"type": "string", "nullable": True}, request=False) == [
+        ("x: can now be null", True)
+    ]
+    nested = {"type": "array", "items": obj}
+    assert diff(
+        nested, {"type": "array", "items": {"type": "object", "properties": {}}}, request=False
+    ) == [("x[].a: removed", True)]
+    assert diff({"oneOf": [obj, status]}, {"oneOf": [obj]}, request=False) == [
+        ("x: 1 oneOf variant(s) removed", True)
+    ]
+    documented = {**obj, "description": "now documented", "example": {"a": "z"}}
+    assert diff(obj, documented, request=False) == []
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"<html>maintenance</html>",
+        b'{"message": "maintenance"}',
+        b'{"openapi": "3.1.0", "paths": {}}',
+        b"[]",
+    ],
+)
+def test_sync_refuses_a_download_that_is_not_openapi(openapi: pathlib.Path, body: bytes) -> None:
+    before = {p.name: p.read_bytes() for p in openapi.iterdir()}
+    downloads = {
+        "verification.json": (openapi / "verification.json").read_bytes(),
+        "account.json": body,
+    }
+    with pytest.raises(spec_sync.SpecSyncError, match=r"account\.json"):
+        spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
+    assert {p.name: p.read_bytes() for p in openapi.iterdir()} == before
+
+
+def test_deprecated_entry_that_is_provided_again_names_the_fix(openapi: pathlib.Path) -> None:
+    deprecated = _read(openapi / "deprecated-operations.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    deprecated["methods"]["billing.retrieve_balance"] = {
+        "reason": "removed",
+        "operation_key": "GET /v3/billing/balance-old/",
+        "x-didit-sdk": overlay["GET /v3/billing/balance/"],
+        "operation": {"responses": {"200": {"description": "ok"}}},
+        "remove_in": "0.2.0",
+    }
+    _write(openapi / "deprecated-operations.json", deprecated)
+    with pytest.raises(
+        CodegenError, match=r"delete this entry from openapi/deprecated-operations\.json"
+    ):
+        load(openapi)
+
+
+def test_next_minor() -> None:
+    assert spec_sync.next_minor("0.1.0") == "0.2.0"
+    assert spec_sync.next_minor("1.9.3") == "1.10.0"
+    assert spec_sync.next_minor("garbage") == "0.1.0"
 
 
 def test_moved_operation_is_not_deprecated(openapi: pathlib.Path) -> None:
@@ -237,7 +541,7 @@ def test_moved_operation_is_not_deprecated(openapi: pathlib.Path) -> None:
     changed, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
     assert changed
     assert "moved to `GET /v3/billing/balance-v2/`" in summary
-    assert _read(openapi / "deprecated-operations.json")["operations"] == {}
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
     load(openapi)
 
 

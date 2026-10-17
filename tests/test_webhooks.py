@@ -213,6 +213,25 @@ def test_empty_secret_is_a_configuration_error(secret: Any, frozen_time: list[fl
         webhooks.verify(body, headers, secret)
 
 
+@pytest.mark.parametrize(
+    ("secret", "message"),
+    [
+        (None, "No webhook secret"),
+        (b"whsec_test_unit_secret_0001", "not bytes"),
+        ([SECRET, None], "must be a str"),
+        (5, "a str or a list"),
+    ],
+)
+def test_missing_or_wrongly_typed_secret_is_a_configuration_error(
+    secret: Any, message: str, frozen_time: list[float]
+) -> None:
+    body, headers = _delivery(_payload())
+    with pytest.raises(ConfigurationError, match=message):
+        webhooks.verify(body, headers, secret)
+    with pytest.raises(ConfigurationError, match=message):
+        webhooks.verify_parsed(json.loads(body), headers, secret)
+
+
 def test_tolerance_boundaries(frozen_time: list[float]) -> None:
     body, headers = _delivery(_payload())
     frozen_time[0] = NOW + 300
@@ -231,6 +250,67 @@ def test_negative_tolerance_is_a_configuration_error(frozen_time: list[float]) -
     body, headers = _delivery(_payload())
     with pytest.raises(ConfigurationError):
         webhooks.verify(body, headers, SECRET, tolerance=-1)
+    # Checked before the body, so a bad body cannot hide the configuration error.
+    with pytest.raises(ConfigurationError):
+        webhooks.verify(b"x", headers, SECRET, tolerance=-1)
+    with pytest.raises(ConfigurationError):
+        webhooks.verify_parsed({}, headers, SECRET, tolerance=-1)
+    for bad in (float("nan"), True, "300"):
+        with pytest.raises(ConfigurationError):
+            webhooks.verify(body, headers, SECRET, tolerance=bad)  # type: ignore[arg-type]
+
+
+def _nested(depth: int) -> bytes:
+    return b'{"timestamp": 1760702400, "x": ' + b"[" * depth + b"]" * depth + b"}"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b'{"timestamp": 1' + b"0" * 400 + b', "webhook_type": "status.updated"}',
+        b'{"timestamp": -1' + b"0" * 400 + b"}",
+        _nested(1_500),
+        _nested(30_000),
+    ],
+    ids=["huge-timestamp", "huge-negative-timestamp", "deep-1500", "deep-30000"],
+)
+def test_hostile_bodies_are_verification_errors(body: bytes, frozen_time: list[float]) -> None:
+    # Anyone can send these before any signature is checked; a receiver that
+    # catches WebhookVerificationError must never see anything else.
+    headers = {"X-Signature-V2": "0" * 64, "X-Signature": "0" * 64}
+    with pytest.raises(WebhookVerificationError) as info:
+        webhooks.verify(body, headers, SECRET)
+    assert info.value.reason in (
+        "invalid_payload",
+        "timestamp_out_of_tolerance",
+        "invalid_signature",
+    )
+
+
+def test_deeply_nested_parsed_payload_is_a_verification_error(frozen_time: list[float]) -> None:
+    payload: dict[str, Any] = {"timestamp": NOW}
+    node: list[Any] = []
+    payload["x"] = node
+    for _ in range(5_000):
+        child: list[Any] = []
+        node.append(child)
+        node = child
+    with pytest.raises(WebhookVerificationError) as info:
+        webhooks.verify_parsed(payload, {"X-Signature-V2": "0" * 64}, SECRET)
+    assert info.value.reason == "invalid_payload"
+
+
+def test_str_body_with_a_lone_surrogate_is_invalid(frozen_time: list[float]) -> None:
+    body = '{"timestamp": 1760702400, "x": "' + chr(0xD800) + '"}'
+    with pytest.raises(WebhookVerificationError) as info:
+        webhooks.verify(body, {"X-Signature": "0" * 64}, SECRET)
+    assert info.value.reason == "invalid_payload"
+
+
+def test_raw_asgi_header_pairs(frozen_time: list[float]) -> None:
+    body, headers = _delivery(_payload())
+    scope_headers = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
+    assert webhooks.verify(body, scope_headers, SECRET).body_authenticated  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
@@ -244,6 +324,7 @@ def test_negative_tolerance_is_a_configuration_error(frozen_time: list[float]) -
         (b'{"webhook_type": "status.updated"}', "missing_timestamp"),
         (b'{"timestamp": "1760702400"}', "missing_timestamp"),
         (b'{"timestamp": true}', "missing_timestamp"),
+        (b'{"timestamp": 1760702400.0}', "missing_timestamp"),
     ],
 )
 def test_malformed_bodies(body: bytes, reason: str, frozen_time: list[float]) -> None:
@@ -253,9 +334,12 @@ def test_malformed_bodies(body: bytes, reason: str, frozen_time: list[float]) ->
     assert info.value.reason == reason
 
 
-def test_timestamp_header_must_be_an_integer(frozen_time: list[float]) -> None:
+@pytest.mark.parametrize(
+    "value", ["soon", "", "1_760_702_400", "+1760702400", "1760702400.0", "\u0661760702400"]
+)
+def test_timestamp_header_must_be_plain_digits(value: str, frozen_time: list[float]) -> None:
     body, headers = _delivery(_payload())
-    headers["X-Timestamp"] = "soon"
+    headers["X-Timestamp"] = value
     with pytest.raises(WebhookVerificationError) as info:
         webhooks.verify(body, headers, SECRET)
     assert info.value.reason == "timestamp_mismatch"

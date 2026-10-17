@@ -27,4 +27,4 @@ class BusinessesUpdateParams(TypedDict, total=False):
     """Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry."""
 
     metadata: Mapping[str, object] | None
-    """Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update — merge client-side if you only want to add keys."""
+    """Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys."""

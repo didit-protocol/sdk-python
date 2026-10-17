@@ -55,7 +55,7 @@ class AccountApplications(SyncAPIResource):
     ) -> object:
         """List the organization's applications.
 
-        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine — follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
+        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine - follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
 
         ``GET /organizations/me/{org_id}/applications/``
 
@@ -268,7 +268,7 @@ class AsyncAccountApplications(AsyncAPIResource):
     ) -> object:
         """List the organization's applications.
 
-        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine — follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
+        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine - follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
 
         ``GET /organizations/me/{org_id}/applications/``
 

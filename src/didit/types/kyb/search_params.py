@@ -10,7 +10,7 @@ __all__ = ["KybSearchParams"]
 
 class KybSearchParams(TypedDict, total=False):
     country_code: Required[str]
-    """ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision — a bare `US` is rejected. Case-insensitive; normalized to upper case."""
+    """ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision - a bare `US` is rejected. Case-insensitive; normalized to upper case."""
 
     name: str
     """Company name to search for. Either `name` or `registration_number` is required."""

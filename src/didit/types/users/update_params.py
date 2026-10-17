@@ -23,7 +23,7 @@ class UsersUpdateParams(TypedDict, total=False):
     """User lifecycle status. Changing it via this generic PATCH does NOT sync the system blocklist or record a status-change activity; prefer the update-status endpoint."""
 
     metadata: Mapping[str, object] | None
-    """Arbitrary JSON object you attach to the user. **Fully replaces** the existing metadata on update — merge client-side if you only want to add keys."""
+    """Arbitrary JSON object you attach to the user. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys."""
 
     approved_emails: Sequence[str]
     """Verified email addresses for this user, e.g. `["john@example.com"]`. Fully replaces the stored list."""

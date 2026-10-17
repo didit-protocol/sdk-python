@@ -157,7 +157,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionImportJob:
         """Retrieve a verification import job.
 
-        Retrieve import progress counters and terminal status for one job. Poll until `status` is `COMPLETED` or `FAILED`; `failed_count` > 0 means some rows were rejected — list them via the errors endpoint.
+        Retrieve import progress counters and terminal status for one job. Poll until `status` is `COMPLETED` or `FAILED`; `failed_count` > 0 means some rows were rejected - list them via the errors endpoint.
 
         ``GET /v3/session/imports/{importId}/``
 
@@ -353,7 +353,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionImportJob:
         """Retrieve a verification import job.
 
-        Retrieve import progress counters and terminal status for one job. Poll until `status` is `COMPLETED` or `FAILED`; `failed_count` > 0 means some rows were rejected — list them via the errors endpoint.
+        Retrieve import progress counters and terminal status for one job. Poll until `status` is `COMPLETED` or `FAILED`; `failed_count` > 0 means some rows were rejected - list them via the errors endpoint.
 
         ``GET /v3/session/imports/{importId}/``
 

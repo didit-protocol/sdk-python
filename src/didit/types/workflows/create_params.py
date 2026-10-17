@@ -14,7 +14,7 @@ class WorkflowsCreateParams(TypedDict, total=False):
     """Create a simple linear workflow. The API converts this feature list into a node-based workflow graph internally. STRICT field whitelist: any key not listed here (including `workflow_type`) is rejected with a 400."""
 
     workflow_label: str
-    """Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted — always set it so workflows stay distinguishable."""
+    """Display name for the workflow (max 50 characters). Defaults to `"ID Verification"` when omitted - always set it so workflows stay distinguishable."""
 
     is_default: bool
     """Set this workflow as the default for new sessions."""

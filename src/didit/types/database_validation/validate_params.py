@@ -30,16 +30,16 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """ISO 3166-1 **alpha-3** country code of the registry to validate against (e.g. `BRA`, `ESP`, `COL`). Determines which services are available. Unsupported codes return `400` with the full list of valid options."""
 
     services: Sequence[str]
-    """Catalog `service_id`s to run for this country (e.g. `["bra_cpf"]`). Also accepts a single string or a comma-separated/JSON-encoded string. **If omitted or empty, exactly one default service runs** — the longest-established live service for the country; newer, biometric, and pay-as-you-go services must be named explicitly. Sending `services` switches the response to the extended shape (adds `services_used` and `match_score`). Every id must exist and be live for the `issuing_state`; services that require onboarding return `400` until activated for your organization. Discover available services per country via `GET /v1/organization/database-validation-countries/` (a catalog endpoint not documented in this spec) or the Business Console workflow editor."""
+    """Catalog `service_id`s to run for this country (e.g. `["bra_cpf"]`). Also accepts a single string or a comma-separated/JSON-encoded string. **If omitted or empty, exactly one default service runs** - the longest-established live service for the country; newer, biometric, and pay-as-you-go services must be named explicitly. Sending `services` switches the response to the extended shape (adds `services_used` and `match_score`). Every id must exist and be live for the `issuing_state`; services that require onboarding return `400` until activated for your organization. Discover available services per country via `GET /v1/organization/database-validation-countries/` (a catalog endpoint not documented in this spec) or the Business Console workflow editor."""
 
     validation_type: str
-    """Deprecated. DEPRECATED. Accepted for backward compatibility but ignored — the response `validation_type` is now derived from how many services full-matched. Use `services` to pin specific services."""
+    """Deprecated. DEPRECATED. Accepted for backward compatibility but ignored - the response `validation_type` is now derived from how many services full-matched. Use `services` to pin specific services."""
 
     consent: bool
-    """Set to `true` when the end user has explicitly consented to the selected validation services. Required for services flagged `requires_consent=true` in the catalog — without it those services return `400` with `services_requiring_consent`."""
+    """Set to `true` when the end user has explicitly consented to the selected validation services. Required for services flagged `requires_consent=true` in the catalog - without it those services return `400` with `services_requiring_consent`."""
 
     identification_number: str
-    """Universal identification number — automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field."""
+    """Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field."""
 
     first_name: str
     """The individual's first name. Required by some services/countries."""
@@ -51,7 +51,7 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """Middle name, used by some country services (AUS, NZL, …)."""
 
     full_name: str
-    """Full name — some services accept this in lieu of first/last name (e.g. CHN services, which match the native-script name)."""
+    """Full name - some services accept this in lieu of first/last name (e.g. CHN services, which match the native-script name)."""
 
     date_of_birth: str | _dt.date
     """Date of birth, `YYYY-MM-DD`. Required by many services."""
@@ -224,4 +224,4 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """Free-form JSON stored with the request and echoed back."""
 
     selfie: FileTypes
-    """Selfie image (`jpg`, `jpeg`, `png`, `webp`; max 2 MB — images are compressed to ~1.5 MB before upload to the registry) for biometric validation services, e.g. Argentina RENAPER (`arg_renaper`) and Panama SIB (`pan_cedula_sib`, `pan_cedula_sib_plus`). Required whenever a selected service lists it as a required field. Only available via `multipart/form-data`."""
+    """Selfie image (`jpg`, `jpeg`, `png`, `webp`; max 2 MB - images are compressed to ~1.5 MB before upload to the registry) for biometric validation services, e.g. Argentina RENAPER (`arg_renaper`) and Panama SIB (`pan_cedula_sib`, `pan_cedula_sib_plus`). Required whenever a selected service lists it as a required field. Only available via `multipart/form-data`."""

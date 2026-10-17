@@ -9,7 +9,7 @@ __all__ = ["SessionsImportsListErrorsResponse"]
 
 class SessionsImportsListErrorsResponse(BaseModel):
     count: int | None = None
-    """Number of error rows — exact up to 100, capped at 100 beyond that. Rely on `next` being `null` to detect the last page."""
+    """Number of error rows - exact up to 100, capped at 100 beyond that. Rely on `next` being `null` to detect the last page."""
 
     next: str | None = None
     """Absolute URL of the next page, or `null` on the last page."""

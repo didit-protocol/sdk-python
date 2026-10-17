@@ -15,7 +15,7 @@ class WebhooksDestinationsCreateParams(TypedDict, total=False):
     """Human-readable name displayed in Console → Webhooks. Helps distinguish destinations when you have several (e.g. "Prod", "Staging mirror")."""
 
     url: Required[str]
-    """HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint — Didit retries failed deliveries on a backoff schedule."""
+    """HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint - Didit retries failed deliveries on a backoff schedule."""
 
     enabled: bool
     """When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked."""

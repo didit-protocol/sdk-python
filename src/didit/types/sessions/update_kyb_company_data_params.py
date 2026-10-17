@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdateKybCompanyDataParams"]
 
 
 class SessionsUpdateKybCompanyDataParams(TypedDict, total=False):
-    """All fields optional — send only what you want to change. Provided fields update the canonical company columns (where one exists) and are merged into the `registry_data` snapshot."""
+    """All fields optional - send only what you want to change. Provided fields update the canonical company columns (where one exists) and are merged into the `registry_data` snapshot."""
 
     company_name: str
     """Legal name of the company. Written to the canonical column and the registry snapshot."""
@@ -22,10 +22,10 @@ class SessionsUpdateKybCompanyDataParams(TypedDict, total=False):
     """Country of incorporation, ISO 3166-1 alpha-2. Case-insensitive (`us` is stored as `US`). Alpha-3 codes fail the 2-character limit with `400`."""
 
     region: str | None
-    """Subdivision / region tag where the registry has one (e.g. US state). Stored in the registry snapshot only — it has no canonical column."""
+    """Subdivision / region tag where the registry has one (e.g. US state). Stored in the registry snapshot only - it has no canonical column."""
 
     incorporation_date: str | _dt.date
-    """Incorporation date in `YYYY-MM-DD`. Optional like every other field — the `PATCH` is partial. Any other date format returns `400`."""
+    """Incorporation date in `YYYY-MM-DD`. Optional like every other field - the `PATCH` is partial. Any other date format returns `400`."""
 
     registration_date: str | _dt.date | None
     """Registration date where the registry distinguishes it from incorporation. Stored in the registry snapshot only."""
@@ -37,7 +37,7 @@ class SessionsUpdateKybCompanyDataParams(TypedDict, total=False):
     """Tax identification number."""
 
     legal_address: str
-    """Legal / registered address. Aliased server-side to the canonical `registered_address` column — the response returns it under `registered_address`, while the registry snapshot keeps the `legal_address` key you sent."""
+    """Legal / registered address. Aliased server-side to the canonical `registered_address` column - the response returns it under `registered_address`, while the registry snapshot keeps the `legal_address` key you sent."""
 
     company_type: str
     """Legal entity type (e.g. `Limited Liability Company`, `PLC`, `GmbH`)."""
@@ -86,7 +86,7 @@ class SessionsUpdateKybCompanyDataParams(TypedDict, total=False):
     """Contact email on file with the registry."""
 
     phone: str
-    """Contact phone. Must match `+`, digits, spaces, dashes, dots, or parentheses, with 7-15 digits total — otherwise `400`."""
+    """Contact phone. Must match `+`, digits, spaces, dashes, dots, or parentheses, with 7-15 digits total - otherwise `400`."""
 
     legal_entity_identifier: str
     """LEI, where the company has one."""
@@ -95,7 +95,7 @@ class SessionsUpdateKybCompanyDataParams(TypedDict, total=False):
     """City / subdivision of the registry of record."""
 
     vat_number: str
-    """EU VAT number. Merged into the `registry_data` snapshot only — editing it here does not re-run VAT and tax ID validation, so `vat_validation_status` and the other `vat_*` result fields are unchanged."""
+    """EU VAT number. Merged into the `registry_data` snapshot only - editing it here does not re-run VAT and tax ID validation, so `vat_validation_status` and the other `vat_*` result fields are unchanged."""
 
     control_scheme: str
     """Control / governance scheme when the registry exposes it. Stored in the registry snapshot only."""

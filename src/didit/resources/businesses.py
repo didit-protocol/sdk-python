@@ -83,7 +83,7 @@ class Businesses(SyncAPIResource):
     ) -> SyncPage[BusinessListItem]:
         """List businesses.
 
-        List [businesses](/entities/businesses) Didit assembles from KYB sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus businesses created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters — fetch pages and filter client-side.
+        List [businesses](/entities/businesses) Didit assembles from KYB sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus businesses created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters - fetch pages and filter client-side.
 
         ``GET /v3/businesses/``
 
@@ -127,7 +127,7 @@ class Businesses(SyncAPIResource):
         ``GET /v3/businesses/{vendor_data}/``
 
         Args:
-          vendor_data: Your unique identifier for the business — a free-form string (NOT a UUID), matched exactly as sent.
+          vendor_data: Your unique identifier for the business - a free-form string (NOT a UUID), matched exactly as sent.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -176,7 +176,7 @@ class Businesses(SyncAPIResource):
           registration_number: Company registration or incorporation number.
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
-          metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update — merge client-side if you only want to add keys.
+          metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -217,7 +217,7 @@ class Businesses(SyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business status.
 
-        Flip only the lifecycle `status` of a business — VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
+        Flip only the lifecycle `status` of a business - VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
 
         ``PATCH /v3/businesses/{vendor_data}/update-status/``
 
@@ -258,7 +258,7 @@ class Businesses(SyncAPIResource):
     ) -> BusinessesBatchDeleteResponse:
         """Batch delete businesses.
 
-        **Permanently delete** businesses — this cannot be undone. For blocking prefer [Update Business Status](#patch-/v3/businesses/-vendor_data-/update-status/) with `BLOCKED`.
+        **Permanently delete** businesses - this cannot be undone. For blocking prefer [Update Business Status](#patch-/v3/businesses/-vendor_data-/update-status/) with `BLOCKED`.
 
         ``POST /v3/businesses/delete/``
 
@@ -365,7 +365,7 @@ class Businesses(SyncAPIResource):
     ) -> BusinessDetailItem:
         """Create business.
 
-        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` — without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
+        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
 
         ``POST /v3/businesses/create/``
 
@@ -698,7 +698,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> AsyncPaginator[BusinessListItem]:
         """List businesses.
 
-        List [businesses](/entities/businesses) Didit assembles from KYB sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus businesses created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters — fetch pages and filter client-side.
+        List [businesses](/entities/businesses) Didit assembles from KYB sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus businesses created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters - fetch pages and filter client-side.
 
         ``GET /v3/businesses/``
 
@@ -742,7 +742,7 @@ class AsyncBusinesses(AsyncAPIResource):
         ``GET /v3/businesses/{vendor_data}/``
 
         Args:
-          vendor_data: Your unique identifier for the business — a free-form string (NOT a UUID), matched exactly as sent.
+          vendor_data: Your unique identifier for the business - a free-form string (NOT a UUID), matched exactly as sent.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -791,7 +791,7 @@ class AsyncBusinesses(AsyncAPIResource):
           registration_number: Company registration or incorporation number.
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
-          metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update — merge client-side if you only want to add keys.
+          metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -832,7 +832,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business status.
 
-        Flip only the lifecycle `status` of a business — VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
+        Flip only the lifecycle `status` of a business - VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
 
         ``PATCH /v3/businesses/{vendor_data}/update-status/``
 
@@ -873,7 +873,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessesBatchDeleteResponse:
         """Batch delete businesses.
 
-        **Permanently delete** businesses — this cannot be undone. For blocking prefer [Update Business Status](#patch-/v3/businesses/-vendor_data-/update-status/) with `BLOCKED`.
+        **Permanently delete** businesses - this cannot be undone. For blocking prefer [Update Business Status](#patch-/v3/businesses/-vendor_data-/update-status/) with `BLOCKED`.
 
         ``POST /v3/businesses/delete/``
 
@@ -980,7 +980,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessDetailItem:
         """Create business.
 
-        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` — without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
+        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
 
         ``POST /v3/businesses/create/``
 
