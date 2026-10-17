@@ -365,9 +365,7 @@ def _breaking(summary: str) -> str:
     return summary.split("## Breaking changes", 1)[1].split("\n## ", 1)[0]
 
 
-def _name_op(
-    openapi: pathlib.Path, spec: Any, path: str, http_method: str, **naming: Any
-) -> None:
+def _name_op(openapi: pathlib.Path, spec: Any, path: str, http_method: str, **naming: Any) -> None:
     key = f"{http_method.upper()} {path}"
     spec["paths"][path][http_method]["x-didit-sdk"] = {**_naming(openapi, key), **naming}
 
