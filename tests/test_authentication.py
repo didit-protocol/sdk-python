@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import functools
 import hashlib
 import hmac
 import json
