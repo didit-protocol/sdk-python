@@ -1,0 +1,1612 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Didit Auth API",
+    "description": "Programmatic registration and authentication API for developers and AI agents. Register in 2 API calls -- no browser needed. The most agent-friendly identity verification platform.\n\n## Base URL\n\nAll endpoints in this spec are hosted at `https://apx.didit.me/auth/v2`. This is a different host than the verification API (`https://verification.didit.me/v3`). Keep them straight: this auth host issues your **JWT access tokens** and lets you list and manage your **organizations** and **applications**. The verification host is where you call sessions, workflows, AML, etc., authenticated with the **`api_key`** returned by this API.\n\n## How the auth flow works\n\n1. `POST /programmatic/register/` — submit email + password.\n2. Receive a 6-character alphanumeric code by email.\n3. `POST /programmatic/verify-email/` — submit the code. You get back a JWT `access_token`, a `refresh_token`, an organization, and a default application with `client_id` + `api_key`.\n4. Save the `api_key`. Use it as `x-api-key` for every call to `https://verification.didit.me/v3/...`.\n5. From any future machine, `POST /programmatic/login/` exchanges your email + password for a fresh JWT, then call `GET /organizations/me/` and the application endpoints to recover or rotate credentials.\n\nThe JWT is only needed for the **Account Management** endpoints in this spec; verification API traffic uses the long-lived `api_key`, not the JWT.\n\n## Conventions\n\n- All request and response bodies are JSON (`Content-Type: application/json`).\n- **Use a real, deliverable email address when testing `POST /programmatic/register/`.** The endpoint sends the verification code synchronously, so addresses on reserved test domains (`@example.com`, `@example.org`, `@*.test`, `@*.example`, `@*.invalid`) are refused by mail delivery and the request returns a `500`. Substitute the `you@yourdomain.com` placeholder in the samples with an inbox you can actually read.\n- Validation errors return HTTP `400` with one of two envelopes: `{\"field\": [\"message\", ...]}` for field-level problems, or `{\"detail\": \"message\"}` for business-rule errors. A handful of validators (password strength on register, code expiry on verify-email) currently respond with a bare array `[\"message\"]` instead of the field-keyed form -- this is a known server-side inconsistency, so client code should accept both shapes.\n- Authentication errors come back as `{\"detail\": \"...\"}` with HTTP `401` (invalid bearer token) or `403` (missing bearer token / insufficient privileges).\n- Rate-limit responses include a `wait` field with the cooldown in seconds."
+  },
+  "servers": [
+    {
+      "url": "https://apx.didit.me/auth/v2",
+      "description": "Production auth server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Programmatic Auth",
+      "description": "Email-and-password account lifecycle: register, verify, login. Returns the JWT `access_token` you use against the Account Management endpoints, plus (on verify) your first application's `client_id` and `api_key`."
+    },
+    {
+      "name": "Account Management",
+      "description": "Authenticated endpoints (JWT bearer) that list organizations and create, fetch, or update applications. Use these to recover or rotate the `api_key` you authenticate verification API calls with."
+    }
+  ],
+  "paths": {
+    "/programmatic/register/": {
+      "post": {
+        "summary": "Register Account",
+        "description": "Step 1 of programmatic onboarding. Creates a pending account and emails a 6-char code (10 min TTL). Rate limit: 5/IP/hour.",
+        "operationId": "programmatic_register",
+        "tags": [
+          "Programmatic Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "examples": {
+                "Gmail": {
+                  "summary": "Register with a personal Gmail",
+                  "value": {
+                    "email": "you@yourdomain.com",
+                    "password": "MyStr0ng!Pass"
+                  }
+                },
+                "Work": {
+                  "summary": "Register with a work email",
+                  "value": {
+                    "email": "you@yourcompany.com",
+                    "password": "C0mplex#Pass1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful. A 6-character alphanumeric verification code (e.g., `A3K9F2`) was emailed to the supplied address and is valid for 10 minutes. Call `POST /programmatic/verify-email/` next.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "message": "Registration successful. Check your email for the verification code.",
+                      "email": "you@yourdomain.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level errors and `{\"detail\": \"...\"}` for business-rule errors (e.g. duplicate email). Password-strength rules currently respond with a bare array `[\"...\"]`, one rule at a time -- known server-side inconsistency; treat it as `{\"password\": [\"...\"]}` until fixed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "MissingFields": {
+                    "summary": "Empty body",
+                    "value": {
+                      "email": [
+                        "This field is required."
+                      ],
+                      "password": [
+                        "This field is required."
+                      ]
+                    }
+                  },
+                  "InvalidEmail": {
+                    "summary": "Malformed email",
+                    "value": {
+                      "email": [
+                        "Enter a valid email address."
+                      ]
+                    }
+                  },
+                  "PasswordTooShort": {
+                    "summary": "Password under 8 chars",
+                    "value": {
+                      "password": [
+                        "Ensure this field has at least 8 characters."
+                      ]
+                    }
+                  },
+                  "PasswordMissingUppercase": {
+                    "summary": "Password missing an uppercase letter",
+                    "value": [
+                      "Password must contain at least one uppercase letter."
+                    ]
+                  },
+                  "PasswordMissingLowercase": {
+                    "summary": "Password missing a lowercase letter",
+                    "value": [
+                      "Password must contain at least one lowercase letter."
+                    ]
+                  },
+                  "PasswordMissingDigit": {
+                    "summary": "Password missing a digit",
+                    "value": [
+                      "Password must contain at least one digit."
+                    ]
+                  },
+                  "PasswordMissingSpecial": {
+                    "summary": "Password missing a special character",
+                    "value": [
+                      "Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)."
+                    ]
+                  },
+                  "Duplicate": {
+                    "summary": "Email already has an account",
+                    "value": {
+                      "detail": "An account with this email already exists."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited. More than 5 registration attempts from the same IP in the last hour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                },
+                "examples": {
+                  "RateLimited": {
+                    "value": {
+                      "detail": "Too many registration attempts. Please try again later."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://apx.didit.me/auth/v2/programmatic/register/ \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"you@yourdomain.com\",\n    \"password\": \"MyStr0ng!Pass\"\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/register/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"password\": \"MyStr0ng!Pass\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\nprint(resp.json())\n# {'message': 'Registration successful...', 'email': 'you@yourdomain.com'}"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/register/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      password: \"MyStr0ng!Pass\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Register failed: ${resp.status}`);\nconst data = await resp.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
+    "/programmatic/verify-email/": {
+      "post": {
+        "summary": "Verify Email and Issue Credentials",
+        "description": "Step 2 of onboarding. Exchanges the 6-char code for a verified account, a default org+app, and a JWT pair. Persist the returned `api_key`.",
+        "operationId": "programmatic_verify_email",
+        "tags": [
+          "Programmatic Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              },
+              "examples": {
+                "Default": {
+                  "summary": "Submit the code from the registration email",
+                  "value": {
+                    "email": "you@yourdomain.com",
+                    "code": "A3K9F2"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified. The response contains tokens for this auth API plus the brand-new application's `client_id` and `api_key`. Persist the `api_key` securely — it is the long-lived credential used by every verification API call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "expires_in": 86400,
+                      "organization": {
+                        "uuid": "a1b2c3d4-5678-90ab-cdef-111111111111",
+                        "name": "developer"
+                      },
+                      "application": {
+                        "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
+                        "name": "developer",
+                        "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
+                        "api_key": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level problems and `{\"detail\": \"...\"}` for business-rule errors (e.g. user not found). Wrong-or-expired-code errors currently respond with a bare array `[\"Invalid or expired verification code.\"]` -- known server-side inconsistency; treat it as `{\"code\": [\"...\"]}` until fixed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "MissingFields": {
+                    "summary": "Empty body",
+                    "value": {
+                      "email": [
+                        "This field is required."
+                      ],
+                      "code": [
+                        "This field is required."
+                      ]
+                    }
+                  },
+                  "CodeTooShort": {
+                    "summary": "Code under 6 characters",
+                    "value": {
+                      "code": [
+                        "Ensure this field has at least 6 characters."
+                      ]
+                    }
+                  },
+                  "InvalidEmail": {
+                    "summary": "Malformed email",
+                    "value": {
+                      "email": [
+                        "Enter a valid email address."
+                      ]
+                    }
+                  },
+                  "InvalidCode": {
+                    "summary": "Wrong or expired code",
+                    "value": [
+                      "Invalid or expired verification code."
+                    ]
+                  },
+                  "UserNotFound": {
+                    "summary": "No pending account for that email",
+                    "value": {
+                      "detail": "User not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://apx.didit.me/auth/v2/programmatic/verify-email/ \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"you@yourdomain.com\",\n    \"code\": \"A3K9F2\"\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/verify-email/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"code\": \"A3K9F2\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\ndata = resp.json()\n\napi_key = data[\"application\"][\"api_key\"]\nprint(f\"Save this for x-api-key: {api_key}\")"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/verify-email/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      code: \"A3K9F2\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Verify failed: ${resp.status}`);\nconst { application, access_token } = await resp.json();\n// application.api_key -> x-api-key for verification.didit.me/v3\n// access_token -> Authorization: Bearer ... for this auth API"
+          }
+        ]
+      }
+    },
+    "/programmatic/login/": {
+      "post": {
+        "summary": "Programmatic Login",
+        "description": "Authenticate any verified email/password Didit account and receive an RS256 JWT pair (default lifetime 86400s). Console-created email/password accounts can use this endpoint; OAuth-only console accounts must set a password first.",
+        "operationId": "programmatic_login",
+        "tags": [
+          "Programmatic Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "examples": {
+                "Default": {
+                  "summary": "Programmatic login",
+                  "value": {
+                    "email": "you@yourdomain.com",
+                    "password": "MyStr0ng!Pass"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful. Returns a fresh JWT pair. Use the `access_token` as `Authorization: Bearer <token>` against `/organizations/me/...` to look up the `org_id`, `app_id`, and `api_key`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "expires_in": 86400,
+                      "message": "Login successful"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error. Field-level problems with the request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "MissingFields": {
+                    "summary": "Empty body",
+                    "value": {
+                      "email": [
+                        "This field is required."
+                      ],
+                      "password": [
+                        "This field is required."
+                      ]
+                    }
+                  },
+                  "InvalidEmail": {
+                    "summary": "Malformed email",
+                    "value": {
+                      "email": [
+                        "Enter a valid email address."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication refused.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "InvalidCredentials": {
+                    "summary": "Email + password did not match (also returned when the account does not exist, to avoid user-enumeration)",
+                    "value": {
+                      "detail": "Invalid email or password."
+                    }
+                  },
+                  "NotVerified": {
+                    "summary": "Account exists but email is not yet verified",
+                    "value": {
+                      "detail": "Please verify your email address before logging in."
+                    }
+                  },
+                  "SSORequired": {
+                    "summary": "The account belongs to an organization that requires SSO",
+                    "value": {
+                      "detail": {
+                        "error": "sso_required",
+                        "message": "Your organization 'Acme Corp' requires SSO login.",
+                        "organization_name": "Acme Corp",
+                        "organization_slug": "acme-corp",
+                        "sso_url": "/sso/acme-corp"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Account locked (too many recent failures on this email) or IP rate-limited (too many attempts from this address).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                },
+                "examples": {
+                  "AccountLocked": {
+                    "summary": "Progressive lockout tripped",
+                    "value": {
+                      "detail": "Account temporarily locked due to too many failed login attempts. Please try again later."
+                    }
+                  },
+                  "IPRateLimited": {
+                    "summary": "More than 20/min or 100/hour from this IP",
+                    "value": {
+                      "detail": "Too many login attempts from this IP address. Please wait before trying again."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://apx.didit.me/auth/v2/programmatic/login/ \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"you@yourdomain.com\",\n    \"password\": \"MyStr0ng!Pass\"\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/login/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"password\": \"MyStr0ng!Pass\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\ntokens = resp.json()\naccess_token = tokens[\"access_token\"]\n\n# Use against the Account Management endpoints on this host\norgs = requests.get(\n    \"https://apx.didit.me/auth/v2/organizations/me/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n).json()"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/login/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      password: \"MyStr0ng!Pass\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Login failed: ${resp.status}`);\nconst { access_token } = await resp.json();\n\n// Use against the Account Management endpoints on this host\nconst orgs = await fetch(\n  \"https://apx.didit.me/auth/v2/organizations/me/\",\n  { headers: { Authorization: `Bearer ${access_token}` } },\n).then((r) => r.json());"
+          }
+        ]
+      }
+    },
+    "/organizations/me/": {
+      "get": {
+        "summary": "List My Organizations",
+        "description": "List organizations the authenticated user belongs to. Each entry's `uuid` is the `org_id` used on the application endpoints.",
+        "operationId": "list_my_organizations",
+        "tags": [
+          "Account Management"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of organizations the authenticated user belongs to. Use the `uuid` of an entry as `{org_id}` on the application endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Organization"
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "summary": "A freshly-registered programmatic account",
+                    "value": [
+                      {
+                        "uuid": "a1b2c3d4-5678-90ab-cdef-111111111111",
+                        "name": "developer",
+                        "contact_email": "developer@gmail.com",
+                        "created_at": "2025-06-01T10:00:00Z"
+                      }
+                    ]
+                  },
+                  "Multi": {
+                    "summary": "A reseller account that manages several customer organizations",
+                    "value": [
+                      {
+                        "uuid": "a1b2c3d4-5678-90ab-cdef-111111111111",
+                        "name": "Acme HQ",
+                        "contact_email": "ops@acme.example",
+                        "created_at": "2025-06-01T10:00:00Z"
+                      },
+                      {
+                        "uuid": "f9e8d7c6-5432-10ab-cdef-444444444444",
+                        "name": "Acme Customer A",
+                        "contact_email": "ops@acme.example",
+                        "created_at": "2025-06-12T08:11:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access token is missing, malformed, or expired. Re-authenticate with `POST /programmatic/login/`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "InvalidToken": {
+                    "value": {
+                      "detail": "Invalid access token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No bearer token was supplied, or the token belongs to an account without the required privileges.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl https://apx.didit.me/auth/v2/organizations/me/ \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\""
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.get(\n    \"https://apx.didit.me/auth/v2/organizations/me/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n)\nresp.raise_for_status()\norgs = resp.json()\nfirst_org_id = orgs[0][\"uuid\"]"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/organizations/me/\",\n  { headers: { Authorization: `Bearer ${accessToken}` } },\n);\nif (!resp.ok) throw new Error(`List orgs failed: ${resp.status}`);\nconst orgs = await resp.json();\nconst firstOrgId = orgs[0].uuid;"
+          }
+        ]
+      }
+    },
+    "/organizations/me/{org_id}/applications/": {
+      "post": {
+        "summary": "Create Application",
+        "description": "Create an application inside an organization. The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.",
+        "operationId": "create_organization_application",
+        "tags": [
+          "Account Management"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the organization. Look it up with `GET /organizations/me/`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "All fields are optional. Omitting the body creates an application with default name `\"<organization name> App\"` and no public URLs configured.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationCreateRequest"
+              },
+              "examples": {
+                "ResellerCustomer": {
+                  "summary": "Reseller spinning up a customer-scoped application",
+                  "value": {
+                    "name": "Acme Customer App",
+                    "website_url": "https://acme.example",
+                    "redirect_uris": [
+                      "https://acme.example/callback"
+                    ],
+                    "terms_url": "https://acme.example/terms",
+                    "privacy_url": "https://acme.example/privacy"
+                  }
+                },
+                "Minimal": {
+                  "summary": "Minimal create -- accept all defaults",
+                  "value": {
+                    "name": "Sandbox App"
+                  }
+                },
+                "Empty": {
+                  "summary": "No body at all -- defaults to <org name> App",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created. The response includes the long-lived `api_key`; persist it now and use it as the `x-api-key` header on every `https://verification.didit.me/v3/...` call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
+                      "name": "Acme Customer App",
+                      "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
+                      "api_key": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo",
+                      "website_url": "https://acme.example",
+                      "redirect_uris": [
+                        "https://acme.example/callback"
+                      ],
+                      "terms_url": "https://acme.example/terms",
+                      "privacy_url": "https://acme.example/privacy",
+                      "description": null,
+                      "created_at": "2025-06-01T10:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error in the request body (for example a malformed redirect URI).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "InvalidUrl": {
+                    "value": {
+                      "website_url": [
+                        "Enter a valid URL."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access token missing, malformed, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "InvalidToken": {
+                    "value": {
+                      "detail": "Invalid access token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user is a member of the organization but is not an owner or admin. Only owners and admins can create applications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found, or the authenticated user is not a member of it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "NotFound": {
+                    "value": {
+                      "detail": "Not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST \"https://apx.didit.me/auth/v2/organizations/me/$ORG_ID/applications/\" \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Acme Customer App\",\n    \"website_url\": \"https://acme.example\",\n    \"redirect_uris\": [\"https://acme.example/callback\"]\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.post(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    json={\n        \"name\": \"Acme Customer App\",\n        \"website_url\": \"https://acme.example\",\n        \"redirect_uris\": [\"https://acme.example/callback\"],\n    },\n    timeout=10,\n)\nresp.raise_for_status()\napp = resp.json()\nprint(\"Save this:\", app[\"api_key\"])"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/`,\n  {\n    method: \"POST\",\n    headers: {\n      Authorization: `Bearer ${accessToken}`,\n      \"Content-Type\": \"application/json\",\n    },\n    body: JSON.stringify({\n      name: \"Acme Customer App\",\n      website_url: \"https://acme.example\",\n      redirect_uris: [\"https://acme.example/callback\"],\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Create app failed: ${resp.status}`);\nconst app = await resp.json();\nconsole.log(\"Save this:\", app.api_key);"
+          }
+        ]
+      },
+      "get": {
+        "summary": "List the organization's applications",
+        "operationId": "get_org_applications_list",
+        "tags": [
+          "Account Management"
+        ],
+        "description": "List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine — follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the organization. Look it up with `GET /organizations/me/`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of applications (same item shape as the application detail response)."
+          },
+          "401": {
+            "description": "Missing/invalid Bearer token."
+          },
+          "403": {
+            "description": "Token holder is not an owner or admin of this organization."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/organizations/me/{org_id}/applications/{app_id}/": {
+      "get": {
+        "summary": "Get Application Credentials",
+        "description": "Read one application's full record including `client_id` and `api_key`. Use this to recover a lost `api_key`.",
+        "operationId": "get_application_credentials",
+        "tags": [
+          "Account Management"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the organization that owns the application.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+            }
+          },
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the application whose credentials you want to read.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "b2c3d4e5-6789-01bc-defg-222222222222"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application record including its `client_id` and `api_key`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
+                      "name": "My App",
+                      "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
+                      "api_key": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo",
+                      "website_url": "https://example.com",
+                      "redirect_uris": [
+                        "https://example.com/callback"
+                      ],
+                      "terms_url": "https://example.com/terms",
+                      "privacy_url": "https://example.com/privacy",
+                      "description": "Production application",
+                      "created_at": "2025-06-01T10:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access token missing, malformed, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "InvalidToken": {
+                    "value": {
+                      "detail": "Invalid access token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bearer token is valid but the user does not have permission to read credentials for this application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found, application not found in that organization, or the authenticated user is not a member of the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "NotFound": {
+                    "value": {
+                      "detail": "Not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl \"https://apx.didit.me/auth/v2/organizations/me/$ORG_ID/applications/$APP_ID/\" \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\""
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.get(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/{app_id}/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n)\nresp.raise_for_status()\napp = resp.json()\napi_key = app[\"api_key\"]  # use as x-api-key on verification.didit.me"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/${appId}/`,\n  { headers: { Authorization: `Bearer ${accessToken}` } },\n);\nif (!resp.ok) throw new Error(`Get app failed: ${resp.status}`);\nconst app = await resp.json();\nconst apiKey = app.api_key; // use as x-api-key on verification.didit.me"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update Application",
+        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. Requires owner/admin JWT.",
+        "operationId": "update_organization_application",
+        "tags": [
+          "Account Management"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the organization that owns the application.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+            }
+          },
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the application to update.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "b2c3d4e5-6789-01bc-defg-222222222222"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Send only the fields you want to change. PATCH semantics: missing fields are preserved.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationUpdateRequest"
+              },
+              "examples": {
+                "RenameCustomerApplication": {
+                  "summary": "Rename and move to a new domain",
+                  "value": {
+                    "name": "Acme Production App",
+                    "website_url": "https://app.acme.example"
+                  }
+                },
+                "UpdateRedirectUris": {
+                  "summary": "Add a second redirect URI",
+                  "value": {
+                    "redirect_uris": [
+                      "https://acme.example/callback",
+                      "https://staging.acme.example/callback"
+                    ]
+                  }
+                },
+                "UpdatePolicies": {
+                  "summary": "Refresh terms and privacy URLs",
+                  "value": {
+                    "terms_url": "https://acme.example/v2/terms",
+                    "privacy_url": "https://acme.example/v2/privacy"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated. The response is the full application record after the change; `uuid`, `client_id`, and `api_key` are unchanged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
+                      "name": "Acme Production App",
+                      "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
+                      "api_key": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo",
+                      "website_url": "https://app.acme.example",
+                      "redirect_uris": [
+                        "https://acme.example/callback"
+                      ],
+                      "terms_url": "https://acme.example/terms",
+                      "privacy_url": "https://acme.example/privacy",
+                      "description": null,
+                      "created_at": "2025-06-01T10:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error in the request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "InvalidUrl": {
+                    "value": {
+                      "website_url": [
+                        "Enter a valid URL."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access token missing, malformed, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "InvalidToken": {
+                    "value": {
+                      "detail": "Invalid access token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The user is a member of the organization but is not an owner or admin. Only owners and admins can update applications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found, application not found in that organization, or user is not a member of the organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                },
+                "examples": {
+                  "NotFound": {
+                    "value": {
+                      "detail": "Not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X PATCH \"https://apx.didit.me/auth/v2/organizations/me/$ORG_ID/applications/$APP_ID/\" \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Acme Production App\",\n    \"website_url\": \"https://app.acme.example\"\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.patch(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/{app_id}/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    json={\n        \"name\": \"Acme Production App\",\n        \"website_url\": \"https://app.acme.example\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\nupdated = resp.json()"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/${appId}/`,\n  {\n    method: \"PATCH\",\n    headers: {\n      Authorization: `Bearer ${accessToken}`,\n      \"Content-Type\": \"application/json\",\n    },\n    body: JSON.stringify({\n      name: \"Acme Production App\",\n      website_url: \"https://app.acme.example\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Update app failed: ${resp.status}`);\nconst updated = await resp.json();"
+          }
+        ]
+      }
+    },
+    "/programmatic/resend-otp/": {
+      "post": {
+        "summary": "Resend the email verification code",
+        "operationId": "post_programmatic_resend_otp",
+        "tags": [
+          "Programmatic Auth"
+        ],
+        "description": "Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.\n\nRate limits: a per-email cooldown of 60 seconds between resends (HTTP 429 with `Retry-After`), and the same 5-per-IP-per-hour budget as registration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email of the pending (unverified) account.",
+                    "example": "dev@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Password chosen at registration.",
+                    "example": "S3cure-Passw0rd!"
+                  }
+                }
+              },
+              "example": {
+                "email": "dev@example.com",
+                "password": "S3cure-Passw0rd!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A new code was emailed.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "A new verification code has been sent to your email."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email/password, or the email is already verified.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Bad credentials": {
+                    "value": {
+                      "detail": "Invalid email or password."
+                    }
+                  },
+                  "Already verified": {
+                    "value": {
+                      "detail": "This email address is already verified."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Cooldown active (60s between resends) or IP budget exhausted (5/hour, shared with registration).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Please wait before requesting a new code."
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "RS256-signed JWT `access_token` returned by `POST /programmatic/login/` or `POST /programmatic/verify-email/`. Send as `Authorization: Bearer <access_token>`. Default lifetime is 86400 seconds (24h). This token is only valid against the Account Management endpoints on `apx.didit.me/auth/v2`. The verification API (`verification.didit.me/v3`) uses the long-lived `api_key` as `x-api-key` instead."
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Any valid email address (personal, work, alias). Used as the unique account identifier.",
+            "example": "you@yourdomain.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "Minimum 8 characters. Must contain at least one uppercase letter (`A-Z`), one lowercase letter (`a-z`), one digit (`0-9`), and one special character from `!@#$%^&*()_+-=[]{}|;:,.<>?`. Validation reports one failed rule at a time.",
+            "example": "MyStr0ng!Pass"
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable confirmation that the verification code was sent.",
+            "example": "Registration successful. Check your email for the verification code."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The email the verification code was sent to.",
+            "example": "you@yourdomain.com"
+          }
+        }
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "code"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email used during `POST /programmatic/register/`.",
+            "example": "you@yourdomain.com"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6,
+            "description": "6-character alphanumeric code from the verification email. Codes expire 10 minutes after the most recent code was sent.",
+            "example": "A3K9F2"
+          }
+        }
+      },
+      "VerifyEmailResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "RS256-signed JWT. Use as `Authorization: Bearer <token>` for Account Management endpoints on `apx.didit.me/auth/v2`."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Refresh token paired with the access token."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Lifetime of the access token in seconds (default 86400).",
+            "example": 86400
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationSummary"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationCredentialsSummary"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "you@yourdomain.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "MyStr0ng!Pass"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "RS256-signed JWT. Use as `Authorization: Bearer <token>` for Account Management endpoints."
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Lifetime of the access token in seconds (default 86400).",
+            "example": 86400
+          },
+          "message": {
+            "type": "string",
+            "example": "Login successful"
+          }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Use as `{org_id}` on the application endpoints.",
+            "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the organization.",
+            "example": "developer"
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Primary contact email for the organization.",
+            "example": "developer@gmail.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-06-01T10:00:00Z"
+          }
+        }
+      },
+      "OrganizationSummary": {
+        "type": "object",
+        "description": "Minimal organization shape returned inline by `POST /programmatic/verify-email/`.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "example": "a1b2c3d4-5678-90ab-cdef-111111111111"
+          },
+          "name": {
+            "type": "string",
+            "example": "developer"
+          }
+        }
+      },
+      "ApplicationCredentialsSummary": {
+        "type": "object",
+        "description": "Minimal application shape returned inline by `POST /programmatic/verify-email/`. Persist the `api_key` immediately.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "example": "b2c3d4e5-6789-01bc-defg-222222222222"
+          },
+          "name": {
+            "type": "string",
+            "example": "developer"
+          },
+          "client_id": {
+            "type": "string",
+            "example": "S9LIYGSoWNuGMLHsvEt9dQ"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "Use this as `x-api-key` on every verification API call.",
+            "example": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo"
+          }
+        }
+      },
+      "Application": {
+        "type": "object",
+        "description": "Full application record. `uuid`, `client_id`, and `api_key` never change after creation.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Application UUID. Use as `{app_id}` in subsequent calls.",
+            "example": "b2c3d4e5-6789-01bc-defg-222222222222"
+          },
+          "name": {
+            "type": "string",
+            "description": "Application display name shown in the Didit console.",
+            "example": "Acme Production App"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "Public client identifier, safe to embed in OAuth-style flows.",
+            "example": "S9LIYGSoWNuGMLHsvEt9dQ"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side.",
+            "example": "05mHcOWL8GathLZlz8oIDawYj9qFAcoSHtz-75PAkuo"
+          },
+          "website_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Website or app URL associated with this application.",
+            "example": "https://acme.example"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed redirect URIs for OAuth-style and verification redirect flows.",
+            "example": [
+              "https://acme.example/callback"
+            ]
+          },
+          "terms_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms of service URL shown in the verification flow.",
+            "example": "https://acme.example/terms"
+          },
+          "privacy_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Privacy policy URL shown in the verification flow.",
+            "example": "https://acme.example/privacy"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Internal description for the application (not shown to end users)."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-06-01T10:00:00Z"
+          }
+        }
+      },
+      "ApplicationCreateRequest": {
+        "type": "object",
+        "description": "All fields are optional. Sending an empty body creates an application with a default name.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Application display name. Defaults to `\"<organization name> App\"`.",
+            "example": "Acme Customer App"
+          },
+          "website_url": {
+            "type": "string",
+            "description": "Website or app URL associated with this application.",
+            "example": "https://acme.example"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed redirect URIs for OAuth-style and verification redirect flows.",
+            "example": [
+              "https://acme.example/callback"
+            ]
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "Terms of service URL shown in the verification flow.",
+            "example": "https://acme.example/terms"
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "Privacy policy URL shown in the verification flow.",
+            "example": "https://acme.example/privacy"
+          },
+          "description": {
+            "type": "string",
+            "description": "Internal description for the application (not shown to end users)."
+          }
+        }
+      },
+      "ApplicationUpdateRequest": {
+        "type": "object",
+        "description": "PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Application display name.",
+            "example": "Acme Production App"
+          },
+          "website_url": {
+            "type": "string",
+            "description": "Website or app URL associated with this application.",
+            "example": "https://app.acme.example"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed redirect URIs for OAuth-style and verification redirect flows.",
+            "example": [
+              "https://acme.example/callback"
+            ]
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "Terms of service URL shown in the verification flow."
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "Privacy policy URL shown in the verification flow."
+          },
+          "description": {
+            "type": "string",
+            "description": "Internal description for the application."
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error body. The intended envelope is a `{field: [\"message\", ...]}` map for field-level errors or a `{detail: \"...\"}` single-key envelope for business-rule errors. A handful of validators (password strength on register, code validity on verify-email) currently respond with a bare array `[\"message\"]` -- known server-side inconsistency. The schema below keeps that bare-array branch so client code generated from this spec deserializes today's responses, but new client code should treat it as the relevant field-keyed form (`{password: [...]}` or `{code: [...]}`) and the server contract will converge on that shape.",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "email": [
+                "Enter a valid email address."
+              ]
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "detail": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "detail": "An account with this email already exists."
+            }
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Invalid or expired verification code."
+            ]
+          }
+        ]
+      },
+      "AuthError": {
+        "type": "object",
+        "description": "Authentication / authorization / not-found error envelope.",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Invalid access token"
+          }
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "description": "Rate-limit or progressive-lockout response. `wait` is the cooldown in seconds.",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Too many login attempts from this IP address. Please wait before trying again."
+          }
+        }
+      }
+    }
+  }
+}
