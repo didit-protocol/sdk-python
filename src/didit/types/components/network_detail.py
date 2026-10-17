@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import datetime as _dt
 
-from didit._models import BaseModel
 from didit.types.components.network_list_item import NetworkListItem
 
 __all__ = ["NetworkDetail"]

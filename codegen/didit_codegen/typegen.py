@@ -223,7 +223,12 @@ class TypeBuilder:
             ann = self._param_inner(spec, schema, base, module, suffix, define_as=py)
             if ann.expr != py:
                 model_alias = self.registry.defs.get(base)
-                if suffix and model_alias is not None and model_alias.kind == "alias" and model_alias.alias == ann:
+                if (
+                    suffix
+                    and model_alias is not None
+                    and model_alias.kind == "alias"
+                    and model_alias.alias == ann
+                ):
                     self._params[key] = base
                 else:
                     self.registry.add(TypeDef("alias", py, module, _description(schema), alias=ann))
@@ -320,11 +325,21 @@ class TypeBuilder:
             parts = schema["allOf"]
             if len(parts) == 1 and not schema.get("properties"):
                 return self.param(spec, parts[0], hint, module, suffix)
-            return self._model(spec, schema, define_as or hint + suffix, module, mode="param", suffix=suffix, hint=hint)
+            return self._model(
+                spec,
+                schema,
+                define_as or hint + suffix,
+                module,
+                mode="param",
+                suffix=suffix,
+                hint=hint,
+            )
         for key in ("oneOf", "anyOf"):
             if key in schema:
                 members = [
-                    self.param(spec, member, self._variant_name(spec, member, hint, i), module, suffix)
+                    self.param(
+                        spec, member, self._variant_name(spec, member, hint, i), module, suffix
+                    )
                     for i, member in enumerate(schema[key])
                 ]
                 return union(members)
@@ -351,7 +366,15 @@ class TypeBuilder:
             return Ann(f"Sequence[{item.expr}]", item.deps | {SEQUENCE})
         if kind == "object" or "properties" in schema:
             if schema.get("properties"):
-                return self._model(spec, schema, define_as or hint + suffix, module, mode="param", suffix=suffix, hint=hint)
+                return self._model(
+                    spec,
+                    schema,
+                    define_as or hint + suffix,
+                    module,
+                    mode="param",
+                    suffix=suffix,
+                    hint=hint,
+                )
             extra = schema.get("additionalProperties")
             if isinstance(extra, dict) and extra:
                 value = self.param(spec, extra, hint + "Value", module, suffix)
@@ -372,7 +395,9 @@ class TypeBuilder:
         kind = schema.get("type")
         if values and all(isinstance(v, str) for v in values):
             return Ann(f"{_literal(values)} | str", frozenset({LITERAL}))
-        if kind == "integer" or (values and all(isinstance(v, int) and not isinstance(v, bool) for v in values)):
+        if kind == "integer" or (
+            values and all(isinstance(v, int) and not isinstance(v, bool) for v in values)
+        ):
             return Ann("int")
         if kind == "boolean":
             return Ann("bool")
@@ -425,10 +450,14 @@ class TypeBuilder:
             ):
                 comp = ref_name.rsplit("/", 1)[1]
                 base_ann = (
-                    self.component_model(spec, comp) if mode == "response" else self.component_param(spec, comp)
+                    self.component_model(spec, comp)
+                    if mode == "response"
+                    else self.component_param(spec, comp)
                 )
                 base_td = self.registry.defs.get(base_ann.expr)
-                if base_td is not None and base_td.kind == ("model" if mode == "response" else "typeddict"):
+                if base_td is not None and base_td.kind == (
+                    "model" if mode == "response" else "typeddict"
+                ):
                     bases.append(base_ann.expr)
                     inherited = set(target.get("properties", {}))
                     base_required = set(target.get("required", []))
@@ -449,7 +478,9 @@ class TypeBuilder:
         taken = set(self.base_names) if mode == "response" else set()
         for wire, prop in own_props.items():
             resolved = spec.resolve(prop) if isinstance(prop, dict) else {}
-            if mode == "response" and (prop.get("writeOnly") is True or resolved.get("writeOnly") is True):
+            if mode == "response" and (
+                prop.get("writeOnly") is True or resolved.get("writeOnly") is True
+            ):
                 continue
             if mode == "param" and resolved.get("readOnly") is True:
                 continue
@@ -470,7 +501,9 @@ class TypeBuilder:
                     annotation=ann,
                     required=is_required,
                     description=_description(prop) or _description(resolved),
-                    deprecated=bool(resolved.get("deprecated")) if isinstance(resolved, dict) else False,
+                    deprecated=bool(resolved.get("deprecated"))
+                    if isinstance(resolved, dict)
+                    else False,
                 )
             )
         return Ann(name, frozenset({name}))

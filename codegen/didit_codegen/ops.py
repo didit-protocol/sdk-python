@@ -12,7 +12,13 @@ from .typegen import Ann, TypeBuilder, TypeDef
 
 Json = Any
 
-BINARY_TYPES = ("application/pdf", "text/csv", "image/", "application/octet-stream", "application/zip")
+BINARY_TYPES = (
+    "application/pdf",
+    "text/csv",
+    "image/",
+    "application/octet-stream",
+    "application/zip",
+)
 
 
 @dataclass
@@ -97,7 +103,10 @@ def _has_binary(spec_schema: Json, op: Operation) -> set[str]:
         return out
     for name, prop in schema.get("properties", {}).items():
         prop = op.spec.resolve(prop)
-        if prop.get("format") == "binary" or (prop.get("type") == "array" and op.spec.resolve(prop.get("items", {})).get("format") == "binary"):
+        if prop.get("format") == "binary" or (
+            prop.get("type") == "array"
+            and op.spec.resolve(prop.get("items", {})).get("format") == "binary"
+        ):
             out.add(name)
     return out
 
@@ -129,7 +138,9 @@ def _merge_body(op: Operation, content: dict[str, Json]) -> tuple[Json, str, lis
         props.setdefault(name, prop)
     merged["properties"] = props
     merged["required"] = [
-        r for r in json_schema.get("required", []) if r in set(multipart_schema.get("required", [])) or r not in files
+        r
+        for r in json_schema.get("required", [])
+        if r in set(multipart_schema.get("required", [])) or r not in files
     ]
     merged.pop("$ref", None)
     return merged, "auto", sorted(files), json_media
@@ -177,7 +188,9 @@ def build_method(op: Operation, builder: TypeBuilder) -> Method:
                 required=True,
                 description=_first_text(param, "description") or None,
                 schema=schema,
-                example=param.get("example", schema.get("example") if isinstance(schema, dict) else None),
+                example=param.get(
+                    "example", schema.get("example") if isinstance(schema, dict) else None
+                ),
                 has_example=has_ex,
             )
         )
@@ -196,6 +209,14 @@ def build_method(op: Operation, builder: TypeBuilder) -> Method:
         body_mode = mode  # type: ignore[assignment]
         has_body_example, body_example = _example_of(media, spec.resolve(schema))
         root = spec.resolve(schema)
+        if isinstance(root, dict) and "allOf" in root:
+            props, required, _ = builder._collect(spec, root)
+            root = {
+                "type": "object",
+                "description": root.get("description"),
+                "properties": props,
+                "required": sorted(required),
+            }
         ann = builder.param(spec, root, params_name, params_module)
         td = builder.registry.defs.get(ann.expr)
         if td is not None and td.kind == "typeddict" and ann.expr == params_name:
@@ -249,7 +270,9 @@ def build_method(op: Operation, builder: TypeBuilder) -> Method:
                 required=bool(param.get("required")),
                 description=_first_text(param, "description") or None,
                 schema=schema,
-                example=param.get("example", schema.get("example") if isinstance(schema, dict) else None),
+                example=param.get(
+                    "example", schema.get("example") if isinstance(schema, dict) else None
+                ),
                 has_example=has_ex,
             )
         )
@@ -335,7 +358,11 @@ def _response(op: Operation, builder: TypeBuilder, rc: str) -> ResponseInfo:
                 continue
             hint = rc + "Response" + ("" if index == 0 else str(code))
             resolved = spec.resolve(schema)
-            if isinstance(resolved, dict) and resolved.get("type") == "array" and "$ref" not in schema:
+            if (
+                isinstance(resolved, dict)
+                and resolved.get("type") == "array"
+                and "$ref" not in schema
+            ):
                 item = builder.response(spec, resolved.get("items", {}), hint + "Item", module)
                 ann = Ann(f"list[{item.expr}]", item.deps)
                 if resolved.get("nullable"):

@@ -105,7 +105,9 @@ def construct_type(type_: Any, value: object) -> object:
         if isinstance(value, dict):
             args = get_args(type_)
             inner = args[1] if len(args) == 2 else Any
-            return {k: construct_type(inner, v) for k, v in cast("dict[str, object]", value).items()}
+            return {
+                k: construct_type(inner, v) for k, v in cast("dict[str, object]", value).items()
+            }
         return value
     if origin is Literal or origin is typing_extensions.Literal:
         return value

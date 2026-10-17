@@ -72,8 +72,12 @@ class Didit(SyncRootResources):
         super().__init__(
             api_key=api_key if api_key is not None else env("DIDIT_API_KEY"),
             account_token=account_token,
-            organization_id=organization_id if organization_id is not None else env("DIDIT_ORGANIZATION_ID"),
-            application_id=application_id if application_id is not None else env("DIDIT_APPLICATION_ID"),
+            organization_id=organization_id
+            if organization_id is not None
+            else env("DIDIT_ORGANIZATION_ID"),
+            application_id=application_id
+            if application_id is not None
+            else env("DIDIT_APPLICATION_ID"),
             base_url=base_url or DEFAULT_BASE_URL,
             account_base_url=account_base_url or DEFAULT_ACCOUNT_BASE_URL,
             timeout=timeout,
@@ -105,10 +109,14 @@ class Didit(SyncRootResources):
             organization_id=_pick(organization_id, self.organization_id),
             application_id=_pick(application_id, self.application_id),
             base_url=self.base_url if isinstance(base_url, NotGiven) else base_url,
-            account_base_url=self.account_base_url if isinstance(account_base_url, NotGiven) else account_base_url,
+            account_base_url=self.account_base_url
+            if isinstance(account_base_url, NotGiven)
+            else account_base_url,
             timeout=self.timeout if isinstance(timeout, NotGiven) else timeout,
             max_retries=self.max_retries if isinstance(max_retries, NotGiven) else max_retries,
-            default_headers=self.default_headers if isinstance(default_headers, NotGiven) else default_headers,
+            default_headers=self.default_headers
+            if isinstance(default_headers, NotGiven)
+            else default_headers,
         )
         copy._client = self._client
         copy._owns_client = False
@@ -151,8 +159,12 @@ class AsyncDidit(AsyncRootResources):
         super().__init__(
             api_key=api_key if api_key is not None else env("DIDIT_API_KEY"),
             account_token=account_token,
-            organization_id=organization_id if organization_id is not None else env("DIDIT_ORGANIZATION_ID"),
-            application_id=application_id if application_id is not None else env("DIDIT_APPLICATION_ID"),
+            organization_id=organization_id
+            if organization_id is not None
+            else env("DIDIT_ORGANIZATION_ID"),
+            application_id=application_id
+            if application_id is not None
+            else env("DIDIT_APPLICATION_ID"),
             base_url=base_url or DEFAULT_BASE_URL,
             account_base_url=account_base_url or DEFAULT_ACCOUNT_BASE_URL,
             timeout=timeout,
@@ -183,10 +195,14 @@ class AsyncDidit(AsyncRootResources):
             organization_id=_pick(organization_id, self.organization_id),
             application_id=_pick(application_id, self.application_id),
             base_url=self.base_url if isinstance(base_url, NotGiven) else base_url,
-            account_base_url=self.account_base_url if isinstance(account_base_url, NotGiven) else account_base_url,
+            account_base_url=self.account_base_url
+            if isinstance(account_base_url, NotGiven)
+            else account_base_url,
             timeout=self.timeout if isinstance(timeout, NotGiven) else timeout,
             max_retries=self.max_retries if isinstance(max_retries, NotGiven) else max_retries,
-            default_headers=self.default_headers if isinstance(default_headers, NotGiven) else default_headers,
+            default_headers=self.default_headers
+            if isinstance(default_headers, NotGiven)
+            else default_headers,
         )
         copy._client = self._client
         copy._owns_client = False

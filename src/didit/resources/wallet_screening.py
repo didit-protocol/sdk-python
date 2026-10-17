@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Literal, cast
+from typing import Literal, Mapping, Sequence, cast
 
 import httpx
 
@@ -16,9 +16,12 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.components.wallet_screening_result import (
-    WalletScreeningResult,
-    WalletScreeningResultParam,
+from didit.types.components.wallet_screening_result import WalletScreeningResult
+from didit.types.wallet_screening.screen_pdf_params import (
+    WalletScreeningScreenPdfParamsCounterpartyConnections,
+    WalletScreeningScreenPdfParamsDestinationOfFunds,
+    WalletScreeningScreenPdfParamsRiskFactors,
+    WalletScreeningScreenPdfParamsSourceOfFunds,
 )
 
 __all__ = [
@@ -115,7 +118,34 @@ class WalletScreening(SyncAPIResource):
     def screen_pdf(
         self,
         *,
-        body: WalletScreeningResultParam,
+        provider: str,
+        screening_type: Literal["WALLET_SCREENING"] | str,
+        risk_score: int,
+        severity: Literal["UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"] | str,
+        status: Literal["SCREENED", "PENDING", "ERROR"] | str,
+        summary: str,
+        wallet_address: str,
+        blockchain: str,
+        source_of_funds: Sequence[WalletScreeningScreenPdfParamsSourceOfFunds],
+        destination_of_funds: Sequence[WalletScreeningScreenPdfParamsDestinationOfFunds],
+        counterparty_connections: Sequence[WalletScreeningScreenPdfParamsCounterpartyConnections],
+        sanctions_hit: bool,
+        dominant_risk_category: str | None,
+        report_signature: str,
+        transaction_hash: str | None | NotGiven = NOT_GIVEN,
+        block_timestamp: str | None | NotGiven = NOT_GIVEN,
+        total_value_usd: float | None | NotGiven = NOT_GIVEN,
+        fee_usd: float | None | NotGiven = NOT_GIVEN,
+        sender_rows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        receiver_rows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        transaction_flows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        transaction_flows_status: str | None | NotGiven = NOT_GIVEN,
+        transaction_flows_error: str | None | NotGiven = NOT_GIVEN,
+        network_nodes: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        network_edges: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        pep_counterparty: bool | None | NotGiven = NOT_GIVEN,
+        risk_factors: Sequence[WalletScreeningScreenPdfParamsRiskFactors] | NotGiven = NOT_GIVEN,
+        raw_response: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -128,7 +158,34 @@ class WalletScreening(SyncAPIResource):
         ``POST /v3/wallet-screening/pdf/``
 
         Args:
-          body: The unmodified JSON object returned by `POST /v3/wallet-screening/`, including `report_signature`.
+          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`).
+          screening_type: Always `WALLET_SCREENING` for this endpoint.
+          risk_score: Normalised 0-100 risk score. Higher means greater exposure to risky entities. Merkle Science grades an address 0-5, which maps to 0, 15, 35, 55, 75 or 95.
+          severity: Risk bucket derived from `risk_score`: `0-9` UNKNOWN, `10-39` LOW, `40-69` MEDIUM, `70-89` HIGH, `90-100` CRITICAL. `UNKNOWN` is the lowest band, not a separate no-data state: `risk_score` 0 (the common clean-address case) means no adverse assessment, while a non-zero score in the 1-9 range is a real but sub-LOW signal - read the `risk_score`, not just the band. Never treat `UNKNOWN` as an affirmative low-risk or clear rating; do not display it as a pass.
+          status: Screening outcome status.
+          summary: Human-readable summary of the screening result.
+          wallet_address: The screened address, echoed back.
+          blockchain: The blockchain that was screened.
+          source_of_funds: Where the address received funds from, attributed by entity. Each entry is an exposure breakdown.
+          destination_of_funds: Where the address sent funds to, attributed by entity. Same item shape as `source_of_funds` with `exposure_direction` = `outgoing`.
+          counterparty_connections: Entities the provider attributes the screened address to. For Merkle Science these come from the address's own owner and user tags, so the same entity can appear twice, and they carry no fund flows: `received_usd`, `sent_usd`, `received_hops` and `sent_hops` are `null` and `percentage` is 0. Do not route on `risk_level` or `is_direct` here: use `sanctions_hit`, `dominant_risk_category` and `risk_factors[].is_high_risk` for the verdict, and `exposure_type` in `source_of_funds`/`destination_of_funds` for directness.
+          sanctions_hit: True if the address has direct or indirect sanctions exposure.
+          dominant_risk_category: Highest-weighted high-risk category, or `null` when none is dominant (e.g. `sanctioned`, `mixer`, `stolen_funds`).
+          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own — repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
+          transaction_hash: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          block_timestamp: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          total_value_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          fee_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          sender_rows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          receiver_rows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          transaction_flows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          transaction_flows_status: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          transaction_flows_error: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          network_nodes: Exposure graph nodes for transaction screening. Empty on a wallet screening result.
+          network_edges: Exposure graph edges for transaction screening. Empty on a wallet screening result.
+          pep_counterparty: Politically exposed person exposure. `null` when no PEP finding is available, which is every result today because no provider reports one; `false` only for an explicit negative screening result. Do not read `null` as a completed PEP check.
+          risk_factors: Ranked explanation of `risk_score`: what produced this verdict. Providers grade an address on their own model and return only a verdict (Merkle Science returns an integer 0-5), so the score alone is not actionable. Ordered high-risk first, then by the value that moved through each driver, capped at the five strongest; `source_of_funds` and `destination_of_funds` always carry the complete breakdown. A high `risk_score` with no `is_high_risk` entry means the provider reported no sanctions or attributed-entity match and graded the address purely on its own exposure model - `summary` states this explicitly.
+          raw_response: The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -141,7 +198,36 @@ class WalletScreening(SyncAPIResource):
                 "/v3/wallet-screening/pdf/",
                 cast_to=bytes,
                 auth="api_key",
-                body=body,
+                body={
+                    "provider": provider,
+                    "screening_type": screening_type,
+                    "risk_score": risk_score,
+                    "severity": severity,
+                    "status": status,
+                    "summary": summary,
+                    "wallet_address": wallet_address,
+                    "blockchain": blockchain,
+                    "source_of_funds": source_of_funds,
+                    "destination_of_funds": destination_of_funds,
+                    "counterparty_connections": counterparty_connections,
+                    "sanctions_hit": sanctions_hit,
+                    "dominant_risk_category": dominant_risk_category,
+                    "report_signature": report_signature,
+                    "transaction_hash": transaction_hash,
+                    "block_timestamp": block_timestamp,
+                    "total_value_usd": total_value_usd,
+                    "fee_usd": fee_usd,
+                    "sender_rows": sender_rows,
+                    "receiver_rows": receiver_rows,
+                    "transaction_flows": transaction_flows,
+                    "transaction_flows_status": transaction_flows_status,
+                    "transaction_flows_error": transaction_flows_error,
+                    "network_nodes": network_nodes,
+                    "network_edges": network_edges,
+                    "pep_counterparty": pep_counterparty,
+                    "risk_factors": risk_factors,
+                    "raw_response": raw_response,
+                },
                 accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -235,7 +321,34 @@ class AsyncWalletScreening(AsyncAPIResource):
     async def screen_pdf(
         self,
         *,
-        body: WalletScreeningResultParam,
+        provider: str,
+        screening_type: Literal["WALLET_SCREENING"] | str,
+        risk_score: int,
+        severity: Literal["UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"] | str,
+        status: Literal["SCREENED", "PENDING", "ERROR"] | str,
+        summary: str,
+        wallet_address: str,
+        blockchain: str,
+        source_of_funds: Sequence[WalletScreeningScreenPdfParamsSourceOfFunds],
+        destination_of_funds: Sequence[WalletScreeningScreenPdfParamsDestinationOfFunds],
+        counterparty_connections: Sequence[WalletScreeningScreenPdfParamsCounterpartyConnections],
+        sanctions_hit: bool,
+        dominant_risk_category: str | None,
+        report_signature: str,
+        transaction_hash: str | None | NotGiven = NOT_GIVEN,
+        block_timestamp: str | None | NotGiven = NOT_GIVEN,
+        total_value_usd: float | None | NotGiven = NOT_GIVEN,
+        fee_usd: float | None | NotGiven = NOT_GIVEN,
+        sender_rows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        receiver_rows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        transaction_flows: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        transaction_flows_status: str | None | NotGiven = NOT_GIVEN,
+        transaction_flows_error: str | None | NotGiven = NOT_GIVEN,
+        network_nodes: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        network_edges: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        pep_counterparty: bool | None | NotGiven = NOT_GIVEN,
+        risk_factors: Sequence[WalletScreeningScreenPdfParamsRiskFactors] | NotGiven = NOT_GIVEN,
+        raw_response: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -248,7 +361,34 @@ class AsyncWalletScreening(AsyncAPIResource):
         ``POST /v3/wallet-screening/pdf/``
 
         Args:
-          body: The unmodified JSON object returned by `POST /v3/wallet-screening/`, including `report_signature`.
+          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`).
+          screening_type: Always `WALLET_SCREENING` for this endpoint.
+          risk_score: Normalised 0-100 risk score. Higher means greater exposure to risky entities. Merkle Science grades an address 0-5, which maps to 0, 15, 35, 55, 75 or 95.
+          severity: Risk bucket derived from `risk_score`: `0-9` UNKNOWN, `10-39` LOW, `40-69` MEDIUM, `70-89` HIGH, `90-100` CRITICAL. `UNKNOWN` is the lowest band, not a separate no-data state: `risk_score` 0 (the common clean-address case) means no adverse assessment, while a non-zero score in the 1-9 range is a real but sub-LOW signal - read the `risk_score`, not just the band. Never treat `UNKNOWN` as an affirmative low-risk or clear rating; do not display it as a pass.
+          status: Screening outcome status.
+          summary: Human-readable summary of the screening result.
+          wallet_address: The screened address, echoed back.
+          blockchain: The blockchain that was screened.
+          source_of_funds: Where the address received funds from, attributed by entity. Each entry is an exposure breakdown.
+          destination_of_funds: Where the address sent funds to, attributed by entity. Same item shape as `source_of_funds` with `exposure_direction` = `outgoing`.
+          counterparty_connections: Entities the provider attributes the screened address to. For Merkle Science these come from the address's own owner and user tags, so the same entity can appear twice, and they carry no fund flows: `received_usd`, `sent_usd`, `received_hops` and `sent_hops` are `null` and `percentage` is 0. Do not route on `risk_level` or `is_direct` here: use `sanctions_hit`, `dominant_risk_category` and `risk_factors[].is_high_risk` for the verdict, and `exposure_type` in `source_of_funds`/`destination_of_funds` for directness.
+          sanctions_hit: True if the address has direct or indirect sanctions exposure.
+          dominant_risk_category: Highest-weighted high-risk category, or `null` when none is dominant (e.g. `sanctioned`, `mixer`, `stolen_funds`).
+          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own — repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
+          transaction_hash: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          block_timestamp: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          total_value_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          fee_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          sender_rows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          receiver_rows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          transaction_flows: Transaction screening field, shared with the result shape. Always empty on a wallet screening result.
+          transaction_flows_status: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          transaction_flows_error: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
+          network_nodes: Exposure graph nodes for transaction screening. Empty on a wallet screening result.
+          network_edges: Exposure graph edges for transaction screening. Empty on a wallet screening result.
+          pep_counterparty: Politically exposed person exposure. `null` when no PEP finding is available, which is every result today because no provider reports one; `false` only for an explicit negative screening result. Do not read `null` as a completed PEP check.
+          risk_factors: Ranked explanation of `risk_score`: what produced this verdict. Providers grade an address on their own model and return only a verdict (Merkle Science returns an integer 0-5), so the score alone is not actionable. Ordered high-risk first, then by the value that moved through each driver, capped at the five strongest; `source_of_funds` and `destination_of_funds` always carry the complete breakdown. A high `risk_score` with no `is_high_risk` entry means the provider reported no sanctions or attributed-entity match and graded the address purely on its own exposure model - `summary` states this explicitly.
+          raw_response: The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -261,7 +401,36 @@ class AsyncWalletScreening(AsyncAPIResource):
                 "/v3/wallet-screening/pdf/",
                 cast_to=bytes,
                 auth="api_key",
-                body=body,
+                body={
+                    "provider": provider,
+                    "screening_type": screening_type,
+                    "risk_score": risk_score,
+                    "severity": severity,
+                    "status": status,
+                    "summary": summary,
+                    "wallet_address": wallet_address,
+                    "blockchain": blockchain,
+                    "source_of_funds": source_of_funds,
+                    "destination_of_funds": destination_of_funds,
+                    "counterparty_connections": counterparty_connections,
+                    "sanctions_hit": sanctions_hit,
+                    "dominant_risk_category": dominant_risk_category,
+                    "report_signature": report_signature,
+                    "transaction_hash": transaction_hash,
+                    "block_timestamp": block_timestamp,
+                    "total_value_usd": total_value_usd,
+                    "fee_usd": fee_usd,
+                    "sender_rows": sender_rows,
+                    "receiver_rows": receiver_rows,
+                    "transaction_flows": transaction_flows,
+                    "transaction_flows_status": transaction_flows_status,
+                    "transaction_flows_error": transaction_flows_error,
+                    "network_nodes": network_nodes,
+                    "network_edges": network_edges,
+                    "pep_counterparty": pep_counterparty,
+                    "risk_factors": risk_factors,
+                    "raw_response": raw_response,
+                },
                 accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,

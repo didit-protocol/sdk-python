@@ -42,7 +42,9 @@ class SdkNaming:
         if not isinstance(resource, str) or not all(
             seg.isidentifier() and seg == seg.lower() for seg in resource.split(".")
         ):
-            raise CodegenError(f"{key}: resource {resource!r} must be a dot path of snake_case names.")
+            raise CodegenError(
+                f"{key}: resource {resource!r} must be a dot path of snake_case names."
+            )
         if not isinstance(method, str) or not method.isidentifier() or method != method.lower():
             raise CodegenError(f"{key}: method {method!r} must be a snake_case name.")
         if auth not in AUTH_VALUES:
@@ -50,7 +52,7 @@ class SdkNaming:
         if not isinstance(server, bool):
             raise CodegenError(f"{key}: server must be true or false.")
         if scope not in (None, "application"):
-            raise CodegenError(f"{key}: scope must be \"application\" when present.")
+            raise CodegenError(f'{key}: scope must be "application" when present.')
         return SdkNaming(resource, method, auth, server, scope)
 
     def as_json(self) -> dict[str, Json]:
@@ -135,7 +137,9 @@ def _key(api: str, method: str, path: str) -> str:
 
 def load(openapi_dir: pathlib.Path) -> Model:
     specs = {
-        "verification": Spec("verification", json.loads((openapi_dir / "verification.json").read_text("utf-8"))),
+        "verification": Spec(
+            "verification", json.loads((openapi_dir / "verification.json").read_text("utf-8"))
+        ),
         "account": Spec("account", json.loads((openapi_dir / "account.json").read_text("utf-8"))),
     }
     overlay = json.loads((openapi_dir / "overlay.json").read_text("utf-8"))
@@ -163,7 +167,9 @@ def load(openapi_dir: pathlib.Path) -> Model:
                 if raw is None:
                     missing.append(f"{key} (operationId {op.get('operationId', '-')})")
                     continue
-                params = _merge_parameters(spec, item.get("parameters", []), op.get("parameters", []))
+                params = _merge_parameters(
+                    spec, item.get("parameters", []), op.get("parameters", [])
+                )
                 operations.append(
                     Operation(
                         key=key,
@@ -220,8 +226,12 @@ def load(openapi_dir: pathlib.Path) -> Model:
 
     _check_unique(operations)
     for operation in operations:
-        if operation.sdk.scope == "application" and not operation.path.startswith(APPLICATION_PREFIX):
-            raise CodegenError(f"{operation.key}: scope application needs a path under {APPLICATION_PREFIX}.")
+        if operation.sdk.scope == "application" and not operation.path.startswith(
+            APPLICATION_PREFIX
+        ):
+            raise CodegenError(
+                f"{operation.key}: scope application needs a path under {APPLICATION_PREFIX}."
+            )
     return Model(specs=specs, operations=operations)
 
 

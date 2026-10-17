@@ -20,6 +20,7 @@ __all__ = [
     "Timeout",
 ]
 
+
 @final
 class NotGiven:
     """Sentinel for "the caller did not pass this argument".
@@ -69,4 +70,3 @@ FileTypes = Union[
 ]
 """A file, optionally with a file name and a content type: ``content``,
 ``(filename, content)`` or ``(filename, content, content_type)``."""
-

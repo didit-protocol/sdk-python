@@ -49,16 +49,22 @@ def _normalise_headers(headers: HeadersLike) -> dict[str, str]:
 def _secrets(secret: str | Sequence[str]) -> list[bytes]:
     items = [secret] if isinstance(secret, str) else list(secret)
     if not items or any(not isinstance(s, str) or not s for s in items):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise ConfigurationError("The webhook secret is empty; copy it from the webhook destination in the console.")
+        raise ConfigurationError(
+            "The webhook secret is empty; copy it from the webhook destination in the console."
+        )
     return [s.encode("utf-8") for s in items]
 
 
-def _timestamp(payload: Mapping[str, Any], headers: Mapping[str, str], tolerance: int, now: float) -> int:
+def _timestamp(
+    payload: Mapping[str, Any], headers: Mapping[str, str], tolerance: int, now: float
+) -> int:
     raw = payload.get("timestamp")
     if isinstance(raw, float) and raw.is_integer():
         raw = int(raw)
     if not isinstance(raw, int) or isinstance(raw, bool):
-        raise WebhookVerificationError("missing_timestamp", "The webhook body has no integer timestamp.")
+        raise WebhookVerificationError(
+            "missing_timestamp", "The webhook body has no integer timestamp."
+        )
     header = headers.get("x-timestamp")
     if header is not None:
         try:
@@ -67,7 +73,8 @@ def _timestamp(payload: Mapping[str, Any], headers: Mapping[str, str], tolerance
             header_value = None
         if header_value != raw:
             raise WebhookVerificationError(
-                "timestamp_mismatch", "X-Timestamp does not match the timestamp in the webhook body."
+                "timestamp_mismatch",
+                "X-Timestamp does not match the timestamp in the webhook body.",
             )
     if tolerance < 0:
         raise ConfigurationError("tolerance must be 0 or more seconds.")
@@ -129,7 +136,9 @@ def verify(
 
     present = [h for h in (*_RAW, *_V2, *_SIMPLE) if normalised.get(h)]
     if not present:
-        raise WebhookVerificationError("missing_signature", "The delivery has no X-Signature header.")
+        raise WebhookVerificationError(
+            "missing_signature", "The delivery has no X-Signature header."
+        )
     verified_by: VerifiedBy | None = None
     raw_candidates = [normalised[h] for h in _RAW if normalised.get(h)]
     v2_candidates = [normalised[h] for h in _V2 if normalised.get(h)]
@@ -138,10 +147,16 @@ def verify(
         verified_by = "signature"
     elif v2_candidates and _matches(_canonical_bytes(payload), keys, v2_candidates):
         verified_by = "signature_v2"
-    elif allow_simple and simple_candidates and _matches(_simple_message(payload), keys, simple_candidates):
+    elif (
+        allow_simple
+        and simple_candidates
+        and _matches(_simple_message(payload), keys, simple_candidates)
+    ):
         verified_by = "signature_simple"
     if verified_by is None:
-        raise WebhookVerificationError("invalid_signature", "No webhook signature matches the secret.")
+        raise WebhookVerificationError(
+            "invalid_signature", "No webhook signature matches the secret."
+        )
     return parse_event(payload, verified_by)
 
 
@@ -160,7 +175,9 @@ def verify_parsed(
     """
     keys = _secrets(secret)
     if not isinstance(payload, Mapping):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise WebhookVerificationError("invalid_payload", "The webhook payload is not a JSON object.")
+        raise WebhookVerificationError(
+            "invalid_payload", "The webhook payload is not a JSON object."
+        )
     body = dict(payload)
     normalised = _normalise_headers(headers)
     _timestamp(body, normalised, tolerance, time.time())
@@ -171,5 +188,7 @@ def verify_parsed(
             "verify_parsed needs X-Signature-V2; pass the raw body to verify() to check X-Signature.",
         )
     if not _matches(_canonical_bytes(body), keys, v2_candidates):
-        raise WebhookVerificationError("invalid_signature", "No webhook signature matches the secret.")
+        raise WebhookVerificationError(
+            "invalid_signature", "No webhook signature matches the secret."
+        )
     return parse_event(body, "signature_v2")

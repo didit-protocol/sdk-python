@@ -1121,28 +1121,13 @@ if TYPE_CHECKING:
         WalletScreeningResultCounterpartyConnections as WalletScreeningResultCounterpartyConnections,
     )
     from didit.types.components.wallet_screening_result import (
-        WalletScreeningResultCounterpartyConnectionsParam as WalletScreeningResultCounterpartyConnectionsParam,
-    )
-    from didit.types.components.wallet_screening_result import (
         WalletScreeningResultDestinationOfFunds as WalletScreeningResultDestinationOfFunds,
-    )
-    from didit.types.components.wallet_screening_result import (
-        WalletScreeningResultDestinationOfFundsParam as WalletScreeningResultDestinationOfFundsParam,
-    )
-    from didit.types.components.wallet_screening_result import (
-        WalletScreeningResultParam as WalletScreeningResultParam,
     )
     from didit.types.components.wallet_screening_result import (
         WalletScreeningResultRiskFactors as WalletScreeningResultRiskFactors,
     )
     from didit.types.components.wallet_screening_result import (
-        WalletScreeningResultRiskFactorsParam as WalletScreeningResultRiskFactorsParam,
-    )
-    from didit.types.components.wallet_screening_result import (
         WalletScreeningResultSourceOfFunds as WalletScreeningResultSourceOfFunds,
-    )
-    from didit.types.components.wallet_screening_result import (
-        WalletScreeningResultSourceOfFundsParam as WalletScreeningResultSourceOfFundsParam,
     )
     from didit.types.components.webhook_event import WebhookEvent as WebhookEvent
     from didit.types.components.webhook_subscribed_events import (
@@ -2317,6 +2302,21 @@ if TYPE_CHECKING:
     from didit.types.wallet_screening.screen_params import (
         WalletScreeningScreenParams as WalletScreeningScreenParams,
     )
+    from didit.types.wallet_screening.screen_pdf_params import (
+        WalletScreeningScreenPdfParams as WalletScreeningScreenPdfParams,
+    )
+    from didit.types.wallet_screening.screen_pdf_params import (
+        WalletScreeningScreenPdfParamsCounterpartyConnections as WalletScreeningScreenPdfParamsCounterpartyConnections,
+    )
+    from didit.types.wallet_screening.screen_pdf_params import (
+        WalletScreeningScreenPdfParamsDestinationOfFunds as WalletScreeningScreenPdfParamsDestinationOfFunds,
+    )
+    from didit.types.wallet_screening.screen_pdf_params import (
+        WalletScreeningScreenPdfParamsRiskFactors as WalletScreeningScreenPdfParamsRiskFactors,
+    )
+    from didit.types.wallet_screening.screen_pdf_params import (
+        WalletScreeningScreenPdfParamsSourceOfFunds as WalletScreeningScreenPdfParamsSourceOfFunds,
+    )
     from didit.types.webhooks.destinations.create_params import (
         WebhooksDestinationsCreateParams as WebhooksDestinationsCreateParams,
     )
@@ -3175,15 +3175,15 @@ _MODULES: dict[str, str] = {
     "WalletAddressEntryUpdate": "components.wallet_address_entry_update",
     "WalletScreeningResult": "components.wallet_screening_result",
     "WalletScreeningResultCounterpartyConnections": "components.wallet_screening_result",
-    "WalletScreeningResultCounterpartyConnectionsParam": "components.wallet_screening_result",
     "WalletScreeningResultDestinationOfFunds": "components.wallet_screening_result",
-    "WalletScreeningResultDestinationOfFundsParam": "components.wallet_screening_result",
-    "WalletScreeningResultParam": "components.wallet_screening_result",
     "WalletScreeningResultRiskFactors": "components.wallet_screening_result",
-    "WalletScreeningResultRiskFactorsParam": "components.wallet_screening_result",
     "WalletScreeningResultSourceOfFunds": "components.wallet_screening_result",
-    "WalletScreeningResultSourceOfFundsParam": "components.wallet_screening_result",
     "WalletScreeningScreenParams": "wallet_screening.screen_params",
+    "WalletScreeningScreenPdfParams": "wallet_screening.screen_pdf_params",
+    "WalletScreeningScreenPdfParamsCounterpartyConnections": "wallet_screening.screen_pdf_params",
+    "WalletScreeningScreenPdfParamsDestinationOfFunds": "wallet_screening.screen_pdf_params",
+    "WalletScreeningScreenPdfParamsRiskFactors": "wallet_screening.screen_pdf_params",
+    "WalletScreeningScreenPdfParamsSourceOfFunds": "wallet_screening.screen_pdf_params",
     "WebhookEvent": "components.webhook_event",
     "WebhookSubscribedEvents": "components.webhook_subscribed_events",
     "WebhookSubscribedEventsParam": "components.webhook_subscribed_events",
@@ -4030,15 +4030,15 @@ __all__ = [
     "WalletAddressEntryUpdate",
     "WalletScreeningResult",
     "WalletScreeningResultCounterpartyConnections",
-    "WalletScreeningResultCounterpartyConnectionsParam",
     "WalletScreeningResultDestinationOfFunds",
-    "WalletScreeningResultDestinationOfFundsParam",
-    "WalletScreeningResultParam",
     "WalletScreeningResultRiskFactors",
-    "WalletScreeningResultRiskFactorsParam",
     "WalletScreeningResultSourceOfFunds",
-    "WalletScreeningResultSourceOfFundsParam",
     "WalletScreeningScreenParams",
+    "WalletScreeningScreenPdfParams",
+    "WalletScreeningScreenPdfParamsCounterpartyConnections",
+    "WalletScreeningScreenPdfParamsDestinationOfFunds",
+    "WalletScreeningScreenPdfParamsRiskFactors",
+    "WalletScreeningScreenPdfParamsSourceOfFunds",
     "WebhookEvent",
     "WebhookSubscribedEvents",
     "WebhookSubscribedEventsParam",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Union
 
-from pydantic import PrivateAttr
+from pydantic import Field, PrivateAttr
 
 from .._models import BaseModel, validate_response
 from ..types.sessions.retrieve_decision_response import SessionsRetrieveDecisionResponse
@@ -177,7 +177,7 @@ class UnknownEvent(WebhookEventBase):
     """An event type this version of the SDK does not know. ``payload`` holds
     the whole body."""
 
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 WebhookEvent = Union[

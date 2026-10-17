@@ -31,7 +31,9 @@ def _check_finite(value: object) -> None:
     while stack:
         cur = stack.pop()
         if isinstance(cur, float) and not math.isfinite(cur):
-            raise WebhookVerificationError("invalid_payload", "The webhook body holds a non-finite number.")
+            raise WebhookVerificationError(
+                "invalid_payload", "The webhook body holds a non-finite number."
+            )
         if isinstance(cur, dict):
             stack.extend(cast("dict[str, object]", cur).values())
         elif isinstance(cur, list):
@@ -50,7 +52,9 @@ def canonical_json(value: object) -> str:
             allow_nan=False,
         )
     except (TypeError, ValueError) as exc:
-        raise WebhookVerificationError("invalid_payload", "The webhook payload is not JSON data.") from exc
+        raise WebhookVerificationError(
+            "invalid_payload", "The webhook payload is not JSON data."
+        ) from exc
 
 
 def _reject_constant(name: str) -> Any:
@@ -63,7 +67,9 @@ def parse_body(raw: bytes) -> dict[str, Any]:
         text = raw.decode("utf-8")
         value = json.loads(text, parse_constant=_reject_constant)
     except (UnicodeDecodeError, ValueError) as exc:
-        raise WebhookVerificationError("invalid_payload", "The webhook body is not valid JSON.") from exc
+        raise WebhookVerificationError(
+            "invalid_payload", "The webhook body is not valid JSON."
+        ) from exc
     if not isinstance(value, dict):
         raise WebhookVerificationError("invalid_payload", "The webhook body is not a JSON object.")
     _check_finite(value)

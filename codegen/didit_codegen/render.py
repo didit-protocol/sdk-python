@@ -188,7 +188,9 @@ def _render_def(td: TypeDef) -> str:
             out.append(docstring(_field_doc(f.description, f.deprecated), "    "))
         return "".join(out) + "\n"
     # TypedDict
-    functional = any(not f.wire.isidentifier() or not f.wire.isascii() or _is_keyword(f.wire) for f in td.fields)
+    functional = any(
+        not f.wire.isidentifier() or not f.wire.isascii() or _is_keyword(f.wire) for f in td.fields
+    )
     if functional:
         if td.bases:
             raise RuntimeError(f"{td.name}: a functional TypedDict cannot have bases.")
@@ -196,7 +198,11 @@ def _render_def(td: TypeDef) -> str:
         for f in td.fields:
             ann = f"Required[{f.annotation.expr}]" if f.required else f.annotation.expr
             items.append(f"        {json.dumps(f.wire, ensure_ascii=False)}: {ann},\n")
-        text = f'{td.name} = TypedDict(\n    "{td.name}",\n    {{\n' + "".join(items) + "    },\n    total=False,\n)\n"
+        text = (
+            f'{td.name} = TypedDict(\n    "{td.name}",\n    {{\n'
+            + "".join(items)
+            + "    },\n    total=False,\n)\n"
+        )
         return text + docstring(td.description, "")
     bases = ", ".join(td.bases) if td.bases else "TypedDict"
     total = ", total=False"
@@ -348,7 +354,8 @@ def _method_doc(method: Method) -> str:
     parts: list[str] = []
     if method.op.deprecated:
         parts.append(
-            "Deprecated: " + (method.op.deprecation_note or "this operation is deprecated in the API contract.")
+            "Deprecated: "
+            + (method.op.deprecation_note or "this operation is deprecated in the API contract.")
         )
     if method.summary:
         parts.append(method.summary.rstrip(".") + ".")
@@ -356,7 +363,11 @@ def _method_doc(method: Method) -> str:
         parts.append(method.description)
     parts.append(f"``{method.op.http_method.upper()} {method.op.path}``")
     arg_lines: list[str] = []
-    for arg in [*method.path_args, *([method.whole_body] if method.whole_body else []), *method.kwargs]:
+    for arg in [
+        *method.path_args,
+        *([method.whole_body] if method.whole_body else []),
+        *method.kwargs,
+    ]:
         desc = (arg.description or "").strip()
         desc = " ".join(desc.split())
         arg_lines.append(f"  {arg.py}: {desc}" if desc else f"  {arg.py}")
@@ -456,7 +467,9 @@ def _render_method(method: Method, is_async: bool) -> str:
         note = method.op.deprecation_note or "This operation is deprecated in the API contract."
         out.append(f"    @deprecated({json.dumps(note)})\n")
     args = ",\n        ".join(_sig_args(method))
-    out.append(f"    {kw} {method.name}(\n        {args},\n    ) -> {_return_type(method, is_async)}:\n")
+    out.append(
+        f"    {kw} {method.name}(\n        {args},\n    ) -> {_return_type(method, is_async)}:\n"
+    )
     out.append(docstring(_method_doc(method), "        "))
     out.append(_call(method, is_async))
     return "".join(out)
@@ -478,9 +491,15 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
     std.append("from functools import cached_property")
     has_methods = bool(node.methods)
     typing_names = (["TYPE_CHECKING"] if node.children else []) + (["cast"] if has_methods else [])
-    typing_names += [n for n, m in (("Literal", LITERAL), ("Mapping", MAPPING), ("Sequence", SEQUENCE)) if m in deps]
+    typing_names += [
+        n
+        for n, m in (("Literal", LITERAL), ("Mapping", MAPPING), ("Sequence", SEQUENCE))
+        if m in deps
+    ]
     if typing_names:
-        std.append(f"from typing import {', '.join(sorted(typing_names, key=lambda s: (s != 'TYPE_CHECKING', s.lower())))}")
+        std.append(
+            f"from typing import {', '.join(sorted(typing_names, key=lambda s: (s != 'TYPE_CHECKING', s.lower())))}"
+        )
     out.append("\n".join(std) + "\n\n")
     if has_methods:
         out.append("import httpx\n")
@@ -504,7 +523,9 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
         types_names = ["NOT_GIVEN", "Body", "Headers", "NotGiven", "Query"]
         if FILE_TYPES in deps:
             types_names.append("FileTypes")
-        first.append(f"from didit._types import {', '.join(sorted(types_names, key=lambda s: (not s.isupper(), s)))}")
+        first.append(
+            f"from didit._types import {', '.join(sorted(types_names, key=lambda s: (not s.isupper(), s)))}"
+        )
     mixin = RESOURCE_MIXINS.get(node.path)
     if mixin:
         first.append(f"from {mixin[0]} import {mixin[1]}")
@@ -552,7 +573,11 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
             attr = "with_raw_response" if kind == "RawResponse" else "with_streaming_response"
             out.append("\n    @cached_property\n")
             out.append(f"    def {attr}(self) -> {prefix}{cls}With{kind}:\n")
-            what = "the raw HTTP response" if kind == "RawResponse" else "the HTTP response before reading its body"
+            what = (
+                "the raw HTTP response"
+                if kind == "RawResponse"
+                else "the HTTP response before reading its body"
+            )
             out.append(f'        """Every method of this resource, returning {what}."""\n')
             out.append(f"        return {prefix}{cls}With{kind}(self)\n")
         for method in node.methods:
@@ -606,7 +631,9 @@ def _render_root(roots: dict[str, ResourceNode]) -> str:
     for is_async in (False, True):
         prefix = "Async" if is_async else ""
         base = "AsyncAPIClient" if is_async else "SyncAPIClient"
-        out.append(f"\nclass {prefix}{'RootResources' if is_async else 'SyncRootResources'}({base}):\n")
+        out.append(
+            f"\nclass {prefix}{'RootResources' if is_async else 'SyncRootResources'}({base}):\n"
+        )
         out.append('    """Top-level resources, loaded on first use."""\n')
         for name, node in sorted(roots.items()):
             out.append("\n    @cached_property\n")
@@ -615,4 +642,3 @@ def _render_root(roots: dict[str, ResourceNode]) -> str:
             out.append(f"        return {prefix}{node.cls}(self)\n")
         out.append("\n")
     return "".join(out)
-

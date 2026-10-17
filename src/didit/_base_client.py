@@ -310,7 +310,9 @@ class BaseClient:
             )
         return replace(prepared, url=next_url, params=[])
 
-    def _build_httpx_request(self, prepared: PreparedRequest, client: httpx.Client | httpx.AsyncClient) -> httpx.Request:
+    def _build_httpx_request(
+        self, prepared: PreparedRequest, client: httpx.Client | httpx.AsyncClient
+    ) -> httpx.Request:
         headers: dict[str, str] = {
             "Accept": prepared.accept,
             "User-Agent": user_agent(),
@@ -381,7 +383,9 @@ class BaseClient:
             ) from exc
         return validate_response(cast_to, data)
 
-    def _log_response(self, request: httpx.Request, response: httpx.Response, started: float) -> None:
+    def _log_response(
+        self, request: httpx.Request, response: httpx.Response, started: float
+    ) -> None:
         if log.isEnabledFor(logging.DEBUG):
             log.debug(
                 "%s %s -> %d in %.0f ms (request id %s)",
@@ -392,7 +396,9 @@ class BaseClient:
                 _request_id(response.headers) or "-",
             )
 
-    def _log_retry(self, request: httpx.Request, reason: str, delay: float, retries_left: int) -> None:
+    def _log_retry(
+        self, request: httpx.Request, reason: str, delay: float, retries_left: int
+    ) -> None:
         log.debug(
             "%s %s: %s; retrying in %.2f s (%d retries left)",
             request.method,
@@ -411,7 +417,9 @@ class SyncAPIClient(BaseClient):
 
     def _init_http(self, http_client: httpx.Client | None) -> None:
         if http_client is not None and not isinstance(http_client, httpx.Client):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ConfigurationError("http_client must be an httpx.Client (use AsyncDidit for httpx.AsyncClient).")
+            raise ConfigurationError(
+                "http_client must be an httpx.Client (use AsyncDidit for httpx.AsyncClient)."
+            )
         self._owns_client = http_client is None
         self._client = http_client or httpx.Client(follow_redirects=False)
 
@@ -463,7 +471,9 @@ class SyncAPIClient(BaseClient):
         prepared = self._prepare(method, path, **_prepare_defaults(kwargs))
         return cast(
             "SyncPage[Any]",
-            self._send(prepared, lambda r: SyncPage.from_response(self, prepared, r, cast_to, item_type)),
+            self._send(
+                prepared, lambda r: SyncPage.from_response(self, prepared, r, cast_to, item_type)
+            ),
         )
 
     def _send(self, prepared: PreparedRequest, parse: Callable[[httpx.Response], T]) -> Any:
@@ -485,7 +495,9 @@ class SyncAPIClient(BaseClient):
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, type(exc).__name__, delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request, type(exc).__name__, delay, self.max_retries - retries_taken
+                    )
                     retries_taken += 1
                     time.sleep(delay)
                     continue
@@ -493,10 +505,17 @@ class SyncAPIClient(BaseClient):
 
             self._log_response(request, response, started)
             if not response.is_success:
-                if retries_taken < self.max_retries and should_retry_status(request.method, response.status_code):
+                if retries_taken < self.max_retries and should_retry_status(
+                    request.method, response.status_code
+                ):
                     response.close()
                     delay = retry_delay(retries_taken, response.headers)
-                    self._log_retry(request, f"HTTP {response.status_code}", delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request,
+                        f"HTTP {response.status_code}",
+                        delay,
+                        self.max_retries - retries_taken,
+                    )
                     retries_taken += 1
                     time.sleep(delay)
                     continue
@@ -525,7 +544,9 @@ class AsyncAPIClient(BaseClient):
 
     def _init_http(self, http_client: httpx.AsyncClient | None) -> None:
         if http_client is not None and not isinstance(http_client, httpx.AsyncClient):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ConfigurationError("http_client must be an httpx.AsyncClient (use Didit for httpx.Client).")
+            raise ConfigurationError(
+                "http_client must be an httpx.AsyncClient (use Didit for httpx.Client)."
+            )
         self._owns_client = http_client is None
         self._client = http_client or httpx.AsyncClient(follow_redirects=False)
 
@@ -580,7 +601,8 @@ class AsyncAPIClient(BaseClient):
             return cast(
                 "AsyncPage[Any]",
                 await self._send(
-                    prepared, lambda r: AsyncPage.from_response(self, prepared, r, cast_to, item_type)
+                    prepared,
+                    lambda r: AsyncPage.from_response(self, prepared, r, cast_to, item_type),
                 ),
             )
 
@@ -605,7 +627,9 @@ class AsyncAPIClient(BaseClient):
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, type(exc).__name__, delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request, type(exc).__name__, delay, self.max_retries - retries_taken
+                    )
                     retries_taken += 1
                     await asyncio.sleep(delay)
                     continue
@@ -613,10 +637,17 @@ class AsyncAPIClient(BaseClient):
 
             self._log_response(request, response, started)
             if not response.is_success:
-                if retries_taken < self.max_retries and should_retry_status(request.method, response.status_code):
+                if retries_taken < self.max_retries and should_retry_status(
+                    request.method, response.status_code
+                ):
                     await response.aclose()
                     delay = retry_delay(retries_taken, response.headers)
-                    self._log_retry(request, f"HTTP {response.status_code}", delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request,
+                        f"HTTP {response.status_code}",
+                        delay,
+                        self.max_retries - retries_taken,
+                    )
                     retries_taken += 1
                     await asyncio.sleep(delay)
                     continue

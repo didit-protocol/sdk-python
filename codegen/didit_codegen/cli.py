@@ -22,7 +22,10 @@ def _format(root: pathlib.Path) -> None:
     if ruff is None:
         raise CodegenError("ruff is needed to format the generated code: run `uv sync` first.")
     config = str(REPO / "pyproject.toml")
-    subprocess.run([ruff, "check", "--config", config, "--select", "I", "--fix", "--quiet", str(root)], check=True)
+    subprocess.run(
+        [ruff, "check", "--config", config, "--select", "I", "--fix", "--quiet", str(root)],
+        check=True,
+    )
     subprocess.run([ruff, "format", "--config", config, "--quiet", str(root)], check=True)
 
 
@@ -40,9 +43,17 @@ def _diff(expected: pathlib.Path, actual: pathlib.Path) -> list[str]:
     problems: list[str] = []
     for root in GENERATED_ROOTS:
         exp_root, act_root = expected / root, actual / root
-        exp = {p.relative_to(exp_root) for p in exp_root.rglob("*") if p.is_file()} if exp_root.exists() else set()
+        exp = (
+            {p.relative_to(exp_root) for p in exp_root.rglob("*") if p.is_file()}
+            if exp_root.exists()
+            else set()
+        )
         act = (
-            {p.relative_to(act_root) for p in act_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts}
+            {
+                p.relative_to(act_root)
+                for p in act_root.rglob("*")
+                if p.is_file() and "__pycache__" not in p.parts
+            }
             if act_root.exists()
             else set()
         )

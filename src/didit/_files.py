@@ -39,7 +39,9 @@ def to_httpx_file(value: FileTypes) -> HttpxFile:
         elif len(parts) == 3:
             filename, content, content_type = parts
         else:
-            raise TypeError("A file tuple is (filename, content) or (filename, content, content_type).")
+            raise TypeError(
+                "A file tuple is (filename, content) or (filename, content, content_type)."
+            )
     else:
         content = value
     data: bytes

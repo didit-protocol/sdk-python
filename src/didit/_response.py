@@ -268,4 +268,3 @@ def async_to_streamed_response_wrapper(
         return AsyncResponseContextManager(call)
 
     return wrapped
-

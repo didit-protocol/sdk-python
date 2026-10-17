@@ -125,4 +125,3 @@ def user_agent() -> str:
 
 def client_header() -> str:
     return f"python/{__version__}"
-
