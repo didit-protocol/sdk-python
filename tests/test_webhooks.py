@@ -311,7 +311,7 @@ def test_simple_signature_formats_null_like_the_backend(frozen_time: list[float]
 
 def test_verify_parsed_needs_v2(frozen_time: list[float]) -> None:
     payload = _payload()
-    body, headers = _delivery(payload)
+    _, headers = _delivery(payload)
     with pytest.raises(WebhookVerificationError) as info:
         webhooks.verify_parsed(payload, {"X-Signature": headers["X-Signature"]}, SECRET)
     assert info.value.reason == "missing_signature"

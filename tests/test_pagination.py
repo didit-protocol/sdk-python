@@ -130,7 +130,7 @@ def test_async_pagination() -> None:
 
     api = _three_pages()
 
-    async def run_direct() -> list[str]:
+    async def run_direct() -> list[str | None]:
         client = api.async_client()
         return [b.didit_internal_id async for b in client.businesses.list(limit=2)]
 

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
+from tests.harness import Expect, check_operation
 
 from didit.types.webhooks.destinations.create_response import WebhooksDestinationsCreateResponse
 from didit.types.webhooks.destinations.list_response import WebhooksDestinationsListResponseItem

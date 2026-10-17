@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
+from tests.harness import Expect, check_operation
 
 from didit import AsyncPage, SyncPage
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse

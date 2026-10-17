@@ -449,7 +449,10 @@ def render_tests(methods: list[Method], registry: Registry) -> dict[str, str]:
                 by_module[module].append(name)
         for module in sorted(by_module):
             out.append(f"from didit.types.{module} import {', '.join(sorted(by_module[module]))}\n")
-        out.append("from tests.harness import BINARY_BODY, Expect, check_operation\n")
+        harness = ["Expect", "check_operation"]
+        if any(m.response.kind == "bytes" for m in group):
+            harness.insert(0, "BINARY_BODY")
+        out.append(f"from tests.harness import {', '.join(harness)}\n")
         for body in bodies:
             out.append("\n\n")
             out.append(body)

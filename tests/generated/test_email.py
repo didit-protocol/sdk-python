@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
+from tests.harness import Expect, check_operation
 
 from didit.types.components.email_risk_response import EmailRiskResponse
 from didit.types.components.email_verification_check_response import EmailVerificationCheckResponse

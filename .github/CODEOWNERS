@@ -1,0 +1,4 @@
+# Code owners of the Didit Python SDK.
+# GitHub requests reviews only from users and teams (@org/team-name); replace the
+# organisation below with the owning team so that review requests are sent.
+* @didit-protocol

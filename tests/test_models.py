@@ -63,11 +63,11 @@ def test_contract_mismatch_never_raises() -> None:
     loose: Any = model
     assert loose.id == "not-an-int"
     assert isinstance(model.inner, Inner)
-    assert model.inner.name == 5
-    assert model.inner.when == "yesterday"
+    assert loose.inner.name == 5
+    assert loose.inner.when == "yesterday"
     assert model.items is not None
     assert isinstance(model.items[0], Inner)
-    assert model.items[2] == "junk"
+    assert loose.items[2] == "junk"
     assert model.tags is not None and isinstance(model.tags["a"], Inner)
     assert isinstance(model.either, Inner)
     assert model.model_extra == {"extra": 1}

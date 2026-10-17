@@ -116,8 +116,9 @@ ignore_missing_imports = true
 
 [tool.pyright]
 include = ["src/didit", "tests", "codegen"]
+strict = ["src/didit", "codegen"]
 pythonVersion = "3.10"
-typeCheckingMode = "strict"
+typeCheckingMode = "standard"
 reportMissingTypeStubs = false
 reportPrivateUsage = false
 reportUnnecessaryIsInstance = false
