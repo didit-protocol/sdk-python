@@ -84,7 +84,8 @@ def main(argv: list[str] | None = None) -> int:
                 return 0
             for root in GENERATED_ROOTS:
                 shutil.rmtree(REPO / root, ignore_errors=True)
-                shutil.copytree(out / root, REPO / root)
+                if (out / root).exists():
+                    shutil.copytree(out / root, REPO / root)
             print(f"Wrote {count} generated files.")
             return 0
     except CodegenError as exc:
