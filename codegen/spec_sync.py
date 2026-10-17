@@ -93,7 +93,12 @@ def dereference(doc: Json, node: Json, depth: int = 0) -> Json:
         return {}
     if isinstance(node, dict):
         if "$ref" in node and isinstance(node["$ref"], str):
-            target = dereference(doc, _pointer(doc, node["$ref"]), depth + 1)
+            try:
+                found = _pointer(doc, node["$ref"])
+            except (KeyError, IndexError, TypeError):
+                # A dangling reference upstream: keep it visible; the generator reports it.
+                return {"x-unresolved-ref": node["$ref"]}
+            target = dereference(doc, found, depth + 1)
             extra = {k: v for k, v in node.items() if k != "$ref"}
             return {**target, **extra} if isinstance(target, dict) else target
         return {k: dereference(doc, v, depth + 1) for k, v in node.items()}

@@ -196,6 +196,17 @@ def test_every_server_operation_becomes_one_method() -> None:
     assert kinds == {"model", "page", "bytes", "none"}
     # Counted from the JSON, independently of the generator.
     pages = multipart = scoped = 0
+
+    def binary(schema: Any, spec: Any) -> set[str]:
+        props = spec.resolve(schema).get("properties", {})
+        out = set()
+        for name, prop in props.items():
+            prop = spec.resolve(prop)
+            item = spec.resolve(prop.get("items", {}))
+            if "binary" in (prop.get("format"), item.get("format")):
+                out.add(name)
+        return out
+
     for op in model.server_operations:
         props = (
             op.spec.resolve(
@@ -207,7 +218,13 @@ def test_every_server_operation_becomes_one_method() -> None:
             or {}
         ).get("properties", {})
         pages += {"count", "next", "previous", "results"} <= set(props)
-        multipart += "multipart/form-data" in (op.op.get("requestBody") or {}).get("content", {})
+        content = (op.op.get("requestBody") or {}).get("content", {})
+        if "multipart/form-data" in content:
+            files = binary(content["multipart/form-data"].get("schema", {}), op.spec)
+            if "application/json" in content:
+                json_schema = op.spec.resolve(content["application/json"].get("schema", {}))
+                files -= set(json_schema.get("properties", {}))
+            multipart += bool(files)
         scoped += op.sdk.scope == "application"
     assert sum(1 for m in methods if m.response.kind == "page") == pages
     assert sum(1 for m in methods if m.body_mode in ("multipart", "auto")) == multipart
@@ -295,17 +312,24 @@ def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> No
     assert "class BillingRetrieveBalanceResponse(" in types
     assert "class BillingGetBalanceResponse(" in types
 
-    # Once the old name comes back, the next sync drops the alias.
+    # Renamed back: the old name is live again (its alias is dropped), and the
+    # interim name it shipped under becomes the deprecated alias in turn.
     spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"]["method"] = "retrieve_balance"
     downloads["verification.json"] = json.dumps(spec).encode()
     _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.1")
-    assert "provided again" in summary
-    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+    assert "`billing.retrieve_balance` is provided again" in summary
+    methods = _read(openapi / "deprecated-operations.json")["methods"]
+    assert list(methods) == ["billing.get_balance"]
+    assert methods["billing.get_balance"]["replacement"] == "billing.retrieve_balance"
     load(openapi)
 
 
 def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> None:
+    old = _read(openapi / "verification.json")
+    old["components"]["schemas"]["LegacyUnusedThing"] = {"type": "object"}
+    _write(openapi / "verification.json", old)
     spec = _read(openapi / "verification.json")
+    del spec["components"]["schemas"]["LegacyUnusedThing"]
     schemas = spec["components"]["schemas"]
     name, prop = next(
         (n, p)
@@ -314,7 +338,6 @@ def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> Non
         if v.get("type") == "string" and "enum" not in v
     )
     schemas[name]["properties"][prop] = {"type": "integer"}
-    del schemas[sorted(schemas)[-1]]
     downloads = {
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
@@ -322,7 +345,7 @@ def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> Non
     _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
     breaking = summary.split("## Breaking changes", 1)[1].split("## ", 1)[0]
     assert f".{prop}: type string -> integer (breaking)" in breaking
-    assert "schema `" in breaking and "removed" in breaking
+    assert "schema `LegacyUnusedThing` removed" in breaking
 
 
 def test_schema_diff_rules() -> None:
