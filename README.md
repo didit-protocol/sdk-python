@@ -155,7 +155,7 @@ except didit.APIConnectionError:  # no response (APITimeoutError is a subclass)
 | `ConfigurationError` | Missing API key, account token, organization or application id, or webhook secret |
 | `APIResponseValidationError` | A successful response was not the documented content (for example HTML instead of JSON) |
 
-A response that does not match the published schema never raises: the SDK returns it with the fields it could read, and unknown values stay available.
+A response that does not match the published schema never raises: the SDK returns it with the fields it could read, and unknown values stay available. A field the response left out reads `None` (and is absent from `model_fields_set` and `to_dict()`). A failure while the body is still arriving is an `APIConnectionError` (or `APITimeoutError`), retried like any other for the methods above.
 
 ### Retries and timeouts
 
@@ -177,7 +177,7 @@ async for session in async_client.sessions.list(limit=100):
     ...
 ```
 
-Next links are followed only on the API's own origin; the API key is never sent anywhere else.
+Next links are followed only on the API's own origin (a relative link resolves against the page that returned it); the API key is never sent anywhere else. A list that keeps returning a link it already returned raises `DiditError` instead of looping forever.
 
 ## Files and binary responses
 
@@ -222,6 +222,7 @@ asyncio.run(main())
 - Pass the exact raw body bytes and the request headers (any mapping or list of pairs).
 - `X-Signature` (raw body) and `X-Signature-V2` (canonical JSON, which survives middleware that re-encodes the body) are checked, and their `-Previous` variants during a secret rotation. `secret` can be a list: `verify(body, headers, [new_secret, old_secret])`.
 - Deliveries older or newer than `tolerance` seconds (default 300) are refused.
+- Anything the request carries (a malformed, huge or deeply nested body, odd headers) raises `WebhookVerificationError`, never another exception, so catching that one class is enough. A missing secret (`None`, for example an unset environment variable) or an empty one raises `ConfigurationError`.
 - `X-Signature-Simple` (deprecated) counts only with `allow_simple=True`; it covers the envelope, not the body, so `event.body_authenticated` is then `False` and you should re-fetch the record from the API.
 - `didit.webhooks.verify_parsed(payload, headers, secret)` is for frameworks that only give you the parsed JSON; it can check `X-Signature-V2` only.
 
@@ -245,11 +246,11 @@ except TokenVerificationError as err:
 print(claims.sub, claims.sid, claims.vendor_data, claims.org)
 ```
 
-- `verify_access_token(token, audience=None)` accepts ES256 only (never `none`, HS* or RS*), requires the header `typ: at+jwt`, checks `iss`, `aud` (the given audience, else `client_id`), `exp`, `nbf` and `iat` with 60 s leeway, and the signature against the issuer's keys. Discovery and keys are fetched on first use and cached as the issuer says (5 minutes today); an unknown key id triggers at most one refetch per minute.
+- `verify_access_token(token, audience=None)` accepts ES256 only (never `none`, HS* or RS*), requires the header `typ: at+jwt`, checks `iss`, `aud` (the given audience, else `client_id`), `exp`, `nbf` and `iat` with 60 s leeway, and the signature against the issuer's keys. Discovery and keys are fetched on first use and cached as the issuer says (5 minutes today); an unknown key id triggers at most one refetch per minute, and a failed fetch is not retried for a minute either. The discovery document must name the configured issuer, keep the token endpoint on the issuer's origin and use https. To deny-list a token, key the list on its `jti` claim, not on the token string.
 - `verify_id_token(token, nonce=..., audience=None)` does the same for ID tokens and checks the nonce of the sign-in (pass `nonce=None` for an ID token from a refresh, which has none).
 - `create_pkce()`, `create_state()` and `create_nonce()` for the sign-in redirect; `exchange_code(code, code_verifier=..., redirect_uri=...)` and `refresh(refresh_token)` for tokens. Serialise refreshes for one session: reusing a consumed refresh token revokes the session.
 - `get_session(access_token)` asks the issuer whether the session is still live (instant revocation check); `revoke_session(access_token)` signs the person out.
-- `create_step_up(access_token, action="payout", amount="250.00", currency="EUR", return_to=...)` and `retrieve_step_up(access_token, step_up_id)`: act on a sensitive action only when `step_up.approved` is true.
+- `create_step_up(access_token, action="payout", amount="250.00", currency="EUR", return_to=...)` and `retrieve_step_up(access_token, step_up_id)`: go ahead without a step-up only when `step_up.required is False`, and after one only when `step_up.approved` is true.
 - `AsyncAuthentication` has the same methods with `await`. One instance per process is the intended use.
 
 See [`examples/authentication.py`](examples/authentication.py).
@@ -273,7 +274,7 @@ CPython 3.10, 3.11, 3.12, 3.13 and 3.14 on Linux, macOS and Windows. Dependencie
 
 ## Versioning
 
-Semantic versioning. Until 1.0.0 the version stays `0.x` and minor versions may change the public API. Releases are cut by release-please from conventional commits; see [CHANGELOG.md](CHANGELOG.md) once the first release is out. When an endpoint is removed from the API, its method stays for one more minor version and is marked deprecated.
+Semantic versioning. Until 1.0.0 the version stays `0.x` and minor versions may change the public API. Releases are cut by release-please from conventional commits; see [CHANGELOG.md](CHANGELOG.md) once the first release is out. When an endpoint is removed from the API, or its method is renamed, the old method stays for one more minor version, marked deprecated (it emits a `DeprecationWarning` and type checkers flag it); a renamed method's old name keeps working as an alias of the new one.
 
 ## Contributing and security
 
