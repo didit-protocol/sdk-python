@@ -88,7 +88,7 @@ def construct_type(type_: Any, value: object) -> object:
             if models:
                 best = max(models, key=lambda m: _overlap(m, cast("dict[str, Any]", value)))
                 return best.construct_lenient(cast("dict[str, Any]", value))
-        return value
+        return cast(object, value)
     if isinstance(type_, type) and issubclass(type_, BaseModel):
         if isinstance(value, dict):
             try:

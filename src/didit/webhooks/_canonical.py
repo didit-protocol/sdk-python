@@ -72,5 +72,6 @@ def parse_body(raw: bytes) -> dict[str, Any]:
         ) from exc
     if not isinstance(value, dict):
         raise WebhookVerificationError("invalid_payload", "The webhook body is not a JSON object.")
-    _check_finite(value)
-    return cast("dict[str, Any]", value)
+    body = cast("dict[str, Any]", value)
+    _check_finite(body)
+    return body

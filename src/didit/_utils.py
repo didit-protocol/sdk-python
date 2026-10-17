@@ -88,11 +88,11 @@ def multipart_fields(
             continue
         if key in names:
             if isinstance(value, list):
-                files.extend((key, to_httpx_file(v)) for v in value)
+                files.extend((key, to_httpx_file(v)) for v in cast("list[Any]", value))
             else:
                 files.append((key, to_httpx_file(cast("Any", value))))
         elif isinstance(value, (Mapping, list, tuple)):
-            data[key] = json.dumps(strip_not_given(value), separators=(",", ":"))
+            data[key] = json.dumps(strip_not_given(cast(object, value)), separators=(",", ":"))
         else:
             data[key] = _scalar_text(value)
     return data, files

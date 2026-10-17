@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import mimetypes
 import os
 import pathlib
@@ -10,17 +9,9 @@ from typing import Any, Union, cast
 
 from ._types import FileContent, FileTypes
 
-__all__ = ["is_file_input", "to_httpx_file"]
+__all__ = ["to_httpx_file"]
 
 HttpxFile = tuple[Union[str, None], bytes, Union[str, None]]
-
-
-def is_file_input(value: object) -> bool:
-    if isinstance(value, (bytes, bytearray, os.PathLike, io.IOBase)):
-        return True
-    if isinstance(value, tuple) and len(value) in (2, 3):  # pyright: ignore[reportUnknownArgumentType]
-        return is_file_input(value[1])
-    return hasattr(value, "read")
 
 
 def to_httpx_file(value: FileTypes) -> HttpxFile:
@@ -56,7 +47,7 @@ def to_httpx_file(value: FileTypes) -> HttpxFile:
         raw: object = content.read()
         if isinstance(raw, str):
             raise TypeError("Open files in binary mode ('rb') before uploading them.")
-        data = bytes(cast("bytes", raw))
+        data = bytes(cast("bytes | bytearray", raw))
         if filename is None:
             name = getattr(content, "name", None)
             if isinstance(name, str):
