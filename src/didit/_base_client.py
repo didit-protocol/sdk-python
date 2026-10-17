@@ -526,13 +526,13 @@ class SyncAPIClient(BaseClient):
                 raise self._status_error(response)
 
             if mode == "stream":
-                return APIResponse(response, parse, retries_taken)
+                return APIResponse(response, parse, retries_taken, time.monotonic() - started)
             try:
                 response.read()
             finally:
                 response.close()
             if mode == "raw":
-                return APIResponse(response, parse, retries_taken)
+                return APIResponse(response, parse, retries_taken, time.monotonic() - started)
             return parse(response)
 
 
@@ -658,13 +658,13 @@ class AsyncAPIClient(BaseClient):
                 raise self._status_error(response)
 
             if mode == "stream":
-                return AsyncAPIResponse(response, parse, retries_taken)
+                return AsyncAPIResponse(response, parse, retries_taken, time.monotonic() - started)
             try:
                 await response.aread()
             finally:
                 await response.aclose()
             if mode == "raw":
-                return AsyncAPIResponse(response, parse, retries_taken)
+                return AsyncAPIResponse(response, parse, retries_taken, time.monotonic() - started)
             return parse(response)
 
 

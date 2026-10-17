@@ -53,9 +53,11 @@ class _BaseAPIResponse(Generic[R]):
         http_response: httpx.Response,
         parse: Callable[[httpx.Response], R],
         retries_taken: int,
+        elapsed: float = 0.0,
     ) -> None:
         self.http_response = http_response
         self.retries_taken = retries_taken
+        self._elapsed = elapsed
         self._parse = parse
         self._parsed: list[R] = []
 
@@ -81,8 +83,8 @@ class _BaseAPIResponse(Generic[R]):
 
     @property
     def elapsed(self) -> float:
-        """Seconds between sending the request and reading the response headers."""
-        return self.http_response.elapsed.total_seconds()
+        """Seconds between sending the last attempt and receiving its response headers."""
+        return self._elapsed
 
     def __repr__(self) -> str:
         return (
