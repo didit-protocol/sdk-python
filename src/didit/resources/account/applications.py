@@ -52,7 +52,7 @@ class AccountApplications(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> None:
+    ) -> object:
         """List the organization's applications.
 
         List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine — follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
@@ -67,11 +67,11 @@ class AccountApplications(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "None",
+            "object",
             self._client.request(
                 "get",
                 "/organizations/me/{org_id}/applications/",
-                cast_to=None,
+                cast_to=object,
                 path_params={"org_id": org_id},
                 auth="account_token",
                 api="account",
@@ -265,7 +265,7 @@ class AsyncAccountApplications(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> None:
+    ) -> object:
         """List the organization's applications.
 
         List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine — follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
@@ -280,11 +280,11 @@ class AsyncAccountApplications(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "None",
+            "object",
             await self._client.request(
                 "get",
                 "/organizations/me/{org_id}/applications/",
-                cast_to=None,
+                cast_to=object,
                 path_params={"org_id": org_id},
                 auth="account_token",
                 api="account",

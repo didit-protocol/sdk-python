@@ -344,6 +344,9 @@ def _response(op: Operation, builder: TypeBuilder, rc: str) -> ResponseInfo:
         other = [ct for ct in content if any(ct.startswith(b) for b in BINARY_TYPES)]
         if other:
             binary = (code, other[0])
+        elif not content and code != 204 and op.http_method not in ("delete", "head"):
+            # A body is promised but not described: return the JSON as is.
+            json_responses.append((code, {"schema": {}}))
         else:
             empty = True
     module = types_module(op.sdk.resource, op.sdk.method, "response")
