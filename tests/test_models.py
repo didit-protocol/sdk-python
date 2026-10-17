@@ -6,6 +6,7 @@ import datetime as dt
 from typing import Any
 
 import pydantic
+import pytest
 
 import didit
 from didit._models import BaseModel, construct_type, validate_response
@@ -106,3 +107,20 @@ def test_validate_response_passthrough() -> None:
 def test_public_base_model() -> None:
     assert issubclass(SessionsCreateResponse, didit.BaseModel)
     assert issubclass(didit.BaseModel, pydantic.BaseModel)
+
+
+def test_missing_required_fields_read_none(recwarn: pytest.WarningsRecorder) -> None:
+    from didit.types import WalletScreeningResult
+
+    data = {"risk_score": "high", "brand_new": 1}
+    result = validate_response(WalletScreeningResult, data)
+    assert isinstance(result, WalletScreeningResult)
+    assert result.provider is None  # absent: reads None instead of raising AttributeError
+    assert "provider" not in result.model_fields_set
+    assert result.risk_score == "high"  # type: ignore[comparison-overlap]
+    assert result.to_dict() == data
+    assert '"risk_score": "high"' in result.to_json()
+    assert not [w for w in recwarn if issubclass(w.category, UserWarning)]
+    nested = validate_response(Outer, {"id": 1, "inner": {"when": "not a date"}})
+    assert nested.inner is not None
+    assert nested.inner.name is None  # type: ignore[comparison-overlap]
