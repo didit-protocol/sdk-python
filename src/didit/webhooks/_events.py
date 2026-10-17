@@ -24,6 +24,7 @@ __all__ = [
     "UserStatusUpdatedEvent",
     "WebhookEvent",
     "WebhookEventBase",
+    "WorkflowComplianceChangedEvent",
     "parse_event",
 ]
 
