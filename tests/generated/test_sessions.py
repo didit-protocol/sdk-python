@@ -2594,9 +2594,9 @@ def test_sessions_imports_create() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "source_file_url": "https://files.example.com/exports/sessions.ndjson",
                 "import_type": "user_verification",
                 "workflow_id": "9f9b1234-aaaa-bbbb-cccc-1234567890ab",
+                "source_file_url": "https://files.example.com/exports/sessions.ndjson",
             },
             status=201,
             response_json={
@@ -2621,14 +2621,14 @@ def test_sessions_imports_create() -> None:
             },
         ),
         lambda c: c.sessions.imports.create(
-            source_file_url="https://files.example.com/exports/sessions.ndjson",
             import_type="user_verification",
             workflow_id="9f9b1234-aaaa-bbbb-cccc-1234567890ab",
+            source_file_url="https://files.example.com/exports/sessions.ndjson",
         ),
         lambda c: c.sessions.imports.create(
-            source_file_url="https://files.example.com/exports/sessions.ndjson",
             import_type="user_verification",
             workflow_id="9f9b1234-aaaa-bbbb-cccc-1234567890ab",
+            source_file_url="https://files.example.com/exports/sessions.ndjson",
         ),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),

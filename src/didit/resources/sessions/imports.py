@@ -50,7 +50,6 @@ class SessionsImports(SyncAPIResource):
     def create(
         self,
         *,
-        source_file_url: str,
         import_type: Literal[
             "user_verification", "business_verification", "status_rules", "transactions"
         ]
@@ -58,6 +57,7 @@ class SessionsImports(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         workflow_id: str | NotGiven = NOT_GIVEN,
         source_format: Literal["csv", "ndjson"] | str | NotGiven = NOT_GIVEN,
+        source_file_url: str | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -71,10 +71,10 @@ class SessionsImports(SyncAPIResource):
         ``POST /v3/session/imports/``
 
         Args:
-          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
           import_type: What to import: historical User Verification sessions, historical Business Verification sessions, workflow custom status rules, or historical transaction monitoring records.
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
+          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -89,10 +89,10 @@ class SessionsImports(SyncAPIResource):
                 cast_to=SessionImportJob,
                 auth="api_key",
                 body={
-                    "source_file_url": source_file_url,
                     "import_type": import_type,
                     "workflow_id": workflow_id,
                     "source_format": source_format,
+                    "source_file_url": source_file_url,
                     "file": file,
                 },
                 multipart="auto",
@@ -246,7 +246,6 @@ class AsyncSessionsImports(AsyncAPIResource):
     async def create(
         self,
         *,
-        source_file_url: str,
         import_type: Literal[
             "user_verification", "business_verification", "status_rules", "transactions"
         ]
@@ -254,6 +253,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         workflow_id: str | NotGiven = NOT_GIVEN,
         source_format: Literal["csv", "ndjson"] | str | NotGiven = NOT_GIVEN,
+        source_file_url: str | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -267,10 +267,10 @@ class AsyncSessionsImports(AsyncAPIResource):
         ``POST /v3/session/imports/``
 
         Args:
-          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
           import_type: What to import: historical User Verification sessions, historical Business Verification sessions, workflow custom status rules, or historical transaction monitoring records.
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
+          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -285,10 +285,10 @@ class AsyncSessionsImports(AsyncAPIResource):
                 cast_to=SessionImportJob,
                 auth="api_key",
                 body={
-                    "source_file_url": source_file_url,
                     "import_type": import_type,
                     "workflow_id": workflow_id,
                     "source_format": source_format,
+                    "source_file_url": source_file_url,
                     "file": file,
                 },
                 multipart="auto",

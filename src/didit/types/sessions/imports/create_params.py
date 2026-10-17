@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from typing_extensions import Required, TypedDict
+from typing_extensions import TypedDict
 
 from didit._types import FileTypes
 
@@ -22,7 +22,7 @@ class SessionsImportsCreateParams(TypedDict, total=False):
     source_format: Literal["csv", "ndjson"] | str
     """Optional. Inferred from the URL's file extension when omitted."""
 
-    source_file_url: Required[str]
+    source_file_url: str
     """Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`."""
 
     file: FileTypes

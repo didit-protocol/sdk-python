@@ -137,11 +137,9 @@ def _merge_body(op: Operation, content: dict[str, Json]) -> tuple[Json, str, lis
     for name, prop in multipart_schema.get("properties", {}).items():
         props.setdefault(name, prop)
     merged["properties"] = props
-    merged["required"] = [
-        r
-        for r in json_schema.get("required", [])
-        if r in set(multipart_schema.get("required", [])) or r not in files
-    ]
+    # Either encoding works, so only a field both of them require is required.
+    multipart_required = set(multipart_schema.get("required", []))
+    merged["required"] = [r for r in json_schema.get("required", []) if r in multipart_required]
     merged.pop("$ref", None)
     return merged, "auto", sorted(files), json_media
 
