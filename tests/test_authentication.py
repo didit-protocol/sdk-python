@@ -583,7 +583,7 @@ def test_documented_paths_are_used_when_discovery_omits_them(
     auth: Authentication, issuer: FakeIssuer, key: SigningKey
 ) -> None:
     issuer.discovery["jwks_uri"] = "https://[::1"
-    issuer.discovery["token_endpoint"] = "not a url"
+    issuer.discovery["token_endpoint"] = 42
     issuer.reply("POST", "/token/", 200, TOKEN_RESPONSE)
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
     assert auth.refresh(REFRESH_TOKEN).token_type == "Bearer"
