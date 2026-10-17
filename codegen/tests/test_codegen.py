@@ -329,6 +329,103 @@ def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> No
     load(openapi)
 
 
+def _sync(openapi: pathlib.Path, spec: Any) -> str:
+    downloads = {
+        "verification.json": json.dumps(spec).encode(),
+        "account.json": (openapi / "account.json").read_bytes(),
+    }
+    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
+    return summary
+
+
+def _breaking(summary: str) -> str:
+    return summary.split("## Breaking changes", 1)[1].split("\n## ", 1)[0]
+
+
+def _name_op(spec: Any, overlay: Any, path: str, method: str, **naming: Any) -> None:
+    key = f"{method.upper()} {path}"
+    spec["paths"][path][method]["x-didit-sdk"] = {**overlay[key], **naming}
+
+
+def test_swapped_names_are_breaking(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="top_up")
+    _name_op(spec, overlay, "/v3/billing/top-up/", "post", method="retrieve_balance")
+    breaking = _breaking(_sync(openapi, spec))
+    assert "`billing.top_up` now calls `GET /v3/billing/balance/` instead of" in breaking
+    assert "`billing.retrieve_balance` now calls `POST /v3/billing/top-up/`" in breaking
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+
+
+def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="current_balance")
+    spec["paths"]["/v3/billing/balance-v2/"] = {
+        "get": {
+            "responses": {"200": {"description": "ok"}},
+            "x-didit-sdk": {**overlay["GET /v3/billing/balance/"]},
+        }
+    }
+    breaking = _breaking(_sync(openapi, spec))
+    assert (
+        "`billing.retrieve_balance` now calls `GET /v3/billing/balance-v2/` instead of "
+        "`GET /v3/billing/balance/`" in breaking
+    )
+
+
+def test_a_moved_operation_reports_what_changed(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    item = spec["paths"].pop("/v3/billing/balance/")
+    item["get"]["x-didit-sdk"] = overlay["GET /v3/billing/balance/"]
+    item["get"]["parameters"] = [
+        {"name": "currency", "in": "query", "required": True, "schema": {"type": "string"}}
+    ]
+    item["get"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "array",
+        "items": {"type": "object"},
+    }
+    spec["paths"]["/v4/billing/balance/"] = item
+    summary = _sync(openapi, spec)
+    breaking = _breaking(summary)
+    assert "`billing.retrieve_balance` moved from `GET /v3/billing/balance/`" in breaking
+    assert "parameter added: currency (query, required)" in breaking
+    assert "response: type object -> array" in breaking
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+
+
+def test_an_operation_that_stops_being_a_server_operation_is_removed(
+    openapi: pathlib.Path,
+) -> None:
+    spec = _read(openapi / "verification.json")
+    overlay = _read(openapi / "overlay.json")["operations"]
+    _name_op(spec, overlay, "/v3/billing/balance/", "get", auth="device_token", server=False)
+    breaking = _breaking(_sync(openapi, spec))
+    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) is removed" in breaking
+    # Never kept: server SDKs do not expose device-token operations (DESIGN 4).
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+    files = generate(openapi)
+    assert "def retrieve_balance(" not in files["src/didit/resources/billing.py"]
+
+
+def test_an_operation_that_loses_its_naming_is_called_out(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"] = None
+    overlay = _read(openapi / "overlay.json")
+    del overlay["operations"]["GET /v3/billing/balance/"]
+    _write(openapi / "overlay.json", overlay)
+    summary = _sync(openapi, spec)
+    assert "lost its SDK naming" in summary
+    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) has no SDK naming" in _breaking(
+        summary
+    )
+    assert _read(openapi / "deprecated-operations.json")["methods"] == {}
+    with pytest.raises(CodegenError, match="no SDK naming"):
+        load(openapi)
+
+
 def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> None:
     old = _read(openapi / "verification.json")
     old["components"]["schemas"]["LegacyUnusedThing"] = {"type": "object"}

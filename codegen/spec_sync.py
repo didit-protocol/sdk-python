@@ -421,6 +421,9 @@ def sync(
     new_server_names = {
         _name(n): key for key in new_ops if (n := new_naming(key)) and n.get("server")
     }
+    old_server_names = {
+        _name(n): key for key in old_ops if (n := old_naming(key)) and n.get("server")
+    }
 
     lines: list[str] = [
         f"Spec sync {today.isoformat()}. Upstream files changed: {', '.join(changed_files)}.",
@@ -505,18 +508,24 @@ def sync(
         if _name(before) in new_server_names:
             continue  # another operation now provides the name (swapped or moved)
         if after is None:
+            # The generator fails until the operation is named again, so this cannot
+            # ship silently; the overlay entry decides whether the name survives.
             renames.append(
-                f"- `{key}` lost its SDK naming; `{_name(before)}` is kept as deprecated"
+                f"- `{key}` lost its SDK naming: add `{_name(before)}` back to "
+                "`openapi/overlay.json` (the generator fails until it is named)"
             )
             breaking.append(f"`{_name(before)}` ({key}) has no SDK naming any more")
-            keep(before, key, "removed", None)
         elif not after.get("server"):
+            # Server SDKs never expose device or end-user token operations (DESIGN 4),
+            # and an API key could not call it any more, so the method goes now.
             renames.append(
                 f"- `{key}` (`{_name(before)}`) is no longer a server operation "
-                f"(auth {after.get('auth')}); kept as deprecated until version {remove_in}"
+                f"(auth {after.get('auth')}); the method is removed"
             )
-            breaking.append(f"`{_name(before)}` ({key}) is no longer exposed to servers")
-            keep(before, key, "removed", None)
+            breaking.append(
+                f"`{_name(before)}` ({key}) is removed: the operation now needs "
+                f"{after.get('auth')} and server SDKs do not expose it"
+            )
         else:
             renames.append(
                 f"- `{key}`: `{_name(before)}` renamed to `{_name(after)}`; the old name stays "
@@ -529,6 +538,40 @@ def sync(
             keep(before, key, "renamed", _name(after))
     lines.append(f"## Renamed methods ({len(renames)})")
     lines.extend(renames)
+    lines.append("")
+
+    # A name that stays but now belongs to another operation: moved to a new path,
+    # or reassigned (swapped, or reused by another operation). Compare what the
+    # method sends and receives before and after.
+    moves: list[str] = []
+    for method in sorted(set(old_server_names) & set(new_server_names)):
+        old_key, new_key = old_server_names[method], new_server_names[method]
+        if old_key == new_key:
+            continue
+        old_name, old = old_ops[old_key]
+        new_name, new = new_ops[new_key]
+        notes, is_breaking = describe_change(old_docs[old_name], old, new_docs[new_name], new)
+        if notes == ["descriptions, examples or other details changed"]:
+            notes = ["same parameters, body and response"]
+        detail = "; ".join(notes)
+        if old_key in new_ops:
+            moves.append(
+                f"- `{method}` **(breaking)** now calls `{new_key}` instead of `{old_key}` "
+                f"(which is still in the API): {detail}"
+            )
+            breaking.append(
+                f"`{method}` now calls `{new_key}` instead of `{old_key}`, a different operation"
+            )
+        else:
+            marker = " **(breaking)**" if is_breaking else ""
+            moves.append(f"- `{method}`{marker} moved from `{old_key}` to `{new_key}`: {detail}")
+            if is_breaking:
+                breaking.append(
+                    f"`{method}` moved from `{old_key}` to `{new_key}`: "
+                    + "; ".join(n for n in notes if n.endswith("(breaking)"))
+                )
+    lines.append(f"## Moved or reassigned methods ({len(moves)})")
+    lines.extend(moves)
     lines.append("")
 
     for method in sorted(deprecated["methods"]):
