@@ -41,7 +41,8 @@ def approve_payout(access_token: str, amount: str) -> str:
         currency="EUR",
         return_to="https://example.com/payouts/confirm",
     )
-    if not step_up.required:
+    # Fail closed: only an explicit "required": false lets the payout go ahead.
+    if step_up.required is False:
         return "go ahead"
     # Send the person to step_up.verification_url. When they come back, read the
     # step-up again and act only on status "approved".

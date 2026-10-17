@@ -648,13 +648,16 @@ def test_keys_may_live_on_another_https_host(
 def test_failed_key_fetches_are_rate_limited_too(
     auth: Authentication, issuer: FakeIssuer, key: SigningKey, clock: FakeClock
 ) -> None:
-    calls: list[int] = []
+    keys_path = "/keys/flaky.json"
+    issuer.discovery["jwks_uri"] = f"{ISSUER}{keys_path}"
+    up = [False]
 
-    def broken(_: httpx.Request) -> httpx.Response:
-        calls.append(1)
+    def flaky(_: httpx.Request) -> httpx.Response:
+        if up[0]:
+            return httpx.Response(200, json={"keys": [key.jwk()]})
         return httpx.Response(500, json={"detail": "down"})
 
-    issuer.route("GET", JWKS, broken)
+    issuer.route("GET", keys_path, flaky)
     with pytest.raises(InternalServerError):
         auth.verify_access_token(key.sign(access_claims()))
     # Random kids (an attacker, or a burst during an outage) do not refetch for a minute.
@@ -662,19 +665,22 @@ def test_failed_key_fetches_are_rate_limited_too(
         clock.advance(1)
         stranger = SigningKey.generate(f"k_random_{index}").sign(access_claims())
         assert reason(lambda: auth.verify_access_token(stranger)) == "unknown_key"
-    assert len(calls) == 1
+    assert issuer.count(keys_path) == 1
     # Once a minute has passed the SDK tries again, and recovers when the issuer does.
     clock.advance(50)
-    issuer.route("GET", JWKS, lambda _r: httpx.Response(200, json={"keys": [key.jwk()]}))
+    up[0] = True
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+    assert issuer.count(keys_path) == 2
     # With a fresh key set, an unknown kid right after a failed refetch waits a minute too.
     clock.advance(60)
-    issuer.route("GET", JWKS, broken)
+    up[0] = False
     with pytest.raises(InternalServerError):
         auth.verify_access_token(SigningKey.generate("k_new").sign(access_claims()))
     clock.advance(1)
-    assert reason(lambda: auth.verify_access_token(SigningKey.generate("k_new2").sign(access_claims()))) == "unknown_key"
-    assert len(calls) == 2
+    newer = SigningKey.generate("k_newer").sign(access_claims())
+    assert reason(lambda: auth.verify_access_token(newer)) == "unknown_key"
+    assert issuer.count(keys_path) == 3
+    # Known keys keep verifying from the cache meanwhile.
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
 
 
