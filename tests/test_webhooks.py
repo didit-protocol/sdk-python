@@ -254,6 +254,9 @@ def test_negative_tolerance_is_a_configuration_error(frozen_time: list[float]) -
         webhooks.verify(b"x", headers, SECRET, tolerance=-1)
     with pytest.raises(ConfigurationError):
         webhooks.verify_parsed({}, headers, SECRET, tolerance=-1)
+    for bad in (float("nan"), True, "300"):
+        with pytest.raises(ConfigurationError):
+            webhooks.verify(body, headers, SECRET, tolerance=bad)  # type: ignore[arg-type]
 
 
 def _nested(depth: int) -> bytes:

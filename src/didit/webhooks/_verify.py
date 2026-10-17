@@ -69,7 +69,8 @@ def _secrets(secret: str | Sequence[str] | None) -> list[bytes]:
 
 
 def _check_tolerance(tolerance: int) -> None:
-    if isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)) or tolerance < 0:  # pyright: ignore[reportUnnecessaryIsInstance]
+    # ``not >= 0`` also refuses NaN, which would otherwise switch the replay check off.
+    if isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)) or not tolerance >= 0:  # pyright: ignore[reportUnnecessaryIsInstance]
         raise ConfigurationError("tolerance must be 0 or more seconds.")
 
 
