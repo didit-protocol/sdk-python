@@ -40,24 +40,37 @@ class BaseModel(pydantic.BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """The model as plain JSON data, with the API's field names, without
         fields the API did not send."""
-        return self.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        # warnings=False: a response that did not match the schema keeps the
+        # values the API sent, which pydantic would otherwise warn about.
+        return self.model_dump(mode="json", by_alias=True, exclude_unset=True, warnings=False)
 
     def to_json(self, *, indent: int | None = 2) -> str:
         """The model as a JSON string, with the API's field names."""
-        return self.model_dump_json(by_alias=True, exclude_unset=True, indent=indent)
+        return self.model_dump_json(
+            by_alias=True, exclude_unset=True, indent=indent, warnings=False
+        )
 
     @classmethod
     def construct_lenient(cls, data: dict[str, Any]) -> Self:
-        """Build the model from ``data`` without raising on contract mismatches."""
+        """Build the model from ``data`` without raising on contract mismatches.
+
+        A required field the API left out reads ``None`` (instead of raising
+        ``AttributeError`` on access) and stays out of ``model_fields_set``.
+        """
         by_alias = {(field.alias or name): name for name, field in cls.model_fields.items()}
         values: dict[str, Any] = {}
+        sent: set[str] = set()
         for key, value in data.items():
             name = by_alias.get(key)
             if name is None:
                 values[key] = value
                 continue
+            sent.add(name)
             values[key] = construct_type(cls.model_fields[name].annotation, value)
-        return cls.model_construct(**values)
+        for name, field in cls.model_fields.items():
+            if name not in sent and field.is_required():
+                values[field.alias or name] = None
+        return cls.model_construct(_fields_set=sent, **values)
 
 
 @functools.cache
