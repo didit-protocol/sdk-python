@@ -230,6 +230,21 @@ def test_errors_keep_no_credentials_on_their_request() -> None:
     with pytest.raises(didit.APIConnectionError) as conn:
         api.client(max_retries=0).sessions.retrieve_decision("s")
     assert conn.value.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(httpx.Response(200, text="<html>", headers={"content-type": "text/html"}))
+    with pytest.raises(didit.APIResponseValidationError) as html:
+        api.client().sessions.retrieve_decision("s")
+    assert html.value.response.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(httpx.Response(200, text="<html>"))
+    with pytest.raises(didit.APIResponseValidationError) as page:
+        api.client().businesses.list()
+    assert page.value.response.request.headers["x-api-key"] == "[redacted]"
+    api = MockAPI().add(_broken(200, httpx.ReadTimeout("stalled")))
+    with (
+        api.client().sessions.with_streaming_response.generate_pdf("s") as response,
+        pytest.raises(didit.APITimeoutError) as streamed,
+    ):
+        response.read()
+    assert streamed.value.request.headers["x-api-key"] == "[redacted]"
 
 
 # Retry policy ---------------------------------------------------------------------

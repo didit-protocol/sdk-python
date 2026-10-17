@@ -1358,6 +1358,29 @@ def test_errors_keep_no_bearer_token_on_their_request(
     with pytest.raises(AuthenticationError) as info:
         auth.get_session(ACCESS_TOKEN)
     assert info.value.response.request.headers["authorization"] == "[redacted]"
+    issuer.route("GET", "/session/", lambda _r: httpx.Response(200, text="<html>"))
+    with pytest.raises(APIResponseValidationError) as html:
+        auth.get_session(ACCESS_TOKEN)
+    assert html.value.response.request.headers["authorization"] == "[redacted]"
+
+
+def test_errors_keep_no_token_request_body(auth: Authentication, issuer: FakeIssuer) -> None:
+    issuer.reply("POST", "/token/", 400, {"error": "invalid_grant"})
+    with pytest.raises(BadRequestError) as info:
+        auth.refresh(REFRESH_TOKEN)
+    kept = info.value.response.request
+    assert kept.url == f"{ISSUER}/token/"
+    assert REFRESH_TOKEN.encode() not in kept.read()
+
+    def stall(_: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("stalled")
+
+    issuer.route("POST", "/token/", stall)
+    with pytest.raises(APITimeoutError) as timeout:
+        auth.exchange_code(CODE, code_verifier=CODE_VERIFIER, redirect_uri=REDIRECT_URI)
+    body = timeout.value.request.read()
+    assert CODE.encode() not in body
+    assert CODE_VERIFIER.encode() not in body
 
 
 def test_echoed_secrets_are_redacted(auth: Authentication, issuer: FakeIssuer) -> None:
