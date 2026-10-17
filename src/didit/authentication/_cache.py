@@ -8,6 +8,7 @@ key set triggers a refetch only when the last fetch is at least a minute old.
 
 from __future__ import annotations
 
+import contextlib
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -64,10 +65,8 @@ def cache_seconds(headers: httpx.Headers) -> float:
         seconds = DEFAULT_MAX_AGE
     else:
         seconds = max_age
-        try:
+        with contextlib.suppress(ValueError):
             seconds -= int(headers.get("age") or 0)
-        except ValueError:
-            pass
     return min(MAX_MAX_AGE, max(MIN_MAX_AGE, seconds))
 
 

@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from types import TracebackType
-from typing import TypeVar, Union, cast
+from typing import Any, TypeVar, Union, cast
 
 import httpx
 from typing_extensions import Self
@@ -28,7 +28,7 @@ from .._exceptions import (
     APIResponseValidationError,
     APITimeoutError,
     ConfigurationError,
-    _request_id,
+    _request_id,  # pyright: ignore[reportPrivateUsage]
     make_status_error,
 )
 from .._models import BaseModel, validate_response
@@ -65,7 +65,7 @@ DEFAULT_TIMEOUT = 10.0
 DEFAULT_LEEWAY = 60
 _DISCOVERY_PATH = ".well-known/openid-configuration"
 _JWKS_PATH = ".well-known/jwks.json"
-_TOKEN_PATH = "token/"
+_TOKEN_PATH = "token/"  # noqa: S105 - a path, not a secret
 _SESSION_PATH = "session/"
 _STEP_UP_PATH = "step-up/"
 
@@ -97,7 +97,7 @@ def _required_text(value: object, name: str) -> str:
 
 
 def _amount_text(amount: Amount) -> str:
-    if isinstance(amount, bool) or not isinstance(amount, (str, int, float, Decimal)):
+    if isinstance(amount, bool) or not isinstance(amount, (str, int, float, Decimal)):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError("amount must be a decimal string, an int, a float or a Decimal.")
     if isinstance(amount, str):
         return amount
@@ -281,7 +281,7 @@ class _AuthenticationBase:
                 response=response,
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
-        return cast("ModelT", validate_response(model, data))
+        return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))
 
     def _store_discovery(self, call: _Call, response: httpx.Response) -> Discovery:
         discovery = parse_discovery(self._read(call, response))
