@@ -328,7 +328,9 @@ class BaseClient:
         kwargs: dict[str, Any] = {"headers": headers, "params": prepared.params or None}
         if prepared.has_json_body:
             headers["Content-Type"] = "application/json"
-            kwargs["content"] = json.dumps(prepared.json_body, separators=(",", ":")).encode()
+            kwargs["content"] = json.dumps(
+                prepared.json_body, separators=(",", ":"), allow_nan=False
+            ).encode()
         elif prepared.files is not None or prepared.data is not None:
             if prepared.files:
                 kwargs["files"] = prepared.files
