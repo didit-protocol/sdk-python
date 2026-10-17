@@ -202,9 +202,11 @@ def test_async_errors_while_reading_the_body() -> None:
 def test_streamed_body_errors_are_sdk_errors() -> None:
     api = MockAPI().add(_broken(200, httpx.ReadError("reset")))
     client = api.client()
-    with client.sessions.with_streaming_response.generate_pdf("s") as response:
-        with pytest.raises(didit.APIConnectionError):
-            b"".join(response.iter_bytes())
+    with (
+        client.sessions.with_streaming_response.generate_pdf("s") as response,
+        pytest.raises(didit.APIConnectionError),
+    ):
+        b"".join(response.iter_bytes())
 
     async def run() -> None:
         api = MockAPI().add(_broken(200, httpx.ReadTimeout("stalled")))

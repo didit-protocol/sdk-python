@@ -101,7 +101,10 @@ def _count_operations(openapi_dir: pathlib.Path) -> tuple[int, int]:
             for method in ("get", "put", "post", "delete", "patch", "head", "options"):
                 if method in item:
                     total += 1
-                    naming = item[method].get("x-didit-sdk") or overlay[f"{prefix}{method.upper()} {path}"]
+                    naming = (
+                        item[method].get("x-didit-sdk")
+                        or overlay[f"{prefix}{method.upper()} {path}"]
+                    )
                     server += bool(naming["server"])
     deprecated = len(_read(openapi_dir / "deprecated-operations.json")["methods"])
     return total + deprecated, server + deprecated
@@ -229,7 +232,9 @@ def test_every_server_operation_becomes_one_method() -> None:
     assert sum(1 for m in methods if m.response.kind == "page") == pages
     assert sum(1 for m in methods if m.body_mode in ("multipart", "auto")) == multipart
     assert sum(1 for m in methods if m.op.sdk.scope == "application") == scoped
-    assert pages and multipart and scoped
+    assert pages
+    assert multipart
+    assert scoped
     names = set(builder.registry.defs)
     assert "SessionsCreateParams" in names
     assert "SessionsCreateParamsContactDetails" in names
@@ -369,9 +374,9 @@ def test_schema_diff_rules() -> None:
         ("x: can now be null", True)
     ]
     nested = {"type": "array", "items": obj}
-    assert diff(nested, {"type": "array", "items": {"type": "object", "properties": {}}}, request=False) == [
-        ("x[].a: removed", True)
-    ]
+    assert diff(
+        nested, {"type": "array", "items": {"type": "object", "properties": {}}}, request=False
+    ) == [("x[].a: removed", True)]
     assert diff({"oneOf": [obj, status]}, {"oneOf": [obj]}, request=False) == [
         ("x: 1 oneOf variant(s) removed", True)
     ]
@@ -381,7 +386,12 @@ def test_schema_diff_rules() -> None:
 
 @pytest.mark.parametrize(
     "body",
-    [b"<html>maintenance</html>", b'{"message": "maintenance"}', b'{"openapi": "3.1.0", "paths": {}}', b"[]"],
+    [
+        b"<html>maintenance</html>",
+        b'{"message": "maintenance"}',
+        b'{"openapi": "3.1.0", "paths": {}}',
+        b"[]",
+    ],
 )
 def test_sync_refuses_a_download_that_is_not_openapi(openapi: pathlib.Path, body: bytes) -> None:
     before = {p.name: p.read_bytes() for p in openapi.iterdir()}
@@ -389,7 +399,7 @@ def test_sync_refuses_a_download_that_is_not_openapi(openapi: pathlib.Path, body
         "verification.json": (openapi / "verification.json").read_bytes(),
         "account.json": body,
     }
-    with pytest.raises(spec_sync.SpecSyncError, match="account.json"):
+    with pytest.raises(spec_sync.SpecSyncError, match=r"account\.json"):
         spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
     assert {p.name: p.read_bytes() for p in openapi.iterdir()} == before
 
@@ -405,7 +415,9 @@ def test_deprecated_entry_that_is_provided_again_names_the_fix(openapi: pathlib.
         "remove_in": "0.2.0",
     }
     _write(openapi / "deprecated-operations.json", deprecated)
-    with pytest.raises(CodegenError, match="delete this entry from openapi/deprecated-operations.json"):
+    with pytest.raises(
+        CodegenError, match=r"delete this entry from openapi/deprecated-operations\.json"
+    ):
         load(openapi)
 
 

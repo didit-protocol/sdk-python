@@ -276,7 +276,11 @@ def test_hostile_bodies_are_verification_errors(body: bytes, frozen_time: list[f
     headers = {"X-Signature-V2": "0" * 64, "X-Signature": "0" * 64}
     with pytest.raises(WebhookVerificationError) as info:
         webhooks.verify(body, headers, SECRET)
-    assert info.value.reason in ("invalid_payload", "timestamp_out_of_tolerance", "invalid_signature")
+    assert info.value.reason in (
+        "invalid_payload",
+        "timestamp_out_of_tolerance",
+        "invalid_signature",
+    )
 
 
 def test_deeply_nested_parsed_payload_is_a_verification_error(frozen_time: list[float]) -> None:

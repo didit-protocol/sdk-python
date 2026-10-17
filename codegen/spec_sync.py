@@ -73,7 +73,9 @@ def check_openapi(name: str, data: bytes) -> Json:
         raise SpecSyncError(f"{name}: the download is not a JSON object.")
     version = doc.get("openapi")
     if not isinstance(version, str) or not version.startswith("3."):
-        raise SpecSyncError(f"{name}: the download is not an OpenAPI 3 document (openapi={version!r}).")
+        raise SpecSyncError(
+            f"{name}: the download is not an OpenAPI 3 document (openapi={version!r})."
+        )
     paths = doc.get("paths")
     if not isinstance(paths, dict) or not paths:
         raise SpecSyncError(f"{name}: the download has no paths.")
@@ -161,11 +163,21 @@ def _object_props(schema: Json) -> tuple[dict[str, Json], set[str]]:
 
 
 def _variants(schema: Json, keyword: str) -> list[Json]:
-    return [v for v in schema.get(keyword) or [] if not (isinstance(v, dict) and v.get("type") == "null")]
+    return [
+        v
+        for v in schema.get(keyword) or []
+        if not (isinstance(v, dict) and v.get("type") == "null")
+    ]
 
 
 def diff_schema(
-    old: Json, new: Json, where: str, *, request: bool, notes: list[tuple[str, bool]], depth: int = 0
+    old: Json,
+    new: Json,
+    where: str,
+    *,
+    request: bool,
+    notes: list[tuple[str, bool]],
+    depth: int = 0,
 ) -> None:
     """Append ``(note, breaking)`` for every difference between two dereferenced schemas.
 
@@ -186,7 +198,10 @@ def diff_schema(
         narrowed = old_plain == {"number"} and new_plain == {"integer"}
         harmless = (request and widened) or (not request and narrowed)
         notes.append(
-            (f"{where}: type {'/'.join(sorted(old_plain))} -> {'/'.join(sorted(new_plain))}", not harmless)
+            (
+                f"{where}: type {'/'.join(sorted(old_plain))} -> {'/'.join(sorted(new_plain))}",
+                not harmless,
+            )
         )
         return
     if "null" in new_types and "null" not in old_types and not request:
@@ -232,11 +247,15 @@ def diff_schema(
     for keyword in ("oneOf", "anyOf"):
         old_vars, new_vars = _variants(old, keyword), _variants(new, keyword)
         if len(new_vars) < len(old_vars):
-            notes.append((f"{where}: {len(old_vars) - len(new_vars)} {keyword} variant(s) removed", True))
+            notes.append(
+                (f"{where}: {len(old_vars) - len(new_vars)} {keyword} variant(s) removed", True)
+            )
         elif len(new_vars) > len(old_vars):
-            notes.append((f"{where}: {len(new_vars) - len(old_vars)} {keyword} variant(s) added", False))
+            notes.append(
+                (f"{where}: {len(new_vars) - len(old_vars)} {keyword} variant(s) added", False)
+            )
         else:
-            for index, (a, b) in enumerate(zip(old_vars, new_vars)):
+            for index, (a, b) in enumerate(zip(old_vars, new_vars, strict=True)):
                 diff_schema(
                     a, b, f"{where}<{keyword} {index + 1}>",
                     request=request, notes=notes, depth=depth + 1,
@@ -285,7 +304,10 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> tuple
     new_types, new_body = _body(new)
     if old_types != new_types and old_types and new_types:
         found.append(
-            (f"request content type {sorted(old_types)} -> {sorted(new_types)}", not old_types <= new_types)
+            (
+                f"request content type {sorted(old_types)} -> {sorted(new_types)}",
+                not old_types <= new_types,
+            )
         )
     if (old.get("requestBody") or {}).get("required") is not True and (
         new.get("requestBody") or {}
@@ -483,7 +505,9 @@ def sync(
         if _name(before) in new_server_names:
             continue  # another operation now provides the name (swapped or moved)
         if after is None:
-            renames.append(f"- `{key}` lost its SDK naming; `{_name(before)}` is kept as deprecated")
+            renames.append(
+                f"- `{key}` lost its SDK naming; `{_name(before)}` is kept as deprecated"
+            )
             breaking.append(f"`{_name(before)}` ({key}) has no SDK naming any more")
             keep(before, key, "removed", None)
         elif not after.get("server"):
@@ -529,9 +553,7 @@ def sync(
         marker = " **(breaking)**" if is_breaking else ""
         changes.append(f"- `{key}`{marker}: " + "; ".join(notes))
         if is_breaking:
-            breaking.append(
-                f"`{key}`: " + "; ".join(n for n in notes if n.endswith("(breaking)"))
-            )
+            breaking.append(f"`{key}`: " + "; ".join(n for n in notes if n.endswith("(breaking)")))
     lines.append(f"## Changed operations ({len(changes)})")
     lines.extend(changes)
     lines.append("")

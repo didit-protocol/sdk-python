@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import functools
 import hashlib
 import hmac
 import json
@@ -613,7 +614,11 @@ def test_discovery_must_name_the_configured_issuer(
         ("token_endpoint", "http://acme.auth.didit.me/token/", "does not use https"),
         ("token_endpoint", "https://evil.example/steal", "not on the issuer's origin"),
         ("token_endpoint", f"{ISSUER}:8443/token/", "not on the issuer's origin"),
-        ("jwks_uri", f"http://{ISSUER.removeprefix('https://')}/.well-known/jwks.json", "does not use https"),
+        (
+            "jwks_uri",
+            f"http://{ISSUER.removeprefix('https://')}/.well-known/jwks.json",
+            "does not use https",
+        ),
     ],
 )
 def test_discovery_endpoints_must_stay_on_https_and_the_issuer(
@@ -664,7 +669,7 @@ def test_failed_key_fetches_are_rate_limited_too(
     for index in range(10):
         clock.advance(1)
         stranger = SigningKey.generate(f"k_random_{index}").sign(access_claims())
-        assert reason(lambda: auth.verify_access_token(stranger)) == "unknown_key"
+        assert reason(functools.partial(auth.verify_access_token, stranger)) == "unknown_key"
     assert issuer.count(keys_path) == 1
     # Once a minute has passed the SDK tries again, and recovers when the issuer does.
     clock.advance(50)

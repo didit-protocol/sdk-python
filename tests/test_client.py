@@ -134,7 +134,7 @@ def test_response_models_can_be_sent_back() -> None:
 
     job = validate_response(SessionImportJob, {"uuid": "j-1", "status": "pending", "extra": 1})
     api = MockAPI().json(201, SESSION)
-    api.client().sessions.create(workflow_id="w-1", metadata={"job": job})  # type: ignore[dict-item]
+    api.client().sessions.create(workflow_id="w-1", metadata={"job": job})
     assert api.last_json()["metadata"] == {"job": {"uuid": "j-1", "status": "pending", "extra": 1}}
 
 

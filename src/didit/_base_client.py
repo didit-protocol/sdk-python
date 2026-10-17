@@ -335,15 +335,15 @@ class BaseClient:
         put("Accept", prepared.accept)
         put("User-Agent", user_agent())
         put("X-Didit-Client", client_header())
-        for name, value in self.default_headers.items():
-            put(name, value)
+        for name, default in self.default_headers.items():
+            put(name, default)
         # Credentials are only ever attached for the origin the request was built for.
         if prepared.auth == "api_key" and self.api_key:
             put("x-api-key", self.api_key)
         elif prepared.auth == "account_token" and self.account_token:
             put("Authorization", f"Bearer {self.account_token}")
-        for name, value in prepared.headers.items():
-            put(name, value)
+        for name, override in prepared.headers.items():
+            put(name, override)
 
         kwargs: dict[str, Any] = {"headers": headers, "params": prepared.params or None}
         if prepared.json_content is not None:
@@ -531,7 +531,9 @@ class SyncAPIClient(BaseClient):
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, _describe(exc), delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request, _describe(exc), delay, self.max_retries - retries_taken
+                    )
                     retries_taken += 1
                     time.sleep(delay)
                     continue
@@ -652,7 +654,9 @@ class AsyncAPIClient(BaseClient):
             except httpx.HTTPError as exc:
                 if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
                     delay = retry_delay(retries_taken, None)
-                    self._log_retry(request, _describe(exc), delay, self.max_retries - retries_taken)
+                    self._log_retry(
+                        request, _describe(exc), delay, self.max_retries - retries_taken
+                    )
                     retries_taken += 1
                     await asyncio.sleep(delay)
                     continue
