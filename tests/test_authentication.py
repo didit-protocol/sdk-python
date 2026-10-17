@@ -692,6 +692,24 @@ def test_failed_key_fetches_are_rate_limited_too(
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
 
 
+def test_async_failed_key_fetches_fail_fast(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    issuer.discovery["jwks_uri"] = f"{ISSUER}/keys/down.json"
+    issuer.reply("GET", "/keys/down.json", 503, {"detail": "down"})
+
+    async def run() -> None:
+        auth = configure(AsyncAuthentication(ISSUER, http_client=issuer.async_client()), clock)
+        with pytest.raises(InternalServerError):
+            await auth.verify_access_token(key.sign(access_claims()))
+        clock.advance(30)
+        with pytest.raises(APIConnectionError, match="less than a minute ago"):
+            await auth.verify_access_token(key.sign(access_claims()))
+
+    asyncio.run(run())
+    assert issuer.count("/keys/down.json") == 1
+
+
 def test_a_failed_discovery_counts_as_a_failed_key_fetch(
     auth: Authentication, issuer: FakeIssuer, key: SigningKey, clock: FakeClock
 ) -> None:

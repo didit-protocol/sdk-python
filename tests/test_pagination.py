@@ -228,3 +228,11 @@ def test_a_list_that_is_not_json_raises_a_validation_error() -> None:
             await api.async_client().businesses.list()
 
     asyncio.run(run())
+
+
+def test_an_invalid_next_link_is_refused() -> None:
+    api = MockAPI().json(200, _page(["1"], "https://[::1"))
+    page = api.client().businesses.list()
+    with pytest.raises(didit.DiditError, match="invalid pagination link"):
+        page.get_next_page()
+    assert len(api.requests) == 1
