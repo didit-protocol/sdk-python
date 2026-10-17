@@ -58,7 +58,12 @@ def _secrets(secret: str | Sequence[str] | None) -> list[bytes]:
         )
     if isinstance(secret, (bytes, bytearray, memoryview)):
         raise ConfigurationError("The webhook secret must be a str, not bytes.")
-    items: list[object] = [secret] if isinstance(secret, str) else list(secret)
+    if isinstance(secret, str):
+        items: list[object] = [secret]
+    elif isinstance(secret, Iterable):  # pyright: ignore[reportUnnecessaryIsInstance]
+        items = list(secret)
+    else:
+        raise ConfigurationError("The webhook secret must be a str or a list of them.")
     if any(not isinstance(s, str) for s in items):
         raise ConfigurationError("Every webhook secret must be a str.")
     if not items or any(not s for s in items):

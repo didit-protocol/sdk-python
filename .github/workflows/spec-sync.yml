@@ -13,9 +13,10 @@
 #
 # Hand-pushed fixes: create-pull-request rebuilds chore/spec-sync from the default branch
 # on every run, which would drop a fix pushed to that branch by hand (usually an
-# openapi/overlay.json entry for a draft sync). While the branch carries a commit that
-# did not come from this workflow, the run leaves it alone; merging or closing that pull
-# request lets the next run sync whatever changed since.
+# openapi/overlay.json entry for a draft sync). While the open spec sync pull request
+# carries a commit that did not come from this workflow, the run leaves it alone; once
+# that pull request is merged or closed, the next run syncs whatever changed since (a
+# leftover branch is rebuilt then).
 name: Spec sync
 
 on:
@@ -68,17 +69,14 @@ jobs:
           BASE: ${{ github.event.repository.default_branch }}
           BOT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
-          status=0
-          authors="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE}...chore/spec-sync" \
-            --jq '.commits[].commit.author.email' 2> "$RUNNER_TEMP/compare.err")" || status=$?
-          if [ "$status" -ne 0 ]; then
-            if grep -q "HTTP 404" "$RUNNER_TEMP/compare.err"; then
-              echo "skip=false" >> "$GITHUB_OUTPUT" # no sync branch yet
-              exit 0
-            fi
-            cat "$RUNNER_TEMP/compare.err" >&2
-            exit 1
+          open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head chore/spec-sync --base "$BASE" \
+            --state open --json number --jq 'length')"
+          if [ "$open" = "0" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT" # no open sync pull request
+            exit 0
           fi
+          authors="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE}...chore/spec-sync" \
+            --jq '.commits[].commit.author.email')"
           if printf '%s\n' "$authors" | grep -v -x -F -e "$BOT_EMAIL" -e '' | grep -q .; then
             echo "::warning::chore/spec-sync has commits that did not come from the spec sync (a fix pushed by hand). This run leaves the branch alone: merge or close the spec sync pull request, and the next run syncs whatever changed since."
             echo "skip=true" >> "$GITHUB_OUTPUT"

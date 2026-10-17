@@ -1253,7 +1253,18 @@ def test_step_up_argument_errors(auth: Authentication, issuer: FakeIssuer) -> No
     for amount in (True, [1], object()):
         with pytest.raises(TypeError, match="amount"):
             auth.create_step_up(ACCESS_TOKEN, action="payout", amount=cast(Any, amount))
-    for bad in (float("nan"), float("inf"), Decimal("NaN"), "Infinity", "12,50", ""):
+    for bad in (
+        float("nan"),
+        float("inf"),
+        Decimal("NaN"),
+        "Infinity",
+        "12,50",
+        "",
+        "1_000",
+        "1e3",
+        "\u0661\u0660",
+        "NaN",
+    ):
         with pytest.raises(ValueError, match="amount"):
             auth.create_step_up(ACCESS_TOKEN, action="payout", amount=bad)
     with pytest.raises(ValueError, match="action"):

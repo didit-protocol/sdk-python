@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import threading
 import time
 import urllib.parse
@@ -101,17 +102,25 @@ def _required_text(value: object, name: str) -> str:
     return value.strip()
 
 
+_DECIMAL_TEXT = re.compile(r"-?[0-9]+(\.[0-9]+)?\Z")
+
+
 def _amount_text(amount: Amount) -> str:
     if isinstance(amount, bool) or not isinstance(amount, (str, int, float, Decimal)):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError("amount must be a decimal string, an int, a float or a Decimal.")
+    if isinstance(amount, str):
+        # Sent as written, so only plain ASCII decimals ("1500.00"): no exponents,
+        # underscores, other digits or NaN, which the issuer would read differently.
+        text = amount.strip()
+        if not _DECIMAL_TEXT.match(text):
+            raise ValueError(f"amount must be a decimal number such as '1500.00', got {amount!r}.")
+        return text
     try:
         value = Decimal(repr(amount)) if isinstance(amount, float) else Decimal(amount)
-    except InvalidOperation as exc:
+    except InvalidOperation as exc:  # pragma: no cover - every int, float and Decimal parses
         raise ValueError(f"amount must be a decimal number, got {amount!r}.") from exc
     if not value.is_finite():
         raise ValueError(f"amount must be a finite number, got {amount!r}.")
-    if isinstance(amount, str):
-        return amount.strip()
     return format(value, "f")
 
 

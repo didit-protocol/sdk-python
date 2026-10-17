@@ -219,6 +219,7 @@ def test_empty_secret_is_a_configuration_error(secret: Any, frozen_time: list[fl
         (None, "No webhook secret"),
         (b"whsec_test_unit_secret_0001", "not bytes"),
         ([SECRET, None], "must be a str"),
+        (5, "a str or a list"),
     ],
 )
 def test_missing_or_wrongly_typed_secret_is_a_configuration_error(
