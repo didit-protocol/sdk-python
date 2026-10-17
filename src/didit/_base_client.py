@@ -227,7 +227,7 @@ class BaseClient:
         body: Mapping[str, object] | None,
         multipart: Multipart,
         file_fields: tuple[str, ...],
-        headers: Mapping[str, str | None] | None,
+        headers: Mapping[str, str | NotGiven | None] | None,
         extra_headers: Headers | None,
         extra_query: Query | None,
         extra_body: Mapping[str, object] | None,
@@ -269,7 +269,9 @@ class BaseClient:
                 json_body = strip_not_given(merged)
                 has_json_body = True
 
-        merged_headers: dict[str, str | None] = dict(headers or {})
+        merged_headers: dict[str, str | None] = {
+            k: v for k, v in (headers or {}).items() if not isinstance(v, NotGiven)
+        }
         if extra_headers:
             merged_headers.update(extra_headers)
         return PreparedRequest(
@@ -431,7 +433,7 @@ class SyncAPIClient(BaseClient):
         body: Mapping[str, object] | None = None,
         multipart: Multipart = False,
         file_fields: tuple[str, ...] = (),
-        headers: Mapping[str, str | None] | None = None,
+        headers: Mapping[str, str | NotGiven | None] | None = None,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Mapping[str, object] | None = None,
@@ -545,7 +547,7 @@ class AsyncAPIClient(BaseClient):
         body: Mapping[str, object] | None = None,
         multipart: Multipart = False,
         file_fields: tuple[str, ...] = (),
-        headers: Mapping[str, str | None] | None = None,
+        headers: Mapping[str, str | NotGiven | None] | None = None,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Mapping[str, object] | None = None,

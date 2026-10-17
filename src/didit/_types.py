@@ -52,7 +52,8 @@ Timeout = Union[float, httpx.Timeout, None]
 Headers = Mapping[str, Union[str, None]]
 """Extra request headers. A ``None`` value removes a header the SDK would send."""
 Query = Mapping[str, object]
-Body = object
+Body = Mapping[str, object]
+"""Extra top-level JSON body fields."""
 
 if TYPE_CHECKING:
     FileContent = Union[IO[bytes], bytes, bytearray, "os.PathLike[str]"]
