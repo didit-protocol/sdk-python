@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import email.utils
 import time
+from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
 import httpx
@@ -140,11 +141,11 @@ class _BrokenBody(httpx.SyncByteStream, httpx.AsyncByteStream):
     def __init__(self, error: Exception) -> None:
         self.error = error
 
-    def __iter__(self) -> Any:
+    def __iter__(self) -> Iterator[bytes]:
         yield b'{"session_id": "'
         raise self.error
 
-    async def __aiter__(self) -> Any:
+    async def __aiter__(self) -> AsyncIterator[bytes]:
         yield b'{"session_id": "'
         raise self.error
 
