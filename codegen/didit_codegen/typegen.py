@@ -53,9 +53,6 @@ def union(anns: list[Ann]) -> Ann:
                 parts.append(part)
     if "object" in parts:
         return Ann("object", frozenset(deps))
-    if "str" in parts:
-        # ``Literal[...] | str`` already accepts any string.
-        parts = [p for p in parts if p == "str" or not p.startswith("Literal[")] if len(parts) > 1 else parts
     expr = " | ".join(parts) if parts else "object"
     if nullable:
         expr += " | None"
@@ -130,10 +127,6 @@ class Registry:
             )
         self.defs[td.name] = td
         self.modules.setdefault(td.module, []).append(td.name)
-
-    def reserve(self, name: str, module: str) -> bool:
-        """Whether ``name`` is still free (and not yet defined)."""
-        return name not in self.defs
 
 
 def _literal(values: list[Json]) -> str:
@@ -215,7 +208,8 @@ class TypeBuilder:
             if ann.expr != py:
                 self.registry.add(TypeDef("alias", py, module, _description(schema), alias=ann))
         py = self._models[key]
-        return Ann(py, frozenset({py}))
+        ann = Ann(py, frozenset({py}))
+        return ann.optional() if spec.components[name].get("nullable") is True else ann
 
     def component_param(self, spec: Spec, name: str) -> Ann:
         key = (spec.name, name)
@@ -234,7 +228,8 @@ class TypeBuilder:
                 else:
                     self.registry.add(TypeDef("alias", py, module, _description(schema), alias=ann))
         py = self._params[key]
-        return Ann(py, frozenset({py}))
+        ann = Ann(py, frozenset({py}))
+        return ann.optional() if spec.components[name].get("nullable") is True else ann
 
     # Responses ---------------------------------------------------------------
 
@@ -367,7 +362,6 @@ class TypeBuilder:
     # Shared ------------------------------------------------------------------
 
     def _variant_name(self, spec: Spec, member: Json, hint: str, index: int) -> str:
-        member = spec.resolve(member) if isinstance(member, dict) and "$ref" not in member else member
         title = member.get("title") if isinstance(member, dict) else None
         if isinstance(title, str) and title.strip():
             return hint + pascal(title)
@@ -455,7 +449,7 @@ class TypeBuilder:
         taken = set(self.base_names) if mode == "response" else set()
         for wire, prop in own_props.items():
             resolved = spec.resolve(prop) if isinstance(prop, dict) else {}
-            if mode == "response" and resolved.get("writeOnly") is True and prop.get("writeOnly", True):
+            if mode == "response" and (prop.get("writeOnly") is True or resolved.get("writeOnly") is True):
                 continue
             if mode == "param" and resolved.get("readOnly") is True:
                 continue
