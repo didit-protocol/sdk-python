@@ -15,7 +15,7 @@ from collections import defaultdict
 from typing import Any
 
 from .ops import Arg, Method
-from .render import HEADER, builtin_safe
+from .render import HEADER
 from .spec import Spec
 from .typegen import Registry, _split_union
 
@@ -375,7 +375,11 @@ def _render_test(method: Method, registry: Registry, imports: set[tuple[str, str
         strict_type = None
     else:
         sync_check = async_check = _check_expr(resp.annotation.expr, registry, imports)
-        strict_type = builtin_safe(resp.cast_to) if strict and not resp.cast_to.startswith("{") else None
+        strict_type = resp.cast_to if strict and not resp.cast_to.startswith("{") else None
+        if strict_type:
+            for dep in resp.annotation.deps:
+                if not dep.startswith("@"):
+                    imports.add((registry.defs[dep].module, dep))
 
     fields: list[str] = [
         f'method="{op.http_method.upper()}"',

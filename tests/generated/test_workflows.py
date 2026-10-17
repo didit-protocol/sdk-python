@@ -267,7 +267,7 @@ def test_workflows_update() -> None:
             json_body={"features": [{"feature": "OCR"}, {"feature": "AML"}]},
             status=200,
             response_json={},
-            strict_type=builtins.dict[str, object],
+            strict_type=dict[str, object],
         ),
         lambda c: c.workflows.update(
             "00000000-0000-4000-8000-000000000001",

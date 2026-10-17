@@ -1000,7 +1000,7 @@ def test_cases_list_aml_hits() -> None:
             auth="api_key",
             status=200,
             response_json=[{}],
-            strict_type=builtins.list[builtins.dict[str, object]],
+            strict_type=list[dict[str, object]],
         ),
         lambda c: c.cases.list_aml_hits("c1a5e000-0000-4000-8000-000000000001"),
         lambda c: c.cases.list_aml_hits("c1a5e000-0000-4000-8000-000000000001"),
@@ -2852,7 +2852,7 @@ def test_cases_checklist_list() -> None:
                     "order": 1,
                 }
             ],
-            strict_type=builtins.list[CaseChecklistItem],
+            strict_type=list[CaseChecklistItem],
         ),
         lambda c: c.cases.checklist.list("c1a5e000-0000-4000-8000-000000000001"),
         lambda c: c.cases.checklist.list("c1a5e000-0000-4000-8000-000000000001"),
@@ -2972,7 +2972,7 @@ def test_cases_links_list() -> None:
                     "created_at": "2026-01-01T00:00:00Z",
                 }
             ],
-            strict_type=builtins.list[CaseLink],
+            strict_type=list[CaseLink],
         ),
         lambda c: c.cases.links.list("c1a5e000-0000-4000-8000-000000000001"),
         lambda c: c.cases.links.list("c1a5e000-0000-4000-8000-000000000001"),
