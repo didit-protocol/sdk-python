@@ -665,11 +665,15 @@ def test_failed_key_fetches_are_rate_limited_too(
     issuer.route("GET", keys_path, flaky)
     with pytest.raises(InternalServerError):
         auth.verify_access_token(key.sign(access_claims()))
-    # Random kids (an attacker, or a burst during an outage) do not refetch for a minute.
+    # Random kids (an attacker, or a burst during an outage) do not refetch for a
+    # minute: they fail fast as a connection problem, not as an invalid token.
     for index in range(10):
         clock.advance(1)
         stranger = SigningKey.generate(f"k_random_{index}").sign(access_claims())
-        assert reason(functools.partial(auth.verify_access_token, stranger)) == "unknown_key"
+        with pytest.raises(APIConnectionError, match="less than a minute ago") as info:
+            auth.verify_access_token(stranger)
+        assert not isinstance(info.value, TokenVerificationError)
+        assert info.value.request.url == f"{ISSUER}{keys_path}"
     assert issuer.count(keys_path) == 1
     # Once a minute has passed the SDK tries again, and recovers when the issuer does.
     clock.advance(50)
@@ -687,6 +691,45 @@ def test_failed_key_fetches_are_rate_limited_too(
     assert issuer.count(keys_path) == 3
     # Known keys keep verifying from the cache meanwhile.
     assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+
+
+def test_a_failed_discovery_counts_as_a_failed_key_fetch(
+    auth: Authentication, issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    discovery = issuer.discovery
+    issuer.discovery = cast(Any, None)  # the issuer answers "null"
+    with pytest.raises(APIResponseValidationError):
+        auth.verify_access_token(key.sign(access_claims()))
+    with pytest.raises(APIConnectionError, match="less than a minute ago"):
+        auth.verify_access_token(key.sign(access_claims()))
+    assert issuer.count(DISCOVERY) == 1
+    issuer.discovery = discovery
+    clock.advance(60)
+    assert auth.verify_access_token(key.sign(access_claims())).sub == IDENTITY_ID
+
+
+def test_configuration_errors_and_cancellation_are_not_cached_as_failures(
+    issuer: FakeIssuer, key: SigningKey, clock: FakeClock
+) -> None:
+    issuer.discovery["issuer"] = "https://login.example.com"
+    with issuer.client() as http:
+        auth = configure(Authentication(ISSUER, http_client=http), clock)
+        for _ in range(2):  # raised every time, never masked by the failure cache
+            with pytest.raises(ConfigurationError):
+                auth.verify_access_token(key.sign(access_claims()))
+    assert issuer.count(DISCOVERY) == 2
+    issuer.discovery["issuer"] = ISSUER
+    issuer.jwks_delay = 0.2
+
+    async def run() -> None:
+        auth = configure(AsyncAuthentication(ISSUER, http_client=issuer.async_client()), clock)
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(auth.verify_access_token(key.sign(access_claims())), 0.05)
+        # The cancelled fetch does not lock anyone out: the next call fetches again.
+        issuer.jwks_delay = 0.0
+        assert (await auth.verify_access_token(key.sign(access_claims()))).sub == IDENTITY_ID
+
+    asyncio.run(run())
 
 
 @pytest.mark.parametrize("claim", ["exp", "nbf", "iat"])

@@ -3,9 +3,9 @@
 Both are cached for the response's ``Cache-Control: max-age`` (Didit sends
 ``public, max-age=300``), five minutes when the header is absent, never less than
 a minute and never more than a day. A token whose ``kid`` is not in the cached
-key set triggers a refetch only when the last attempt, successful or not, is at
-least a minute old; while the issuer's keys cannot be fetched, verification
-fails fast for a minute instead of trying again on every token.
+key set triggers a refetch only when the last fetch, successful or failed, is at
+least a minute old. After a failed fetch, verification that needs the keys fails
+fast for a minute (as a connection error) instead of fetching again on every token.
 """
 
 from __future__ import annotations
@@ -193,10 +193,20 @@ class IssuerCache:
             return None
         return cast("KeySet", entry.value)
 
-    def start_key_set_fetch(self) -> None:
-        """Note an attempt to fetch the key set; it counts as failed until stored."""
+    def key_set_fetch_failed(self) -> None:
+        """Note a fetch of the key set (or the discovery before it) that failed."""
         self._key_set_attempted_at = self.clock()
         self._key_set_failed = True
+
+    def key_set_unavailable(self) -> bool:
+        """No key set is fresh and the last fetch failed less than a minute ago."""
+        attempted_at = self._key_set_attempted_at
+        return (
+            self._key_set_failed
+            and self.key_set() is None
+            and attempted_at is not None
+            and self.clock() - attempted_at < REFETCH_INTERVAL
+        )
 
     def store_key_set(self, key_set: KeySet, headers: httpx.Headers) -> KeySet:
         now = self.clock()
@@ -212,26 +222,16 @@ class IssuerCache:
 
     def needs_key_set_fetch(self, kid: str) -> bool:
         """Whether verifying a token signed with ``kid`` should fetch the key set:
-        when none is fresh, or when ``kid`` is unknown; either way at most once
-        every :data:`REFETCH_INTERVAL` seconds, failed attempts included.
-
-        Raises ``TokenVerificationError("unknown_key")`` when no key set is fresh
-        and the last attempt to fetch one failed less than a minute ago.
-        """
+        when none is fresh, or when ``kid`` is unknown and the last fetch,
+        successful or failed, was at least :data:`REFETCH_INTERVAL` seconds ago.
+        Check :meth:`key_set_unavailable` first."""
         key_set = self.key_set()
-        if key_set is not None and kid in key_set.keys:
+        if key_set is None:
+            return True
+        if kid in key_set.keys:
             return False
         attempted_at = self._key_set_attempted_at
-        recent = attempted_at is not None and self.clock() - attempted_at < REFETCH_INTERVAL
-        if key_set is None:
-            if recent and self._key_set_failed:
-                raise TokenVerificationError(
-                    "unknown_key",
-                    "The issuer's keys could not be fetched less than a minute ago; "
-                    "the SDK tries again once that minute has passed.",
-                )
-            return True
-        return not recent
+        return attempted_at is None or self.clock() - attempted_at >= REFETCH_INTERVAL
 
     def current_key_set(self) -> KeySet:
         """The fresh key set, after :meth:`needs_key_set_fetch` said no fetch is needed."""

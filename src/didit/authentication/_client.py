@@ -27,6 +27,7 @@ from typing_extensions import Self
 from .._exceptions import (
     APIConnectionError,
     APIResponseValidationError,
+    APIStatusError,
     APITimeoutError,
     ConfigurationError,
     _request_id,  # pyright: ignore[reportPrivateUsage]
@@ -76,6 +77,9 @@ Amount = Union[str, int, float, Decimal]
 """A money amount; sent as a decimal string."""
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
+
+# The issuer could not give its discovery document or keys.
+_FETCH_ERRORS = (APIConnectionError, APIStatusError, APIResponseValidationError)
 
 
 @dataclass(frozen=True)
@@ -345,6 +349,17 @@ class _AuthenticationBase:
                     ),
                 )
         return self._cache.store_discovery(discovery, response.headers)
+
+    def _keys_unavailable(self) -> APIConnectionError:
+        discovery = self._cache.discovery()
+        url = (discovery.jwks_uri if discovery else None) or self._url(_JWKS_PATH)
+        return APIConnectionError(
+            request=httpx.Request("GET", url),
+            message=(
+                "The issuer's keys could not be fetched less than a minute ago; the next "
+                "attempt is made once that minute has passed."
+            ),
+        )
 
     def _store_key_set(self, call: _Call, response: httpx.Response) -> KeySet:
         key_set = parse_key_set(self._read(call, response))
@@ -635,11 +650,18 @@ class Authentication(_AuthenticationBase):
         if key_set is not None:
             return key_set
         with self._lock:
+            if self._cache.key_set_unavailable():
+                raise self._keys_unavailable()
             if not self._cache.needs_key_set_fetch(kid):
                 return self._cache.current_key_set()
-            self._cache.start_key_set_fetch()
-            call = self._jwks_call(self._discovery_locked())
-            return self._store_key_set(call, self._send(call))
+            try:
+                call = self._jwks_call(self._discovery_locked())
+                return self._store_key_set(call, self._send(call))
+            except _FETCH_ERRORS:
+                # Counted only when the issuer failed: not for a cancelled call
+                # and not for a configuration error, which is raised every time.
+                self._cache.key_set_fetch_failed()
+                raise
 
 
 class AsyncAuthentication(_AuthenticationBase):
@@ -836,8 +858,15 @@ class AsyncAuthentication(_AuthenticationBase):
         if key_set is not None:
             return key_set
         async with self._async_lock():
+            if self._cache.key_set_unavailable():
+                raise self._keys_unavailable()
             if not self._cache.needs_key_set_fetch(kid):
                 return self._cache.current_key_set()
-            self._cache.start_key_set_fetch()
-            call = self._jwks_call(await self._discovery_locked())
-            return self._store_key_set(call, await self._send(call))
+            try:
+                call = self._jwks_call(await self._discovery_locked())
+                return self._store_key_set(call, await self._send(call))
+            except _FETCH_ERRORS:
+                # Counted only when the issuer failed: not for a cancelled call
+                # and not for a configuration error, which is raised every time.
+                self._cache.key_set_fetch_failed()
+                raise
