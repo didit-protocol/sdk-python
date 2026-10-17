@@ -1,7 +1,7 @@
 """Didit webhook receiver for Flask.
 
-    pip install didit-sdk flask
-    DIDIT_WEBHOOK_SECRET=... flask --app examples/webhooks/flask_app.py run --port 8000
+pip install didit-sdk flask
+DIDIT_WEBHOOK_SECRET=... flask --app examples/webhooks/flask_app.py run --port 8000
 """
 
 from __future__ import annotations

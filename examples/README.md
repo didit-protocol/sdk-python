@@ -8,8 +8,8 @@ Use a sandbox application while you try them.
 | `quickstart.py` | Create a KYC session, read its decision, verify a webhook (needs `DIDIT_WORKFLOW_ID`) |
 | `async_quickstart.py` | The same with `AsyncDidit`, and `async for` auto-pagination |
 | `id_verification.py` | Standalone ID verification with file uploads |
-| `aml_screening.py` | AML screening and error handling |
-| `transaction_screening.py` | Transactions (KYT) with an idempotency key, and listing |
+| `aml_screening.py` | AML screening with an idempotency key, and error handling |
+| `transaction_screening.py` | Transactions (KYT): submit one, then list with auto-pagination |
 | `travel_rule.py` | Travel Rule settings, VASP directory, wallet addresses, wallet screening |
 | `authentication.py` | Verify a Didit Authentication access token in your backend (needs `didit-sdk[auth]`) |
 | `webhooks/fastapi_app.py` | Webhook receiver for FastAPI |

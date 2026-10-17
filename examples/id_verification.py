@@ -1,6 +1,6 @@
 """Standalone ID verification: upload the two sides of a document.
 
-    python examples/id_verification.py front.jpg back.jpg
+python examples/id_verification.py front.jpg back.jpg
 """
 
 from __future__ import annotations

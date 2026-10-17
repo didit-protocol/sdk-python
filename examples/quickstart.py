@@ -1,8 +1,8 @@
 """Quickstart: create a verification session, read its decision, verify a webhook.
 
-    export DIDIT_API_KEY=...            # Business Console > Developers > API keys
-    export DIDIT_WORKFLOW_ID=...        # a published workflow
-    python examples/quickstart.py
+export DIDIT_API_KEY=...            # Business Console > Developers > API keys
+export DIDIT_WORKFLOW_ID=...        # a published workflow
+python examples/quickstart.py
 """
 
 from __future__ import annotations
@@ -34,7 +34,12 @@ print("Status:", decision.status)
 #    body and headers come from the request (see examples/webhooks/).
 secret = os.environ.get("DIDIT_WEBHOOK_SECRET", "whsec_test_quickstart_example")
 body = json.dumps(
-    {"session_id": session.session_id, "status": "Approved", "webhook_type": "status.updated", "timestamp": int(time.time())},
+    {
+        "session_id": session.session_id,
+        "status": "Approved",
+        "webhook_type": "status.updated",
+        "timestamp": int(time.time()),
+    },
     sort_keys=True,
     separators=(",", ":"),
 ).encode()

@@ -114,6 +114,13 @@ show_error_codes = true
 module = ["fastapi", "fastapi.*", "flask", "flask.*", "django", "django.*", "starlette", "starlette.*", "uvicorn"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# The framework examples are type-checked without the frameworks installed.
+module = ["examples.webhooks.*"]
+disallow_untyped_decorators = false
+disallow_any_unimported = false
+warn_return_any = false
+
 [tool.pyright]
 include = ["src/didit", "tests", "codegen"]
 strict = ["src/didit"]

@@ -1,7 +1,7 @@
 """Didit webhook receiver for FastAPI.
 
-    pip install didit-sdk fastapi uvicorn
-    DIDIT_WEBHOOK_SECRET=... uvicorn examples.webhooks.fastapi_app:app --port 8000
+pip install didit-sdk fastapi uvicorn
+DIDIT_WEBHOOK_SECRET=... uvicorn examples.webhooks.fastapi_app:app --port 8000
 """
 
 from __future__ import annotations
