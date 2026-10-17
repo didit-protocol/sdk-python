@@ -16,16 +16,16 @@ class SessionsCreateResponse(BaseModel):
     """Sequential, human-friendly number assigned to the session inside your application. Useful for support and dashboards."""
 
     session_token: str
-    """12-character URL-safe token that authorizes the end user to access the hosted verification flow at `url`. Valid until the session expires. Treat it as a secret — anyone holding it can open the verification flow for this session."""
+    """12-character URL-safe token that authorizes the end user to access the hosted verification flow at `url`. Valid until the session expires. Treat it as a secret - anyone holding it can open the verification flow for this session."""
 
     url: str
-    """Hosted verification URL to redirect the end user to. The URL embeds the `session_token` and, if configured, uses your white-label domain. When the request includes `language`, the URL contains a language path segment — `https://verify.didit.me/{language}/session/{session_token}` (e.g. `/es/session/...`); without `language`, the segment is omitted."""
+    """Hosted verification URL to redirect the end user to. The URL embeds the `session_token` and, if configured, uses your white-label domain. When the request includes `language`, the URL contains a language path segment - `https://verify.didit.me/{language}/session/{session_token}` (e.g. `/es/session/...`); without `language`, the segment is omitted."""
 
     vendor_data: str | None
     """Identifier you passed in the request to link the session to a user or business in your own system. Echoed back verbatim. Null when not provided."""
 
     metadata: object
-    """Arbitrary JSON payload you stored with the session at creation time. Echoed back verbatim — whatever JSON value you sent (object, string, number, array) is returned as-is, though a JSON object is recommended. Not shown to the end user. Always present in responses; `null` when not provided at creation time."""
+    """Arbitrary JSON payload you stored with the session at creation time. Echoed back verbatim - whatever JSON value you sent (object, string, number, array) is returned as-is, though a JSON object is recommended. Not shown to the end user. Always present in responses; `null` when not provided at creation time."""
 
     status: (
         Literal[
@@ -48,7 +48,7 @@ class SessionsCreateResponse(BaseModel):
     """Final redirect URL the user is sent to after completing the flow. Didit appends `?verificationSessionId={session_id}&status={status}` to this URL. Falls back to the workflow's configured callback URL when not provided in the request; `null` when neither is set."""
 
     workflow_id: str
-    """Stable identifier of the workflow this session runs on. Always the workflow's stable group identifier — even if you referenced a specific workflow version UUID in the request (backward-compatible lookup), the response carries the stable `workflow_id`. Use it to correlate the session with the workflow you configured in the Console."""
+    """Stable identifier of the workflow this session runs on. Always the workflow's stable group identifier - even if you referenced a specific workflow version UUID in the request (backward-compatible lookup), the response carries the stable `workflow_id`. Use it to correlate the session with the workflow you configured in the Console."""
 
     workflow_version: int
     """Version number of the published workflow version the session was pinned to at creation. Didit resolves `workflow_id` to the workflow's latest published version when the session is created, and the session keeps running that version even if the workflow is republished later."""

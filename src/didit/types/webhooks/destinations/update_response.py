@@ -40,7 +40,7 @@ class WebhooksDestinationsUpdateResponse(BaseModel):
     secret_shared_key: str | None = None
 
     subscribed_events: WebhookSubscribedEvents | None = None
-    """Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values — there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged."""
+    """Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged."""
 
     created_at: _dt.datetime | None = None
 

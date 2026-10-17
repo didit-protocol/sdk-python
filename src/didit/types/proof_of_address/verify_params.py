@@ -33,16 +33,16 @@ class ProofOfAddressVerifyParams(TypedDict, total=False):
     """Comma-separated list of accepted document languages as ISO 639-1 codes (e.g. `en,es,fr`). When omitted or blank, **all 51 supported languages** are accepted. A document in a language outside the list adds `UNSUPPORTED_DOCUMENT_LANGUAGE` (governed by `poa_unsupported_language_action`); an unknown code in the list returns `400` with the full set of supported codes."""
 
     poa_document_age_months: str
-    """Comma-separated `key:value` pairs setting the maximum document age in months per document type — keys: `utility_bill`, `bank_statement`, `government_issued_document`, `other_poa_document`; values: `1`–`120`, or `-1` for unlimited (no age check). Defaults when omitted: `utility_bill:3,bank_statement:3,government_issued_document:12,other_poa_document:12`. A document older than its limit declines with `POA_DOCUMENT_EXPIRED`. **Caution:** when you provide this field, list *every* type you accept — omitted types are treated as not accepted (informational `POA_DOCUMENT_NOT_SUPPORTED_FOR_APPLICATION`) and their age check is skipped."""
+    """Comma-separated `key:value` pairs setting the maximum document age in months per document type - keys: `utility_bill`, `bank_statement`, `government_issued_document`, `other_poa_document`; values: `1`–`120`, or `-1` for unlimited (no age check). Defaults when omitted: `utility_bill:3,bank_statement:3,government_issued_document:12,other_poa_document:12`. A document older than its limit declines with `POA_DOCUMENT_EXPIRED`. **Caution:** when you provide this field, list *every* type you accept - omitted types are treated as not accepted (informational `POA_DOCUMENT_NOT_SUPPORTED_FOR_APPLICATION`) and their age check is skipped."""
 
     poa_name_mismatch_action: Literal["DECLINE", "NO_ACTION"] | str
-    """Accepted but **currently not applied** — name-mismatch warnings (`NAME_MISMATCH_WITH_PROVIDED`) follow `poa_address_mismatch_action` instead. Set `poa_address_mismatch_action` to control both name and address mismatch behavior."""
+    """Accepted but **currently not applied** - name-mismatch warnings (`NAME_MISMATCH_WITH_PROVIDED`) follow `poa_address_mismatch_action` instead. Set `poa_address_mismatch_action` to control both name and address mismatch behavior."""
 
     poa_document_issues_action: Literal["DECLINE", "NO_ACTION"] | str
-    """What to do on file-integrity problems — in practice only `DOCUMENT_METADATA_MISMATCH` is produced by this endpoint."""
+    """What to do on file-integrity problems - in practice only `DOCUMENT_METADATA_MISMATCH` is produced by this endpoint."""
 
     poa_document_authenticity_action: Literal["DECLINE", "NO_ACTION"] | str
-    """What to do when document manipulation is suspected (`SUSPECTED_DOCUMENT_MANIPULATION`) — e.g. the PDF was modified after digital signing, processed by a known PDF editor, shows overlay-text manipulation, or has inconsistent EXIF dates."""
+    """What to do when document manipulation is suspected (`SUSPECTED_DOCUMENT_MANIPULATION`) - e.g. the PDF was modified after digital signing, processed by a known PDF editor, shows overlay-text manipulation, or has inconsistent EXIF dates."""
 
     poa_unsupported_language_action: Literal["DECLINE", "NO_ACTION"] | str
     """What to do when the document language is outside `poa_languages_allowed` (`UNSUPPORTED_DOCUMENT_LANGUAGE`)."""
@@ -54,10 +54,10 @@ class ProofOfAddressVerifyParams(TypedDict, total=False):
     """What to do when no issuing company/organization can be identified on the document (`ISSUER_NOT_IDENTIFIED`)."""
 
     save_api_request: bool
-    """When `true` (default), persists the call as an API-type session — visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, announced through a `status.updated` webhook, and with the uploaded document stored. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
+    """When `true` (default), persists the call as an API-type session - visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, announced through a `status.updated` webhook, and with the uploaded document stored. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
 
     vendor_data: str
     """Optional opaque string (your internal user id, email, UUID…) stored on the persisted session and echoed back in the response. Use it to correlate API calls with your own records and to filter sessions later."""
 
     metadata: Mapping[str, object]
-    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"onboarding"}`) — it is parsed into an object."""
+    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"onboarding"}`) - it is parsed into an object."""

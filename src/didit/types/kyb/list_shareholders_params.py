@@ -10,7 +10,7 @@ __all__ = ["KybListShareholdersParams"]
 
 class KybListShareholdersParams(TypedDict, total=False):
     kyb_response_id: Required[str]
-    """Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it."""
+    """Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it."""
 
     vendor_data: str
     """Your identifier for this company; echoed back and stored with the business session."""

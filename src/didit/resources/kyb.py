@@ -75,16 +75,16 @@ class Kyb(SyncAPIResource):
 
         **Two modes.**
         - *Synchronous (default):* the API polls the registry until the search resolves and returns the final candidate list (`search_resolved: true`).
-        - *Asynchronous:* pass `webhook_url` and the API returns immediately — usually with `search_status: "pending"` and an empty candidate list — then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` — note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` — and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
+        - *Asynchronous:* pass `webhook_url` and the API returns immediately - usually with `search_status: "pending"` and an empty candidate list - then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` - note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` - and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
 
-        **Country codes.** ISO 3166-1 alpha-2 (`GB`, `DE`), plus `XX-YY` subdivision codes where registries are regional — e.g. `US-CA` for California.
+        **Country codes.** ISO 3166-1 alpha-2 (`GB`, `DE`), plus `XX-YY` subdivision codes where registries are regional - e.g. `US-CA` for California.
 
         **Sandbox.** Keys from sandbox applications return one static candidate without contacting any registry.
 
         ``POST /v3/kyb/search/``
 
         Args:
-          country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision — a bare `US` is rejected. Case-insensitive; normalized to upper case.
+          country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision - a bare `US` is rejected. Case-insensitive; normalized to upper case.
           name: Company name to search for. Either `name` or `registration_number` is required.
           registration_number: Registry registration number to search for. Either `name` or `registration_number` is required.
           search_type: Name-matching strategy applied by the registry search.
@@ -131,20 +131,20 @@ class Kyb(SyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> KybSelectResponse:
-        """KYB registry company select — Lite tier (standalone).
+        """KYB registry company select - Lite tier (standalone).
 
-        Retrieve the **Lite** registry profile of one candidate returned by `POST /v3/kyb/search/` — company details, registered address, identifiers, status, activity and the officers, plus the raw registry payload. Shareholders and ultimate beneficial owners are sold by `POST /v3/kyb/shareholders/` and `POST /v3/kyb/ubo/`.
+        Retrieve the **Lite** registry profile of one candidate returned by `POST /v3/kyb/search/` - company details, registered address, identifiers, status, activity and the officers, plus the raw registry payload. Shareholders and ultimate beneficial owners are sold by `POST /v3/kyb/shareholders/` and `POST /v3/kyb/ubo/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The handle is ephemeral and scoped to that search — select promptly, and re-search for a fresh handle rather than storing it.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The handle is ephemeral and scoped to that search - select promptly, and re-search for a fresh handle rather than storing it.
 
         **Billing.** Each select is billed at the country's Lite price (any search fee is separate); see [KYB registry pricing](/getting-started/kyb-registry-pricing). The balance is checked before any registry call (`403` when short) and the charge is recorded against the created business session.
 
-        **Persistence is mandatory.** Every select creates a business session (its id is the `request_id`) so billing and retrieval can be tracked; it appears in the console. `save_api_request` is accepted for symmetry but must be `true` (the default) — sending `false` returns `400`.
+        **Persistence is mandatory.** Every select creates a business session (its id is the `request_id`) so billing and retrieval can be tracked; it appears in the console. `save_api_request` is accepted for symmetry but must be `true` (the default) - sending `false` returns `400`.
 
         ``POST /v3/kyb/select/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -200,7 +200,7 @@ class Kyb(SyncAPIResource):
         ``POST /v3/kyb/shareholders/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -256,7 +256,7 @@ class Kyb(SyncAPIResource):
         ``POST /v3/kyb/ubo/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -327,16 +327,16 @@ class AsyncKyb(AsyncAPIResource):
 
         **Two modes.**
         - *Synchronous (default):* the API polls the registry until the search resolves and returns the final candidate list (`search_resolved: true`).
-        - *Asynchronous:* pass `webhook_url` and the API returns immediately — usually with `search_status: "pending"` and an empty candidate list — then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` — note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` — and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
+        - *Asynchronous:* pass `webhook_url` and the API returns immediately - usually with `search_status: "pending"` and an empty candidate list - then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` - note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` - and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
 
-        **Country codes.** ISO 3166-1 alpha-2 (`GB`, `DE`), plus `XX-YY` subdivision codes where registries are regional — e.g. `US-CA` for California.
+        **Country codes.** ISO 3166-1 alpha-2 (`GB`, `DE`), plus `XX-YY` subdivision codes where registries are regional - e.g. `US-CA` for California.
 
         **Sandbox.** Keys from sandbox applications return one static candidate without contacting any registry.
 
         ``POST /v3/kyb/search/``
 
         Args:
-          country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision — a bare `US` is rejected. Case-insensitive; normalized to upper case.
+          country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision - a bare `US` is rejected. Case-insensitive; normalized to upper case.
           name: Company name to search for. Either `name` or `registration_number` is required.
           registration_number: Registry registration number to search for. Either `name` or `registration_number` is required.
           search_type: Name-matching strategy applied by the registry search.
@@ -383,20 +383,20 @@ class AsyncKyb(AsyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> KybSelectResponse:
-        """KYB registry company select — Lite tier (standalone).
+        """KYB registry company select - Lite tier (standalone).
 
-        Retrieve the **Lite** registry profile of one candidate returned by `POST /v3/kyb/search/` — company details, registered address, identifiers, status, activity and the officers, plus the raw registry payload. Shareholders and ultimate beneficial owners are sold by `POST /v3/kyb/shareholders/` and `POST /v3/kyb/ubo/`.
+        Retrieve the **Lite** registry profile of one candidate returned by `POST /v3/kyb/search/` - company details, registered address, identifiers, status, activity and the officers, plus the raw registry payload. Shareholders and ultimate beneficial owners are sold by `POST /v3/kyb/shareholders/` and `POST /v3/kyb/ubo/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The handle is ephemeral and scoped to that search — select promptly, and re-search for a fresh handle rather than storing it.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The handle is ephemeral and scoped to that search - select promptly, and re-search for a fresh handle rather than storing it.
 
         **Billing.** Each select is billed at the country's Lite price (any search fee is separate); see [KYB registry pricing](/getting-started/kyb-registry-pricing). The balance is checked before any registry call (`403` when short) and the charge is recorded against the created business session.
 
-        **Persistence is mandatory.** Every select creates a business session (its id is the `request_id`) so billing and retrieval can be tracked; it appears in the console. `save_api_request` is accepted for symmetry but must be `true` (the default) — sending `false` returns `400`.
+        **Persistence is mandatory.** Every select creates a business session (its id is the `request_id`) so billing and retrieval can be tracked; it appears in the console. `save_api_request` is accepted for symmetry but must be `true` (the default) - sending `false` returns `400`.
 
         ``POST /v3/kyb/select/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -452,7 +452,7 @@ class AsyncKyb(AsyncAPIResource):
         ``POST /v3/kyb/shareholders/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -508,7 +508,7 @@ class AsyncKyb(AsyncAPIResource):
         ``POST /v3/kyb/ubo/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral — use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.

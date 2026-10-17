@@ -9,7 +9,7 @@ __all__ = ["UsersListResponse"]
 
 class UsersListResponse(BaseModel):
     count: int | None = None
-    """Number of matching rows — exact up to 100, capped at 100 beyond that for performance. Do not use it to detect the last page; rely on `next` being `null` instead."""
+    """Number of matching rows - exact up to 100, capped at 100 beyond that for performance. Do not use it to detect the last page; rely on `next` being `null` instead."""
 
     next: str | None = None
     """Absolute URL of the next page, or `null` on the last page."""

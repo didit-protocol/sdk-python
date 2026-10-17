@@ -38,7 +38,7 @@ class FaceSearchSearchResponseFaceSearchMatches(BaseModel):
     """Similarity between the submitted face and the matched face (0–100)."""
 
     source: Literal["session", "imported", "list_entry", "retained_template"] | str | None = None
-    """Where the matched face was enrolled from: `session` — a verification session or a saved standalone API call; `imported` — a face uploaded directly to a User profile; `list_entry` — a face attached to one of your lists; `retained_template` — an image-free biometric template stored on a User, listed under `/v3/biometric-templates/`."""
+    """Where the matched face was enrolled from: `session` - a verification session or a saved standalone API call; `imported` - a face uploaded directly to a User profile; `list_entry` - a face attached to one of your lists; `retained_template` - an image-free biometric template stored on a User, listed under `/v3/biometric-templates/`."""
 
     vendor_data: str | None = None
     """`vendor_data` of the matched session or linked User for imported and retained-template faces."""

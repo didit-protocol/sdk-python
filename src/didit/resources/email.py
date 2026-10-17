@@ -136,9 +136,9 @@ class Email(SyncAPIResource):
 
         Send a one-time passcode (OTP) to an email address, then verify it with [`POST /v3/email/check/`](/standalone-apis/email-check).
 
-        **How send and check pair up.** Verification state is keyed by your application plus the `email` address — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: "Retry"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
+        **How send and check pair up.** Verification state is keyed by your application plus the `email` address - the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: "Retry"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
 
-        **Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: "Undeliverable"` and `reason: "email_can_not_be_delivered"` — no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A downstream send failure reports the same way.
+        **Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: "Undeliverable"` and `reason: "email_can_not_be_delivered"` - no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A downstream send failure reports the same way.
 
         **Code format and branding.** Codes are 4–8 characters (`options.code_size`, default 6), numeric by default; set `options.alphanumeric_code: true` for uppercase letters and digits (the check comparison is case-insensitive). The email template is localized via `options.locale` (54 supported languages) and can use your application's white-label branding via `options.use_white_label_customization`.
 
@@ -148,7 +148,7 @@ class Email(SyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no email is sent and nothing is persisted. Use code `123456` on the sandbox check.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
@@ -207,21 +207,21 @@ class Email(SyncAPIResource):
 
         Verify the OTP delivered by [`POST /v3/email/send/`](/standalone-apis/email-send) and get the final verification result plus email intelligence: deliverability, breach exposure (`is_breached` and the `breaches` list from a breach-intelligence database), disposable-provider detection, and duplicate usage of the address across your sessions.
 
-        **How the check finds the verification.** Matching is by your application plus the `email` address — `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, undeliverable at send time, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
+        **How the check finds the verification.** Matching is by your application plus the `email` address - `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, undeliverable at send time, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
 
         **Attempt budget.** Each verification allows **3 code attempts**. The first two wrong codes return `status: "Failed"` with the attempts remaining and `email: null`; the third wrong code finalizes the verification as `Declined` with an `EMAIL_CODE_ATTEMPTS_EXCEEDED` warning and returns the full email report. Codes are compared case-insensitively (relevant for `alphanumeric_code` sends); only the most recently sent code is valid.
 
-        **Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted address, or the address found undeliverable at finalization), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `email` carries the full report (`is_breached`, `breaches`, `is_disposable`, `is_undeliverable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
+        **Outcomes.** `Approved` - correct code and no declining risk. `Declined` - terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted address, or the address found undeliverable at finalization), or the attempt budget was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `email` carries the full report (`is_breached`, `breaches`, `is_disposable`, `is_undeliverable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
 
         **Risk actions.** `duplicated_email_action`, `breached_email_action`, and `disposable_email_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `email.warnings` without affecting the status.
 
-        **Billing.** Checks are free — the credit is consumed by the successful send.
+        **Billing.** Checks are free - the credit is consumed by the successful send.
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
         **Sandbox.** Sandbox API keys skip all processing: any well-formed code (`123456` included) returns a static `Approved` payload with a simplified `email` object (`status`, `email`, `is_breached`, `is_disposable`, `is_undeliverable`); malformed input still returns `400`. Nothing is persisted.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
@@ -367,9 +367,9 @@ class AsyncEmail(AsyncAPIResource):
 
         Send a one-time passcode (OTP) to an email address, then verify it with [`POST /v3/email/check/`](/standalone-apis/email-check).
 
-        **How send and check pair up.** Verification state is keyed by your application plus the `email` address — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: "Retry"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
+        **How send and check pair up.** Verification state is keyed by your application plus the `email` address - the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: "Retry"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
 
-        **Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: "Undeliverable"` and `reason: "email_can_not_be_delivered"` — no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A downstream send failure reports the same way.
+        **Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: "Undeliverable"` and `reason: "email_can_not_be_delivered"` - no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A downstream send failure reports the same way.
 
         **Code format and branding.** Codes are 4–8 characters (`options.code_size`, default 6), numeric by default; set `options.alphanumeric_code: true` for uppercase letters and digits (the check comparison is case-insensitive). The email template is localized via `options.locale` (54 supported languages) and can use your application's white-label branding via `options.use_white_label_customization`.
 
@@ -379,7 +379,7 @@ class AsyncEmail(AsyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no email is sent and nothing is persisted. Use code `123456` on the sandbox check.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
@@ -438,21 +438,21 @@ class AsyncEmail(AsyncAPIResource):
 
         Verify the OTP delivered by [`POST /v3/email/send/`](/standalone-apis/email-send) and get the final verification result plus email intelligence: deliverability, breach exposure (`is_breached` and the `breaches` list from a breach-intelligence database), disposable-provider detection, and duplicate usage of the address across your sessions.
 
-        **How the check finds the verification.** Matching is by your application plus the `email` address — `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, undeliverable at send time, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
+        **How the check finds the verification.** Matching is by your application plus the `email` address - `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, undeliverable at send time, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
 
         **Attempt budget.** Each verification allows **3 code attempts**. The first two wrong codes return `status: "Failed"` with the attempts remaining and `email: null`; the third wrong code finalizes the verification as `Declined` with an `EMAIL_CODE_ATTEMPTS_EXCEEDED` warning and returns the full email report. Codes are compared case-insensitively (relevant for `alphanumeric_code` sends); only the most recently sent code is valid.
 
-        **Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted address, or the address found undeliverable at finalization), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `email` carries the full report (`is_breached`, `breaches`, `is_disposable`, `is_undeliverable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
+        **Outcomes.** `Approved` - correct code and no declining risk. `Declined` - terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted address, or the address found undeliverable at finalization), or the attempt budget was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `email` carries the full report (`is_breached`, `breaches`, `is_disposable`, `is_undeliverable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
 
         **Risk actions.** `duplicated_email_action`, `breached_email_action`, and `disposable_email_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `email.warnings` without affecting the status.
 
-        **Billing.** Checks are free — the credit is consumed by the successful send.
+        **Billing.** Checks are free - the credit is consumed by the successful send.
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
         **Sandbox.** Sandbox API keys skip all processing: any well-formed code (`123456` included) returns a static `Approved` payload with a simplified `email` object (`status`, `email`, `is_breached`, `is_disposable`, `is_undeliverable`); malformed input still returns `400`. Nothing is persisted.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 

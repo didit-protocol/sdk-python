@@ -42,7 +42,7 @@ class TransactionsCreateParamsCounterpartyDeviceContextNetworkContext(TypedDict,
 
 
 class TransactionsCreateParamsCounterpartyDeviceContext(TypedDict, total=False):
-    """Device context for the counterparty. browser_family and platform must be sent as explicit top-level keys — they are not derived from user_agent."""
+    """Device context for the counterparty. browser_family and platform must be sent as explicit top-level keys - they are not derived from user_agent."""
 
     fingerprint: str
     """Unique device fingerprint."""
@@ -54,13 +54,13 @@ class TransactionsCreateParamsCounterpartyDeviceContext(TypedDict, total=False):
     """Browser or app user agent string. CamelCase alias: userAgent."""
 
     browser_family: str
-    """Browser family (e.g. Chrome, Firefox, Safari). Must be sent explicitly — it is not derived from user_agent. CamelCase alias: browserFamily."""
+    """Browser family (e.g. Chrome, Firefox, Safari). Must be sent explicitly - it is not derived from user_agent. CamelCase alias: browserFamily."""
 
     browser_version: str
     """Browser version string. Must be sent explicitly. CamelCase alias: browserVersion."""
 
     platform: str
-    """Platform identifier (web, ios, android, macos, windows, linux). Must be sent explicitly — it is not derived from user_agent."""
+    """Platform identifier (web, ios, android, macos, windows, linux). Must be sent explicitly - it is not derived from user_agent."""
 
     os_family: str
     """Operating system family (e.g. iOS, Android, Windows). CamelCase alias: osFamily."""
@@ -117,7 +117,7 @@ class TransactionsCreateParamsCounterparty(TypedDict, total=False):
     institution_details: Mapping[str, object]
 
     device_context: TransactionsCreateParamsCounterpartyDeviceContext
-    """Device context for the counterparty. browser_family and platform must be sent as explicit top-level keys — they are not derived from user_agent."""
+    """Device context for the counterparty. browser_family and platform must be sent as explicit top-level keys - they are not derived from user_agent."""
 
     payment_method: TransactionsCreateParamsCounterpartyPaymentMethod
     """Payment method used by the counterparty. On travelRule transactions, `method_type: "unhosted_wallet"` declares the counterparty wallet as self-hosted: the transfer skips counterparty-VASP routing, is created directly in `UNCONFIRMED_OWNERSHIP`, and (when `auto_wallet_verification` is enabled) a wallet-ownership widget session is auto-minted and returned in the transaction's `action_required` block."""
@@ -165,7 +165,7 @@ class TransactionsCreateParamsSubjectDeviceContextNetworkContext(TypedDict, tota
 
 
 class TransactionsCreateParamsSubjectDeviceContext(TypedDict, total=False):
-    """Device context captured at transaction time. browser_family and platform must be sent as explicit top-level keys — they are not derived from user_agent. The camelCase alias device is also accepted on the request."""
+    """Device context captured at transaction time. browser_family and platform must be sent as explicit top-level keys - they are not derived from user_agent. The camelCase alias device is also accepted on the request."""
 
     fingerprint: str
     """Unique device fingerprint."""
@@ -177,13 +177,13 @@ class TransactionsCreateParamsSubjectDeviceContext(TypedDict, total=False):
     """Browser or app user agent string. CamelCase alias: userAgent."""
 
     browser_family: str
-    """Browser family (e.g. Chrome, Firefox, Safari). Must be sent explicitly — it is not derived from user_agent. CamelCase alias: browserFamily."""
+    """Browser family (e.g. Chrome, Firefox, Safari). Must be sent explicitly - it is not derived from user_agent. CamelCase alias: browserFamily."""
 
     browser_version: str
     """Browser version string. Must be sent explicitly. CamelCase alias: browserVersion."""
 
     platform: str
-    """Platform identifier (web, ios, android, macos, windows, linux). Must be sent explicitly — it is not derived from user_agent."""
+    """Platform identifier (web, ios, android, macos, windows, linux). Must be sent explicitly - it is not derived from user_agent."""
 
     os_family: str
     """Operating system family (e.g. iOS, Android, Windows). CamelCase alias: osFamily."""
@@ -255,7 +255,7 @@ class TransactionsCreateParamsSubject(TypedDict, total=False):
     """Institution details (for institutional subjects)."""
 
     device_context: TransactionsCreateParamsSubjectDeviceContext
-    """Device context captured at transaction time. browser_family and platform must be sent as explicit top-level keys — they are not derived from user_agent. The camelCase alias device is also accepted on the request."""
+    """Device context captured at transaction time. browser_family and platform must be sent as explicit top-level keys - they are not derived from user_agent. The camelCase alias device is also accepted on the request."""
 
     payment_method: TransactionsCreateParamsSubjectPaymentMethod
     """Payment method used by the subject."""

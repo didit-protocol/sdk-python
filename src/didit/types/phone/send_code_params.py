@@ -18,7 +18,7 @@ class PhoneSendCodeParamsOptions(TypedDict, total=False):
     """BCP-47 locale used to localize the verification message (e.g., `en-US`, `fr`, `es`). Invalid formats return `400`."""
 
     preferred_channel: Literal["whatsapp", "sms", "telegram", "voice", "rcs", "viber", "zalo"] | str
-    """Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS — the send still reports `Success`."""
+    """Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS - the send still reports `Success`."""
 
     use_white_label_customization: bool
     """When `true`, the send is white-labelled: if your application has no SMS sender name, the SMS names your white-label public name instead ("123456 is your verification code for Acme Bank"). Your SMS sender name, when set, is used with or without this flag. Applies to SMS messages, including an SMS fallback from another channel; WhatsApp codes are sent with a fixed message and are not branded. Defaults to `false`."""
@@ -54,7 +54,7 @@ class PhoneSendCodeParamsSignals(TypedDict, total=False):
 
 class PhoneSendCodeParams(TypedDict, total=False):
     phone_number: Required[str]
-    """Recipient phone number in E.164 format — leading `+` and country code (e.g., `+14155552671`). Numbers are validated and normalized to E.164; unparseable or invalid numbers return `400` with a `phone_number` field error."""
+    """Recipient phone number in E.164 format - leading `+` and country code (e.g., `+14155552671`). Numbers are validated and normalized to E.164; unparseable or invalid numbers return `400` with a `phone_number` field error."""
 
     options: PhoneSendCodeParamsOptions
     """OTP delivery options. All fields are optional."""

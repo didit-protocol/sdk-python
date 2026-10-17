@@ -12,19 +12,19 @@ __all__ = ["FaceSearchSearchParams"]
 
 class FaceSearchSearchParams(TypedDict, total=False):
     user_image: Required[FileTypes]
-    """Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face — otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added."""
+    """Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face - otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added."""
 
     search_type: Literal["most_similar", "blocklisted_or_approved"] | str
-    """Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces — with blocklisted entries ranked first."""
+    """Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces - with blocklisted entries ranked first."""
 
     rotate_image: bool
     """When `true`, the service tries 90-degree rotations of the input and uses the orientation that yields the best face detection. Useful when EXIF orientation is missing. Adds latency."""
 
     save_api_request: bool
-    """When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot — no session is stored and the face is not enrolled."""
+    """When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot - no session is stored and the face is not enrolled."""
 
     vendor_data: str
     """Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. It does not exclude same-user faces from the search results."""
 
     metadata: Mapping[str, object]
-    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field — it is parsed into an object."""
+    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object."""

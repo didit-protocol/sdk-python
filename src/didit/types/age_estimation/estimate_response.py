@@ -51,7 +51,7 @@ class AgeEstimationEstimateResponseAgeEstimationWarnings(BaseModel):
         | str
         | None
     ) = None
-    """Machine-readable risk code. `NO_FACE_DETECTED` — the liveness model found no face; `LOW_LIVENESS_SCORE` — liveness `score` at or below `face_liveness_score_decline_threshold`; `LIVENESS_FACE_ATTACK` — a presentation attack (photo/screen/mask) was detected; `AGE_NOT_DETECTED` — no face age could be estimated; `AGE_BELOW_MINIMUM` — estimated age below `age_estimation_decline_threshold`. `NO_FACE_DETECTED` and `LOW_LIVENESS_SCORE` are mutually exclusive — when no face is found only `NO_FACE_DETECTED` is emitted."""
+    """Machine-readable risk code. `NO_FACE_DETECTED` - the liveness model found no face; `LOW_LIVENESS_SCORE` - liveness `score` at or below `face_liveness_score_decline_threshold`; `LIVENESS_FACE_ATTACK` - a presentation attack (photo/screen/mask) was detected; `AGE_NOT_DETECTED` - no face age could be estimated; `AGE_BELOW_MINIMUM` - estimated age below `age_estimation_decline_threshold`. `NO_FACE_DETECTED` and `LOW_LIVENESS_SCORE` are mutually exclusive - when no face is found only `NO_FACE_DETECTED` is emitted."""
 
     feature: Literal["LIVENESS"] | str | None = None
     """Feature that raised the warning. Always `LIVENESS` on this endpoint."""
@@ -77,7 +77,7 @@ class AgeEstimationEstimateResponseAgeEstimation(BaseModel):
     """Liveness method. Always `PASSIVE` on this endpoint (single-image, no user challenge)."""
 
     score: float | None = None
-    """Passive-liveness score from 0 to 100 — the model's confidence that the photo shows a live person. Compared against `face_liveness_score_decline_threshold`; at or below it the call declines with `LOW_LIVENESS_SCORE`. `null` when the liveness model returns no confidence — the call still declines with `LOW_LIVENESS_SCORE` because null is treated as 0 for the threshold comparison."""
+    """Passive-liveness score from 0 to 100 - the model's confidence that the photo shows a live person. Compared against `face_liveness_score_decline_threshold`; at or below it the call declines with `LOW_LIVENESS_SCORE`. `null` when the liveness model returns no confidence - the call still declines with `LOW_LIVENESS_SCORE` because null is treated as 0 for the threshold comparison."""
 
     user_image: AgeEstimationEstimateResponseAgeEstimationUserImage | None = None
     """Face-detection results for the analyzed image."""

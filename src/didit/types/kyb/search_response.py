@@ -16,7 +16,7 @@ __all__ = [
 
 class KybSearchResponseKybRegistryCompanies(BaseModel):
     kyb_response_id: str | None = None
-    """Handle for this candidate — pass it to `POST /v3/kyb/select/` to retrieve the full profile. Ephemeral and scoped to this search: do not store it long-term; re-search to get a fresh one."""
+    """Handle for this candidate - pass it to `POST /v3/kyb/select/` to retrieve the full profile. Ephemeral and scoped to this search: do not store it long-term; re-search to get a fresh one."""
 
     name: str | None = None
     """Registered company name."""
@@ -34,7 +34,7 @@ class KybSearchResponseKybRegistryCompanies(BaseModel):
     """Registry-reported risk level, when available. Usually `null` at search time."""
 
     fetch_status: str | None = None
-    """Always `pending` for search candidates — the full company profile is only fetched (and billed) when you select the candidate."""
+    """Always `pending` for search candidates - the full company profile is only fetched (and billed) when you select the candidate."""
 
 
 class KybSearchResponseKybRegistryPagination(BaseModel):

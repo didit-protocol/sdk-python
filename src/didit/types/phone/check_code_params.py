@@ -13,7 +13,7 @@ class PhoneCheckCodeParams(TypedDict, total=False):
     """The same phone number used in the matching [`POST /v3/phone/send/`](/standalone-apis/phone-send) call, in E.164 format. This is what links the check to the send."""
 
     code: Required[str]
-    """The OTP the end user received. Must be 4–8 numeric digits — anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: "Failed"` and consumes one of the 3 attempts."""
+    """The OTP the end user received. Must be 4–8 numeric digits - anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: "Failed"` and consumes one of the 3 attempts."""
 
     duplicated_phone_number_action: Literal["NO_ACTION", "DECLINE"] | str
     """What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`."""
@@ -22,7 +22,7 @@ class PhoneCheckCodeParams(TypedDict, total=False):
     """What to do when the carrier lookup flags the number as a temporary/burner line (`phone.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`."""
 
     voip_number_action: Literal["NO_ACTION", "DECLINE"] | str
-    """What to do when the carrier lookup reports a virtual line type — `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`."""
+    """What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`."""
 
     enable_social: bool
     """When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price."""

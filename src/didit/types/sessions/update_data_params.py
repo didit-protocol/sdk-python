@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdateDataParams", "SessionsUpdateDataParamsParsedAddress"]
 
 
 class SessionsUpdateDataParamsParsedAddress(TypedDict, total=False):
-    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` — any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response — you cannot set it directly."""
+    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response - you cannot set it directly."""
 
     address_type: str | None
     """Free-form address classification (e.g. `home`)."""
@@ -31,7 +31,7 @@ class SessionsUpdateDataParamsParsedAddress(TypedDict, total=False):
 
 
 class SessionsUpdateDataParams(TypedDict, total=False):
-    """All fields optional — send only what you want to change."""
+    """All fields optional - send only what you want to change."""
 
     document_type: (
         Literal["P", "DL", "ID", "RP", "SSC", "HIC", "WP", "TC", "VISA", "PSC", "BC", "OTHER"]
@@ -68,16 +68,16 @@ class SessionsUpdateDataParams(TypedDict, total=False):
     """Family name(s). Also feeds the recomputed `full_name`."""
 
     gender: Literal["M", "F", "U"] | str | None
-    """Sex as printed on the document: `M` (male), `F` (female), or `U` (unknown). Any other value — including `X` — returns `400`."""
+    """Sex as printed on the document: `M` (male), `F` (female), or `U` (unknown). Any other value - including `X` - returns `400`."""
 
     address: str | None
-    """Free-text address as printed on the document. When this value changes (non-sandbox sessions only) and the structured address is still missing or incomplete, the server re-geocodes it synchronously before responding — the 200 body already reflects the refreshed `parsed_address`. The re-geocode also requires `issuing_state` to be present on the KYC record."""
+    """Free-text address as printed on the document. When this value changes (non-sandbox sessions only) and the structured address is still missing or incomplete, the server re-geocodes it synchronously before responding - the 200 body already reflects the refreshed `parsed_address`. The re-geocode also requires `issuing_state` to be present on the KYC record."""
 
     place_of_birth: str | None
     """Place of birth as printed on the document."""
 
     nationality: str | None
-    """Nationality as printed on the document. Free text up to 32 characters — typically an ISO 3166-1 alpha-3 code (e.g. `ESP`), but not validated as one."""
+    """Nationality as printed on the document. Free text up to 32 characters - typically an ISO 3166-1 alpha-3 code (e.g. `ESP`), but not validated as one."""
 
     marital_status: Literal["SINGLE", "MARRIED", "DIVORCED", "WIDOWED", "UNKNOWN"] | str
     """Marital status where the document carries it. Any other value returns `400`."""
@@ -86,4 +86,4 @@ class SessionsUpdateDataParams(TypedDict, total=False):
     """Per-key overrides for document-specific extra fields (e.g. `blood_group`, `dl_categories`, `mrz_string`). Keys are merged into the existing override map: send a key with a value to set it, or with `null` / `""` to remove that key from the merged view. Send the whole field as `null` to clear all previously applied overrides. Must be a JSON object, otherwise `400`. The response always returns the merged view (OCR-extracted values with your overrides applied)."""
 
     parsed_address: SessionsUpdateDataParamsParsedAddress | None
-    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` — any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response — you cannot set it directly."""
+    """Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response - you cannot set it directly."""

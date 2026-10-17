@@ -64,7 +64,7 @@ class DocumentAiAnalyzeResponseDocumentAi(BaseModel):
     """`Approved` when no warning resolves to a decline or review; `Declined` when at least one risk maps to `DECLINE`; otherwise `In Review` when at least one maps to `REVIEW`. The `warnings` list explains why."""
 
     extracted_data: dict[str, object] | None = None
-    """One entry per requested field key. Values are typed per the field `type` — strings for `text`, numbers for `number`, `YYYY-MM-DD` strings for `date` — or `null` when the value could not be read."""
+    """One entry per requested field key. Values are typed per the field `type` - strings for `text`, numbers for `number`, `YYYY-MM-DD` strings for `date` - or `null` when the value could not be read."""
 
     detected_codes: list[DocumentAIDetectedCode] | None = None
     """QR codes and barcodes detected across every processed page. Empty when none are found. A located but undecodable QR code has `parsed_payload: null`."""
@@ -73,7 +73,7 @@ class DocumentAiAnalyzeResponseDocumentAi(BaseModel):
     """The normalized field definitions that were used for this extraction, echoed back (also stored with the session when `save_api_request=true`)."""
 
     name_match_score: float | None = None
-    """Fuzzy similarity (0–100) between `name_on_document` and the expected person/company name. Returned whenever both a name value and an expected name exist — on matches **and** mismatches; `null` otherwise."""
+    """Fuzzy similarity (0–100) between `name_on_document` and the expected person/company name. Returned whenever both a name value and an expected name exist - on matches **and** mismatches; `null` otherwise."""
 
     name_on_document: str | None = None
     """The name value taken from the document (the `is_full_name` field, or the first name-like text field) that was compared against the expected name. `null` when no name value was available."""

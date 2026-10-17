@@ -60,17 +60,17 @@ class PassiveLiveness(SyncAPIResource):
     ) -> PassiveLivenessCheckResponse:
         """Passive Liveness.
 
-        Detect presentation attacks — printed photos, screen replays, masks, deepfakes — from a single face image. No video, motion, or user interaction required.
+        Detect presentation attacks - printed photos, screen replays, masks, deepfakes - from a single face image. No video, motion, or user interaction required.
 
         **How it works.** The image is analyzed by a biometric model; the largest detected face is evaluated and a liveness `score` (0–100) is computed. `status` is `Declined` when any `error`-severity warning fires:
-        - `NO_FACE_DETECTED` — the liveness model found no face,
-        - `LOW_LIVENESS_SCORE` — score at or below `face_liveness_score_decline_threshold` (default `30`),
-        - `LIVENESS_FACE_ATTACK` — the model detected a presentation attack,
-        - `FACE_IN_BLOCKLIST` / `POSSIBLE_FACE_IN_BLOCKLIST` — the face matches an entry on your face blocklist.
+        - `NO_FACE_DETECTED` - the liveness model found no face,
+        - `LOW_LIVENESS_SCORE` - score at or below `face_liveness_score_decline_threshold` (default `30`),
+        - `LIVENESS_FACE_ATTACK` - the model detected a presentation attack,
+        - `FACE_IN_BLOCKLIST` / `POSSIBLE_FACE_IN_BLOCKLIST` - the face matches an entry on your face blocklist.
 
         `MULTIPLE_FACES_DETECTED` is a `warning`-severity signal (does not decline), and `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` are `information`-severity signals that the same face already appeared in another approved session (they never decline). `face_quality` and `face_luminance` (0–100, nullable) describe capture quality.
 
-        **Blocklist and duplicate screening.** Runs on **every** call — with or without `save_api_request` — by matching the detected face against your application's face search index. Prior faces with the same `vendor_data` are excluded from the entire index search — so re-running liveness for the same user does not trigger `DUPLICATED_FACE`, and a blocklisted face originating from a session with the caller's own `vendor_data` is also NOT flagged (`FACE_IN_BLOCKLIST` screening is bypassed for same-`vendor_data` faces).
+        **Blocklist and duplicate screening.** Runs on **every** call - with or without `save_api_request` - by matching the detected face against your application's face search index. Prior faces with the same `vendor_data` are excluded from the entire index search - so re-running liveness for the same user does not trigger `DUPLICATED_FACE`, and a blocklisted face originating from a session with the caller's own `vendor_data` is also NOT flagged (`FACE_IN_BLOCKLIST` screening is bypassed for same-`vendor_data` faces).
 
         **Billing.** Each `200` response consumes one Passive Liveness API credit (standalone APIs have no free tier). Insufficient balance returns `403` before any image processing.
 
@@ -78,19 +78,19 @@ class PassiveLiveness(SyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip all processing and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Approved` mock payload, no session is persisted, and no credits are consumed.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         ``POST /v3/passive-liveness/``
 
         Args:
-          user_image: Front-facing face image (e.g. a selfie). Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image should contain a single subject — when several faces are present, the largest one is evaluated and a `MULTIPLE_FACES_DETECTED` warning is added.
+          user_image: Front-facing face image (e.g. a selfie). Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image should contain a single subject - when several faces are present, the largest one is evaluated and a `MULTIPLE_FACES_DETECTED` warning is added.
           face_liveness_score_decline_threshold: Liveness score threshold (0–100). A computed score **at or below** this value emits a `LOW_LIVENESS_SCORE` warning and sets `status` to `Declined`. Default `30`; raise it for a stricter anti-spoofing posture. Values outside 0–100 return `400`.
           rotate_image: When `true`, the service tries 90-degree rotations of the input and uses the orientation that yields the best face detection. Useful when EXIF orientation is missing. Adds latency.
-          save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot — nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
+          save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot - nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. Also used to exclude prior sessions with the same `vendor_data` from the duplicate-face check, so re-verifying the same user does not raise `DUPLICATED_FACE`.
-          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field — it is parsed into an object.
+          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -153,17 +153,17 @@ class AsyncPassiveLiveness(AsyncAPIResource):
     ) -> PassiveLivenessCheckResponse:
         """Passive Liveness.
 
-        Detect presentation attacks — printed photos, screen replays, masks, deepfakes — from a single face image. No video, motion, or user interaction required.
+        Detect presentation attacks - printed photos, screen replays, masks, deepfakes - from a single face image. No video, motion, or user interaction required.
 
         **How it works.** The image is analyzed by a biometric model; the largest detected face is evaluated and a liveness `score` (0–100) is computed. `status` is `Declined` when any `error`-severity warning fires:
-        - `NO_FACE_DETECTED` — the liveness model found no face,
-        - `LOW_LIVENESS_SCORE` — score at or below `face_liveness_score_decline_threshold` (default `30`),
-        - `LIVENESS_FACE_ATTACK` — the model detected a presentation attack,
-        - `FACE_IN_BLOCKLIST` / `POSSIBLE_FACE_IN_BLOCKLIST` — the face matches an entry on your face blocklist.
+        - `NO_FACE_DETECTED` - the liveness model found no face,
+        - `LOW_LIVENESS_SCORE` - score at or below `face_liveness_score_decline_threshold` (default `30`),
+        - `LIVENESS_FACE_ATTACK` - the model detected a presentation attack,
+        - `FACE_IN_BLOCKLIST` / `POSSIBLE_FACE_IN_BLOCKLIST` - the face matches an entry on your face blocklist.
 
         `MULTIPLE_FACES_DETECTED` is a `warning`-severity signal (does not decline), and `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` are `information`-severity signals that the same face already appeared in another approved session (they never decline). `face_quality` and `face_luminance` (0–100, nullable) describe capture quality.
 
-        **Blocklist and duplicate screening.** Runs on **every** call — with or without `save_api_request` — by matching the detected face against your application's face search index. Prior faces with the same `vendor_data` are excluded from the entire index search — so re-running liveness for the same user does not trigger `DUPLICATED_FACE`, and a blocklisted face originating from a session with the caller's own `vendor_data` is also NOT flagged (`FACE_IN_BLOCKLIST` screening is bypassed for same-`vendor_data` faces).
+        **Blocklist and duplicate screening.** Runs on **every** call - with or without `save_api_request` - by matching the detected face against your application's face search index. Prior faces with the same `vendor_data` are excluded from the entire index search - so re-running liveness for the same user does not trigger `DUPLICATED_FACE`, and a blocklisted face originating from a session with the caller's own `vendor_data` is also NOT flagged (`FACE_IN_BLOCKLIST` screening is bypassed for same-`vendor_data` faces).
 
         **Billing.** Each `200` response consumes one Passive Liveness API credit (standalone APIs have no free tier). Insufficient balance returns `403` before any image processing.
 
@@ -171,19 +171,19 @@ class AsyncPassiveLiveness(AsyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip all processing and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Approved` mock payload, no session is persisted, and no credits are consumed.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         ``POST /v3/passive-liveness/``
 
         Args:
-          user_image: Front-facing face image (e.g. a selfie). Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image should contain a single subject — when several faces are present, the largest one is evaluated and a `MULTIPLE_FACES_DETECTED` warning is added.
+          user_image: Front-facing face image (e.g. a selfie). Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image should contain a single subject - when several faces are present, the largest one is evaluated and a `MULTIPLE_FACES_DETECTED` warning is added.
           face_liveness_score_decline_threshold: Liveness score threshold (0–100). A computed score **at or below** this value emits a `LOW_LIVENESS_SCORE` warning and sets `status` to `Declined`. Default `30`; raise it for a stricter anti-spoofing posture. Values outside 0–100 return `400`.
           rotate_image: When `true`, the service tries 90-degree rotations of the input and uses the orientation that yields the best face detection. Useful when EXIF orientation is missing. Adds latency.
-          save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot — nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
+          save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot - nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. Also used to exclude prior sessions with the same `vendor_data` from the duplicate-face check, so re-verifying the same user does not raise `DUPLICATED_FACE`.
-          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field — it is parsed into an object.
+          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.

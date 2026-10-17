@@ -62,12 +62,12 @@ class FaceSearch(SyncAPIResource):
     ) -> FaceSearchSearchResponse:
         """Face Search.
 
-        Search a face image (1:N) against your application's face search index — faces enrolled from verification sessions, saved standalone API calls, direct user-profile face uploads, and your block/allow lists — and get back ranked similarity matches plus blocklist and duplicate warnings.
+        Search a face image (1:N) against your application's face search index - faces enrolled from verification sessions, saved standalone API calls, direct user-profile face uploads, and your block/allow lists - and get back ranked similarity matches plus blocklist and duplicate warnings.
 
         **How it works.** The largest detected face in `user_image` is embedded and searched against the index, scoped to your application. Up to **5 matches** above the similarity floor are returned in `matches`, each with `similarity_percentage`, the originating session (`session_id`, `session_number`, `status`, `vendor_data`), `user_details` extracted during that session's document verification, `is_blocklisted` / `is_allowlisted` flags, and a `source` discriminator (`session`, `imported`, or `list_entry`).
 
-        - `search_type=most_similar` (default) ranks every enrolled face by similarity — use it for deduplication and fraud-ring investigation.
-        - `search_type=blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces, ranking blocklisted entries first — use it when the primary goal is blocklist screening.
+        - `search_type=most_similar` (default) ranks every enrolled face by similarity - use it for deduplication and fraud-ring investigation.
+        - `search_type=blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces, ranking blocklisted entries first - use it when the primary goal is blocklist screening.
 
         `status` is `Declined` only when a `FACE_IN_BLOCKLIST` or `POSSIBLE_FACE_IN_BLOCKLIST` warning fires; `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` (`information`) and `MULTIPLE_FACES_DETECTED` (`warning`) never decline. Unlike Passive Liveness, this endpoint does **not** exclude prior sessions with the same `vendor_data` from matching. A passive-liveness analysis also runs internally and is stored with the persisted session, but its result is not part of this response.
 
@@ -77,19 +77,19 @@ class FaceSearch(SyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip all processing and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Approved` mock payload, no session is persisted, and no credits are consumed.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         ``POST /v3/face-search/``
 
         Args:
-          user_image: Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face — otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added.
-          search_type: Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces — with blocklisted entries ranked first.
+          user_image: Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face - otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added.
+          search_type: Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces - with blocklisted entries ranked first.
           rotate_image: When `true`, the service tries 90-degree rotations of the input and uses the orientation that yields the best face detection. Useful when EXIF orientation is missing. Adds latency.
-          save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot — no session is stored and the face is not enrolled.
+          save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot - no session is stored and the face is not enrolled.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. It does not exclude same-user faces from the search results.
-          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field — it is parsed into an object.
+          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -154,12 +154,12 @@ class AsyncFaceSearch(AsyncAPIResource):
     ) -> FaceSearchSearchResponse:
         """Face Search.
 
-        Search a face image (1:N) against your application's face search index — faces enrolled from verification sessions, saved standalone API calls, direct user-profile face uploads, and your block/allow lists — and get back ranked similarity matches plus blocklist and duplicate warnings.
+        Search a face image (1:N) against your application's face search index - faces enrolled from verification sessions, saved standalone API calls, direct user-profile face uploads, and your block/allow lists - and get back ranked similarity matches plus blocklist and duplicate warnings.
 
         **How it works.** The largest detected face in `user_image` is embedded and searched against the index, scoped to your application. Up to **5 matches** above the similarity floor are returned in `matches`, each with `similarity_percentage`, the originating session (`session_id`, `session_number`, `status`, `vendor_data`), `user_details` extracted during that session's document verification, `is_blocklisted` / `is_allowlisted` flags, and a `source` discriminator (`session`, `imported`, or `list_entry`).
 
-        - `search_type=most_similar` (default) ranks every enrolled face by similarity — use it for deduplication and fraud-ring investigation.
-        - `search_type=blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces, ranking blocklisted entries first — use it when the primary goal is blocklist screening.
+        - `search_type=most_similar` (default) ranks every enrolled face by similarity - use it for deduplication and fraud-ring investigation.
+        - `search_type=blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces, ranking blocklisted entries first - use it when the primary goal is blocklist screening.
 
         `status` is `Declined` only when a `FACE_IN_BLOCKLIST` or `POSSIBLE_FACE_IN_BLOCKLIST` warning fires; `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` (`information`) and `MULTIPLE_FACES_DETECTED` (`warning`) never decline. Unlike Passive Liveness, this endpoint does **not** exclude prior sessions with the same `vendor_data` from matching. A passive-liveness analysis also runs internally and is stored with the persisted session, but its result is not part of this response.
 
@@ -169,19 +169,19 @@ class AsyncFaceSearch(AsyncAPIResource):
 
         **Sandbox.** Sandbox API keys skip all processing and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Approved` mock payload, no session is persisted, and no credits are consumed.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) — this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
 
         **Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         ``POST /v3/face-search/``
 
         Args:
-          user_image: Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face — otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added.
-          search_type: Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces — with blocklisted entries ranked first.
+          user_image: Front-facing face image to search with. Allowed extensions: `tiff`, `jpg`, `jpeg`, `png`, `webp`. Maximum upload size: **5 MB** (larger files are rejected with `400`). Images are automatically compressed to ~0.5 MB before processing, so very high resolutions do not improve accuracy. The image must contain at least one detectable face - otherwise the endpoint returns `400`. When several faces are present, the largest one is searched and a `MULTIPLE_FACES_DETECTED` warning is added.
+          search_type: Search policy. `most_similar` (default) ranks every enrolled face in your application by similarity. `blocklisted_or_approved` restricts candidates to blocklisted faces, allowlisted faces, faces from approved sessions, and imported user-profile faces - with blocklisted entries ranked first.
           rotate_image: When `true`, the service tries 90-degree rotations of the input and uses the orientation that yields the best face detection. Useful when EXIF orientation is missing. Adds latency.
-          save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot — no session is stored and the face is not enrolled.
+          save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot - no session is stored and the face is not enrolled.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. It does not exclude same-user faces from the search results.
-          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field — it is parsed into an object.
+          metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.

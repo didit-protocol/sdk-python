@@ -27,10 +27,15 @@ RESOURCE_MIXINS: dict[str, tuple[str, str]] = {
 }
 
 
+def plain_text(text: str) -> str:
+    """Upstream descriptions as written in this repository: no em dashes."""
+    return text.replace(" \u2014 ", " - ").replace("\u2014", " - ")
+
+
 def docstring(text: str | None, indent: str) -> str:
     if not text:
         return ""
-    body = text.replace("\\", "\\\\").replace('"""', '\\"\\"\\"').strip()
+    body = plain_text(text).replace("\\", "\\\\").replace('"""', '\\"\\"\\"').strip()
     if body.endswith('"'):
         body += " "
     lines = body.splitlines()

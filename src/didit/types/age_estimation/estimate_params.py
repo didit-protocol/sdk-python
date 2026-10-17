@@ -21,13 +21,13 @@ class AgeEstimationEstimateParams(TypedDict, total=False):
     """Minimum acceptable estimated age in years. An estimated age **below** this value adds an `AGE_BELOW_MINIMUM` warning and declines. Set `0` to disable the age check (the call then only runs liveness + age estimation without an age-based decision)."""
 
     rotate_image: bool
-    """When `true`, the service tries the input image in 90-degree increments (0, 90, 180, 270) and uses the orientation that yields the best face detection — useful for mobile captures with missing EXIF orientation. Adds latency, so only enable it if you cannot guarantee upright images."""
+    """When `true`, the service tries the input image in 90-degree increments (0, 90, 180, 270) and uses the orientation that yields the best face detection - useful for mobile captures with missing EXIF orientation. Adds latency, so only enable it if you cannot guarantee upright images."""
 
     save_api_request: bool
-    """When `true` (default), persists the call as an API-type session — visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, announced through a `status.updated` webhook, and with the detected face added to your application's face index. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
+    """When `true` (default), persists the call as an API-type session - visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, announced through a `status.updated` webhook, and with the detected face added to your application's face index. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only."""
 
     vendor_data: str
     """Optional opaque string (your internal user id, email, UUID…) stored on the persisted session and echoed back in the response. Use it to correlate API calls with your own records and to filter sessions later."""
 
     metadata: Mapping[str, object]
-    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"age-gate"}`) — it is parsed into an object."""
+    """Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"age-gate"}`) - it is parsed into an object."""

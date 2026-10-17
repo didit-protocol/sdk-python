@@ -24,4 +24,4 @@ class WebhooksDestinationsUpdateParams(TypedDict, total=False):
     """New payload schema version for future deliveries."""
 
     subscribed_events: WebhookSubscribedEventsParam
-    """Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values — there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged."""
+    """Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged."""

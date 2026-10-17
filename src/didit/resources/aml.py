@@ -79,7 +79,7 @@ class Aml(SyncAPIResource):
 
         **Match-score weights.** `aml_name_weight` + `aml_dob_weight` + `aml_country_weight` must sum to exactly 100 (defaults 60/25/15). Components missing from the request are re-normalized away; a matching `document_number` acts as a golden key that overrides `match_score` to 100.
 
-        **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) — configure a client timeout of **at least 60 seconds**.
+        **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) - configure a client timeout of **at least 60 seconds**.
 
         **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps re-screening the profile and requires `save_api_request=true` (enforced with a `400`).
 
@@ -87,7 +87,7 @@ class Aml(SyncAPIResource):
 
         **Billing.** One AML API credit is charged after the first successful screening. Replayed idempotent responses are not charged again; an insufficient balance returns `403` before any new screening happens.
 
-        **Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result — `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.
+        **Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result - `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.
 
         ``POST /v3/aml/``
 
@@ -96,14 +96,14 @@ class Aml(SyncAPIResource):
           entity_type: Type of entity to screen. Defaults to `person`.
           date_of_birth: Date of birth (persons) or incorporation date (companies), `YYYY-MM-DD`. Improves match precision via the DOB weight.
           nationality: ISO 3166-1 **alpha-2** country code (e.g. `ES`). Invalid codes return `400`. Improves match precision via the country weight.
-          document_number: Identity document number. Not weighted — acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number.
+          document_number: Identity document number. Not weighted - acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number.
           aml_score_approve_threshold: Risk-score threshold at or below which the result is `Approved`. Must be ≤ `aml_score_review_threshold` (else `400`).
           aml_score_review_threshold: Risk-score threshold above which the result is `Declined`. Scores between the two thresholds produce `In Review`.
           aml_name_weight: Weight of name similarity in the per-hit match score. The three weights must sum to exactly 100 (else `400`).
           aml_dob_weight: Weight of date of birth in the per-hit match score.
           aml_country_weight: Weight of country/nationality in the per-hit match score.
           aml_match_score_threshold: Per-hit cutoff: hits with `match_score` below this are `False Positive` (excluded from risk assessment); at or above are `Unreviewed` possible matches.
-          include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered — use a ≥60 s client timeout.
+          include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered - use a ≥60 s client timeout.
           include_ongoing_monitoring: Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`).
           save_api_request: Persist the screening as a session (console visibility, decision endpoint, webhooks, hit review). Set to `false` for a stateless check.
           vendor_data: Your identifier for the screened user; echoed back and stored with the session.
@@ -200,7 +200,7 @@ class AsyncAml(AsyncAPIResource):
 
         **Match-score weights.** `aml_name_weight` + `aml_dob_weight` + `aml_country_weight` must sum to exactly 100 (defaults 60/25/15). Components missing from the request are re-normalized away; a matching `document_number` acts as a golden key that overrides `match_score` to 100.
 
-        **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) — configure a client timeout of **at least 60 seconds**.
+        **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) - configure a client timeout of **at least 60 seconds**.
 
         **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps re-screening the profile and requires `save_api_request=true` (enforced with a `400`).
 
@@ -208,7 +208,7 @@ class AsyncAml(AsyncAPIResource):
 
         **Billing.** One AML API credit is charged after the first successful screening. Replayed idempotent responses are not charged again; an insufficient balance returns `403` before any new screening happens.
 
-        **Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result — `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.
+        **Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result - `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.
 
         ``POST /v3/aml/``
 
@@ -217,14 +217,14 @@ class AsyncAml(AsyncAPIResource):
           entity_type: Type of entity to screen. Defaults to `person`.
           date_of_birth: Date of birth (persons) or incorporation date (companies), `YYYY-MM-DD`. Improves match precision via the DOB weight.
           nationality: ISO 3166-1 **alpha-2** country code (e.g. `ES`). Invalid codes return `400`. Improves match precision via the country weight.
-          document_number: Identity document number. Not weighted — acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number.
+          document_number: Identity document number. Not weighted - acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number.
           aml_score_approve_threshold: Risk-score threshold at or below which the result is `Approved`. Must be ≤ `aml_score_review_threshold` (else `400`).
           aml_score_review_threshold: Risk-score threshold above which the result is `Declined`. Scores between the two thresholds produce `In Review`.
           aml_name_weight: Weight of name similarity in the per-hit match score. The three weights must sum to exactly 100 (else `400`).
           aml_dob_weight: Weight of date of birth in the per-hit match score.
           aml_country_weight: Weight of country/nationality in the per-hit match score.
           aml_match_score_threshold: Per-hit cutoff: hits with `match_score` below this are `False Positive` (excluded from risk assessment); at or above are `Unreviewed` possible matches.
-          include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered — use a ≥60 s client timeout.
+          include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered - use a ≥60 s client timeout.
           include_ongoing_monitoring: Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`).
           save_api_request: Persist the screening as a session (console visibility, decision endpoint, webhooks, hit review). Set to `false` for a stateless check.
           vendor_data: Your identifier for the screened user; echoed back and stored with the session.

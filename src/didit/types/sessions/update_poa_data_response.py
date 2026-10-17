@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdatePoaDataResponse", "SessionsUpdatePoaDataResponsePoaPar
 
 
 class SessionsUpdatePoaDataResponsePoaParsedAddress(BaseModel):
-    """Current structured address, or `null` when none exists. Includes the recomputed `formatted_address` alongside the seven editable keys. Returned as stored — after a server-side geocode it can contain bookkeeping keys (e.g. `raw_results`) alongside the editable keys."""
+    """Current structured address, or `null` when none exists. Includes the recomputed `formatted_address` alongside the seven editable keys. Returned as stored - after a server-side geocode it can contain bookkeeping keys (e.g. `raw_results`) alongside the editable keys."""
 
     address_type: str | None = None
     """Free-form address classification (e.g. `home`)."""
@@ -48,10 +48,10 @@ class SessionsUpdatePoaDataResponse(BaseModel):
         | str
         | None
     ) = None
-    """POA document category. Values are uppercase — lowercase variants like `utility_bill` return `400`."""
+    """POA document category. Values are uppercase - lowercase variants like `utility_bill` return `400`."""
 
     document_language: str | None = None
-    """Language of the document, typically an ISO 639-1 code (e.g. `es`). Free text — not validated as a language code."""
+    """Language of the document, typically an ISO 639-1 code (e.g. `es`). Free text - not validated as a language code."""
 
     issuer: str | None = None
     """Organization that issued the document (utility company, bank, government agency)."""
@@ -69,7 +69,7 @@ class SessionsUpdatePoaDataResponse(BaseModel):
     """Always present in the response: the nine known keys (with `null` for unset ones, `additional_names` defaulting to `[]`) plus any custom keys previously stored."""
 
     poa_parsed_address: SessionsUpdatePoaDataResponsePoaParsedAddress | None = None
-    """Current structured address, or `null` when none exists. Includes the recomputed `formatted_address` alongside the seven editable keys. Returned as stored — after a server-side geocode it can contain bookkeeping keys (e.g. `raw_results`) alongside the editable keys."""
+    """Current structured address, or `null` when none exists. Includes the recomputed `formatted_address` alongside the seven editable keys. Returned as stored - after a server-side geocode it can contain bookkeeping keys (e.g. `raw_results`) alongside the editable keys."""
 
     poa_formatted_address: str | None = None
     """Top-level copy of the recomputed `formatted_address`, kept in sync when the structured address changes."""

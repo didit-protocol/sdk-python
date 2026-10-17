@@ -23,7 +23,7 @@ class AmlScreenParams(TypedDict, total=False):
     """ISO 3166-1 **alpha-2** country code (e.g. `ES`). Invalid codes return `400`. Improves match precision via the country weight."""
 
     document_number: str
-    """Identity document number. Not weighted — acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number."""
+    """Identity document number. Not weighted - acts as a golden key: an exact match overrides the hit's `match_score` to 100, a hard mismatch penalizes it. Sent to the screening provider as a search filter only when it is **2-50 characters**; a value outside that range is accepted and stored, and the screening still runs and is billed, just not narrowed by document number."""
 
     aml_score_approve_threshold: float
     """Risk-score threshold at or below which the result is `Approved`. Must be ≤ `aml_score_review_threshold` (else `400`)."""
@@ -44,7 +44,7 @@ class AmlScreenParams(TypedDict, total=False):
     """Per-hit cutoff: hits with `match_score` below this are `False Positive` (excluded from risk assessment); at or above are `Unreviewed` possible matches."""
 
     include_adverse_media: bool
-    """Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered — use a ≥60 s client timeout."""
+    """Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered - use a ≥60 s client timeout."""
 
     include_ongoing_monitoring: bool
     """Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`)."""

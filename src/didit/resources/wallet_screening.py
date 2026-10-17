@@ -153,7 +153,7 @@ class WalletScreening(SyncAPIResource):
     ) -> bytes:
         """Render a wallet-screening result as a PDF.
 
-        Stateless companion to `POST /v3/wallet-screening/`: repost the exact JSON body that endpoint returned — including the `report_signature` it added — and get back a Didit-branded PDF of the same result. No provider is called and nothing is billed or persisted; this only re-renders a result Didit already produced. The signature ties the PDF to an unmodified result: editing `risk_score`, `severity`, `sanctions_hit`, or any other signed field before reposting fails with `400`.
+        Stateless companion to `POST /v3/wallet-screening/`: repost the exact JSON body that endpoint returned - including the `report_signature` it added - and get back a Didit-branded PDF of the same result. No provider is called and nothing is billed or persisted; this only re-renders a result Didit already produced. The signature ties the PDF to an unmodified result: editing `risk_score`, `severity`, `sanctions_hit`, or any other signed field before reposting fails with `400`.
 
         ``POST /v3/wallet-screening/pdf/``
 
@@ -171,7 +171,7 @@ class WalletScreening(SyncAPIResource):
           counterparty_connections: Entities the provider attributes the screened address to. For Merkle Science these come from the address's own owner and user tags, so the same entity can appear twice, and they carry no fund flows: `received_usd`, `sent_usd`, `received_hops` and `sent_hops` are `null` and `percentage` is 0. Do not route on `risk_level` or `is_direct` here: use `sanctions_hit`, `dominant_risk_category` and `risk_factors[].is_high_risk` for the verdict, and `exposure_type` in `source_of_funds`/`destination_of_funds` for directness.
           sanctions_hit: True if the address has direct or indirect sanctions exposure.
           dominant_risk_category: Highest-weighted high-risk category, or `null` when none is dominant (e.g. `sanctioned`, `mixer`, `stolen_funds`).
-          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own — repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
+          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own - repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
           transaction_hash: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
           block_timestamp: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
           total_value_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
@@ -356,7 +356,7 @@ class AsyncWalletScreening(AsyncAPIResource):
     ) -> bytes:
         """Render a wallet-screening result as a PDF.
 
-        Stateless companion to `POST /v3/wallet-screening/`: repost the exact JSON body that endpoint returned — including the `report_signature` it added — and get back a Didit-branded PDF of the same result. No provider is called and nothing is billed or persisted; this only re-renders a result Didit already produced. The signature ties the PDF to an unmodified result: editing `risk_score`, `severity`, `sanctions_hit`, or any other signed field before reposting fails with `400`.
+        Stateless companion to `POST /v3/wallet-screening/`: repost the exact JSON body that endpoint returned - including the `report_signature` it added - and get back a Didit-branded PDF of the same result. No provider is called and nothing is billed or persisted; this only re-renders a result Didit already produced. The signature ties the PDF to an unmodified result: editing `risk_score`, `severity`, `sanctions_hit`, or any other signed field before reposting fails with `400`.
 
         ``POST /v3/wallet-screening/pdf/``
 
@@ -374,7 +374,7 @@ class AsyncWalletScreening(AsyncAPIResource):
           counterparty_connections: Entities the provider attributes the screened address to. For Merkle Science these come from the address's own owner and user tags, so the same entity can appear twice, and they carry no fund flows: `received_usd`, `sent_usd`, `received_hops` and `sent_hops` are `null` and `percentage` is 0. Do not route on `risk_level` or `is_direct` here: use `sanctions_hit`, `dominant_risk_category` and `risk_factors[].is_high_risk` for the verdict, and `exposure_type` in `source_of_funds`/`destination_of_funds` for directness.
           sanctions_hit: True if the address has direct or indirect sanctions exposure.
           dominant_risk_category: Highest-weighted high-risk category, or `null` when none is dominant (e.g. `sanctioned`, `mixer`, `stolen_funds`).
-          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own — repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
+          report_signature: Opaque HMAC-SHA256 signature over this exact result, scoped to your application. Not meaningful on its own - repost the full response body, unmodified and including this field, to `POST /v3/wallet-screening/pdf/` to render it as a PDF. The PDF endpoint rejects the request with `400` if `report_signature` is missing or if any signed field (e.g. `risk_score`, `severity`, `sanctions_hit`) was edited before repost.
           transaction_hash: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
           block_timestamp: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.
           total_value_usd: Transaction screening field, shared with the result shape. Always `null` on a wallet screening result.

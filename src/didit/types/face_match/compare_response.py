@@ -25,13 +25,13 @@ class FaceMatchCompareResponseFaceMatchRefImageEntities(BaseModel):
     """Face-detection confidence (0–1)."""
 
     age: float | None = None
-    """Model-estimated age of the detected face, in years. Informational only — it does not affect the face-match decision."""
+    """Model-estimated age of the detected face, in years. Informational only - it does not affect the face-match decision."""
 
     gender: str | None = None
     """Model-predicted gender of the detected face (`male` or `female`). Informational only."""
 
     race: str | None = None
-    """Reserved field — always `null` in responses from this endpoint."""
+    """Reserved field - always `null` in responses from this endpoint."""
 
 
 class FaceMatchCompareResponseFaceMatchRefImage(BaseModel):
@@ -51,13 +51,13 @@ class FaceMatchCompareResponseFaceMatchUserImageEntities(BaseModel):
     """Face-detection confidence (0–1)."""
 
     age: float | None = None
-    """Model-estimated age of the detected face, in years. Informational only — it does not affect the face-match decision."""
+    """Model-estimated age of the detected face, in years. Informational only - it does not affect the face-match decision."""
 
     gender: str | None = None
     """Model-predicted gender of the detected face (`male` or `female`). Informational only."""
 
     race: str | None = None
-    """Reserved field — always `null` in responses from this endpoint."""
+    """Reserved field - always `null` in responses from this endpoint."""
 
 
 class FaceMatchCompareResponseFaceMatchUserImage(BaseModel):
@@ -95,7 +95,7 @@ class FaceMatchCompareResponseFaceMatch(BaseModel):
     """`Approved` when the similarity score is strictly above `face_match_score_decline_threshold` and a score could be computed; `Declined` otherwise (a warning explains why)."""
 
     score: float | None = None
-    """Similarity score from 0 to 100 — the model's confidence that both images depict the same person. Rounded to two decimals only when `save_api_request` is true; with `save_api_request=false` the raw float is returned. `null` when no face pair could be scored (with the default `save_api_request=true`); with `save_api_request=false` the same condition can surface as `score: 0`. Either way a `NO_REFERENCE_IMAGE` warning is present and `status` is `Declined`."""
+    """Similarity score from 0 to 100 - the model's confidence that both images depict the same person. Rounded to two decimals only when `save_api_request` is true; with `save_api_request=false` the raw float is returned. `null` when no face pair could be scored (with the default `save_api_request=true`); with `save_api_request=false` the same condition can surface as `score: 0`. Either way a `NO_REFERENCE_IMAGE` warning is present and `status` is `Declined`."""
 
     user_image: FaceMatchCompareResponseFaceMatchUserImage | None = None
     """Face-detection results for the analyzed images."""
@@ -104,7 +104,7 @@ class FaceMatchCompareResponseFaceMatch(BaseModel):
     """Face-detection results for the reference image, same shape as `user_image`."""
 
     warnings: list[FaceMatchCompareResponseFaceMatchWarnings] | None = None
-    """Empty on a clean approval. `NO_REFERENCE_IMAGE` (`error`) — no face pair could be scored; `LOW_FACE_MATCH_SIMILARITY` (`error`) — score at or below the decline threshold. Any of these sets `status` to `Declined`."""
+    """Empty on a clean approval. `NO_REFERENCE_IMAGE` (`error`) - no face pair could be scored; `LOW_FACE_MATCH_SIMILARITY` (`error`) - score at or below the decline threshold. Any of these sets `status` to `Declined`."""
 
 
 class FaceMatchCompareResponse(BaseModel):

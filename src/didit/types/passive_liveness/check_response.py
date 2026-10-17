@@ -23,13 +23,13 @@ class PassiveLivenessCheckResponseLivenessUserImageEntities(BaseModel):
     """Face-detection confidence (0–1)."""
 
     age: float | None = None
-    """Model-estimated age of the detected face, in years. Informational only — it does not affect the liveness decision."""
+    """Model-estimated age of the detected face, in years. Informational only - it does not affect the liveness decision."""
 
     gender: str | None = None
     """Model-predicted gender of the detected face (`male` or `female`). Informational only."""
 
     race: str | None = None
-    """Reserved field — always `null` in responses from this endpoint."""
+    """Reserved field - always `null` in responses from this endpoint."""
 
 
 class PassiveLivenessCheckResponseLivenessUserImage(BaseModel):
@@ -89,7 +89,7 @@ class PassiveLivenessCheckResponseLiveness(BaseModel):
     """Face-detection results for the submitted image."""
 
     warnings: list[PassiveLivenessCheckResponseLivenessWarnings] | None = None
-    """Risk signals. `error` severity (declines): `NO_FACE_DETECTED`, `LOW_LIVENESS_SCORE` (score at or below the threshold), `LIVENESS_FACE_ATTACK`, `FACE_IN_BLOCKLIST`, `POSSIBLE_FACE_IN_BLOCKLIST`. `warning` severity (review, no decline): `MULTIPLE_FACES_DETECTED`. `information` severity (no decline): `DUPLICATED_FACE`, `POSSIBLE_DUPLICATED_FACE` — the same face already appeared in another approved session."""
+    """Risk signals. `error` severity (declines): `NO_FACE_DETECTED`, `LOW_LIVENESS_SCORE` (score at or below the threshold), `LIVENESS_FACE_ATTACK`, `FACE_IN_BLOCKLIST`, `POSSIBLE_FACE_IN_BLOCKLIST`. `warning` severity (review, no decline): `MULTIPLE_FACES_DETECTED`. `information` severity (no decline): `DUPLICATED_FACE`, `POSSIBLE_DUPLICATED_FACE` - the same face already appeared in another approved session."""
 
     face_quality: float | None = None
     """Capture-quality score of the detected face, normalized to 0–100. `null` when the model could not produce a reliable value."""

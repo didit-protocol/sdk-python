@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdateKybCompanyDataResponse"]
 
 
 class SessionsUpdateKybCompanyDataResponse(BaseModel):
-    """Full KYB company record — the same shape as the `company` object inside `registry_checks[]` on the business session decision."""
+    """Full KYB company record - the same shape as the `company` object inside `registry_checks[]` on the business session decision."""
 
     uuid: str | None = None
     """Company record identifier (the `companyUuid` path parameter)."""
@@ -25,7 +25,7 @@ class SessionsUpdateKybCompanyDataResponse(BaseModel):
     """Registry-reported company status (e.g. `active`, `dissolved`, `struck off`)."""
 
     data_resolved: bool | None = None
-    """`true` when the company data is complete — always `true` for manual-entry companies; for registry-sourced companies, `true` once the registry fetch resolved."""
+    """`true` when the company data is complete - always `true` for manual-entry companies; for registry-sourced companies, `true` once the registry fetch resolved."""
 
     company_name: str | None = None
 
@@ -41,7 +41,7 @@ class SessionsUpdateKybCompanyDataResponse(BaseModel):
     incorporation_date: _dt.date | None = None
 
     registered_address: str | None = None
-    """Canonical registered address — updated when you send `legal_address`."""
+    """Canonical registered address - updated when you send `legal_address`."""
 
     tax_number: str | None = None
 

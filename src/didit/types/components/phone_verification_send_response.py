@@ -13,7 +13,7 @@ class PhoneVerificationSendResponse(BaseModel):
     """Session id of the verification. A `Retry` send returns the same `request_id` as the original send. This id appears in the Business Console, is returned again by a finalized `POST /v3/phone/check/`, and can be passed to `GET /v3/session/{sessionId}/decision/`."""
 
     status: Literal["Success", "Retry", "Blocked"] | str | None = None
-    """`Success` — OTP sent to a new verification. `Retry` — OTP re-sent for the pending verification created by a previous send. `Blocked` — the anti-fraud layer refused to send; the verification is immediately finalized as `Declined` and nothing is billed."""
+    """`Success` - OTP sent to a new verification. `Retry` - OTP re-sent for the pending verification created by a previous send. `Blocked` - the anti-fraud layer refused to send; the verification is immediately finalized as `Declined` and nothing is billed."""
 
     reason: str | None = None
     """Why a send was `Blocked` (e.g., `repeated_attempts`, `suspicious`, `spam`). `null` on `Success` and `Retry`."""

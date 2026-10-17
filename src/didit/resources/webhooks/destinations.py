@@ -59,7 +59,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
-        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list — fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
+        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list - fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
 
         ``GET /v3/webhook/destinations/``
 
@@ -104,7 +104,7 @@ class WebhooksDestinations(SyncAPIResource):
 
         Args:
           label: Human-readable name displayed in Console → Webhooks. Helps distinguish destinations when you have several (e.g. "Prod", "Staging mirror").
-          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint — Didit retries failed deliveries on a backoff schedule.
+          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint - Didit retries failed deliveries on a backoff schedule.
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
@@ -224,7 +224,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> WebhooksDestinationsUpdateResponse:
         """Update webhook destination.
 
-        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** — fetch first, append, resend. Secret is not rotated.
+        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** - fetch first, append, resend. Secret is not rotated.
 
         ``PATCH /v3/webhook/destinations/{destination_uuid}/``
 
@@ -234,7 +234,7 @@ class WebhooksDestinations(SyncAPIResource):
           url: New target URL. Must be unique within the application.
           enabled: Set to `false` to pause deliveries to this destination without deleting it.
           webhook_version: New payload schema version for future deliveries.
-          subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values — there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
+          subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -289,7 +289,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
-        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list — fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
+        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list - fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
 
         ``GET /v3/webhook/destinations/``
 
@@ -334,7 +334,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
 
         Args:
           label: Human-readable name displayed in Console → Webhooks. Helps distinguish destinations when you have several (e.g. "Prod", "Staging mirror").
-          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint — Didit retries failed deliveries on a backoff schedule.
+          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint - Didit retries failed deliveries on a backoff schedule.
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
@@ -454,7 +454,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> WebhooksDestinationsUpdateResponse:
         """Update webhook destination.
 
-        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** — fetch first, append, resend. Secret is not rotated.
+        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** - fetch first, append, resend. Secret is not rotated.
 
         ``PATCH /v3/webhook/destinations/{destination_uuid}/``
 
@@ -464,7 +464,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
           url: New target URL. Must be unique within the application.
           enabled: Set to `false` to pause deliveries to this destination without deleting it.
           webhook_version: New payload schema version for future deliveries.
-          subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values — there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
+          subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
