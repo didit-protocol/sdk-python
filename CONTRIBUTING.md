@@ -32,7 +32,16 @@ CI runs `uv run python codegen/generate.py --check`, which regenerates into a te
 - `openapi/overlay.json` holds the SDK naming (`x-didit-sdk`, DESIGN section 4) for operations whose upstream definition does not carry it yet. Keys are `"<METHOD> <path>"` for `verification.json` and `"account <METHOD> <path>"` for `account.json`; each value has `resource` (dot path of snake_case names, one nested accessor per segment), `method`, `auth`, `server` and, for application-scoped paths, `scope`. When upstream carries `x-didit-sdk` for an operation, the upstream value wins and the overlay entry is deleted.
 - A new server operation without SDK naming makes the generator fail with a message that names the operation. The fix is an overlay entry (or `x-didit-sdk` upstream).
 
-The spec sync runs daily. When upstream changed, it regenerates the code, runs the checks and opens a pull request titled `chore(spec): sync API spec YYYY-MM-DD`.
+The spec sync runs daily. When upstream changed, it regenerates the code, runs the checks and opens a pull request titled `chore(spec): sync API spec YYYY-MM-DD`. Its body lists added, removed, renamed and changed operations and schemas; field-level differences (nested fields, types, enum values, nullability, required fields) that can break code written against the SDK are listed under "Breaking changes". A download that is not an OpenAPI 3 document with paths is refused and nothing is written.
+
+When a sync fails a check, the pull request opens as a draft; push the fix (usually an `openapi/overlay.json` entry) to its branch `chore/spec-sync`. While that branch carries a commit that is not from the sync, later syncs leave it alone, so the fix is never overwritten: merge or close the pull request and the next sync picks up anything that changed since.
+
+### Deprecations
+
+The sync never deletes a public method silently (DESIGN section 3.1). When an operation is removed upstream, or its `x-didit-sdk` naming changes (a rename), `codegen/spec_sync.py` records the old method in `openapi/deprecated-operations.json`, keyed by `resource.method`, with a dereferenced copy of the operation and `remove_in`, the next minor version. The generator keeps it as a method marked `@deprecated` (a renamed method's old name calls the same endpoint as the new one). An operation that moves to another path with the same naming is not deprecated.
+
+- When the release that reaches `remove_in` is prepared (the release-please pull request), `tests/test_contract.py` fails until the entry is deleted: delete it, run `uv run python codegen/generate.py` and push to the release pull request.
+- If a deprecated name becomes live again (for example an overlay entry gives a new path the old name), the generator says so; delete the entry.
 
 ## Checks
 
@@ -65,7 +74,7 @@ They never run in the default CI. A maintainer can start them from the CI workfl
 
 Pull request titles and commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fix:` is a patch, `feat:` a minor version, and `feat!:` or a `BREAKING CHANGE:` footer a major version (a minor version while the SDK is 0.x). Pick the type that matches the semver impact of the change.
 
-Releases are cut by release-please from those commits. It updates the version and generates `CHANGELOG.md`; never edit the changelog by hand.
+Releases are cut by release-please from those commits. It updates the version and generates `CHANGELOG.md`; never edit the changelog by hand. Squash-merge pull requests so that their conventional title becomes the commit release-please reads. `.release-please-manifest.json` holds the version in the repository (0.1.0, unreleased). The first public release sets its version with a `Release-As: <version>` footer in a commit on `main`.
 
 Nothing is published without Alex's explicit approval, and nothing before the 2026-11-01 Didit release. Do not push release tags or publish packages.
 

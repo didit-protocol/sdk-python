@@ -31,7 +31,7 @@ uv for environments and locking, hatchling for the build, pytest, mypy --strict,
 
 - Generated (never edit by hand): `src/didit/types/`, `src/didit/resources/`, `tests/generated/`. The generator is `codegen/didit_codegen/`; its tests are in `codegen/tests/`.
 - Core (hand-written): everything else in `src/didit/` (`_base_client.py` transport and retries, `_client.py` options, `_exceptions.py`, `_pagination.py`, `_files.py`, `_response.py`, `_models.py`), `src/didit/webhooks/` and `src/didit/authentication/`.
-- `openapi/deprecated-operations.json` (written by `codegen/spec_sync.py`) keeps operations removed upstream as deprecated methods for one minor version.
+- `openapi/deprecated-operations.json` (written by `codegen/spec_sync.py`) keeps methods whose operation was removed or renamed upstream as deprecated methods until `remove_in` (the next minor version); `tests/test_contract.py` fails once that version is reached, and the entry is then deleted.
 
 ## Rules
 
