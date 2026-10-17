@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.network_detail import NetworkDetail
 from didit.types.components.network_graph import NetworkGraph
@@ -14,6 +12,7 @@ from didit.types.components.network_note import NetworkNote
 from didit.types.networks.list_members_response import NetworksListMembersResponse
 from didit.types.networks.list_signals_response import NetworksListSignalsResponse
 from didit.types.networks.retrieve_timeline_response import NetworksRetrieveTimelineResponse
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_networks_download_report() -> None:

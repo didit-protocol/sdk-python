@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.user_detail_item import UserDetailItem
 from didit.types.components.user_list_item import UserListItem
@@ -24,6 +22,7 @@ from didit.types.users.set_ongoing_monitoring_response import (
     UsersSetOngoingMonitoringResponseVariant2,
 )
 from didit.types.users.upload_face_response import UsersUploadFaceResponse
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_users_batch_delete() -> None:

@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.aml_monitoring.retrieve_job_response import AmlMonitoringRetrieveJobResponse
+from tests.harness import Expect, check_operation
 
 
 def test_aml_monitoring_retrieve_job() -> None:

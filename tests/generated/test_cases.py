@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.cases.blueprints.install_presets_response import (
     CasesBlueprintsInstallPresetsResponse,
@@ -64,6 +62,7 @@ from didit.types.components.routing_publication_policy_draft_response import (
 from didit.types.components.routing_publication_policy_revision import (
     RoutingPublicationPolicyRevision,
 )
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_cases_apply_entity_action() -> None:

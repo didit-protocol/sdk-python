@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.webhooks.destinations.create_response import WebhooksDestinationsCreateResponse
 from didit.types.webhooks.destinations.list_response import WebhooksDestinationsListResponseItem
 from didit.types.webhooks.destinations.retrieve_response import WebhooksDestinationsRetrieveResponse
 from didit.types.webhooks.destinations.update_response import WebhooksDestinationsUpdateResponse
+from tests.harness import Expect, check_operation
 
 
 def test_webhooks_destinations_create() -> None:

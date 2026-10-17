@@ -68,7 +68,8 @@ def test_contract_mismatch_never_raises() -> None:
     assert model.items is not None
     assert isinstance(model.items[0], Inner)
     assert loose.items[2] == "junk"
-    assert model.tags is not None and isinstance(model.tags["a"], Inner)
+    assert model.tags is not None
+    assert isinstance(model.tags["a"], Inner)
     assert isinstance(model.either, Inner)
     assert model.model_extra == {"extra": 1}
 

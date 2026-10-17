@@ -11,7 +11,12 @@ import httpx
 import pytest
 
 import didit
-from didit._base_client import parse_retry_after, retry_delay, should_retry_exception, should_retry_status
+from didit._base_client import (
+    parse_retry_after,
+    retry_delay,
+    should_retry_exception,
+    should_retry_status,
+)
 from tests.mock_api import API_KEY, SESSION, MockAPI
 
 

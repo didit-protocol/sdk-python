@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
-
 from didit.types.components.wallet_screening_result import WalletScreeningResult
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_wallet_screening_screen() -> None:

@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.biometric_templates.batch_delete_response import (
     BiometricTemplatesBatchDeleteResponse,
@@ -13,6 +11,7 @@ from didit.types.biometric_templates.count_response import BiometricTemplatesCou
 from didit.types.biometric_templates.delete_response import BiometricTemplatesDeleteResponse
 from didit.types.biometric_templates.list_response import BiometricTemplatesListResponseResults
 from didit.types.biometric_templates.retrieve_response import BiometricTemplatesRetrieveResponse
+from tests.harness import Expect, check_operation
 
 
 def test_biometric_templates_batch_delete() -> None:

@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.aml.screen_response import AmlScreenResponse
+from tests.harness import Expect, check_operation
 
 
 def test_aml_screen() -> None:

@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.kyb.list_shareholders_response import (
     KybListShareholdersResponse,
     KybListShareholdersResponse202,
@@ -12,6 +10,7 @@ from didit.types.kyb.list_shareholders_response import (
 from didit.types.kyb.list_ubos_response import KybListUbosResponse, KybListUbosResponse202
 from didit.types.kyb.search_response import KybSearchResponse
 from didit.types.kyb.select_response import KybSelectResponse
+from tests.harness import Expect, check_operation
 
 
 def test_kyb_list_shareholders() -> None:

@@ -90,7 +90,7 @@ def _json_object(segment: str, part: str) -> dict[str, Any]:
         value: object = json.loads(
             raw.decode("utf-8"), object_pairs_hook=_no_duplicates, parse_constant=_no_constants
         )
-    except (UnicodeDecodeError, ValueError):
+    except (UnicodeDecodeError, ValueError, RecursionError):
         _fail("malformed", f"The token {part} is not valid JSON.")
     if not isinstance(value, dict):
         _fail("malformed", f"The token {part} is not a JSON object.")
@@ -169,11 +169,9 @@ def p256_point(jwk: Mapping[str, Any]) -> tuple[int, int] | None:
     return coordinates[0], coordinates[1]
 
 
-def _numeric_date(claims: Mapping[str, Any], name: str, *, required: bool) -> float | None:
+def _numeric_date(claims: Mapping[str, Any], name: str) -> float:
     if name not in claims:
-        if required:
-            _fail("missing_claim", f"The token has no {name} claim.")
-        return None
+        _fail("missing_claim", f"The token has no {name} claim.")
     value = claims[name]
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         _fail("malformed", f"The token's {name} claim is not a number of seconds.")
@@ -213,10 +211,9 @@ def check_claims(
     sub = claims.get("sub")
     if not isinstance(sub, str) or not sub:
         _fail("missing_claim", "The token has no sub claim.")
-    exp = _numeric_date(claims, "exp", required=True)
-    iat = _numeric_date(claims, "iat", required=True)
-    nbf = _numeric_date(claims, "nbf", required=False)
-    assert exp is not None and iat is not None  # noqa: S101 - required above
+    exp = _numeric_date(claims, "exp")
+    iat = _numeric_date(claims, "iat")
+    nbf = _numeric_date(claims, "nbf") if "nbf" in claims else None
     if now >= exp + leeway:
         _fail("expired", "The token has expired.")
     if nbf is not None and now + leeway < nbf:

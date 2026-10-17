@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.businesses.batch_delete_response import BusinessesBatchDeleteResponse
 from didit.types.businesses.list_networks_response import BusinessesListNetworksResponse
@@ -31,6 +29,7 @@ from didit.types.businesses.set_session_ongoing_monitoring_response import (
 )
 from didit.types.components.business_detail_item import BusinessDetailItem
 from didit.types.components.business_list_item import BusinessListItem
+from tests.harness import Expect, check_operation
 
 
 def test_businesses_batch_delete() -> None:

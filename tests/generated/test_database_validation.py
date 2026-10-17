@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.database_validation.validate_response import DatabaseValidationValidateResponse
+from tests.harness import Expect, check_operation
 
 
 def test_database_validation_validate() -> None:

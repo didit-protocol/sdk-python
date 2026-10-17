@@ -3,10 +3,9 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.report_template_detail import ReportTemplateDetail
+from tests.harness import Expect, check_operation
 
 
 def test_report_templates_create() -> None:

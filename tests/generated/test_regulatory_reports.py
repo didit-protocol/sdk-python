@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.regulatory_report_detail import RegulatoryReportDetail
 from didit.types.regulatory_reports.retrieve_download_url_response import (
     RegulatoryReportsRetrieveDownloadUrlResponse,
 )
 from didit.types.regulatory_reports.validate_response import RegulatoryReportsValidateResponse
+from tests.harness import Expect, check_operation
 
 
 def test_regulatory_reports_create() -> None:

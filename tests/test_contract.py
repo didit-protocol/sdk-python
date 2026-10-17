@@ -94,7 +94,7 @@ def test_spec_operations_equal_sdk_methods(client: Any, base: type) -> None:
     extra = sorted(api_methods - set(SPEC))
     assert not missing, f"operations without an SDK method: {missing}"
     assert not extra, f"SDK methods without an operation: {extra}"
-    assert CORE_METHODS <= set(sdk)
+    assert set(sdk) >= CORE_METHODS
 
 
 def test_signatures_follow_the_paths() -> None:

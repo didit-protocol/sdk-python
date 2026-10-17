@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import BINARY_BODY, Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.review_item import ReviewItem
 from didit.types.components.session_import_error import SessionImportError
@@ -33,6 +31,7 @@ from didit.types.sessions.update_kyb_company_data_response import (
 from didit.types.sessions.update_kyb_party_response import SessionsUpdateKybPartyResponse
 from didit.types.sessions.update_poa_data_response import SessionsUpdatePoaDataResponse
 from didit.types.sessions.update_status_response import SessionsUpdateStatusResponse
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_sessions_batch_delete() -> None:

@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.transaction_detail import TransactionDetail
 from didit.types.components.transaction_rule_backtest_result import TransactionRuleBacktestResult
@@ -18,6 +16,7 @@ from didit.types.transactions.list_party_networks_response import (
     TransactionsListPartyNetworksResponse,
 )
 from didit.types.transactions.list_response import TransactionsListResponseResults
+from tests.harness import Expect, check_operation
 
 
 def test_transactions_create() -> None:

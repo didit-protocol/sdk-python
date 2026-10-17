@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.passive_liveness.check_response import PassiveLivenessCheckResponse
+from tests.harness import Expect, check_operation
 
 
 def test_passive_liveness_check() -> None:

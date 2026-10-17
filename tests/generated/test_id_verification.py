@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.id_verification.verify_response import IdVerificationVerifyResponse
+from tests.harness import Expect, check_operation
 
 
 def test_id_verification_verify() -> None:

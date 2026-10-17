@@ -77,7 +77,7 @@ def sample(spec: Spec, schema: Json, *, request: bool, depth: int = 0, full: boo
             return sample(spec, first, request=request, depth=depth + 1, full=full)
         return sample(spec, merged, request=request, depth=depth + 1, full=full)
     for key in ("oneOf", "anyOf"):
-        if key in schema and schema[key]:
+        if schema.get(key):
             return sample(spec, schema[key][0], request=request, depth=depth + 1, full=full)
     if "enum" in schema:
         values = [v for v in schema["enum"] if v is not None]

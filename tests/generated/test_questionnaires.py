@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.questionnaire_detail import QuestionnaireDetail
 from didit.types.components.questionnaire_list_item import QuestionnaireListItem
+from tests.harness import Expect, check_operation
 
 
 def test_questionnaires_create() -> None:

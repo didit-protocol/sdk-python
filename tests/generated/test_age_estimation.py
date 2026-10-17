@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.age_estimation.estimate_response import AgeEstimationEstimateResponse
+from tests.harness import Expect, check_operation
 
 
 def test_age_estimation_estimate() -> None:

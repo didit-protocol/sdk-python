@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.digital_id_wallet_api_wallet_catalog_response import (
     DigitalIdWalletApiWalletCatalogResponse,
 )
 from didit.types.components.digital_id_wallet_api_wallet_verification_response import (
     DigitalIdWalletApiWalletVerificationResponse,
 )
+from tests.harness import Expect, check_operation
 
 
 def test_id_wallets_cancel_verification() -> None:

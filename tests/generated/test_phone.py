@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.phone_risk_response import PhoneRiskResponse
 from didit.types.components.phone_verification_check_response import PhoneVerificationCheckResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
+from tests.harness import Expect, check_operation
 
 
 def test_phone_assess_risk() -> None:

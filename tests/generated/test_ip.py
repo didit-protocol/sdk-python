@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.ip_risk_response import IPRiskResponse
+from tests.harness import Expect, check_operation
 
 
 def test_ip_assess_risk() -> None:

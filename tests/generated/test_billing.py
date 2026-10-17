@@ -3,10 +3,9 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.billing.retrieve_balance_response import BillingRetrieveBalanceResponse
 from didit.types.billing.top_up_response import BillingTopUpResponse
+from tests.harness import Expect, check_operation
 
 
 def test_billing_retrieve_balance() -> None:

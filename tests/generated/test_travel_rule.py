@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit import AsyncPage, SyncPage
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse
 from didit.types.components.travel_rule_settings_detail import TravelRuleSettingsDetail
@@ -14,6 +12,7 @@ from didit.types.components.travel_rule_widget_session_response import (
 from didit.types.components.vasp_directory_entry import VaspDirectoryEntry
 from didit.types.components.wallet_address_entry import WalletAddressEntry
 from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
+from tests.harness import Expect, check_operation
 
 
 def test_travel_rule_create_widget_session() -> None:

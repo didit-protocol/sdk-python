@@ -3,10 +3,9 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.fraud_check_plan import FraudCheckPlan
 from didit.types.components.fraud_check_response import FraudCheckResponse
+from tests.harness import Expect, check_operation
 
 
 def test_fraud_checks_create() -> None:

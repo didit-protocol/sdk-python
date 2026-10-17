@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.branding_customization import BrandingCustomization
+from tests.harness import Expect, check_operation
 
 
 def test_customization_retrieve() -> None:

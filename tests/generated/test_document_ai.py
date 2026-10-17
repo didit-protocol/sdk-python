@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.document_ai.analyze_response import DocumentAiAnalyzeResponse
+from tests.harness import Expect, check_operation
 
 
 def test_document_ai_analyze() -> None:

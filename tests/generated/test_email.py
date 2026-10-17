@@ -3,11 +3,10 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.components.email_risk_response import EmailRiskResponse
 from didit.types.components.email_verification_check_response import EmailVerificationCheckResponse
 from didit.types.components.email_verification_send_response import EmailVerificationSendResponse
+from tests.harness import Expect, check_operation
 
 
 def test_email_assess_risk() -> None:

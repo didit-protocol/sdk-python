@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from tests.harness import Expect, check_operation
-
 from didit.types.face_search.search_response import FaceSearchSearchResponse
+from tests.harness import Expect, check_operation
 
 
 def test_face_search_search() -> None:
