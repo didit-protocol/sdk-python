@@ -40,6 +40,14 @@ def _spec_operations() -> dict[tuple[str, str], dict[str, Any]]:
                 name_key = (naming["resource"], naming["method"])
                 assert name_key not in out, f"{key} duplicates {name_key}"
                 out[name_key] = {"key": key, "path": path, "naming": naming, "op": op, "item": item}
+    deprecated = json.loads((OPENAPI / "deprecated-operations.json").read_text("utf-8"))["operations"]
+    for key, entry in deprecated.items():
+        naming = entry["x-didit-sdk"]
+        path = key.removeprefix("account ").split(" ", 1)[1]
+        out.setdefault(
+            (naming["resource"], naming["method"]),
+            {"key": key, "path": path, "naming": naming, "op": entry["operation"], "item": {}},
+        )
     return out
 
 
