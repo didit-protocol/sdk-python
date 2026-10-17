@@ -88,7 +88,7 @@ def multipart_fields(
             continue
         if key in names:
             if isinstance(value, list):
-                files.extend((key, to_httpx_file(v)) for v in cast("list[Any]", value))
+                files.extend((key, to_httpx_file(v)) for v in value)  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
             else:
                 files.append((key, to_httpx_file(cast("Any", value))))
         elif isinstance(value, (Mapping, list, tuple)):
