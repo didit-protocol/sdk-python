@@ -331,13 +331,9 @@ def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> Non
     spec = _read(openapi / "verification.json")
     del spec["components"]["schemas"]["LegacyUnusedThing"]
     schemas = spec["components"]["schemas"]
-    name, prop = next(
-        (n, p)
-        for n, s in sorted(schemas.items())
-        for p, v in sorted((s.get("properties") or {}).items())
-        if v.get("type") == "string" and "enum" not in v
-    )
-    schemas[name]["properties"][prop] = {"type": "integer"}
+    # The reviewer's case: a nested component property changes type.
+    schemas["DocumentAIDetectedCode"]["properties"]["type"] = {"type": "integer"}
+    prop = "type"
     downloads = {
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
