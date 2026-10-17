@@ -39,6 +39,7 @@ print(decision.status)
 # 3. Verify the webhook Didit sends to your backend (Flask shown; see examples/).
 import didit
 
+
 @app.post("/webhooks/didit")
 def didit_webhook():
     try:
@@ -66,7 +67,7 @@ client.aml.screen(full_name="Maria Garcia", date_of_birth="1992-03-14")
 client.users.retrieve("user-123")
 client.workflows.list()
 client.webhooks.destinations.list()
-client.cases.list()            # application scoped, see Configuration
+client.cases.list()  # application scoped, see Configuration
 client.account.login(email="you@example.com", password="...")
 ```
 
@@ -76,10 +77,10 @@ Request and response types live in `didit.types`, named after the method (`Sessi
 
 ```python
 decision = client.sessions.retrieve_decision(session_id)
-decision.status                 # typed attributes
-decision.to_dict()              # plain JSON data, with the API's field names
-decision.model_extra            # fields this SDK version does not know yet
-"aml" in decision.model_fields_set   # was the field present (even as null)?
+decision.status  # typed attributes
+decision.to_dict()  # plain JSON data, with the API's field names
+decision.model_extra  # fields this SDK version does not know yet
+"aml" in decision.model_fields_set  # was the field present (even as null)?
 ```
 
 ## Transactions and Travel Rule
@@ -88,7 +89,12 @@ decision.model_extra            # fields this SDK version does not know yet
 transaction = client.transactions.create(
     transaction_id="your-txn-001",
     transaction_category="finance",
-    transaction_details={"direction": "outbound", "amount": 1500, "currency": "EUR", "action_type": "withdrawal"},
+    transaction_details={
+        "direction": "outbound",
+        "amount": 1500,
+        "currency": "EUR",
+        "action_type": "withdrawal",
+    },
     subject={"entity_type": "individual", "vendor_data": "user-12345", "full_name": "Maria Garcia"},
 )
 client.transactions.rules.list()
@@ -104,11 +110,11 @@ Their webhooks arrive as `TransactionCreatedEvent`, `TransactionStatusUpdatedEve
 
 ```python
 client = Didit(
-    api_key="...",                 # default: DIDIT_API_KEY
-    organization_id="...",         # default: DIDIT_ORGANIZATION_ID
-    application_id="...",          # default: DIDIT_APPLICATION_ID
+    api_key="...",  # default: DIDIT_API_KEY
+    organization_id="...",  # default: DIDIT_ORGANIZATION_ID
+    application_id="...",  # default: DIDIT_APPLICATION_ID
     base_url="https://verification.didit.me",
-    timeout=60,                    # seconds, or an httpx.Timeout
+    timeout=60,  # seconds, or an httpx.Timeout
     max_retries=2,
     default_headers={"X-My-Header": "..."},
     http_client=httpx.Client(proxy="http://proxy:8080"),  # optional
@@ -133,9 +139,9 @@ except didit.NotFoundError:
     ...
 except didit.RateLimitError as err:
     print(err.status, err.request_id, err.headers.get("retry-after"))
-except didit.APIStatusError as err:      # any other non-2xx
+except didit.APIStatusError as err:  # any other non-2xx
     print(err.status, err.body)
-except didit.APIConnectionError:          # no response (APITimeoutError is a subclass)
+except didit.APIConnectionError:  # no response (APITimeoutError is a subclass)
     ...
 ```
 
@@ -198,11 +204,13 @@ decision = response.parse()
 import asyncio
 from didit import AsyncDidit
 
+
 async def main() -> None:
     async with AsyncDidit() as client:
         session = await client.sessions.create(workflow_id="...")
         async for row in client.sessions.list():
             ...
+
 
 asyncio.run(main())
 ```
