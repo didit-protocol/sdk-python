@@ -46,7 +46,9 @@ def test_import_is_light() -> None:
         "loaded = [m for m in sys.modules if m.startswith(('didit.resources.', 'didit.types.'))]; "
         "print(len(loaded), 'cryptography' in sys.modules)"
     )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.split()
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    ).stdout.split()
     # Only the decision model the webhook events reuse is loaded up front.
     assert int(out[0]) < 10
     assert out[1] == "False"

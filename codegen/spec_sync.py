@@ -117,8 +117,12 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> tuple
     """Human-readable differences of one operation, and whether any is breaking."""
     notes: list[str] = []
     breaking = False
-    old_params = {(p.get("in"), p.get("name")): p for p in dereference(old_doc, old.get("parameters", []))}
-    new_params = {(p.get("in"), p.get("name")): p for p in dereference(new_doc, new.get("parameters", []))}
+    old_params = {
+        (p.get("in"), p.get("name")): p for p in dereference(old_doc, old.get("parameters", []))
+    }
+    new_params = {
+        (p.get("in"), p.get("name")): p for p in dereference(new_doc, new.get("parameters", []))
+    }
     for key in sorted(set(old_params) - set(new_params), key=str):
         notes.append(f"parameter removed: {key[1]} ({key[0]})")
         breaking = True
@@ -206,17 +210,24 @@ def sync(
     removed = sorted(set(old_ops) - set(new_ops))
     common = sorted(set(old_ops) & set(new_ops))
     new_names = {
-        (n["resource"], n["method"]): key for key, (_, op) in new_ops.items() if (n := naming(key, op))
+        (n["resource"], n["method"]): key
+        for key, (_, op) in new_ops.items()
+        if (n := naming(key, op))
     }
 
-    lines: list[str] = [f"Spec sync {today.isoformat()}. Upstream files changed: {', '.join(changed_files)}.", ""]
+    lines: list[str] = [
+        f"Spec sync {today.isoformat()}. Upstream files changed: {', '.join(changed_files)}.",
+        "",
+    ]
     breaking: list[str] = []
 
     lines.append(f"## Added operations ({len(added)})")
     for key in added:
         n = naming(key, new_ops[key][1])
         if n is None:
-            lines.append(f"- `{key}`: **no SDK naming**; add an entry to `openapi/overlay.json` (DESIGN section 4)")
+            lines.append(
+                f"- `{key}`: **no SDK naming**; add an entry to `openapi/overlay.json` (DESIGN section 4)"
+            )
         elif n.get("server"):
             lines.append(f"- `{key}` -> `{n['resource']}.{n['method']}`")
         else:
@@ -232,7 +243,9 @@ def sync(
             continue
         moved_to = new_names.get((n["resource"], n["method"]))
         if moved_to:
-            lines.append(f"- `{key}` moved to `{moved_to}`; `{n['resource']}.{n['method']}` keeps its name")
+            lines.append(
+                f"- `{key}` moved to `{moved_to}`; `{n['resource']}.{n['method']}` keeps its name"
+            )
         elif n.get("server"):
             breaking.append(f"`{n['resource']}.{n['method']}` was removed upstream ({key})")
             lines.append(
@@ -260,7 +273,9 @@ def sync(
     for key in common:
         old_name, old = old_ops[key]
         new_name, new = new_ops[key]
-        if old == new and old_docs[old_name].get("components") == new_docs[new_name].get("components"):
+        if old == new and old_docs[old_name].get("components") == new_docs[new_name].get(
+            "components"
+        ):
             continue
         notes, is_breaking = describe_change(old_docs[old_name], old, new_docs[new_name], new)
         if old == new and notes == ["descriptions, examples or other details changed"]:
@@ -280,7 +295,14 @@ def sync(
         for label, names in (
             ("added", sorted(set(new_schemas) - set(old_schemas))),
             ("removed", sorted(set(old_schemas) - set(new_schemas))),
-            ("changed", sorted(k for k in set(old_schemas) & set(new_schemas) if old_schemas[k] != new_schemas[k])),
+            (
+                "changed",
+                sorted(
+                    k
+                    for k in set(old_schemas) & set(new_schemas)
+                    if old_schemas[k] != new_schemas[k]
+                ),
+            ),
         ):
             if names:
                 lines.append(f"- {name} {label}: " + ", ".join(f"`{n}`" for n in names))
@@ -291,7 +313,9 @@ def sync(
         entry = new_ops.get(key)
         if entry is not None and entry[1].get("x-didit-sdk") is not None:
             if entry[1]["x-didit-sdk"] != overlay["operations"][key]:
-                lines.append(f"- `{key}`: upstream x-didit-sdk differs from the overlay; upstream wins.")
+                lines.append(
+                    f"- `{key}`: upstream x-didit-sdk differs from the overlay; upstream wins."
+                )
             dropped.append(key)
             del overlay["operations"][key]
     if dropped:
@@ -320,9 +344,13 @@ def sync(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--summary", type=pathlib.Path, help="write the Markdown summary here")
-    parser.add_argument("--from-dir", type=pathlib.Path, help="read the upstream files from a directory instead")
+    parser.add_argument(
+        "--from-dir", type=pathlib.Path, help="read the upstream files from a directory instead"
+    )
     args = parser.parse_args(argv)
     if args.from_dir:
         downloads = {name: (args.from_dir / name).read_bytes() for name in UPSTREAM}
@@ -343,4 +371,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

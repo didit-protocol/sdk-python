@@ -97,7 +97,9 @@ def test_json_or_multipart_operation_picks_the_encoding() -> None:
     assert isinstance(result, SessionImportJob)
     assert api.last.headers["content-type"] == "application/json"
     assert api.last_json() == {"source_file_url": "https://example.com/users.csv"}
-    client.sessions.imports.create(file=("users.csv", b"a,b\n1,2\n"), import_type="user_verification")
+    client.sessions.imports.create(
+        file=("users.csv", b"a,b\n1,2\n"), import_type="user_verification"
+    )
     parts = _parts(api.last)
     assert parts["file"] == ("users.csv", "text/csv", b"a,b\n1,2\n")
     assert parts["import_type"][2] == b"user_verification"
@@ -105,25 +107,33 @@ def test_json_or_multipart_operation_picks_the_encoding() -> None:
 
 def test_multipart_without_files_is_still_multipart() -> None:
     api = MockAPI().json(200, {})
-    api.client().database_validation.validate(issuing_state="BRA", services=["bra_cpf"], consent=True)
+    api.client().database_validation.validate(
+        issuing_state="BRA", services=["bra_cpf"], consent=True
+    )
     assert api.last.headers["content-type"] == "application/json"
     assert api.last_json() == {"issuing_state": "BRA", "services": ["bra_cpf"], "consent": True}
     api.json(200, {})
-    api.client().database_validation.validate(issuing_state="ARG", selfie=IMAGE, services=["arg_renaper"])
+    api.client().database_validation.validate(
+        issuing_state="ARG", selfie=IMAGE, services=["arg_renaper"]
+    )
     parts = _parts(api.last)
     assert parts["services"][2] == b'["arg_renaper"]'
     assert parts["selfie"][0] == "upload"
 
 
 def test_binary_response_returns_bytes() -> None:
-    api = MockAPI().add(httpx.Response(200, content=PDF, headers={"content-type": "application/pdf"}))
+    api = MockAPI().add(
+        httpx.Response(200, content=PDF, headers={"content-type": "application/pdf"})
+    )
     pdf = api.client().sessions.generate_pdf("s-1")
     assert pdf == PDF
     assert api.last.headers["accept"] == "application/pdf, application/json"
 
 
 def test_raw_response() -> None:
-    api = MockAPI().add(httpx.Response(200, json={"session_id": "s-1"}, headers={"x-request-id": "req_7"}))
+    api = MockAPI().add(
+        httpx.Response(200, json={"session_id": "s-1"}, headers={"x-request-id": "req_7"})
+    )
     raw = api.client().sessions.with_raw_response.retrieve_decision("s-1")
     assert isinstance(raw, didit.APIResponse)
     assert raw.status_code == 200
@@ -149,7 +159,9 @@ def test_raw_response_counts_retries() -> None:
 
 
 def test_streaming_response(tmp_path: pathlib.Path) -> None:
-    api = MockAPI().add(httpx.Response(200, content=PDF * 100, headers={"content-type": "application/pdf"}))
+    api = MockAPI().add(
+        httpx.Response(200, content=PDF * 100, headers={"content-type": "application/pdf"})
+    )
     target = tmp_path / "report.pdf"
     with api.client().sessions.with_streaming_response.generate_pdf("s-1") as response:
         assert response.status_code == 200
@@ -170,7 +182,10 @@ def test_streaming_response(tmp_path: pathlib.Path) -> None:
 
 def test_streaming_error_is_raised_on_enter() -> None:
     api = MockAPI().add(httpx.Response(404, json={"detail": "missing"}))
-    with pytest.raises(didit.NotFoundError), api.client().sessions.with_streaming_response.generate_pdf("s"):
+    with (
+        pytest.raises(didit.NotFoundError),
+        api.client().sessions.with_streaming_response.generate_pdf("s"),
+    ):
         pass
 
 

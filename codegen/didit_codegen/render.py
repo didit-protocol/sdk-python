@@ -615,7 +615,11 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
             out.append("\n")
     text = "".join(out)
     if "builtins." in text:
-        text = text.replace("from __future__ import annotations\n\n", "from __future__ import annotations\n\nimport builtins\n", 1)
+        text = text.replace(
+            "from __future__ import annotations\n\n",
+            "from __future__ import annotations\n\nimport builtins\n",
+            1,
+        )
     return text
 
 

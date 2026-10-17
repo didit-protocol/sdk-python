@@ -65,7 +65,7 @@ def sample(spec: Spec, schema: Json, *, request: bool, depth: int = 0, full: boo
         return sample(spec, spec.resolve(schema), request=request, depth=depth + 1, full=full)
     if "allOf" in schema:
         merged: dict[str, Json] = {"type": "object", "properties": {}, "required": []}
-        stack = list(schema["allOf"]) + [{k: v for k, v in schema.items() if k != "allOf"}]
+        stack = [*schema["allOf"], {k: v for k, v in schema.items() if k != "allOf"}]
         for part in stack:
             part = spec.resolve(part)
             if "allOf" in part:
@@ -148,10 +148,16 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
     if value is None:
         return schema.get("nullable") is True or not schema
     if "allOf" in schema:
-        return all(conforms(spec, part, value, request=request, depth=depth + 1) for part in schema["allOf"])
+        return all(
+            conforms(spec, part, value, request=request, depth=depth + 1)
+            for part in schema["allOf"]
+        )
     for key in ("oneOf", "anyOf"):
         if key in schema:
-            return any(conforms(spec, part, value, request=request, depth=depth + 1) for part in schema[key])
+            return any(
+                conforms(spec, part, value, request=request, depth=depth + 1)
+                for part in schema[key]
+            )
     if "enum" in schema:
         if all(isinstance(v, str) for v in schema["enum"] if v is not None):
             return isinstance(value, str)
@@ -172,7 +178,8 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
         return isinstance(value, bool)
     if kind == "array":
         return isinstance(value, list) and all(
-            conforms(spec, schema.get("items", {}), v, request=request, depth=depth + 1) for v in value
+            conforms(spec, schema.get("items", {}), v, request=request, depth=depth + 1)
+            for v in value
         )
     if kind == "object" or "properties" in schema:
         if not isinstance(value, dict):
@@ -180,7 +187,9 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
         props = schema.get("properties", {})
         if props:
             for name in schema.get("required", []):
-                if name not in value and not (request and spec.resolve(props.get(name, {})).get("readOnly")):
+                if name not in value and not (
+                    request and spec.resolve(props.get(name, {})).get("readOnly")
+                ):
                     return False
             for key, item in value.items():
                 if key in props:
@@ -194,7 +203,9 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
             return True
         extra = schema.get("additionalProperties")
         if isinstance(extra, dict) and extra:
-            return all(conforms(spec, extra, v, request=request, depth=depth + 1) for v in value.values())
+            return all(
+                conforms(spec, extra, v, request=request, depth=depth + 1) for v in value.values()
+            )
         return True
     return True
 
@@ -214,7 +225,13 @@ def literal(value: Json) -> str:
     if isinstance(value, list):
         return "[" + ", ".join(literal(v) for v in value) + "]"
     if isinstance(value, dict):
-        return "{" + ", ".join(f"{json.dumps(k, ensure_ascii=False)}: {literal(v)}" for k, v in value.items()) + "}"
+        return (
+            "{"
+            + ", ".join(
+                f"{json.dumps(k, ensure_ascii=False)}: {literal(v)}" for k, v in value.items()
+            )
+            + "}"
+        )
     raise TypeError(f"Unsupported example value {value!r}")
 
 
@@ -278,7 +295,9 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
         isinstance(example, dict)
         and example
         and all(
-            k in by_wire and conforms(spec, by_wire[k].schema, v, request=True) and not _has_unknown_keys(spec, by_wire[k].schema, v)
+            k in by_wire
+            and conforms(spec, by_wire[k].schema, v, request=True)
+            and not _has_unknown_keys(spec, by_wire[k].schema, v)
             for k, v in example.items()
         )
         and all(a.wire in example for a in body_args if a.required)
@@ -300,8 +319,12 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
     for arg in body_args:
         if arg.wire in chosen:
             out.append((arg, chosen[arg.wire]))
-    for i, arg in enumerate(a for a in method.kwargs if a.location == "query"):
-        if arg.has_example and conforms(spec, arg.schema, arg.example, request=True) and arg.example is not None:
+    for arg in (a for a in method.kwargs if a.location == "query"):
+        if (
+            arg.has_example
+            and conforms(spec, arg.schema, arg.example, request=True)
+            and arg.example is not None
+        ):
             value = arg.example
         else:
             value = sample(spec, arg.schema, request=True, full=False)
@@ -314,7 +337,11 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
 def _path_values(method: Method) -> list[tuple[Arg, str]]:
     out: list[tuple[Arg, str]] = []
     for i, arg in enumerate(method.path_args):
-        value = arg.example if isinstance(arg.example, str) and re.fullmatch(r"[A-Za-z0-9_-]+", arg.example or "") else _uuid(i + 1)
+        value = (
+            arg.example
+            if isinstance(arg.example, str) and re.fullmatch(r"[A-Za-z0-9_-]+", arg.example or "")
+            else _uuid(i + 1)
+        )
         out.append((arg, value))
     return out
 

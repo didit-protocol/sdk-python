@@ -41,9 +41,13 @@ def _sign(secret: str, message: bytes) -> str:
 
 def _delivery(payload: dict[str, Any], secret: str = SECRET) -> tuple[bytes, dict[str, str]]:
     """A delivery signed exactly like service-didit-verification does it."""
-    body = json.dumps(webhooks._canonical.shorten_floats(payload), sort_keys=True, separators=(",", ":"))
+    body = json.dumps(
+        webhooks._canonical.shorten_floats(payload), sort_keys=True, separators=(",", ":")
+    )
     canonical = canonical_json(json.loads(body))
-    simple = ":".join(str(payload.get(k, "")) for k in ("timestamp", "session_id", "status", "webhook_type"))
+    simple = ":".join(
+        str(payload.get(k, "")) for k in ("timestamp", "session_id", "status", "webhook_type")
+    )
     headers = {
         "X-Signature": _sign(secret, body.encode()),
         "X-Signature-V2": _sign(secret, canonical.encode()),
@@ -92,13 +96,19 @@ def test_vector(vector: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None
         if vector["previous_secret"]:
             # A receiver that only has the previous secret still verifies during a rotation.
             assert webhooks.verify(body, headers, vector["previous_secret"]).body_authenticated
-            assert webhooks.verify(body, headers, [vector["previous_secret"], secret]).body_authenticated
+            assert webhooks.verify(
+                body, headers, [vector["previous_secret"], secret]
+            ).body_authenticated
         # X-Signature-V2 alone also verifies, from the raw body or the parsed payload.
         v2_only = {
-            k: v for k, v in headers.items() if k in ("X-Signature-V2", "X-Signature-V2-Previous", "X-Timestamp")
+            k: v
+            for k, v in headers.items()
+            if k in ("X-Signature-V2", "X-Signature-V2-Previous", "X-Timestamp")
         }
         assert webhooks.verify(body, v2_only, secret).verified_by == "signature_v2"
-        assert webhooks.verify_parsed(json.loads(body), v2_only, secret).verified_by == "signature_v2"
+        assert (
+            webhooks.verify_parsed(json.loads(body), v2_only, secret).verified_by == "signature_v2"
+        )
     elif expect == "valid_only_with_allow_simple":
         with pytest.raises(WebhookVerificationError) as info:
             webhooks.verify(body, headers, secret)
@@ -296,7 +306,10 @@ def test_previous_headers_alone_are_checked(frozen_time: list[float]) -> None:
     v2_previous = {"X-Signature-V2-Previous": headers["X-Signature-V2"]}
     assert webhooks.verify(body, v2_previous, PREVIOUS).verified_by == "signature_v2"
     simple_previous = {"X-Signature-Simple-Previous": headers["X-Signature-Simple"]}
-    assert webhooks.verify(body, simple_previous, PREVIOUS, allow_simple=True).verified_by == "signature_simple"
+    assert (
+        webhooks.verify(body, simple_previous, PREVIOUS, allow_simple=True).verified_by
+        == "signature_simple"
+    )
 
 
 def test_simple_signature_formats_null_like_the_backend(frozen_time: list[float]) -> None:
@@ -341,17 +354,31 @@ def test_client_webhooks_verify_delegates(frozen_time: list[float]) -> None:
         ("data.updated", webhooks.SessionDataUpdatedEvent, {}),
         ("user.status.updated", webhooks.UserStatusUpdatedEvent, {"vendor_user_id": "u-1"}),
         ("user.data.updated", webhooks.UserDataUpdatedEvent, {}),
-        ("business.status.updated", webhooks.BusinessStatusUpdatedEvent, {"vendor_business_id": "b-1"}),
+        (
+            "business.status.updated",
+            webhooks.BusinessStatusUpdatedEvent,
+            {"vendor_business_id": "b-1"},
+        ),
         ("business.data.updated", webhooks.BusinessDataUpdatedEvent, {}),
         ("activity.created", webhooks.ActivityCreatedEvent, {}),
-        ("transaction.created", webhooks.TransactionCreatedEvent, {"amount": "10.00", "score": 12.5}),
+        (
+            "transaction.created",
+            webhooks.TransactionCreatedEvent,
+            {"amount": "10.00", "score": 12.5},
+        ),
         ("transaction.status.updated", webhooks.TransactionStatusUpdatedEvent, {"txn_id": "t-1"}),
         ("travel_rule.status.updated", webhooks.TravelRuleStatusUpdatedEvent, {"rail": "TRP"}),
-        ("workflow.compliance_changed", webhooks.WorkflowComplianceChangedEvent, {"workflow_id": "w"}),
+        (
+            "workflow.compliance_changed",
+            webhooks.WorkflowComplianceChangedEvent,
+            {"workflow_id": "w"},
+        ),
         ("kyb.registry_search.resolved", webhooks.KybRegistrySearchResolvedEvent, {}),
     ],
 )
-def test_event_union(webhook_type: str, cls: type[webhooks.WebhookEventBase], extra: dict[str, Any]) -> None:
+def test_event_union(
+    webhook_type: str, cls: type[webhooks.WebhookEventBase], extra: dict[str, Any]
+) -> None:
     event = webhooks.parse_event(_payload(webhook_type=webhook_type, **extra))
     assert type(event) is cls
     for key, value in extra.items():
@@ -373,12 +400,16 @@ def test_registry_search_callback_uses_event_type() -> None:
 
 
 def test_events_keep_unknown_fields_and_survive_bad_shapes() -> None:
-    event = webhooks.parse_event(_payload(new_field={"a": 1}, decision={"status": "Approved", "x": 1}))
+    event = webhooks.parse_event(
+        _payload(new_field={"a": 1}, decision={"status": "Approved", "x": 1})
+    )
     assert isinstance(event, SessionStatusUpdatedEvent)
     assert event.model_extra == {"new_field": {"a": 1}}
     assert event.decision is not None
     # A field of the wrong type never raises; the value is kept as sent.
-    odd = webhooks.parse_event(_payload(webhook_type="user.status.updated", status=["not", "a", "string"]))
+    odd = webhooks.parse_event(
+        _payload(webhook_type="user.status.updated", status=["not", "a", "string"])
+    )
     assert isinstance(odd, UserStatusUpdatedEvent)
     loose: Any = odd
     assert loose.status == ["not", "a", "string"]

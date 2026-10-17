@@ -82,8 +82,10 @@ def test_next_link_on_another_origin_is_refused() -> None:
 
 
 def test_default_port_counts_as_the_same_origin() -> None:
-    api = MockAPI().json(200, _page(["1"], "https://verification.didit.me:443/v3/businesses/?offset=1")).json(
-        200, _page(["2"], None)
+    api = (
+        MockAPI()
+        .json(200, _page(["1"], "https://verification.didit.me:443/v3/businesses/?offset=1"))
+        .json(200, _page(["2"], None))
     )
     assert [b.didit_internal_id for b in api.client().businesses.list()] == ["1", "2"]
 
@@ -99,7 +101,9 @@ def test_extra_list_fields_are_kept_on_the_response() -> None:
 
 
 def test_raw_response_of_a_list() -> None:
-    api = MockAPI().add(httpx.Response(200, json=_page(["1"], None), headers={"x-request-id": "req_1"}))
+    api = MockAPI().add(
+        httpx.Response(200, json=_page(["1"], None), headers={"x-request-id": "req_1"})
+    )
     raw = api.client().businesses.with_raw_response.list()
     assert raw.status_code == 200
     assert raw.request_id == "req_1"

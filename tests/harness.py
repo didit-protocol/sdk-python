@@ -54,7 +54,9 @@ def _response(expect: Expect) -> httpx.Response:
         )
     if expect.response_json is None:
         return httpx.Response(expect.status)
-    return httpx.Response(expect.status, json=expect.response_json, headers={"x-request-id": "req_test"})
+    return httpx.Response(
+        expect.status, json=expect.response_json, headers={"x-request-id": "req_test"}
+    )
 
 
 def _check_request(request: httpx.Request, expect: Expect) -> None:

@@ -30,7 +30,9 @@ class MockAPI:
         return self
 
     def json(self, status: int = 200, body: Any = None, **headers: str) -> MockAPI:
-        return self.add(httpx.Response(status, json=body if body is not None else {}, headers=headers))
+        return self.add(
+            httpx.Response(status, json=body if body is not None else {}, headers=headers)
+        )
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         request.read()
@@ -63,7 +65,9 @@ class MockAPI:
         options.setdefault("api_key", API_KEY)
         options.setdefault("organization_id", ORG_ID)
         options.setdefault("application_id", APP_ID)
-        return AsyncDidit(http_client=httpx.AsyncClient(transport=httpx.MockTransport(self)), **options)
+        return AsyncDidit(
+            http_client=httpx.AsyncClient(transport=httpx.MockTransport(self)), **options
+        )
 
 
 SESSION = {

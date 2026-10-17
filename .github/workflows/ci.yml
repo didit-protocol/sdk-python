@@ -208,6 +208,13 @@ jobs:
       - name: pytest -m live
         if: steps.key.outputs.present == 'true'
         # The key reaches only this step, through the environment; it is never printed.
+        # Optional repository variables: DIDIT_SANDBOX_WORKFLOW_ID, DIDIT_SANDBOX_BASE_URL.
         env:
           DIDIT_SANDBOX_API_KEY: ${{ secrets.DIDIT_SANDBOX_API_KEY }}
-        run: uv run pytest -m live
+          DIDIT_SANDBOX_WORKFLOW_ID: ${{ vars.DIDIT_SANDBOX_WORKFLOW_ID }}
+          SANDBOX_BASE_URL: ${{ vars.DIDIT_SANDBOX_BASE_URL }}
+        run: |
+          if [ -n "$SANDBOX_BASE_URL" ]; then
+            export DIDIT_SANDBOX_BASE_URL="$SANDBOX_BASE_URL"
+          fi
+          uv run pytest -m live

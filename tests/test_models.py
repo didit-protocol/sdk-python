@@ -45,7 +45,9 @@ def test_absent_and_null_are_distinguishable() -> None:
 
 
 def test_dates_are_parsed() -> None:
-    model = validate_response(Outer, {"id": 1, "inner": {"name": "a", "when": "2026-01-02T03:04:05Z"}})
+    model = validate_response(
+        Outer, {"id": 1, "inner": {"name": "a", "when": "2026-01-02T03:04:05Z"}}
+    )
     assert model.inner.when == dt.datetime(2026, 1, 2, 3, 4, 5, tzinfo=dt.timezone.utc)
 
 

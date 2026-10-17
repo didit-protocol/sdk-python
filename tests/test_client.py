@@ -34,9 +34,17 @@ def test_environment_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DIDIT_ORGANIZATION_ID", "org-env")
     monkeypatch.setenv("DIDIT_APPLICATION_ID", "app-env")
     client = Didit()
-    assert (client.api_key, client.organization_id, client.application_id) == ("env-key", "org-env", "app-env")
+    assert (client.api_key, client.organization_id, client.application_id) == (
+        "env-key",
+        "org-env",
+        "app-env",
+    )
     explicit = Didit(api_key="explicit", organization_id="o", application_id="a")
-    assert (explicit.api_key, explicit.organization_id, explicit.application_id) == ("explicit", "o", "a")
+    assert (explicit.api_key, explicit.organization_id, explicit.application_id) == (
+        "explicit",
+        "o",
+        "a",
+    )
     asynchronous = AsyncDidit()
     assert asynchronous.api_key == "env-key"
 
@@ -148,7 +156,11 @@ def test_timeout_reaches_httpx() -> None:
         seen.append(request.extensions["timeout"])
         return httpx.Response(200, json={})
 
-    client = Didit(api_key=API_KEY, timeout=12.5, http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = Didit(
+        api_key=API_KEY,
+        timeout=12.5,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
     client.sessions.retrieve_decision("s")
     client.sessions.retrieve_decision("s", timeout=3)
     client.sessions.retrieve_decision("s", timeout=httpx.Timeout(1.0, connect=2.0))

@@ -69,7 +69,9 @@ def test_identifiers() -> None:
 
 
 def test_sdk_naming_validation() -> None:
-    ok = SdkNaming.parse("k", {"resource": "a.b", "method": "list", "auth": "api_key", "server": True})
+    ok = SdkNaming.parse(
+        "k", {"resource": "a.b", "method": "list", "auth": "api_key", "server": True}
+    )
     assert ok.as_json() == {"auth": "api_key", "method": "list", "resource": "a.b", "server": True}
     bad: list[dict[str, Any]] = [
         {"resource": "A", "method": "list", "auth": "api_key", "server": True},
@@ -99,7 +101,9 @@ def test_repository_specs_load() -> None:
 
 def test_new_operation_without_naming_fails_with_its_name(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
-    spec["paths"]["/v3/brand-new/"] = {"get": {"operationId": "brand_new_list", "responses": {"200": {"description": "ok"}}}}
+    spec["paths"]["/v3/brand-new/"] = {
+        "get": {"operationId": "brand_new_list", "responses": {"200": {"description": "ok"}}}
+    }
     _write(openapi / "verification.json", spec)
     with pytest.raises(CodegenError) as info:
         load(openapi)
@@ -122,7 +126,12 @@ def test_upstream_naming_wins_over_the_overlay(openapi: pathlib.Path) -> None:
 
 def test_stale_overlay_entry_fails(openapi: pathlib.Path) -> None:
     overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/gone/"] = {"resource": "gone", "method": "list", "auth": "api_key", "server": True}
+    overlay["operations"]["GET /v3/gone/"] = {
+        "resource": "gone",
+        "method": "list",
+        "auth": "api_key",
+        "server": True,
+    }
     _write(openapi / "overlay.json", overlay)
     with pytest.raises(CodegenError, match="no longer exist upstream"):
         load(openapi)
@@ -132,7 +141,7 @@ def test_duplicate_method_names_fail(openapi: pathlib.Path) -> None:
     overlay = _read(openapi / "overlay.json")
     overlay["operations"]["GET /v3/sessions/"]["method"] = "create"
     _write(openapi / "overlay.json", overlay)
-    with pytest.raises(CodegenError, match="both map to sessions.create"):
+    with pytest.raises(CodegenError, match=r"both map to sessions\.create"):
         load(openapi)
 
 
@@ -181,7 +190,9 @@ def test_every_server_operation_becomes_one_method() -> None:
 
 def test_query_parameter_clashing_with_a_body_field_is_renamed() -> None:
     _, _, methods = build(REPO / "openapi")
-    method = next(m for m in methods if m.resource == "sessions" and m.name == "update_aml_hit_status")
+    method = next(
+        m for m in methods if m.resource == "sessions" and m.name == "update_aml_hit_status"
+    )
     by_py = {a.py: a for a in method.kwargs}
     assert by_py["node_id"].location == "body"
     assert by_py["node_id_query"].location == "query"
@@ -234,7 +245,9 @@ def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -
     spec = _read(openapi / "verification.json")
     op = spec["paths"]["/v3/session/"]["post"]
     op["x-didit-sdk"] = _read(openapi / "overlay.json")["operations"]["POST /v3/session/"]
-    op["parameters"] = [{"name": "dry_run", "in": "query", "required": True, "schema": {"type": "boolean"}}]
+    op["parameters"] = [
+        {"name": "dry_run", "in": "query", "required": True, "schema": {"type": "boolean"}}
+    ]
     spec["paths"]["/v3/new-thing/"] = {"get": {"responses": {"200": {"description": "ok"}}}}
     downloads = {
         "verification.json": json.dumps(spec).encode(),
@@ -268,7 +281,9 @@ def test_seeded_json_layout_round_trips() -> None:
         assert json.dumps(json.loads(raw), indent=1, ensure_ascii=False) == raw
 
 
-def test_cli_main_from_dir(monkeypatch: pytest.MonkeyPatch, openapi: pathlib.Path, tmp_path: pathlib.Path) -> None:
+def test_cli_main_from_dir(
+    monkeypatch: pytest.MonkeyPatch, openapi: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
     output = tmp_path / "github_output"
     summary = tmp_path / "summary.md"
     monkeypatch.setattr(spec_sync, "REPO", openapi.parent)

@@ -40,7 +40,9 @@ def _spec_operations() -> dict[tuple[str, str], dict[str, Any]]:
                 name_key = (naming["resource"], naming["method"])
                 assert name_key not in out, f"{key} duplicates {name_key}"
                 out[name_key] = {"key": key, "path": path, "naming": naming, "op": op, "item": item}
-    deprecated = json.loads((OPENAPI / "deprecated-operations.json").read_text("utf-8"))["operations"]
+    deprecated = json.loads((OPENAPI / "deprecated-operations.json").read_text("utf-8"))[
+        "operations"
+    ]
     for key, entry in deprecated.items():
         naming = entry["x-didit-sdk"]
         path = key.removeprefix("account ").split(" ", 1)[1]
@@ -84,7 +86,10 @@ def test_operation_counts() -> None:
 
 @pytest.mark.parametrize(
     ("client", "base"),
-    [(Didit(api_key="contract"), SyncAPIResource), (AsyncDidit(api_key="contract"), AsyncAPIResource)],
+    [
+        (Didit(api_key="contract"), SyncAPIResource),
+        (AsyncDidit(api_key="contract"), AsyncAPIResource),
+    ],
     ids=["Didit", "AsyncDidit"],
 )
 def test_spec_operations_equal_sdk_methods(client: Any, base: type) -> None:
@@ -102,10 +107,14 @@ def test_signatures_follow_the_paths() -> None:
     sdk = _sdk_methods(client, SyncAPIResource)
     for name, info in SPEC.items():
         params = inspect.signature(sdk[name]).parameters
-        positional = [p for p in params.values() if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD]
+        positional = [
+            p for p in params.values() if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ]
         path_names = re.findall(r"\{([^}]+)\}", info["path"])
         if info["naming"].get("scope") == "application":
-            assert info["path"].startswith("/v3/organization/{organization_id}/application/{application_id}/")
+            assert info["path"].startswith(
+                "/v3/organization/{organization_id}/application/{application_id}/"
+            )
             path_names = [p for p in path_names if p not in ("organization_id", "application_id")]
         assert len(positional) == len(path_names), name
         for option in ("extra_headers", "extra_query", "extra_body", "timeout"):

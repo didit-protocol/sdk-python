@@ -55,7 +55,9 @@ def _request() -> httpx.Request:
     ],
 )
 def test_status_errors(status: int, cls: type[didit.APIStatusError]) -> None:
-    api = MockAPI().add(httpx.Response(status, json={"detail": "nope"}, headers={"x-request-id": "req_9"}))
+    api = MockAPI().add(
+        httpx.Response(status, json={"detail": "nope"}, headers={"x-request-id": "req_9"})
+    )
     client = api.client(max_retries=0)
     with pytest.raises(cls) as info:
         client.sessions.retrieve_decision("s")
@@ -76,7 +78,10 @@ def test_status_errors(status: int, cls: type[didit.APIStatusError]) -> None:
     [
         ({"error": "Invalid workflow"}, "HTTP 400: Invalid workflow"),
         ({"message": "bad"}, "HTTP 400: bad"),
-        ({"workflow_id": ["This field is required."], "language": "unknown"}, "HTTP 400: workflow_id: This field is required.; language: unknown"),
+        (
+            {"workflow_id": ["This field is required."], "language": "unknown"},
+            "HTTP 400: workflow_id: This field is required.; language: unknown",
+        ),
         (["one", "two"], "HTTP 400: one; two"),
         ({}, "HTTP 400"),
     ],
@@ -110,7 +115,9 @@ def test_error_messages_never_contain_the_api_key() -> None:
 
 
 def test_html_on_success_is_a_response_validation_error() -> None:
-    api = MockAPI().add(httpx.Response(200, text="<html></html>", headers={"content-type": "text/html"}))
+    api = MockAPI().add(
+        httpx.Response(200, text="<html></html>", headers={"content-type": "text/html"})
+    )
     with pytest.raises(didit.APIResponseValidationError) as info:
         api.client().sessions.retrieve_decision("s")
     assert info.value.status == 200
@@ -180,7 +187,9 @@ def test_get_retries_5xx_then_succeeds(no_sleep: list[float]) -> None:
 
 
 def test_retries_stop_at_max_retries() -> None:
-    api = MockAPI().add(httpx.Response(500), httpx.Response(500), httpx.Response(500), httpx.Response(500))
+    api = MockAPI().add(
+        httpx.Response(500), httpx.Response(500), httpx.Response(500), httpx.Response(500)
+    )
     with pytest.raises(didit.InternalServerError):
         api.client(max_retries=2).sessions.retrieve_decision("s")
     assert len(api.requests) == 3
@@ -201,7 +210,11 @@ def test_post_is_not_retried_after_a_read_timeout() -> None:
 
 
 def test_post_is_retried_when_the_connection_failed_before_sending() -> None:
-    api = MockAPI().add(httpx.ConnectError("refused"), httpx.ConnectTimeout("slow")).json(201, SESSION)
+    api = (
+        MockAPI()
+        .add(httpx.ConnectError("refused"), httpx.ConnectTimeout("slow"))
+        .json(201, SESSION)
+    )
     session = api.client().sessions.create(workflow_id="w")
     assert session.session_id == SESSION["session_id"]
     assert len(api.requests) == 3
@@ -215,7 +228,9 @@ def test_post_is_retried_on_429_honouring_retry_after(no_sleep: list[float]) -> 
 
 
 def test_get_retries_timeouts_and_dropped_connections() -> None:
-    api = MockAPI().add(httpx.ReadTimeout("slow"), httpx.RemoteProtocolError("dropped")).json(200, {})
+    api = (
+        MockAPI().add(httpx.ReadTimeout("slow"), httpx.RemoteProtocolError("dropped")).json(200, {})
+    )
     api.client().sessions.retrieve_decision("s")
     assert len(api.requests) == 3
 
@@ -238,7 +253,15 @@ def test_retry_delays_are_capped(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [("3", 3.0), ("0.5", 0.5), ("120", 60.0), ("-4", 0.0), ("soon", None), ("", None), ("nan", None)],
+    [
+        ("3", 3.0),
+        ("0.5", 0.5),
+        ("120", 60.0),
+        ("-4", 0.0),
+        ("soon", None),
+        ("", None),
+        ("nan", None),
+    ],
 )
 def test_retry_after_seconds(value: str, expected: float | None) -> None:
     assert parse_retry_after(httpx.Headers({"Retry-After": value})) == expected
@@ -272,11 +295,26 @@ def test_async_retry_policy(no_sleep: list[float]) -> None:
         with pytest.raises(didit.InternalServerError):
             await post.async_client().sessions.create(workflow_id="w")
         with pytest.raises(didit.APITimeoutError):
-            await MockAPI().add(httpx.ReadTimeout("x")).async_client(max_retries=0).sessions.retrieve_decision("s")
+            await (
+                MockAPI()
+                .add(httpx.ReadTimeout("x"))
+                .async_client(max_retries=0)
+                .sessions.retrieve_decision("s")
+            )
         with pytest.raises(didit.APIConnectionError):
-            await MockAPI().add(httpx.ConnectError("x")).async_client(max_retries=0).sessions.retrieve_decision("s")
+            await (
+                MockAPI()
+                .add(httpx.ConnectError("x"))
+                .async_client(max_retries=0)
+                .sessions.retrieve_decision("s")
+            )
         with pytest.raises(didit.NotFoundError):
-            await MockAPI().add(httpx.Response(404, json={"detail": "gone"})).async_client().sessions.retrieve_decision("s")
+            await (
+                MockAPI()
+                .add(httpx.Response(404, json={"detail": "gone"}))
+                .async_client()
+                .sessions.retrieve_decision("s")
+            )
         timeout_then_ok = MockAPI().add(httpx.ReadTimeout("x")).json(200, {})
         await timeout_then_ok.async_client().sessions.retrieve_decision("s")
         assert len(timeout_then_ok.requests) == 2
