@@ -33,7 +33,7 @@ from .._exceptions import (
     make_status_error,
 )
 from .._models import BaseModel, validate_response
-from .._utils import client_header, encode_path, user_agent
+from .._utils import client_header, encode_path, redact_request, user_agent
 from ._cache import Discovery, IssuerCache, KeySet, parse_discovery, parse_key_set
 from ._crypto import verify_es256
 from ._errors import TokenVerificationError
@@ -242,6 +242,7 @@ class _AuthenticationBase:
 
     @staticmethod
     def _transport_error(exc: httpx.HTTPError, request: httpx.Request) -> APIConnectionError:
+        redact_request(request)
         if isinstance(exc, httpx.TimeoutException):
             return APITimeoutError(request=request)
         return APIConnectionError(request=request)
@@ -266,6 +267,7 @@ class _AuthenticationBase:
                 body = response.json()
             except ValueError:
                 body = response.text or None
+            redact_request(response.request)
             raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None

@@ -37,6 +37,7 @@ from ._utils import (
     encode_path,
     multipart_fields,
     query_params,
+    redact_request,
     user_agent,
 )
 
@@ -70,8 +71,6 @@ Multipart = Literal[False, True, "auto"]
 _IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
 # Errors raised before any byte of the request left this process.
 _NOT_SENT_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout, httpx.ProxyError)
-# Request headers that carry credentials; blanked on requests attached to errors.
-_CREDENTIAL_HEADERS = ("x-api-key", "authorization")
 
 T = TypeVar("T")
 ItemT = TypeVar("ItemT")
@@ -377,12 +376,12 @@ class BaseClient:
             body = response.json()
         except ValueError:
             body = response.text or None
-        _redact_request(response.request)
+        redact_request(response.request)
         return make_status_error(response, body, redact=self._redactions())
 
     @staticmethod
     def _transport_error(request: httpx.Request, exc: httpx.HTTPError) -> DiditError:
-        _redact_request(request)
+        redact_request(request)
         if isinstance(exc, httpx.TimeoutException):
             return APITimeoutError(request=request)
         return APIConnectionError(request=request)
@@ -679,14 +678,6 @@ class AsyncAPIClient(BaseClient):
 
 def _describe(exc: httpx.HTTPError) -> str:
     return "timed out" if isinstance(exc, httpx.TimeoutException) else type(exc).__name__
-
-
-def _redact_request(request: httpx.Request) -> None:
-    """Blank the credentials on a request that an error keeps a reference to, so
-    error reporters that serialise exception attributes never capture them."""
-    for name in _CREDENTIAL_HEADERS:
-        if name in request.headers:
-            request.headers[name] = "[redacted]"
 
 
 def _prepare_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:

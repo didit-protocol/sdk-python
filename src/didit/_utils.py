@@ -10,6 +10,7 @@ import urllib.parse
 from collections.abc import Iterable, Mapping
 from typing import Any, cast
 
+import httpx
 import pydantic
 
 from ._exceptions import DiditError
@@ -24,6 +25,7 @@ __all__ = [
     "is_given",
     "multipart_fields",
     "query_params",
+    "redact_request",
     "strip_not_given",
     "user_agent",
 ]
@@ -129,6 +131,18 @@ def encode_path(template: str, params: Mapping[str, object]) -> str:
             raise ValueError(f"The path parameter {name!r} must be a non-empty id, got {text!r}.")
         out = out.replace("{" + name + "}", urllib.parse.quote(text, safe=""))
     return out
+
+
+# Request headers that carry credentials; blanked on requests attached to errors.
+_CREDENTIAL_HEADERS = ("x-api-key", "authorization")
+
+
+def redact_request(request: httpx.Request) -> None:
+    """Blank the credentials on a request that an error keeps a reference to, so
+    error reporters that serialise exception attributes never capture them."""
+    for name in _CREDENTIAL_HEADERS:
+        if name in request.headers:
+            request.headers[name] = "[redacted]"
 
 
 def user_agent() -> str:

@@ -1308,6 +1308,15 @@ def test_status_errors(
     assert issuer.count("/token/") == 1
 
 
+def test_errors_keep_no_bearer_token_on_their_request(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply("GET", "/session/", 401, {"detail": "invalid_token"})
+    with pytest.raises(AuthenticationError) as info:
+        auth.get_session(ACCESS_TOKEN)
+    assert info.value.response.request.headers["authorization"] == "[redacted]"
+
+
 def test_echoed_secrets_are_redacted(auth: Authentication, issuer: FakeIssuer) -> None:
     issuer.reply("POST", "/token/", 400, {"detail": f"bad token {REFRESH_TOKEN}"})
     with pytest.raises(BadRequestError) as info:
