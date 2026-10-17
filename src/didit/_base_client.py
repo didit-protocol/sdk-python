@@ -503,6 +503,7 @@ class SyncAPIClient(BaseClient):
                     continue
                 raise APIConnectionError(request=request) from exc
 
+            elapsed = time.monotonic() - started
             self._log_response(request, response, started)
             if not response.is_success:
                 if retries_taken < self.max_retries and should_retry_status(
@@ -526,13 +527,13 @@ class SyncAPIClient(BaseClient):
                 raise self._status_error(response)
 
             if mode == "stream":
-                return APIResponse(response, parse, retries_taken, time.monotonic() - started)
+                return APIResponse(response, parse, retries_taken, elapsed)
             try:
                 response.read()
             finally:
                 response.close()
             if mode == "raw":
-                return APIResponse(response, parse, retries_taken, time.monotonic() - started)
+                return APIResponse(response, parse, retries_taken, elapsed)
             return parse(response)
 
 
@@ -635,6 +636,7 @@ class AsyncAPIClient(BaseClient):
                     continue
                 raise APIConnectionError(request=request) from exc
 
+            elapsed = time.monotonic() - started
             self._log_response(request, response, started)
             if not response.is_success:
                 if retries_taken < self.max_retries and should_retry_status(
@@ -658,13 +660,13 @@ class AsyncAPIClient(BaseClient):
                 raise self._status_error(response)
 
             if mode == "stream":
-                return AsyncAPIResponse(response, parse, retries_taken, time.monotonic() - started)
+                return AsyncAPIResponse(response, parse, retries_taken, elapsed)
             try:
                 await response.aread()
             finally:
                 await response.aclose()
             if mode == "raw":
-                return AsyncAPIResponse(response, parse, retries_taken, time.monotonic() - started)
+                return AsyncAPIResponse(response, parse, retries_taken, elapsed)
             return parse(response)
 
 
