@@ -51,9 +51,9 @@ def canonical_json(value: object) -> str:
             ensure_ascii=False,
             allow_nan=False,
         )
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, RecursionError) as exc:
         raise WebhookVerificationError(
-            "invalid_payload", "The webhook payload is not JSON data."
+            "invalid_payload", "The webhook payload is not JSON data Didit sends."
         ) from exc
 
 
@@ -66,7 +66,7 @@ def parse_body(raw: bytes) -> dict[str, Any]:
     try:
         text = raw.decode("utf-8")
         value = json.loads(text, parse_constant=_reject_constant)
-    except (UnicodeDecodeError, ValueError) as exc:
+    except (UnicodeDecodeError, ValueError, RecursionError) as exc:  # RecursionError: absurd nesting
         raise WebhookVerificationError(
             "invalid_payload", "The webhook body is not valid JSON."
         ) from exc
