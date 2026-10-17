@@ -37,7 +37,6 @@ from ._utils import (
     encode_path,
     multipart_fields,
     query_params,
-    redact_request,
     user_agent,
 )
 
@@ -376,12 +375,10 @@ class BaseClient:
             body = response.json()
         except ValueError:
             body = response.text or None
-        redact_request(response.request)
         return make_status_error(response, body, redact=self._redactions())
 
     @staticmethod
     def _transport_error(request: httpx.Request, exc: httpx.HTTPError) -> DiditError:
-        redact_request(request)
         if isinstance(exc, httpx.TimeoutException):
             return APITimeoutError(request=request)
         return APIConnectionError(request=request)

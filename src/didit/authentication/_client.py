@@ -33,7 +33,7 @@ from .._exceptions import (
     make_status_error,
 )
 from .._models import BaseModel, validate_response
-from .._utils import client_header, encode_path, redact_request, user_agent
+from .._utils import client_header, encode_path, user_agent
 from ._cache import Discovery, IssuerCache, KeySet, parse_discovery, parse_key_set
 from ._crypto import verify_es256
 from ._errors import TokenVerificationError
@@ -109,6 +109,16 @@ def _amount_text(amount: Amount) -> str:
     if isinstance(amount, str):
         return amount.strip()
     return format(value, "f")
+
+
+def _kept_request(call: _Call, request: httpx.Request) -> httpx.Request:
+    """The request an error or response keeps: without the form body of a token
+    request, which carries the code, the PKCE verifier or the refresh token."""
+    if call.form is None:
+        return request
+    headers = request.headers.copy()
+    headers.pop("content-length", None)
+    return httpx.Request(request.method, request.url, headers=headers)
 
 
 class _AuthenticationBase:
@@ -242,7 +252,6 @@ class _AuthenticationBase:
 
     @staticmethod
     def _transport_error(exc: httpx.HTTPError, request: httpx.Request) -> APIConnectionError:
-        redact_request(request)
         if isinstance(exc, httpx.TimeoutException):
             return APITimeoutError(request=request)
         return APIConnectionError(request=request)
@@ -267,7 +276,6 @@ class _AuthenticationBase:
                 body = response.json()
             except ValueError:
                 body = response.text or None
-            redact_request(response.request)
             raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
@@ -603,8 +611,9 @@ class Authentication(_AuthenticationBase):
         try:
             response = self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, request) from exc
+            raise self._transport_error(exc, _kept_request(call, request)) from exc
         self._log(request, response, started)
+        response.request = _kept_request(call, request)
         return response
 
     def _discovery(self) -> Discovery:
@@ -796,8 +805,9 @@ class AsyncAuthentication(_AuthenticationBase):
         try:
             response = await self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, request) from exc
+            raise self._transport_error(exc, _kept_request(call, request)) from exc
         self._log(request, response, started)
+        response.request = _kept_request(call, request)
         return response
 
     def _async_lock(self) -> asyncio.Lock:

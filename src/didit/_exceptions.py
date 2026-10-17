@@ -27,6 +27,26 @@ __all__ = [
 ]
 
 
+# Request headers that carry credentials. Every error that keeps a request blanks
+# them, so error reporters that serialise exception attributes never capture them.
+_CREDENTIAL_HEADERS = ("x-api-key", "authorization")
+
+
+def _scrub(request: httpx.Request) -> httpx.Request:
+    for name in _CREDENTIAL_HEADERS:
+        if name in request.headers:
+            request.headers[name] = "[redacted]"
+    return request
+
+
+def _scrub_response(response: httpx.Response) -> None:
+    try:
+        request = response.request
+    except RuntimeError:  # a response built without a request
+        return
+    _scrub(request)
+
+
 class DiditError(Exception):
     """Base class of every error the SDK raises."""
 
@@ -50,7 +70,7 @@ class APIConnectionError(DiditError):
 
     def __init__(self, *, request: httpx.Request, message: str = "Connection error.") -> None:
         super().__init__(message)
-        self.request = request
+        self.request = _scrub(request)
 
 
 class APITimeoutError(APIConnectionError):
@@ -69,6 +89,7 @@ class APIResponseValidationError(DiditError):
 
     def __init__(self, *, response: httpx.Response, message: str) -> None:
         super().__init__(message)
+        _scrub_response(response)
         self.response = response
         self.status = response.status_code
 
@@ -86,6 +107,7 @@ class APIStatusError(DiditError):
 
     def __init__(self, message: str, *, response: httpx.Response, body: object) -> None:
         super().__init__(message)
+        _scrub_response(response)
         self.response = response
         self.status = response.status_code
         self.headers = response.headers
