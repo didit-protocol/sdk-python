@@ -210,7 +210,7 @@ class _AuthenticationBase:
 
     def _retrieve_step_up_call(self, access_token: str, step_up_id: str) -> _Call:
         token = _required_text(access_token, "access_token")
-        path = encode_path(_STEP_UP_PATH + "{id}/", {"id": step_up_id})
+        path = encode_path(_STEP_UP_PATH + "{step_up_id}/", {"step_up_id": step_up_id})
         return _Call("GET", self._url(path), bearer=token, secrets=(token,))
 
     def _build(self, call: _Call, client: httpx.Client | httpx.AsyncClient) -> httpx.Request:

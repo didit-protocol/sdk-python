@@ -47,7 +47,9 @@ def segment(value: object) -> str:
     return b64url(json.dumps(value).encode("utf-8"))
 
 
-def unsigned_token(header: Mapping[str, Any], claims: Mapping[str, Any], signature: bytes = b"") -> str:
+def unsigned_token(
+    header: Mapping[str, Any], claims: Mapping[str, Any], signature: bytes = b""
+) -> str:
     """A token with any header and signature bytes, for the rejection tests."""
     return f"{segment(dict(header))}.{segment(dict(claims))}.{b64url(signature)}"
 

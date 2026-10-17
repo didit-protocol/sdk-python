@@ -47,11 +47,11 @@ def normalise_issuer(issuer: object, *, allow_loopback_http: bool = True) -> str
         _ = parts.port
     except ValueError:
         parts, host = None, None
+    if parts is not None and (parts.username is not None or parts.password is not None):
+        raise ConfigurationError("The issuer URL must not contain a user name or password.")
     if (
         parts is None
         or not host
-        or parts.username is not None
-        or parts.password is not None
         or "?" in text
         or "#" in text
         or any(ch.isspace() or ord(ch) < 32 for ch in text)

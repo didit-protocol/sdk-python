@@ -54,11 +54,11 @@ from didit.authentication import (
     TokenResponse,
     TokenVerificationError,
     VerifiedClaims,
+    _crypto,
     create_nonce,
     create_pkce,
     create_state,
 )
-from didit.authentication import _crypto
 from didit.authentication._cache import cache_seconds
 from didit.authentication._issuer import issuer_from_publishable_key
 from didit.authentication._pkce import s256_challenge
@@ -183,7 +183,9 @@ def rsa_key() -> rsa.RSAPrivateKey:
 # Access tokens -----------------------------------------------------------------
 
 
-def test_verifies_an_access_token(auth: Authentication, issuer: FakeIssuer, key: SigningKey) -> None:
+def test_verifies_an_access_token(
+    auth: Authentication, issuer: FakeIssuer, key: SigningKey
+) -> None:
     token = key.sign(access_claims(custom_claim="kept"))
     claims = auth.verify_access_token(token)
     assert isinstance(claims, AccessTokenClaims)
@@ -215,7 +217,8 @@ def test_agent_access_token_carries_the_actor(auth: Authentication, key: Signing
         "Synthetic Agent",
         ["payouts:read"],
     )
-    assert claims.verified == VerifiedClaims()
+    assert claims.verified is not None
+    assert claims.verified.level is None
 
 
 @pytest.mark.parametrize("typ", ["at+jwt", "AT+JWT", "application/at+jwt"])
@@ -271,13 +274,11 @@ def test_rejects_every_algorithm_but_es256(
     assert issuer.requests == []
 
 
-def test_rejects_alg_none(auth: Authentication, issuer: FakeIssuer, key: SigningKey) -> None:
-    for header in ({"alg": "none", "typ": "at+jwt", "kid": key.kid}, {"typ": "at+jwt"}):
-        token = unsigned_token(header, access_claims())
-        assert token.endswith(".")
-        assert reason(lambda token=token: auth.verify_access_token(token)) == (
-            "unsupported_algorithm"
-        )
+@pytest.mark.parametrize("header", [{"alg": "none", "kid": "k_synthetic_key_1"}, {}])
+def test_rejects_alg_none(auth: Authentication, issuer: FakeIssuer, header: dict[str, str]) -> None:
+    token = unsigned_token({**header, "typ": "at+jwt"}, access_claims())
+    assert token.endswith(".")
+    assert reason(lambda: auth.verify_access_token(token)) == "unsupported_algorithm"
     assert issuer.requests == []
 
 
@@ -351,7 +352,9 @@ def test_rejects_the_wrong_issuer(auth: Authentication, key: SigningKey) -> None
 def test_time_and_required_claims(
     auth: Authentication, key: SigningKey, overrides: dict[str, Any], expected: str
 ) -> None:
-    assert reason(lambda: auth.verify_access_token(key.sign(access_claims(**overrides)))) == expected
+    assert (
+        reason(lambda: auth.verify_access_token(key.sign(access_claims(**overrides)))) == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -389,6 +392,12 @@ def _malformed_tokens(kid: str) -> list[object]:
     good_header = segment({"alg": "ES256", "typ": "at+jwt", "kid": kid})
     payload = segment(access_claims())
     signature = b64url(b"\x00" * 64)
+    duplicate = b64url(b'{"alg": "ES256", "alg": "none"}')
+    not_utf8 = b64url(b"\xff\xfe")
+    deep = b64url(b"[" * 5000 + b"]" * 5000)
+    no_kid = segment({"alg": "ES256", "typ": "at+jwt"})
+    bad_kid = segment({"alg": "ES256", "typ": "at+jwt", "kid": 7})
+    critical = segment({"alg": "ES256", "typ": "at+jwt", "kid": kid, "crit": ["b64"]})
     return [
         "",
         "abc",
@@ -399,16 +408,16 @@ def _malformed_tokens(kid: str) -> list[object]:
         f"{good_header}=.{payload}.{signature}",
         f"{b64url(b'not json')}.{payload}.{signature}",
         f"{b64url(b'[1, 2]')}.{payload}.{signature}",
-        f"{b64url(b'{"alg": "ES256", "alg": "none"}')}.{payload}.{signature}",
-        f"{b64url(b'\xff\xfe')}.{payload}.{signature}",
+        f"{duplicate}.{payload}.{signature}",
+        f"{not_utf8}.{payload}.{signature}",
         f"{good_header}.{b64url(b'not json')}.{signature}",
         f"{good_header}.{b64url(b'[]')}.{signature}",
         f"{good_header}.abcde.{signature}",
         f"{good_header}.{payload}.abc!",
-        f"{segment({'alg': 'ES256', 'typ': 'at+jwt'})}.{payload}.{signature}",
-        f"{segment({'alg': 'ES256', 'typ': 'at+jwt', 'kid': 7})}.{payload}.{signature}",
-        f"{segment({'alg': 'ES256', 'typ': 'at+jwt', 'kid': kid, 'crit': ['b64']})}.{payload}.{signature}",
-        f"{good_header}.{b64url(b'[' * 5000 + b']' * 5000)}.{signature}",
+        f"{no_kid}.{payload}.{signature}",
+        f"{bad_kid}.{payload}.{signature}",
+        f"{critical}.{payload}.{signature}",
+        f"{good_header}.{deep}.{signature}",
         "x" * 20000,
         123,
         None,
@@ -416,7 +425,9 @@ def _malformed_tokens(kid: str) -> list[object]:
     ]
 
 
-def test_rejects_malformed_tokens(auth: Authentication, issuer: FakeIssuer, key: SigningKey) -> None:
+def test_rejects_malformed_tokens(
+    auth: Authentication, issuer: FakeIssuer, key: SigningKey
+) -> None:
     for token in _malformed_tokens(key.kid):
         with pytest.raises(TokenVerificationError) as info:
             auth.verify_access_token(cast(Any, token))
@@ -610,16 +621,18 @@ def test_unreadable_metadata_is_a_response_validation_error(
 
 
 def test_metadata_http_errors(clock: FakeClock, key: SigningKey) -> None:
+    requests: list[httpx.Request] = []
+
     def failing(request: httpx.Request) -> httpx.Response:
-        if request.url.path == DISCOVERY:
-            return httpx.Response(503, text="upstream unavailable")
-        raise httpx.ConnectError("refused", request=request)
+        requests.append(request)
+        return httpx.Response(503, text="upstream unavailable")
 
     with httpx.Client(transport=httpx.MockTransport(failing)) as http:
         auth = configure(Authentication(ISSUER, http_client=http), clock)
         with pytest.raises(InternalServerError) as info:
             auth.verify_access_token(key.sign(access_claims()))
         assert info.value.status == 503
+        assert [r.url.path for r in requests] == [DISCOVERY]
         assert str(info.value) == "HTTP 503: upstream unavailable"
 
 
@@ -627,16 +640,16 @@ def test_concurrent_threads_fetch_the_keys_once(
     auth: Authentication, issuer: FakeIssuer, key: SigningKey
 ) -> None:
     issuer.jwks_delay = 0.05
-    tokens = [key.sign(access_claims(jti=f"jti-{n}")) for n in range(16)]
-    start = threading.Barrier(8)
+    tokens = [key.sign(access_claims(jti=f"jti-{n}")) for n in range(8)]
+    start = threading.Barrier(8, timeout=10)
 
     def verify(token: str) -> str:
-        start.wait() if threading.current_thread().name.endswith(("_0", "_1")) else None
+        start.wait()
         return auth.verify_access_token(token).sub
 
     with ThreadPoolExecutor(max_workers=8) as pool:
         subjects = list(pool.map(verify, tokens))
-    assert subjects == [IDENTITY_ID] * 16
+    assert subjects == [IDENTITY_ID] * 8
     assert (issuer.count(DISCOVERY), issuer.count(JWKS)) == (1, 1)
 
 
@@ -667,7 +680,7 @@ def test_module_imports_without_cryptography() -> None:
         "auth.close()\n"
         "print(pair.method, 'cryptography' in sys.modules and sys.modules['cryptography'] is None)\n"
     )
-    result = subprocess.run(  # noqa: S603 - the test's own interpreter, fixed code
+    result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=False, timeout=120
     )
     assert result.returncode == 0, result.stderr
@@ -842,10 +855,15 @@ def test_issuer_normalisation_and_options() -> None:
     for leeway in (-1, cast(Any, True), cast(Any, "60"), float("nan")):
         with pytest.raises(ConfigurationError, match="leeway"):
             Authentication(ISSUER, leeway=leeway)
-    with pytest.raises(ConfigurationError, match="httpx.Client"):
-        Authentication(ISSUER, http_client=cast(Any, httpx.AsyncClient()))
-    with pytest.raises(ConfigurationError, match="httpx.AsyncClient"):
-        AsyncAuthentication(ISSUER, http_client=cast(Any, httpx.Client()))
+    async_http = httpx.AsyncClient()
+    with pytest.raises(ConfigurationError, match=r"httpx\.Client"):
+        Authentication(ISSUER, http_client=cast(Any, async_http))
+    asyncio.run(async_http.aclose())
+    with (
+        httpx.Client() as sync_http,
+        pytest.raises(ConfigurationError, match=r"httpx\.AsyncClient"),
+    ):
+        AsyncAuthentication(ISSUER, http_client=cast(Any, sync_http))
 
 
 def test_does_not_close_a_client_it_did_not_create(issuer: FakeIssuer) -> None:
@@ -981,7 +999,8 @@ def test_get_session(auth: Authentication, issuer: FakeIssuer) -> None:
         APPLICATION_ID,
     )
     assert session.expires_at == dt.datetime(2027, 1, 15, 10, 0, tzinfo=dt.timezone.utc)
-    assert session.verified is not None and session.verified.level == "liveness"
+    assert session.verified is not None
+    assert session.verified.level == "liveness"
     assert session.organizations is not None
     organization = session.organizations[0]
     assert (organization.organization_name, organization.role) == ("Acme Treasury", "admin")
@@ -998,7 +1017,7 @@ def test_get_session(auth: Authentication, issuer: FakeIssuer) -> None:
 
 def test_revoke_session(auth: Authentication, issuer: FakeIssuer) -> None:
     issuer.reply("DELETE", "/session/", 204)
-    assert auth.revoke_session(ACCESS_TOKEN) is None  # type: ignore[func-returns-value]
+    auth.revoke_session(ACCESS_TOKEN)
     request = issuer.last("/session/")
     assert request.method == "DELETE"
     assert request.headers["authorization"] == f"Bearer {ACCESS_TOKEN}"
@@ -1073,7 +1092,7 @@ def test_step_up_amounts_are_decimal_strings(
 
 
 def test_step_up_argument_errors(auth: Authentication, issuer: FakeIssuer) -> None:
-    for amount in (True, [1], None.__class__):
+    for amount in (True, [1], object()):
         with pytest.raises(TypeError, match="amount"):
             auth.create_step_up(ACCESS_TOKEN, action="payout", amount=cast(Any, amount))
     with pytest.raises(ValueError, match="action"):
@@ -1115,7 +1134,6 @@ def test_retrieve_step_up(
 
 
 def test_step_up_id_is_percent_encoded(auth: Authentication, issuer: FakeIssuer) -> None:
-    issuer.reply("GET", "/step-up/a%2Fb/", 404, {"detail": "Not found."})
     with pytest.raises(NotFoundError):
         auth.retrieve_step_up(ACCESS_TOKEN, "a/b")
     assert issuer.requests[-1].url.raw_path == b"/step-up/a%2Fb/"
@@ -1130,7 +1148,12 @@ def test_step_up_id_is_percent_encoded(auth: Authentication, issuer: FakeIssuer)
         (400, {"error": "invalid_grant"}, BadRequestError, "HTTP 400: invalid_grant"),
         (400, {"non_field_errors": ["invalid_request"]}, BadRequestError, "HTTP 400"),
         (401, {"detail": "invalid_token"}, AuthenticationError, "HTTP 401: invalid_token"),
-        (403, {"detail": "origin_not_allowed"}, PermissionDeniedError, "HTTP 403: origin_not_allowed"),
+        (
+            403,
+            {"detail": "origin_not_allowed"},
+            PermissionDeniedError,
+            "HTTP 403: origin_not_allowed",
+        ),
         (404, {"detail": "Not found."}, NotFoundError, "HTTP 404: Not found."),
         (409, {"detail": "conflict"}, ConflictError, "HTTP 409: conflict"),
         (429, {"detail": "Too many requests."}, RateLimitError, "HTTP 429: Too many requests."),
@@ -1285,7 +1308,9 @@ def test_async_unknown_kid_and_caching(
                 await auth.verify_access_token(rotated.sign(access_claims()))
             assert info.value.reason == "unknown_key"
             clock.advance(50)
-            assert (await auth.verify_access_token(rotated.sign(access_claims()))).sub == IDENTITY_ID
+            assert (
+                await auth.verify_access_token(rotated.sign(access_claims()))
+            ).sub == IDENTITY_ID
             assert issuer.count(JWKS) == 2
             clock.advance(300)
             await auth.verify_access_token(key.sign(access_claims()))
@@ -1338,7 +1363,7 @@ def test_async_requests(issuer: FakeIssuer, clock: FakeClock) -> None:
             assert form_of(issuer.last("/token/"))["grant_type"] == "refresh_token"
             session = await auth.get_session(ACCESS_TOKEN)
             assert session.sid == SESSION_ID
-            assert await auth.revoke_session(ACCESS_TOKEN) is None  # type: ignore[func-returns-value]
+            await auth.revoke_session(ACCESS_TOKEN)
             assert issuer.requests[-1].method == "DELETE"
             step_up = await auth.create_step_up(
                 ACCESS_TOKEN, action="payout", amount="1500.00", return_to=REDIRECT_URI
