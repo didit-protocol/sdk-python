@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from typing import Any
 
-from .naming import pascal, resource_class
+from .naming import resource_class
 from .ops import Method
 from .typegen import (
     DATE,
@@ -617,6 +617,3 @@ def _render_root(roots: dict[str, ResourceNode]) -> str:
         out.append("\n")
     return "".join(out)
 
-
-def unused(_: Any) -> None:  # pragma: no cover
-    _ = pascal
