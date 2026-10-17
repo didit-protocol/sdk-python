@@ -39,8 +39,13 @@ jobs:
     env:
       FORCE_COLOR: "1"
       UV_FROZEN: "1"
-      SUMMARY: ${{ runner.temp }}/spec-sync-summary.md
     steps:
+      - name: Prepare
+        id: prepare
+        # The summary lives outside the checkout so that it is never committed.
+        run: |
+          echo "SUMMARY=$RUNNER_TEMP/spec-sync-summary.md" >> "$GITHUB_ENV"
+          echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -90,10 +95,6 @@ jobs:
             echo "Generated code comes from codegen/ and openapi/; do not edit it by hand."
           } >> "$SUMMARY"
           echo "failed=$failed" >> "$GITHUB_OUTPUT"
-      - name: Today's date (UTC)
-        id: date
-        if: steps.sync.outputs.changed == 'true'
-        run: echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
       - name: Open or update the spec sync pull request
         if: steps.sync.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
@@ -101,8 +102,8 @@ jobs:
           token: ${{ secrets.SPEC_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
           branch: chore/spec-sync
           delete-branch: true
-          title: "chore(spec): sync API spec ${{ steps.date.outputs.today }}"
-          commit-message: "chore(spec): sync API spec ${{ steps.date.outputs.today }}"
+          title: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
+          commit-message: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
           body-path: ${{ env.SUMMARY }}
           # A sync that fails a check still opens the pull request, as a draft, so the fix
           # (usually an openapi/overlay.json entry) can be pushed to the same branch.

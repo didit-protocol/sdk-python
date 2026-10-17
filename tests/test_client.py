@@ -191,10 +191,14 @@ def test_repr_never_shows_the_api_key() -> None:
     assert "api_key=None" in repr(Didit(api_key=None))
 
 
+def _closed(client: Didit | AsyncDidit) -> bool:
+    return client._client.is_closed
+
+
 def test_context_managers_close_owned_clients() -> None:
     with Didit(api_key=API_KEY) as client:
-        assert not client._client.is_closed
-    assert client._client.is_closed
+        assert not _closed(client)
+    assert _closed(client)
     shared = httpx.Client()
     with Didit(api_key=API_KEY, http_client=shared):
         pass
@@ -203,11 +207,11 @@ def test_context_managers_close_owned_clients() -> None:
 
     async def run() -> AsyncDidit:
         async with AsyncDidit(api_key=API_KEY) as aclient:
-            assert not aclient._client.is_closed
+            assert not _closed(aclient)
         return aclient
 
     aclient = asyncio.run(run())
-    assert aclient._client.is_closed
+    assert _closed(aclient)
 
 
 def test_async_with_options() -> None:

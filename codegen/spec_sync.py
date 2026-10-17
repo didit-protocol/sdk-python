@@ -186,7 +186,7 @@ def sync(
     overlay_path = openapi_dir / "overlay.json"
     overlay = json.loads(overlay_path.read_text("utf-8"))
     deprecated_path = openapi_dir / "deprecated-operations.json"
-    deprecated = (
+    deprecated: dict[str, Any] = (
         json.loads(deprecated_path.read_text("utf-8"))
         if deprecated_path.exists()
         else {"description": "", "operations": {}}

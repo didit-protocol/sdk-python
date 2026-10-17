@@ -86,7 +86,7 @@ def construct_type(type_: Any, value: object) -> object:
         if len(members) == 1:
             return construct_type(members[0], value)
         if isinstance(value, list):
-            lists = [m for m in members if get_origin(m) in (list, List)]
+            lists = [m for m in members if get_origin(m) is list]
             if lists:
                 return construct_type(lists[0], value)
         if isinstance(value, dict):

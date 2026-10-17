@@ -20,7 +20,7 @@ def _page(ids: list[str], next_url: str | None, count: int = 5, **extra: Any) ->
         "count": count,
         "next": next_url,
         "previous": None,
-        "results": [{"uuid": i, "vendor_data": f"b-{i}"} for i in ids],
+        "results": [{"didit_internal_id": i, "vendor_data": f"b-{i}"} for i in ids],
         **extra,
     }
 
@@ -41,7 +41,7 @@ def test_page_fields_and_iteration() -> None:
     assert page.count == 5
     assert page.next == f"{BASE}?limit=2&offset=2"
     assert page.previous is None
-    assert [b.uuid for b in page.results] == ["1", "2"]
+    assert [b.didit_internal_id for b in page.results] == ["1", "2"]
     assert all(isinstance(b, BusinessListItem) for b in page.results)
     assert page.response is not None
     assert page.has_next_page()
@@ -49,7 +49,7 @@ def test_page_fields_and_iteration() -> None:
     assert len(api.requests) == 1
     assert api.requests[0].url.params["limit"] == "2"
 
-    assert [b.uuid for b in page] == ["1", "2", "3", "4", "5"]
+    assert [b.didit_internal_id for b in page] == ["1", "2", "3", "4", "5"]
     assert len(api.requests) == 3
     assert api.requests[1].url.params["offset"] == "2"
     assert api.requests[2].url.params["offset"] == "4"
@@ -85,7 +85,7 @@ def test_default_port_counts_as_the_same_origin() -> None:
     api = MockAPI().json(200, _page(["1"], "https://verification.didit.me:443/v3/businesses/?offset=1")).json(
         200, _page(["2"], None)
     )
-    assert [b.uuid for b in api.client().businesses.list()] == ["1", "2"]
+    assert [b.didit_internal_id for b in api.client().businesses.list()] == ["1", "2"]
 
 
 def test_extra_list_fields_are_kept_on_the_response() -> None:
@@ -105,7 +105,7 @@ def test_raw_response_of_a_list() -> None:
     assert raw.request_id == "req_1"
     page = raw.parse()
     assert isinstance(page, didit.SyncPage)
-    assert [b.uuid for b in page] == ["1"]
+    assert [b.didit_internal_id for b in page] == ["1"]
 
 
 def test_empty_page_stops() -> None:
@@ -121,8 +121,8 @@ def test_async_pagination() -> None:
         client = api.async_client()
         page = await client.businesses.list(limit=2)
         assert isinstance(page, didit.AsyncPage)
-        assert [b.uuid for b in page.results] == ["1", "2"]
-        seen = [b.uuid async for b in page]
+        assert [b.didit_internal_id for b in page.results] == ["1", "2"]
+        seen = [b.didit_internal_id async for b in page]
         assert seen == ["1", "2", "3", "4", "5"]
 
     asyncio.run(run())
@@ -132,7 +132,7 @@ def test_async_pagination() -> None:
 
     async def run_direct() -> list[str]:
         client = api.async_client()
-        return [b.uuid async for b in client.businesses.list(limit=2)]
+        return [b.didit_internal_id async for b in client.businesses.list(limit=2)]
 
     assert asyncio.run(run_direct()) == ["1", "2", "3", "4", "5"]
 

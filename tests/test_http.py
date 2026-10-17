@@ -11,7 +11,6 @@ import httpx
 import pytest
 
 import didit
-from didit import _base_client
 from didit._base_client import parse_retry_after, retry_delay, should_retry_exception, should_retry_status
 from tests.mock_api import API_KEY, SESSION, MockAPI
 
@@ -19,12 +18,12 @@ from tests.mock_api import API_KEY, SESSION, MockAPI
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch: pytest.MonkeyPatch) -> list[float]:
     delays: list[float] = []
-    monkeypatch.setattr(_base_client.time, "sleep", delays.append)
+    monkeypatch.setattr("didit._base_client.time.sleep", delays.append)
 
     async def fake_async_sleep(delay: float) -> None:
         delays.append(delay)
 
-    monkeypatch.setattr(_base_client.asyncio, "sleep", fake_async_sleep)
+    monkeypatch.setattr("didit._base_client.asyncio.sleep", fake_async_sleep)
     return delays
 
 
@@ -153,15 +152,15 @@ def test_exception_policy() -> None:
     ):
         assert should_retry_exception("POST", exc)
         assert should_retry_exception("GET", exc)
-    for exc in (
+    for late in (
         httpx.ReadTimeout("x", request=request),
         httpx.WriteTimeout("x", request=request),
         httpx.ReadError("x", request=request),
         httpx.RemoteProtocolError("x", request=request),
     ):
-        assert not should_retry_exception("POST", exc)
-        assert not should_retry_exception("PATCH", exc)
-        assert should_retry_exception("GET", exc)
+        assert not should_retry_exception("POST", late)
+        assert not should_retry_exception("PATCH", late)
+        assert should_retry_exception("GET", late)
     assert not should_retry_exception("GET", httpx.UnsupportedProtocol("x", request=request))
 
 
@@ -228,7 +227,7 @@ def test_max_retries_zero_and_per_call_override() -> None:
 
 
 def test_retry_delays_are_capped(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_base_client.random, "uniform", lambda low, high: high)
+    monkeypatch.setattr("didit._base_client.random.uniform", lambda low, high: high)
     assert [retry_delay(n, None) for n in range(6)] == [0.5, 1.0, 2.0, 4.0, 8.0, 8.0]
 
 

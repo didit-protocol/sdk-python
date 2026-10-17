@@ -60,7 +60,8 @@ def test_contract_mismatch_never_raises() -> None:
     }
     model = validate_response(Outer, data)
     assert isinstance(model, Outer)
-    assert model.id == "not-an-int"
+    loose: Any = model
+    assert loose.id == "not-an-int"
     assert isinstance(model.inner, Inner)
     assert model.inner.name == 5
     assert model.inner.when == "yesterday"
@@ -87,8 +88,9 @@ def test_real_model_with_wrong_shape() -> None:
     api = MockAPI().json(200, {"uuid": 1234, "status": {"weird": True}, "surprise": [1]})
     transaction = api.client().transactions.retrieve("t-1")
     assert isinstance(transaction, TransactionDetail)
-    assert transaction.uuid == 1234
-    assert transaction.status == {"weird": True}
+    loose: Any = transaction
+    assert loose.uuid == 1234
+    assert loose.status == {"weird": True}
     assert transaction.model_extra == {"surprise": [1]}
 
 

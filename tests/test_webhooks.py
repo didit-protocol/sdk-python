@@ -380,7 +380,8 @@ def test_events_keep_unknown_fields_and_survive_bad_shapes() -> None:
     # A field of the wrong type never raises; the value is kept as sent.
     odd = webhooks.parse_event(_payload(webhook_type="user.status.updated", status=["not", "a", "string"]))
     assert isinstance(odd, UserStatusUpdatedEvent)
-    assert odd.status == ["not", "a", "string"]
+    loose: Any = odd
+    assert loose.status == ["not", "a", "string"]
 
 
 def test_travel_rule_vector_parses_to_its_event(monkeypatch: pytest.MonkeyPatch) -> None:

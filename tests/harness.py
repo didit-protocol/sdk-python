@@ -133,4 +133,5 @@ def check_operation(
 
     if expect.strict_type is not None:
         # Synthesised from the schema, so it must also pass strict validation.
-        pydantic.TypeAdapter(expect.strict_type).validate_python(expect.response_json)
+        strict: Any = expect.strict_type
+        pydantic.TypeAdapter(strict).validate_python(expect.response_json)
