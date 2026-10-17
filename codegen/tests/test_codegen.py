@@ -39,6 +39,36 @@ def _write(path: pathlib.Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=1, ensure_ascii=False), "utf-8")
 
 
+def _spec_operation(openapi_dir: pathlib.Path, key: str) -> tuple[pathlib.Path, Any, Any]:
+    """The spec file, its document and the operation behind an overlay key."""
+    file = openapi_dir / ("account.json" if key.startswith("account ") else "verification.json")
+    http_method, path = key.removeprefix("account ").split(" ", 1)
+    doc = _read(file)
+    return file, doc, doc["paths"][path][http_method.lower()]
+
+
+def _naming(openapi_dir: pathlib.Path, key: str) -> Any:
+    """An operation's naming: its own x-didit-sdk (upstream wins), else the overlay entry.
+
+    Tests never assume where the naming lives: once upstream carries x-didit-sdk, the spec
+    sync drops the overlay entries (DESIGN section 3).
+    """
+    _, _, op = _spec_operation(openapi_dir, key)
+    return op.get("x-didit-sdk") or _read(openapi_dir / "overlay.json")["operations"][key]
+
+
+def _change_naming(openapi_dir: pathlib.Path, key: str, **changes: Any) -> None:
+    """Change an operation's naming where it lives (upstream x-didit-sdk, else the overlay)."""
+    file, doc, op = _spec_operation(openapi_dir, key)
+    if op.get("x-didit-sdk"):
+        op["x-didit-sdk"].update(changes)
+        _write(file, doc)
+    else:
+        overlay = _read(openapi_dir / "overlay.json")
+        overlay["operations"][key].update(changes)
+        _write(openapi_dir / "overlay.json", overlay)
+
+
 # Naming -----------------------------------------------------------------------------
 
 
@@ -157,25 +187,19 @@ def test_stale_overlay_entry_fails(openapi: pathlib.Path) -> None:
 
 
 def test_duplicate_method_names_fail(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["method"] = "create"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", method="create")
     with pytest.raises(CodegenError, match=r"both map to sessions\.create"):
         load(openapi)
 
 
 def test_method_clashing_with_a_nested_resource_fails(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["method"] = "imports"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", method="imports")
     with pytest.raises(CodegenError, match="clashes with the nested resource"):
         load(openapi)
 
 
 def test_application_scope_needs_the_prefix(openapi: pathlib.Path) -> None:
-    overlay = _read(openapi / "overlay.json")
-    overlay["operations"]["GET /v3/sessions/"]["scope"] = "application"
-    _write(openapi / "overlay.json", overlay)
+    _change_naming(openapi, "GET /v3/sessions/", scope="application")
     with pytest.raises(CodegenError, match="scope application"):
         load(openapi)
 
@@ -287,9 +311,8 @@ def test_removed_operation_stays_as_a_deprecated_method(openapi: pathlib.Path) -
 
 def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
     spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"] = {
-        **overlay["GET /v3/billing/balance/"],
+        **_naming(openapi, "GET /v3/billing/balance/"),
         "method": "get_balance",
     }
     downloads = {
@@ -342,16 +365,15 @@ def _breaking(summary: str) -> str:
     return summary.split("## Breaking changes", 1)[1].split("\n## ", 1)[0]
 
 
-def _name_op(spec: Any, overlay: Any, path: str, http_method: str, **naming: Any) -> None:
+def _name_op(openapi: pathlib.Path, spec: Any, path: str, http_method: str, **naming: Any) -> None:
     key = f"{http_method.upper()} {path}"
-    spec["paths"][path][http_method]["x-didit-sdk"] = {**overlay[key], **naming}
+    spec["paths"][path][http_method]["x-didit-sdk"] = {**_naming(openapi, key), **naming}
 
 
 def test_swapped_names_are_breaking(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
-    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="top_up")
-    _name_op(spec, overlay, "/v3/billing/top-up/", "post", method="retrieve_balance")
+    _name_op(openapi, spec, "/v3/billing/balance/", "get", method="top_up")
+    _name_op(openapi, spec, "/v3/billing/top-up/", "post", method="retrieve_balance")
     breaking = _breaking(_sync(openapi, spec))
     assert "`billing.top_up` now calls `GET /v3/billing/balance/` instead of" in breaking
     assert "`billing.retrieve_balance` now calls `POST /v3/billing/top-up/`" in breaking
@@ -360,12 +382,11 @@ def test_swapped_names_are_breaking(openapi: pathlib.Path) -> None:
 
 def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
-    _name_op(spec, overlay, "/v3/billing/balance/", "get", method="current_balance")
+    _name_op(openapi, spec, "/v3/billing/balance/", "get", method="current_balance")
     spec["paths"]["/v3/billing/balance-v2/"] = {
         "get": {
             "responses": {"200": {"description": "ok"}},
-            "x-didit-sdk": {**overlay["GET /v3/billing/balance/"]},
+            "x-didit-sdk": {**_naming(openapi, "GET /v3/billing/balance/")},
         }
     }
     breaking = _breaking(_sync(openapi, spec))
@@ -377,9 +398,8 @@ def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -
 
 def test_a_moved_operation_reports_what_changed(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
     item = spec["paths"].pop("/v3/billing/balance/")
-    item["get"]["x-didit-sdk"] = overlay["GET /v3/billing/balance/"]
+    item["get"]["x-didit-sdk"] = _naming(openapi, "GET /v3/billing/balance/")
     item["get"]["parameters"] = [
         {"name": "currency", "in": "query", "required": True, "schema": {"type": "string"}}
     ]
@@ -400,8 +420,7 @@ def test_an_operation_that_stops_being_a_server_operation_is_removed(
     openapi: pathlib.Path,
 ) -> None:
     spec = _read(openapi / "verification.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
-    _name_op(spec, overlay, "/v3/billing/balance/", "get", auth="device_token", server=False)
+    _name_op(openapi, spec, "/v3/billing/balance/", "get", auth="device_token", server=False)
     breaking = _breaking(_sync(openapi, spec))
     assert "`billing.retrieve_balance` (GET /v3/billing/balance/) is removed" in breaking
     # Never kept: server SDKs do not expose device-token operations (DESIGN 4).
@@ -412,9 +431,10 @@ def test_an_operation_that_stops_being_a_server_operation_is_removed(
 
 def test_an_operation_that_loses_its_naming_is_called_out(openapi: pathlib.Path) -> None:
     # Upstream named the operation (so the overlay no longer does), then drops it.
+    naming = _naming(openapi, "GET /v3/billing/balance/")
     old = _read(openapi / "verification.json")
     overlay = _read(openapi / "overlay.json")
-    naming = overlay["operations"].pop("GET /v3/billing/balance/")
+    overlay["operations"].pop("GET /v3/billing/balance/", None)
     old["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"] = naming
     _write(openapi / "verification.json", old)
     _write(openapi / "overlay.json", overlay)
@@ -507,11 +527,10 @@ def test_sync_refuses_a_download_that_is_not_openapi(openapi: pathlib.Path, body
 
 def test_deprecated_entry_that_is_provided_again_names_the_fix(openapi: pathlib.Path) -> None:
     deprecated = _read(openapi / "deprecated-operations.json")
-    overlay = _read(openapi / "overlay.json")["operations"]
     deprecated["methods"]["billing.retrieve_balance"] = {
         "reason": "removed",
         "operation_key": "GET /v3/billing/balance-old/",
-        "x-didit-sdk": overlay["GET /v3/billing/balance/"],
+        "x-didit-sdk": _naming(openapi, "GET /v3/billing/balance/"),
         "operation": {"responses": {"200": {"description": "ok"}}},
         "remove_in": "0.2.0",
     }
@@ -531,8 +550,7 @@ def test_next_minor() -> None:
 def test_moved_operation_is_not_deprecated(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
     spec["paths"]["/v3/billing/balance-v2/"] = spec["paths"].pop("/v3/billing/balance/")
-    overlay = _read(openapi / "overlay.json")
-    entry = overlay["operations"]["GET /v3/billing/balance/"]
+    entry = _naming(openapi, "GET /v3/billing/balance/")
     spec["paths"]["/v3/billing/balance-v2/"]["get"]["x-didit-sdk"] = entry
     downloads = {
         "verification.json": json.dumps(spec).encode(),
@@ -546,9 +564,17 @@ def test_moved_operation_is_not_deprecated(openapi: pathlib.Path) -> None:
 
 
 def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -> None:
+    # Before the sync only the overlay names the operation; upstream then carries it.
+    naming = _naming(openapi, "POST /v3/session/")
+    old = _read(openapi / "verification.json")
+    old["paths"]["/v3/session/"]["post"].pop("x-didit-sdk", None)
+    _write(openapi / "verification.json", old)
+    overlay = _read(openapi / "overlay.json")
+    overlay["operations"]["POST /v3/session/"] = naming
+    _write(openapi / "overlay.json", overlay)
     spec = _read(openapi / "verification.json")
     op = spec["paths"]["/v3/session/"]["post"]
-    op["x-didit-sdk"] = _read(openapi / "overlay.json")["operations"]["POST /v3/session/"]
+    op["x-didit-sdk"] = naming
     op["parameters"] = [
         {"name": "dry_run", "in": "query", "required": True, "schema": {"type": "boolean"}}
     ]
