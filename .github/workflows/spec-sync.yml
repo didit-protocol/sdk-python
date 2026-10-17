@@ -10,6 +10,12 @@
 # Pull requests read and write on this repository only). Without it the workflow falls
 # back to GITHUB_TOKEN; then close and reopen the pull request, or push to its branch, to
 # start CI.
+#
+# Hand-pushed fixes: create-pull-request rebuilds chore/spec-sync from the default branch
+# on every run, which would drop a fix pushed to that branch by hand (usually an
+# openapi/overlay.json entry for a draft sync). While the branch carries a commit that
+# did not come from this workflow, the run leaves it alone; merging or closing that pull
+# request lets the next run sync whatever changed since.
 name: Spec sync
 
 on:
@@ -55,8 +61,33 @@ jobs:
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - name: Install dependencies
         run: uv sync --frozen
+      - name: Leave hand-pushed fixes on the sync branch alone
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.event.repository.default_branch }}
+          BOT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          status=0
+          authors="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${BASE}...chore/spec-sync" \
+            --jq '.commits[].commit.author.email' 2> "$RUNNER_TEMP/compare.err")" || status=$?
+          if [ "$status" -ne 0 ]; then
+            if grep -q "HTTP 404" "$RUNNER_TEMP/compare.err"; then
+              echo "skip=false" >> "$GITHUB_OUTPUT" # no sync branch yet
+              exit 0
+            fi
+            cat "$RUNNER_TEMP/compare.err" >&2
+            exit 1
+          fi
+          if printf '%s\n' "$authors" | grep -v -x -F -e "$BOT_EMAIL" -e '' | grep -q .; then
+            echo "::warning::chore/spec-sync has commits that did not come from the spec sync (a fix pushed by hand). This run leaves the branch alone: merge or close the spec sync pull request, and the next run syncs whatever changed since."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Download the upstream OpenAPI documents
         id: sync
+        if: steps.guard.outputs.skip != 'true'
         # Writes changed=true|false to $GITHUB_OUTPUT and a markdown summary of the added,
         # removed and changed operations to $SUMMARY.
         run: uv run python codegen/spec_sync.py --summary "$SUMMARY"
