@@ -12,6 +12,27 @@ Status: in development, not released.
 
 uv for environments and locking, hatchling for the build, pytest, mypy --strict, pyright, ruff.
 
+## Commands
+
+| Task | Command |
+|---|---|
+| Install (dev environment, from `uv.lock`) | `uv sync` |
+| Generate `src/didit/types`, `src/didit/resources`, `tests/generated` from `openapi/` | `uv run python codegen/generate.py` |
+| Check the committed generated code is current (CI) | `uv run python codegen/generate.py --check` |
+| Sync `openapi/` with docs.didit.me (spec-sync workflow) | `uv run python codegen/spec_sync.py --summary spec-sync-summary.md` |
+| Test (unit, generated, contract, webhooks, Authentication, codegen) | `uv run pytest` |
+| Test with the core coverage gate | `uv run pytest --cov --cov-report=term-missing --cov-fail-under=90` |
+| Live sandbox smoke tests (only with `DIDIT_SANDBOX_API_KEY`) | `uv run pytest -m live` |
+| Lint and format | `uv run ruff check .` and `uv run ruff format .` |
+| Type-check | `uv run mypy` and `uv run pyright` |
+| Build the sdist and wheel | `uv build` |
+
+## Layout
+
+- Generated (never edit by hand): `src/didit/types/`, `src/didit/resources/`, `tests/generated/`. The generator is `codegen/didit_codegen/`; its tests are in `codegen/tests/`.
+- Core (hand-written): everything else in `src/didit/` (`_base_client.py` transport and retries, `_client.py` options, `_exceptions.py`, `_pagination.py`, `_files.py`, `_response.py`, `_models.py`), `src/didit/webhooks/` and `src/didit/authentication/`.
+- `openapi/deprecated-operations.json` (written by `codegen/spec_sync.py`) keeps methods whose operation was removed or renamed upstream as deprecated methods until `remove_in` (the next minor version); `tests/test_contract.py` fails once that version is reached, and the entry is then deleted.
+
 ## Rules
 
 - Generated code is never edited by hand. Change the generator in `codegen/` or `openapi/overlay.json`, then regenerate; CI fails when the committed generated code is stale.
