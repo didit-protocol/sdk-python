@@ -7,7 +7,21 @@ from typing import Literal
 from didit._models import BaseModel
 from didit.types.components.webhook_subscribed_events import WebhookSubscribedEvents
 
-__all__ = ["WebhooksDestinationsListResponseItem"]
+__all__ = [
+    "WebhooksDestinationsListResponseItem",
+    "WebhooksDestinationsListResponseItemDailyPoints",
+]
+
+
+class WebhooksDestinationsListResponseItemDailyPoints(BaseModel):
+    date: _dt.date | None = None
+    """The UTC day."""
+
+    total_deliveries: int | None = None
+    """Delivery attempts made that day."""
+
+    failed_deliveries: int | None = None
+    """Attempts made that day that were answered with HTTP 400 or above, or not answered at all."""
 
 
 class WebhooksDestinationsListResponseItem(BaseModel):
@@ -33,19 +47,49 @@ class WebhooksDestinationsListResponseItem(BaseModel):
     """Cached length of `subscribed_events`, useful for UI rendering."""
 
     deliveries_count: int | None = None
-    """Total delivery attempts (successful + failed) recorded for this destination."""
+    """Delivery attempts (retries included) made to this destination in the last 30 days."""
 
     failed_deliveries_count: int | None = None
-    """Delivery attempts whose target responded with HTTP ≥ 400 (or did not respond)."""
+    """Delivery attempts in the last 30 days that the destination answered with HTTP 400 or above, or did not answer (timeout, refused connection or blocked address)."""
 
     average_response_time_ms: int | None = None
-    """Average target response time in milliseconds, rounded to an integer. `null` if no deliveries yet."""
+    """Average response time in milliseconds over the last 30 days, rounded to an integer. `null` when there were no deliveries in that window."""
 
     error_rate_percentage: int | None = None
-    """`round(failed_deliveries_count / deliveries_count * 100)`; `0` when there are no deliveries."""
+    """`round(failed_deliveries_count / deliveries_count * 100)` over the last 30 days; `0` when there are no deliveries."""
 
     last_delivery_at: _dt.datetime | None = None
     """Timestamp of the most recent delivery attempt (success or failure). `null` if never delivered."""
+
+    metrics_window_days: int | None = None
+    """Length in days of the window that `deliveries_count`, `failed_deliveries_count`, `average_response_time_ms`, `error_rate_percentage` and `daily_points` cover. Always `30`."""
+
+    health_status: Literal["healthy", "degraded", "failing"] | str | None = None
+    """Delivery health. `failing`: 3 or more consecutive events failed their first delivery attempt since the destination last answered successfully (see `failing_streak`). `degraded`: not failing, but a delivery attempt failed in the last 24 hours and no later attempt has delivered that event; a retry or resend that delivers it clears this. `healthy`: neither. Independent of `enabled`. A failed attempt is one answered with HTTP 400 or above, or not answered at all."""
+
+    failing_streak: int | None = None
+    """How many consecutive events failed their first delivery attempt since the destination last answered successfully, within the last 30 days. Retries are not counted, and any successful attempt, including a retry or a resend, ends the streak. `0` when no event has failed since the last success."""
+
+    failing_since: _dt.datetime | None = None
+    """When the first failed attempt of the current `failing_streak` was made. `null` when `failing_streak` is `0`."""
+
+    last_success_at: _dt.datetime | None = None
+    """When the destination last answered a delivery with an HTTP status under 400, within the last 30 days. `null` if it has not in that window."""
+
+    environment: Literal["live", "sandbox"] | str | None = None
+    """Environment of the application that owns the destination."""
+
+    daily_points: list[WebhooksDestinationsListResponseItemDailyPoints] | None = None
+    """One entry per UTC day of the last 30 days, oldest first, including days with no deliveries. Counts every attempt, retries included."""
+
+    secret_last4: str | None = None
+    """Last four characters of the destination's current signing secret, so you can tell secrets apart. Not enough to verify a signature."""
+
+    created_by_email: str | None = None
+    """Email of the Business Console member who created the destination. `null` for a destination created with an API key."""
+
+    created_by_name: str | None = None
+    """Name of the Business Console member who created the destination. `null` for a destination created with an API key."""
 
     created_at: _dt.datetime | None = None
 

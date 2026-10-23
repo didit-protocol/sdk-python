@@ -4,26 +4,43 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
+from didit.types.components.aml_screening_run import AMLScreeningRun
+from didit.types.components.business_session_list_item import BusinessSessionListItem
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
+from didit.types.components.feature_status_override import FeatureStatusOverride
+from didit.types.components.kyb_key_people_party import KYBKeyPeopleParty
 from didit.types.components.review_item import ReviewItem
+from didit.types.components.sandbox_simulate_response import SandboxSimulateResponse
+from didit.types.components.session_decision import SessionDecision
+from didit.types.components.session_deletion_job import SessionDeletionJob
+from didit.types.components.session_event import SessionEvent
 from didit.types.components.session_import_error import SessionImportError
 from didit.types.components.session_import_job import SessionImportJob
-from didit.types.sessions.batch_delete_response import (
-    SessionsBatchDeleteResponse,
-    SessionsBatchDeleteResponse202,
+from didit.types.components.session_webhook_delivery import SessionWebhookDelivery
+from didit.types.components.user_session_list_item import UserSessionListItem
+from didit.types.sessions.add_images_response import SessionsAddImagesResponse
+from didit.types.sessions.batch_delete_response import SessionsBatchDeleteResponse
+from didit.types.sessions.bulk_update_aml_hit_status_response import (
+    SessionsBulkUpdateAmlHitStatusResponse,
 )
 from didit.types.sessions.create_response import SessionsCreateResponse
 from didit.types.sessions.delete_response import SessionsDeleteResponse
-from didit.types.sessions.list_networks_response import SessionsListNetworksResponse
-from didit.types.sessions.list_response import (
-    SessionsListResponseResultsKybSessionRowSessionKindBusiness,
-    SessionsListResponseResultsKycSessionRowSessionKindUser,
+from didit.types.sessions.list_feature_overrides_response import (
+    SessionsListFeatureOverridesResponse,
+)
+from didit.types.sessions.preview_decision_email_response import (
+    SessionsPreviewDecisionEmailResponse,
 )
 from didit.types.sessions.preview_resubmission_response import SessionsPreviewResubmissionResponse
-from didit.types.sessions.retrieve_decision_response import SessionsRetrieveDecisionResponse
-from didit.types.sessions.retrieve_deletion_job_response import SessionsRetrieveDeletionJobResponse
 from didit.types.sessions.reviews.create_response import SessionsReviewsCreateResponse
 from didit.types.sessions.share_response import SessionsShareResponse
+from didit.types.sessions.signatures.validate_response import SessionsSignaturesValidateResponse
+from didit.types.sessions.update_aml_hit_status_response import SessionsUpdateAmlHitStatusResponse
+from didit.types.sessions.update_aml_status_response import SessionsUpdateAmlStatusResponse
 from didit.types.sessions.update_data_response import SessionsUpdateDataResponse
+from didit.types.sessions.update_document_ai_data_response import (
+    SessionsUpdateDocumentAiDataResponse,
+)
 from didit.types.sessions.update_feature_status_response import SessionsUpdateFeatureStatusResponse
 from didit.types.sessions.update_kyb_company_data_response import (
     SessionsUpdateKybCompanyDataResponse,
@@ -32,6 +49,34 @@ from didit.types.sessions.update_kyb_party_response import SessionsUpdateKybPart
 from didit.types.sessions.update_poa_data_response import SessionsUpdatePoaDataResponse
 from didit.types.sessions.update_status_response import SessionsUpdateStatusResponse
 from tests.harness import BINARY_BODY, Expect, check_operation
+
+
+def test_sessions_add_images() -> None:
+    """``PATCH /v3/session/{sessionId}/add-images/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/add-images/",
+            api="verification",
+            auth="api_key",
+            multipart_fields=["model_type"],
+            multipart_files=["file"],
+            status=200,
+            response_json={
+                "extra_files": [
+                    "https://media.example.com/session/11111111-2222-3333-4444-555555555555/kyc-extra-files/66666666-7777-8888-9999-000000000000.jpg?expires=1789383731&signature=abc123"
+                ]
+            },
+        ),
+        lambda c: c.sessions.add_images(
+            "11111111-2222-3333-4444-555555555555", file=b"file-content", model_type="kyc"
+        ),
+        lambda c: c.sessions.add_images(
+            "11111111-2222-3333-4444-555555555555", file=b"file-content", model_type="kyc"
+        ),
+        lambda r: isinstance(r, SessionsAddImagesResponse),
+        lambda r: isinstance(r, SessionsAddImagesResponse),
+    )
 
 
 def test_sessions_batch_delete() -> None:
@@ -84,12 +129,10 @@ def test_sessions_batch_delete() -> None:
         lambda c: c.sessions.batch_delete(session_numbers=["1001", "1002", "1003"]),
         lambda c: c.sessions.batch_delete(session_numbers=["1001", "1002", "1003"]),
         lambda r: (
-            (isinstance(r, SessionsBatchDeleteResponse))
-            or (isinstance(r, SessionsBatchDeleteResponse202))
+            (isinstance(r, SessionsBatchDeleteResponse)) or (isinstance(r, SessionDeletionJob))
         ),
         lambda r: (
-            (isinstance(r, SessionsBatchDeleteResponse))
-            or (isinstance(r, SessionsBatchDeleteResponse202))
+            (isinstance(r, SessionsBatchDeleteResponse)) or (isinstance(r, SessionDeletionJob))
         ),
     )
 
@@ -120,8 +163,49 @@ def test_sessions_bulk_update_aml_hit_status() -> None:
             hit_updates=[{"hit_id": "abc123", "review_status": "Unreviewed"}],
             node_id_query="feature_aml_1",
         ),
-        lambda r: True,
-        lambda r: True,
+        lambda r: isinstance(r, SessionsBulkUpdateAmlHitStatusResponse),
+        lambda r: isinstance(r, SessionsBulkUpdateAmlHitStatusResponse),
+    )
+
+
+def test_sessions_cancel_feature_override() -> None:
+    """``POST /v3/session/{sessionId}/features/overrides/{overrideId}/cancel/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/3fa85f64-5717-4562-b3fc-2c963f66afa6/features/overrides/9b2f4c1e-8d3a-4e5f-a6b7-c8d9e0f1a2b3/cancel/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "id": "9b2f4c1e-8d3a-4e5f-a6b7-c8d9e0f1a2b3",
+                "node_id": "feature_liveness_1",
+                "feature_type": "",
+                "feature_model": "Face",
+                "previous_status": "Declined",
+                "new_status": "Approved",
+                "state": "cancelled",
+                "forced": False,
+                "reason": "Liveness retried with a reviewer present.",
+                "requested_by": {
+                    "email": "reviewer@example.com",
+                    "name": "Alex Reviewer",
+                    "type": "CONSOLE_USER",
+                },
+                "requested_at": "2026-10-13T09:15:00Z",
+                "applied_at": None,
+                "cancelled_at": "2026-10-13T09:20:00Z",
+                "cancel_reason": "cancelled_by_reviewer",
+            },
+        ),
+        lambda c: c.sessions.cancel_feature_override(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", "9b2f4c1e-8d3a-4e5f-a6b7-c8d9e0f1a2b3"
+        ),
+        lambda c: c.sessions.cancel_feature_override(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", "9b2f4c1e-8d3a-4e5f-a6b7-c8d9e0f1a2b3"
+        ),
+        lambda r: isinstance(r, FeatureStatusOverride),
+        lambda r: isinstance(r, FeatureStatusOverride),
     )
 
 
@@ -258,6 +342,30 @@ def test_sessions_delete() -> None:
     )
 
 
+def test_sessions_export_aml_screening_history() -> None:
+    """``GET /v3/session/{sessionId}/aml-screening-history/export/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/aml-screening-history/export/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["feature_aml_1"]},
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="text/csv",
+        ),
+        lambda c: c.sessions.export_aml_screening_history(
+            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1"
+        ),
+        lambda c: c.sessions.export_aml_screening_history(
+            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1"
+        ),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
 def test_sessions_generate_pdf() -> None:
     """``GET /v3/session/{sessionId}/generate-pdf/``"""
     check_operation(
@@ -317,8 +425,8 @@ def test_sessions_import_shared() -> None:
             workflow_id="9f9b1234-aaaa-bbbb-cccc-1234567890ab",
             vendor_data="user-1",
         ),
-        lambda r: True,
-        lambda r: True,
+        lambda r: isinstance(r, SessionDecision),
+        lambda r: isinstance(r, SessionDecision),
     )
 
 
@@ -470,19 +578,248 @@ def test_sessions_list() -> None:
         lambda r: (
             isinstance(r, SyncPage)
             and all(
-                (isinstance(x1, SessionsListResponseResultsKycSessionRowSessionKindUser))
-                or (isinstance(x1, SessionsListResponseResultsKybSessionRowSessionKindBusiness))
+                (isinstance(x1, UserSessionListItem)) or (isinstance(x1, BusinessSessionListItem))
                 for x1 in r.results
             )
         ),
         lambda r: (
             isinstance(r, AsyncPage)
             and all(
-                (isinstance(x1, SessionsListResponseResultsKycSessionRowSessionKindUser))
-                or (isinstance(x1, SessionsListResponseResultsKybSessionRowSessionKindBusiness))
+                (isinstance(x1, UserSessionListItem)) or (isinstance(x1, BusinessSessionListItem))
                 for x1 in r.results
             )
         ),
+    )
+
+
+def test_sessions_list_aml_screening_history() -> None:
+    """``GET /v3/session/{sessionId}/aml-screening-history/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/aml-screening-history/",
+            api="verification",
+            auth="api_key",
+            query={
+                "node_id": ["feature_aml_1"],
+                "limit": ["50"],
+                "offset": ["0"],
+                "ordering": ["completed_at"],
+            },
+            status=200,
+            response_json={
+                "count": 2,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "dddddddd-1111-2222-3333-444444444444",
+                        "completed_at": "2026-09-14T04:12:33.481207Z",
+                        "started_at": "2026-09-14T04:00:01.002311Z",
+                        "outcome": "NO_CHANGE",
+                        "trigger": "ONGOING_MONITORING",
+                        "provider": "aml_data_source",
+                        "status": "Approved",
+                        "score": 0.0,
+                        "total_hits": 0,
+                        "dataset_freshness": {
+                            "captured_at": "2026-09-14T03:58:02.114820+00:00",
+                            "provider": "aml_data_source",
+                            "catalog_version": "2026-09-13",
+                            "sources": {
+                                "sanctions": {
+                                    "last_updated_at": "2026-09-13T21:10:00+00:00",
+                                    "oldest_updated_at": "2026-09-11T06:00:00+00:00",
+                                    "dataset_count": 120,
+                                    "dated_dataset_count": 120,
+                                },
+                                "pep": {
+                                    "last_updated_at": "2026-09-13T08:00:00+00:00",
+                                    "oldest_updated_at": None,
+                                    "dataset_count": 45,
+                                    "dated_dataset_count": 44,
+                                },
+                                "warnings": {
+                                    "last_updated_at": "2026-09-12T18:45:00+00:00",
+                                    "oldest_updated_at": "2026-09-01T00:00:00+00:00",
+                                    "dataset_count": 30,
+                                    "dated_dataset_count": 30,
+                                },
+                            },
+                        },
+                    },
+                    {
+                        "uuid": "eeeeeeee-1111-2222-3333-444444444444",
+                        "completed_at": "2026-09-13T04:11:58.020914Z",
+                        "started_at": "2026-09-13T04:00:00.871022Z",
+                        "outcome": "FAILED",
+                        "trigger": "ONGOING_MONITORING",
+                        "provider": "aml_data_source",
+                        "status": "Approved",
+                        "score": 0.0,
+                        "total_hits": 0,
+                        "dataset_freshness": None,
+                    },
+                ],
+            },
+        ),
+        lambda c: c.sessions.list_aml_screening_history(
+            "11111111-2222-3333-4444-555555555555",
+            node_id="feature_aml_1",
+            limit=50,
+            offset=0,
+            ordering="completed_at",
+        ),
+        lambda c: c.sessions.list_aml_screening_history(
+            "11111111-2222-3333-4444-555555555555",
+            node_id="feature_aml_1",
+            limit=50,
+            offset=0,
+            ordering="completed_at",
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, AMLScreeningRun) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, AMLScreeningRun) for x1 in r.results)
+        ),
+    )
+
+
+def test_sessions_list_events() -> None:
+    """``GET /v3/session/{sessionId}/events/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/events/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["50"], "offset": ["0"], "ordering": ["sent_at"]},
+            status=200,
+            response_json={
+                "count": 3,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "aaaaaaaa-1111-2222-3333-444444444444",
+                        "event_type": "SESSION_STATUS_CHANGED",
+                        "created_at": "2026-09-14T10:02:13.904512Z",
+                        "component": None,
+                        "feature_step": None,
+                        "step": None,
+                        "details": {"old_status": "In Progress", "current_status": "Approved"},
+                        "ip_address": None,
+                        "user_agent": None,
+                        "device_info": None,
+                        "file_url": None,
+                        "sent_at": 1789380131482,
+                    },
+                    {
+                        "uuid": "bbbbbbbb-1111-2222-3333-444444444444",
+                        "event_type": "FEATURE_STEP_CHANGED",
+                        "created_at": "2026-09-14T10:01:49.210377Z",
+                        "component": None,
+                        "feature_step": None,
+                        "step": None,
+                        "details": {"old_feature_step": "OCR", "current_feature_step": "LIVENESS"},
+                        "ip_address": None,
+                        "user_agent": None,
+                        "device_info": None,
+                        "file_url": None,
+                        "sent_at": 1789380107103,
+                    },
+                    {
+                        "uuid": "cccccccc-1111-2222-3333-444444444444",
+                        "event_type": "STEP_RENDERED",
+                        "created_at": "2026-09-14T10:01:00.581930Z",
+                        "component": "DocumentCapture",
+                        "feature_step": "OCR",
+                        "step": "DOCUMENT_CAPTURE_FRONT",
+                        "details": {},
+                        "ip_address": "203.0.113.24",
+                        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+                        "device_info": {"device_model": "iPhone"},
+                        "file_url": None,
+                        "sent_at": 1789380058776,
+                    },
+                ],
+            },
+        ),
+        lambda c: c.sessions.list_events(
+            "11111111-2222-3333-4444-555555555555", limit=50, offset=0, ordering="sent_at"
+        ),
+        lambda c: c.sessions.list_events(
+            "11111111-2222-3333-4444-555555555555", limit=50, offset=0, ordering="sent_at"
+        ),
+        lambda r: isinstance(r, SyncPage) and all(isinstance(x1, SessionEvent) for x1 in r.results),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, SessionEvent) for x1 in r.results)
+        ),
+    )
+
+
+def test_sessions_list_feature_overrides() -> None:
+    """``GET /v3/session/{sessionId}/features/overrides/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/3fa85f64-5717-4562-b3fc-2c963f66afa6/features/overrides/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "session_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "person_in_flow": True,
+                "flow_finished_at": None,
+                "overrides": [
+                    {
+                        "id": "9b2f4c1e-8d3a-4e5f-a6b7-c8d9e0f1a2b3",
+                        "node_id": "feature_liveness_1",
+                        "feature_type": "",
+                        "feature_model": "Face",
+                        "previous_status": "Declined",
+                        "new_status": "Approved",
+                        "state": "pending_until_flow_finishes",
+                        "forced": False,
+                        "reason": "Liveness retried with a reviewer present.",
+                        "requested_by": {
+                            "email": "reviewer@example.com",
+                            "name": "Alex Reviewer",
+                            "type": "CONSOLE_USER",
+                        },
+                        "requested_at": "2026-10-13T09:15:00Z",
+                        "applied_at": None,
+                        "cancelled_at": None,
+                        "cancel_reason": None,
+                    },
+                    {
+                        "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                        "node_id": "feature_ocr_1",
+                        "feature_type": "",
+                        "feature_model": "KYC",
+                        "previous_status": "In Review",
+                        "new_status": "Approved",
+                        "state": "applied",
+                        "forced": True,
+                        "reason": "Document manually verified by compliance.",
+                        "requested_by": {
+                            "email": "reviewer@example.com",
+                            "name": "Alex Reviewer",
+                            "type": "CONSOLE_USER",
+                        },
+                        "requested_at": "2026-10-13T09:15:00Z",
+                        "applied_at": "2026-10-13T09:15:00Z",
+                        "cancelled_at": None,
+                        "cancel_reason": None,
+                    },
+                ],
+            },
+        ),
+        lambda c: c.sessions.list_feature_overrides("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+        lambda c: c.sessions.list_feature_overrides("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+        lambda r: isinstance(r, SessionsListFeatureOverridesResponse),
+        lambda r: isinstance(r, SessionsListFeatureOverridesResponse),
     )
 
 
@@ -499,13 +836,13 @@ def test_sessions_list_networks() -> None:
                 "results": [
                     {
                         "network": {
-                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "uuid": "00000000-0000-4000-8000-000000000008",
                             "network_id": "sample",
                             "name": "sample",
                             "status": "active",
-                            "risk": {},
-                            "pattern_types": ["exact_same_device"],
-                            "signal_types": ["ip_address"],
+                            "risk": None,
+                            "pattern_types": [],
+                            "signal_types": [],
                             "member_counts": {},
                             "member_status": {},
                             "signal_coverage": {},
@@ -520,12 +857,48 @@ def test_sessions_list_networks() -> None:
                     }
                 ]
             },
-            strict_type=SessionsListNetworksResponse,
+            strict_type=EntityNetworkMembershipList,
         ),
         lambda c: c.sessions.list_networks("00000000-0000-4000-8000-000000000001"),
         lambda c: c.sessions.list_networks("00000000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, SessionsListNetworksResponse),
-        lambda r: isinstance(r, SessionsListNetworksResponse),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+    )
+
+
+def test_sessions_preview_decision_email() -> None:
+    """``POST /v3/session/{sessionId}/decision-email-preview/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/3fa85f64-5717-4562-b3fc-2c963f66afa6/decision-email-preview/",
+            api="verification",
+            auth="api_key",
+            json_body={"new_status": "Approved"},
+            status=200,
+            response_json={
+                "recipient": "person@example.com",
+                "recipient_source": "email_verification",
+                "sender": "Example App <no-reply@mail.example.com>",
+                "sender_name": "Example App",
+                "sender_email": "no-reply@mail.example.com",
+                "sender_kind": "customer",
+                "subject": "Your verification has been approved in Example App",
+                "html": "<!DOCTYPE html><html><body>...</body></html>",
+                "language": "en",
+                "will_be_sent": True,
+                "not_sent_reason": None,
+                "preview_token": "sample-token",
+            },
+        ),
+        lambda c: c.sessions.preview_decision_email(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", new_status="Approved"
+        ),
+        lambda c: c.sessions.preview_decision_email(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", new_status="Approved"
+        ),
+        lambda r: isinstance(r, SessionsPreviewDecisionEmailResponse),
+        lambda r: isinstance(r, SessionsPreviewDecisionEmailResponse),
     )
 
 
@@ -537,27 +910,98 @@ def test_sessions_preview_resubmission() -> None:
             path="/v3/session/11111111-2222-3333-4444-555555555555/resubmission-preview/",
             api="verification",
             auth="api_key",
-            json_body={"email_address": "user@example.com"},
+            json_body={
+                "nodes_to_resubmit": [{"node_id": "feature_poa_1", "feature": "POA"}],
+                "email_language": "en",
+            },
             status=200,
             response_json={
-                "recipient": "user@example.com",
-                "sender": "sample",
-                "subject": "sample",
-                "html": "sample",
-                "nodes_to_resubmit": [{"node_id": "feature_ocr", "feature": "OCR"}],
+                "recipient": "person@example.com",
+                "recipient_source": "email_verification",
+                "sender": "Example App <no-reply@mail.example.com>",
+                "sender_name": "Example App",
+                "sender_email": "no-reply@mail.example.com",
+                "sender_kind": "customer",
+                "subject": "Action Required: Complete your verification in Example App",
+                "html": "<!DOCTYPE html><html><body>...</body></html>",
+                "language": "en",
+                "will_be_sent": True,
+                "not_sent_reason": None,
+                "nodes_to_resubmit": [{"node_id": "feature_poa_1", "feature": "PROOF_OF_ADDRESS"}],
                 "requires_user_action": True,
                 "preview_token": "sample-token",
             },
-            strict_type=SessionsPreviewResubmissionResponse,
         ),
         lambda c: c.sessions.preview_resubmission(
-            "11111111-2222-3333-4444-555555555555", email_address="user@example.com"
+            "11111111-2222-3333-4444-555555555555",
+            nodes_to_resubmit=[{"node_id": "feature_poa_1", "feature": "POA"}],
+            email_language="en",
         ),
         lambda c: c.sessions.preview_resubmission(
-            "11111111-2222-3333-4444-555555555555", email_address="user@example.com"
+            "11111111-2222-3333-4444-555555555555",
+            nodes_to_resubmit=[{"node_id": "feature_poa_1", "feature": "POA"}],
+            email_language="en",
         ),
         lambda r: isinstance(r, SessionsPreviewResubmissionResponse),
         lambda r: isinstance(r, SessionsPreviewResubmissionResponse),
+    )
+
+
+def test_sessions_regenerate_kyb_party() -> None:
+    """``POST /v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/0a3f1e2c-7c2f-4a1b-9d55-2f8d2a5d6b41/regenerate/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "0a3f1e2c-7c2f-4a1b-9d55-2f8d2a5d6b41",
+                "entity_type": "person",
+                "source": "USER",
+                "name": "Jane Smith",
+                "first_name": "Jane",
+                "last_name": "Smith",
+                "company_name": None,
+                "registration_number": None,
+                "email": "user@example.com",
+                "nationality": "GB",
+                "phone_number": None,
+                "date_of_birth": "1980-05-04",
+                "position": "Director",
+                "custom_fields": {},
+                "is_active": True,
+                "is_skipped": False,
+                "requires_verification": True,
+                "roles": [{"role": "director", "ownership_percent": None, "voting_percent": None}],
+                "kyc_session_id": "55555555-6666-7777-8888-999999999999",
+                "kyc_session_status": "Not Started",
+                "kyc_session_url": "https://verify.didit.me/session/abc123def456",
+                "kyc_session_deleted": False,
+                "kyb_sub_session_id": None,
+                "kyb_sub_session_status": None,
+                "kyb_sub_session_url": None,
+                "kyb_sub_session_deleted": False,
+                "verification_workflow_type": "kyc",
+                "verification_workflow_id": "12121212-3434-5656-7878-909090909090",
+                "verification_workflow_label": "Key People KYC",
+                "verification_workflow_features": [
+                    {"feature": "ID_VERIFICATION", "status": "Not Finished"},
+                    {"feature": "LIVENESS", "status": "Not Finished"},
+                    {"feature": "AML", "status": "Not Finished"},
+                ],
+                "didit_internal_id": None,
+            },
+        ),
+        lambda c: c.sessions.regenerate_kyb_party(
+            "33333333-4444-5555-6666-777777777777", "0a3f1e2c-7c2f-4a1b-9d55-2f8d2a5d6b41"
+        ),
+        lambda c: c.sessions.regenerate_kyb_party(
+            "33333333-4444-5555-6666-777777777777", "0a3f1e2c-7c2f-4a1b-9d55-2f8d2a5d6b41"
+        ),
+        lambda r: isinstance(r, KYBKeyPeopleParty),
+        lambda r: isinstance(r, KYBKeyPeopleParty),
     )
 
 
@@ -930,6 +1374,8 @@ def test_sessions_retrieve_decision() -> None:
                         "status": "In Review",
                         "is_nfc_skipped": False,
                         "skip_reason": None,
+                        "chip_protocol": "icao",
+                        "jpki": None,
                         "portrait_image": "https://<media-host>/portrait.jpg",
                         "signature_image": "https://<media-host>/signature.jpg",
                         "chip_data": {
@@ -2075,8 +2521,8 @@ def test_sessions_retrieve_decision() -> None:
         lambda c: c.sessions.retrieve_decision(
             "11111111-2222-3333-4444-555555555555", include="events"
         ),
-        lambda r: isinstance(r, SessionsRetrieveDecisionResponse),
-        lambda r: isinstance(r, SessionsRetrieveDecisionResponse),
+        lambda r: isinstance(r, SessionDecision),
+        lambda r: isinstance(r, SessionDecision),
     )
 
 
@@ -2110,8 +2556,8 @@ def test_sessions_retrieve_deletion_job() -> None:
         ),
         lambda c: c.sessions.retrieve_deletion_job("00000000-0000-4000-8000-000000000001"),
         lambda c: c.sessions.retrieve_deletion_job("00000000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, SessionsRetrieveDeletionJobResponse),
-        lambda r: isinstance(r, SessionsRetrieveDeletionJobResponse),
+        lambda r: isinstance(r, SessionDeletionJob),
+        lambda r: isinstance(r, SessionDeletionJob),
     )
 
 
@@ -2149,6 +2595,36 @@ def test_sessions_share() -> None:
     )
 
 
+def test_sessions_simulate() -> None:
+    """``POST /v3/session/{sessionId}/simulate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/3fa85f64-5717-4562-b3fc-2c963f66afa6/simulate/",
+            api="verification",
+            auth="api_key",
+            json_body={"scenario": "decline_aml_hit", "send_webhooks": False},
+            status=200,
+            response_json={
+                "session_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "previous_status": "In Progress",
+                "status": "Declined",
+                "scenario": "decline_aml_hit",
+                "risk": "POSSIBLE_MATCH_FOUND",
+                "send_webhooks": False,
+            },
+        ),
+        lambda c: c.sessions.simulate(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", scenario="decline_aml_hit", send_webhooks=False
+        ),
+        lambda c: c.sessions.simulate(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", scenario="decline_aml_hit", send_webhooks=False
+        ),
+        lambda r: isinstance(r, SandboxSimulateResponse),
+        lambda r: isinstance(r, SandboxSimulateResponse),
+    )
+
+
 def test_sessions_update_aml_hit_status() -> None:
     """``PATCH /v3/session/{sessionId}/update-aml-hit-status/``"""
     check_operation(
@@ -2178,8 +2654,36 @@ def test_sessions_update_aml_hit_status() -> None:
             review_status="Unreviewed",
             node_id_query="feature_aml_1",
         ),
-        lambda r: True,
-        lambda r: True,
+        lambda r: isinstance(r, SessionsUpdateAmlHitStatusResponse),
+        lambda r: isinstance(r, SessionsUpdateAmlHitStatusResponse),
+    )
+
+
+def test_sessions_update_aml_status() -> None:
+    """``PATCH /v3/session/{sessionId}/update-aml-status/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/update-aml-status/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["feature_aml_1"]},
+            json_body={"status": "Approved"},
+            status=200,
+            response_json={
+                "message": "AML status updated successfully",
+                "status": "Approved",
+                "previous_status": "In Review",
+            },
+        ),
+        lambda c: c.sessions.update_aml_status(
+            "11111111-2222-3333-4444-555555555555", status="Approved", node_id_query="feature_aml_1"
+        ),
+        lambda c: c.sessions.update_aml_status(
+            "11111111-2222-3333-4444-555555555555", status="Approved", node_id_query="feature_aml_1"
+        ),
+        lambda r: isinstance(r, SessionsUpdateAmlStatusResponse),
+        lambda r: isinstance(r, SessionsUpdateAmlStatusResponse),
     )
 
 
@@ -2270,6 +2774,46 @@ def test_sessions_update_data() -> None:
     )
 
 
+def test_sessions_update_document_ai_data() -> None:
+    """``PATCH /v3/document-ai/{sessionId}/documents/{documentUuid}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/document-ai/11111111-2222-3333-4444-555555555555/documents/44444444-5555-6666-7777-888888888888/",
+            api="verification",
+            auth="api_key",
+            json_body={"extracted_data": {"invoice_number": "INV-2026-0042"}, "status": "Approved"},
+            status=200,
+            response_json={
+                "uuid": "44444444-5555-6666-7777-888888888888",
+                "document_key": "invoice",
+                "original_filename": "invoice-2026-09.pdf",
+                "file_url": "document_ai/11111111-2222-3333-4444-555555555555-66666666-7777-8888-9999-000000000000.pdf",
+                "status": "Approved",
+                "extracted_data": {
+                    "invoice_number": "INV-2026-0042",
+                    "total_amount": 1250.0,
+                    "issue_date": "2026-09-01",
+                },
+            },
+        ),
+        lambda c: c.sessions.update_document_ai_data(
+            "11111111-2222-3333-4444-555555555555",
+            "44444444-5555-6666-7777-888888888888",
+            extracted_data={"invoice_number": "INV-2026-0042"},
+            status="Approved",
+        ),
+        lambda c: c.sessions.update_document_ai_data(
+            "11111111-2222-3333-4444-555555555555",
+            "44444444-5555-6666-7777-888888888888",
+            extracted_data={"invoice_number": "INV-2026-0042"},
+            status="Approved",
+        ),
+        lambda r: isinstance(r, SessionsUpdateDocumentAiDataResponse),
+        lambda r: isinstance(r, SessionsUpdateDocumentAiDataResponse),
+    )
+
+
 def test_sessions_update_feature_status() -> None:
     """``PATCH /v3/session/{sessionId}/features/{nodeId}/update-status/``"""
     check_operation(
@@ -2278,20 +2822,49 @@ def test_sessions_update_feature_status() -> None:
             path="/v3/session/11111111-2222-3333-4444-555555555555/features/feature_ocr_1/update-status/",
             api="verification",
             auth="api_key",
-            json_body={"new_status": "Approved"},
+            json_body={
+                "new_status": "Approved",
+                "comment": "Document manually verified by compliance.",
+            },
             status=200,
             response_json={
-                "session_id": "11111111-2222-3333-4444-555555555555",
+                "session_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                 "node_id": "feature_ocr_1",
                 "feature_type": "KYC",
                 "new_status": "Approved",
+                "override": {
+                    "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                    "node_id": "feature_ocr_1",
+                    "feature_type": "",
+                    "feature_model": "KYC",
+                    "previous_status": "In Review",
+                    "new_status": "Approved",
+                    "state": "applied",
+                    "forced": False,
+                    "reason": "Document manually verified by compliance.",
+                    "requested_by": {
+                        "email": "reviewer@example.com",
+                        "name": "Alex Reviewer",
+                        "type": "CONSOLE_USER",
+                    },
+                    "requested_at": "2026-10-13T09:15:00Z",
+                    "applied_at": "2026-10-13T09:15:00Z",
+                    "cancelled_at": None,
+                    "cancel_reason": None,
+                },
             },
         ),
         lambda c: c.sessions.update_feature_status(
-            "11111111-2222-3333-4444-555555555555", "feature_ocr_1", new_status="Approved"
+            "11111111-2222-3333-4444-555555555555",
+            "feature_ocr_1",
+            new_status="Approved",
+            comment="Document manually verified by compliance.",
         ),
         lambda c: c.sessions.update_feature_status(
-            "11111111-2222-3333-4444-555555555555", "feature_ocr_1", new_status="Approved"
+            "11111111-2222-3333-4444-555555555555",
+            "feature_ocr_1",
+            new_status="Approved",
+            comment="Document manually verified by compliance.",
         ),
         lambda r: isinstance(r, SessionsUpdateFeatureStatusResponse),
         lambda r: isinstance(r, SessionsUpdateFeatureStatusResponse),
@@ -2846,4 +3419,327 @@ def test_sessions_reviews_list() -> None:
         ),
         lambda r: isinstance(r, SyncPage) and all(isinstance(x1, ReviewItem) for x1 in r.results),
         lambda r: isinstance(r, AsyncPage) and all(isinstance(x1, ReviewItem) for x1 in r.results),
+    )
+
+
+def test_sessions_signatures_download_document() -> None:
+    """``GET /v3/session/{sessionId}/signatures/{nodeId}/documents/{documentId}/file/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/signatures/feature_signature/documents/00000000-0000-4000-8000-000000000003/file/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="application/pdf",
+        ),
+        lambda c: c.sessions.signatures.download_document(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            "00000000-0000-4000-8000-000000000003",
+        ),
+        lambda c: c.sessions.signatures.download_document(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            "00000000-0000-4000-8000-000000000003",
+        ),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_signatures_download_evidence() -> None:
+    """``GET /v3/session/{sessionId}/signatures/{nodeId}/evidence/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/signatures/feature_signature/evidence/",
+            api="verification",
+            auth="api_key",
+            query={"signature_id": ["00000000-0000-4000-8000-000000000001"]},
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="application/pdf",
+        ),
+        lambda c: c.sessions.signatures.download_evidence(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            signature_id="00000000-0000-4000-8000-000000000001",
+        ),
+        lambda c: c.sessions.signatures.download_evidence(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            signature_id="00000000-0000-4000-8000-000000000001",
+        ),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_signatures_download_field_image() -> None:
+    """``GET /v3/session/{sessionId}/signatures/{nodeId}/fields/{fieldId}/image/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/signatures/feature_signature/fields/00000000-0000-4000-8000-000000000003/image/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="image/png",
+        ),
+        lambda c: c.sessions.signatures.download_field_image(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            "00000000-0000-4000-8000-000000000003",
+        ),
+        lambda c: c.sessions.signatures.download_field_image(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            "00000000-0000-4000-8000-000000000003",
+        ),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_signatures_validate() -> None:
+    """``POST /v3/session/{sessionId}/signatures/{nodeId}/validate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/signatures/feature_signature/validate/",
+            api="verification",
+            auth="api_key",
+            json_body={"signature_id": "0e6c2a8e-6c2f-4b8e-9a51-3f2f6a7d9b10"},
+            status=200,
+            response_json={
+                "signatures": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "node_id": "sample",
+                        "status": "intro",
+                        "verdict": "Not Finished",
+                        "level": "aes",
+                        "format": "pades",
+                        "profile": "sample",
+                        "signer": {
+                            "name": "sample",
+                            "capacity": "self",
+                            "company": "sample",
+                            "role": "sample",
+                            "roles": ["sample"],
+                            "identity_session_id": "00000000-0000-4000-8000-000000000006",
+                        },
+                        "identity_used": {
+                            "session_id": "00000000-0000-4000-8000-000000000006",
+                            "kyc_id": "00000000-0000-4000-8000-000000000006",
+                            "verified": True,
+                            "expected_name": "sample",
+                        },
+                        "certificate": {
+                            "issuer": "sample",
+                            "issued_to": "sample",
+                            "serial": "sample",
+                            "valid_from": "2026-01-01T00:00:00Z",
+                            "valid_until": "2026-01-01T00:00:00Z",
+                        },
+                        "confirmation": {
+                            "channel": "email",
+                            "destination": "sample",
+                            "confirmed_at": "2026-01-01T00:00:00Z",
+                            "attempts": 1,
+                        },
+                        "timestamp": {
+                            "time": "2026-01-01T00:00:00Z",
+                            "qualified": True,
+                            "valid": True,
+                        },
+                        "documents": [
+                            {
+                                "id": "00000000-0000-4000-8000-000000000007",
+                                "uuid": "00000000-0000-4000-8000-000000000007",
+                                "title": "sample",
+                                "file_name": "sample",
+                                "pages": 1,
+                                "size_bytes": 1,
+                                "sha256_original": "sample",
+                                "sha256_signed": "sample",
+                                "status": "signed",
+                                "opened_at": "2026-01-01T00:00:00Z",
+                                "read_at": "2026-01-01T00:00:00Z",
+                                "read_to_end": True,
+                                "consented_at": "2026-01-01T00:00:00Z",
+                                "consent": True,
+                                "signed_file": "sample",
+                                "mode": "fields",
+                                "source_format": "pdf",
+                                "conversion": {
+                                    "from": "docx",
+                                    "file_name": "sample",
+                                    "sha256": "sample",
+                                    "size_bytes": 1,
+                                    "converter": "sample",
+                                },
+                                "fields": [],
+                            }
+                        ],
+                        "adopted_signature": {
+                            "method": "typed",
+                            "font": "sample",
+                            "adopted_at": "2026-01-01T00:00:00Z",
+                        },
+                        "electronic_signature_consent_at": "2026-01-01T00:00:00Z",
+                        "evidence_file": "sample",
+                        "warnings": [{"code": "SIGNATURE_DECLINED", "node_id": "sample"}],
+                        "validation": {
+                            "valid": True,
+                            "reason": "sample",
+                            "checked_at": "2026-01-01T00:00:00Z",
+                            "documents": [
+                                {
+                                    "id": "00000000-0000-4000-8000-000000000008",
+                                    "checked_at": "2026-01-01T00:00:00Z",
+                                    "valid": True,
+                                    "integrity": True,
+                                    "trusted": True,
+                                    "revoked": True,
+                                    "trusted_list": {},
+                                    "certificate": {},
+                                    "timestamp": {},
+                                }
+                            ],
+                        },
+                        "declined_at": "2026-01-01T00:00:00Z",
+                        "declined_action": "DECLINE",
+                        "signed_at": "2026-01-01T00:00:00Z",
+                        "expires_at": "2026-01-01T00:00:00Z",
+                        "email_sent_at": "2026-01-01T00:00:00Z",
+                        "email_unavailable_reason": "sample",
+                        "ip_address": "sample",
+                        "place": "sample",
+                        "place_unavailable_reason": "not_collected",
+                    }
+                ]
+            },
+            strict_type=SessionsSignaturesValidateResponse,
+        ),
+        lambda c: c.sessions.signatures.validate(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            signature_id="0e6c2a8e-6c2f-4b8e-9a51-3f2f6a7d9b10",
+        ),
+        lambda c: c.sessions.signatures.validate(
+            "11111111-2222-3333-4444-555555555555",
+            "feature_signature",
+            signature_id="0e6c2a8e-6c2f-4b8e-9a51-3f2f6a7d9b10",
+        ),
+        lambda r: isinstance(r, SessionsSignaturesValidateResponse),
+        lambda r: isinstance(r, SessionsSignaturesValidateResponse),
+    )
+
+
+def test_sessions_webhooks_list() -> None:
+    """``GET /v3/session/{sessionId}/webhooks/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/22222222-3333-4444-5555-666666666666/webhooks/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json=[
+                {
+                    "uuid": "66666666-7777-8888-9999-000000000002",
+                    "session_id": "22222222-3333-4444-5555-666666666666",
+                    "request_url": "https://yourapp.com/webhooks/didit",
+                    "response_status": 200,
+                    "status": "In Progress",
+                    "webhook_type": "status.updated",
+                    "request_header": '{"Content-Type": "application/json", "X-Signature": "9188851d160b5b3aacfc946e4dde1f061b7e568662518942c927ddaf507f533d", "X-Signature-V2": "381236af514d3fb538579365ac5a24f2464ce1b8224c6e770c60d8201c43ecc5", "X-Signature-Simple": "4740131dc38f29e78a8508371979be74967d5307464494bd3148a03b4d6c8716", "X-Timestamp": "1792056139", "User-Agent": "DiditWebhook/2.0 +https://didit.me"}',
+                    "request_body": '{"application_id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","created_at":1792056057,"environment":"live","event_id":"33333333-4444-5555-6666-777777777777","sandbox_scenario":null,"session_id":"22222222-3333-4444-5555-666666666666","status":"In Progress","timestamp":1792056139,"vendor_data":"user-123","webhook_type":"status.updated","workflow_id":"44444444-5555-6666-7777-888888888888","workflow_version":3}',
+                    "created_at": "2026-10-15T09:22:19.104233Z",
+                },
+                {
+                    "uuid": "66666666-7777-8888-9999-000000000001",
+                    "session_id": "22222222-3333-4444-5555-666666666666",
+                    "request_url": "https://yourapp.com/webhooks/didit",
+                    "response_status": 503,
+                    "status": "In Progress",
+                    "webhook_type": "status.updated",
+                    "request_header": '{"Content-Type": "application/json", "X-Signature": "a5e02a03404e1337a0198e6be15d34abbd053c658a0e51e5d0e78554213ef29b", "X-Signature-V2": "927e7cb770c94ce745939bff73f04aa200015f3bc64795ba46c2aaf78a6cedc5", "X-Signature-Simple": "e37b0d4c716c72bb5ae7127b9cc455d28ab4686e9e22312b4ec2327409a73302", "X-Timestamp": "1792056078", "User-Agent": "DiditWebhook/2.0 +https://didit.me"}',
+                    "request_body": '{"application_id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","created_at":1792056057,"environment":"live","event_id":"33333333-4444-5555-6666-777777777777","sandbox_scenario":null,"session_id":"22222222-3333-4444-5555-666666666666","status":"In Progress","timestamp":1792056078,"vendor_data":"user-123","webhook_type":"status.updated","workflow_id":"44444444-5555-6666-7777-888888888888","workflow_version":3}',
+                    "created_at": "2026-10-15T09:21:18.412345Z",
+                },
+            ],
+        ),
+        lambda c: c.sessions.webhooks.list("22222222-3333-4444-5555-666666666666"),
+        lambda c: c.sessions.webhooks.list("22222222-3333-4444-5555-666666666666"),
+        lambda r: isinstance(r, list) and all(isinstance(x1, SessionWebhookDelivery) for x1 in r),
+        lambda r: isinstance(r, list) and all(isinstance(x1, SessionWebhookDelivery) for x1 in r),
+    )
+
+
+def test_sessions_webhooks_resend() -> None:
+    """``POST /v3/session/{sessionId}/webhook/{webhook_uuid}/resend``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/22222222-3333-4444-5555-666666666666/webhook/66666666-7777-8888-9999-000000000001/resend",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "66666666-7777-8888-9999-000000000004",
+                "session_id": "22222222-3333-4444-5555-666666666666",
+                "request_url": "https://yourapp.com/webhooks/didit",
+                "response_status": 200,
+                "status": "In Progress",
+                "webhook_type": "status.updated",
+                "request_header": '{"Content-Type": "application/json", "X-Signature": "b8eb1e376517ee0cad8ba98ff7f8fd35fc72eca231000963a96a335f82328835", "X-Signature-V2": "9efd2ce9ed1303e1d05273ef9608a59363ed9789a05253db4748b3e8e50cb109", "X-Signature-Simple": "bf3a9dc04b2c20ab539203b0cd5cca2a10f630bf62d8feb6d68d82af80f64774", "X-Timestamp": "1792159542", "User-Agent": "DiditWebhook/2.0 +https://didit.me"}',
+                "request_body": '{"application_id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","created_at":1792056057,"environment":"live","event_id":"33333333-4444-5555-6666-777777777777","sandbox_scenario":null,"session_id":"22222222-3333-4444-5555-666666666666","status":"In Progress","timestamp":1792159542,"vendor_data":"user-123","webhook_type":"status.updated","workflow_id":"44444444-5555-6666-7777-888888888888","workflow_version":3}',
+                "created_at": "2026-10-16T14:05:42.330981Z",
+            },
+        ),
+        lambda c: c.sessions.webhooks.resend(
+            "22222222-3333-4444-5555-666666666666", "66666666-7777-8888-9999-000000000001"
+        ),
+        lambda c: c.sessions.webhooks.resend(
+            "22222222-3333-4444-5555-666666666666", "66666666-7777-8888-9999-000000000001"
+        ),
+        lambda r: isinstance(r, SessionWebhookDelivery),
+        lambda r: isinstance(r, SessionWebhookDelivery),
+    )
+
+
+def test_sessions_webhooks_retrieve() -> None:
+    """``GET /v3/session/{sessionId}/webhook/{webhook_uuid}``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/22222222-3333-4444-5555-666666666666/webhook/66666666-7777-8888-9999-000000000001",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "66666666-7777-8888-9999-000000000001",
+                "session_id": "22222222-3333-4444-5555-666666666666",
+                "request_url": "https://yourapp.com/webhooks/didit",
+                "response_status": 503,
+                "status": "In Progress",
+                "webhook_type": "status.updated",
+                "request_header": '{"Content-Type": "application/json", "X-Signature": "a5e02a03404e1337a0198e6be15d34abbd053c658a0e51e5d0e78554213ef29b", "X-Signature-V2": "927e7cb770c94ce745939bff73f04aa200015f3bc64795ba46c2aaf78a6cedc5", "X-Signature-Simple": "e37b0d4c716c72bb5ae7127b9cc455d28ab4686e9e22312b4ec2327409a73302", "X-Timestamp": "1792056078", "User-Agent": "DiditWebhook/2.0 +https://didit.me"}',
+                "request_body": '{"application_id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","created_at":1792056057,"environment":"live","event_id":"33333333-4444-5555-6666-777777777777","sandbox_scenario":null,"session_id":"22222222-3333-4444-5555-666666666666","status":"In Progress","timestamp":1792056078,"vendor_data":"user-123","webhook_type":"status.updated","workflow_id":"44444444-5555-6666-7777-888888888888","workflow_version":3}',
+                "created_at": "2026-10-15T09:21:18.412345Z",
+            },
+        ),
+        lambda c: c.sessions.webhooks.retrieve(
+            "22222222-3333-4444-5555-666666666666", "66666666-7777-8888-9999-000000000001"
+        ),
+        lambda c: c.sessions.webhooks.retrieve(
+            "22222222-3333-4444-5555-666666666666", "66666666-7777-8888-9999-000000000001"
+        ),
+        lambda r: isinstance(r, SessionWebhookDelivery),
+        lambda r: isinstance(r, SessionWebhookDelivery),
     )

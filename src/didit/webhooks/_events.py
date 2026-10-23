@@ -7,7 +7,7 @@ from typing import Any, Literal, Union
 from pydantic import Field, PrivateAttr
 
 from .._models import BaseModel, validate_response
-from ..types.sessions.retrieve_decision_response import SessionsRetrieveDecisionResponse
+from ..types.components.session_decision import SessionDecision
 
 __all__ = [
     "ActivityCreatedEvent",
@@ -66,7 +66,7 @@ class _SessionEvent(WebhookEventBase):
     workflow_version: int | None = None
     vendor_data: str | None = None
     metadata: object = None
-    decision: SessionsRetrieveDecisionResponse | None = None
+    decision: SessionDecision | None = None
     resubmit_info: object = None
 
 

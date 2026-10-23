@@ -20,7 +20,7 @@ class UsersUpdateParams(TypedDict, total=False):
     """Date of birth in YYYY-MM-DD format"""
 
     status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str
-    """User lifecycle status. Changing it via this generic PATCH does NOT sync the system blocklist or record a status-change activity; prefer the update-status endpoint."""
+    """User lifecycle status. A change is recorded as a `STATUS_CHANGED` activity, and `BLOCKED` adds the `vendor_data` to the system blocklist (moving away from `BLOCKED` removes that entry)."""
 
     metadata: Mapping[str, object] | None
     """Arbitrary JSON object you attach to the user. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys."""
@@ -33,3 +33,6 @@ class UsersUpdateParams(TypedDict, total=False):
 
     issuing_states: Sequence[str]
     """Issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`. Fully replaces the stored list."""
+
+    reason: str | None
+    """Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it."""

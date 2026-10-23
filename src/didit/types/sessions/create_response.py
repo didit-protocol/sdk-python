@@ -45,7 +45,7 @@ class SessionsCreateResponse(BaseModel):
     """Current status of the session. Newly created sessions return `Not Started`. If a non-finished session already existed for the same `vendor_data` on the workflow's latest published version, the returned status reflects that existing session."""
 
     callback: str | None
-    """Final redirect URL the user is sent to after completing the flow. Didit appends `?verificationSessionId={session_id}&status={status}` to this URL. Falls back to the workflow's configured callback URL when not provided in the request; `null` when neither is set."""
+    """Final redirect URL the user is sent to after completing the flow. Didit appends `?verificationSessionId={session_id}&status={status}` to this URL. Falls back to the workflow's configured callback URL when not provided in the request; `null` when neither is set. When the application has allowed domains and this URL is a web URL outside them (for example a workflow default set before the list changed), the hosted flow does not redirect the user to it."""
 
     workflow_id: str
     """Stable identifier of the workflow this session runs on. Always the workflow's stable group identifier - even if you referenced a specific workflow version UUID in the request (backward-compatible lookup), the response carries the stable `workflow_id`. Use it to correlate the session with the workflow you configured in the Console."""

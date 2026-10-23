@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as _dt
 
 from didit._models import BaseModel
+from didit.types.components.application_product import ApplicationProduct
 
 __all__ = ["Application"]
 
@@ -21,7 +22,7 @@ class Application(BaseModel):
     """Public client identifier, safe to embed in OAuth-style flows."""
 
     api_key: str | None = None
-    """Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side."""
+    """Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged."""
 
     website_url: str | None = None
     """Website or app URL associated with this application."""
@@ -39,3 +40,6 @@ class Application(BaseModel):
     """Internal description for the application (not shown to end users)."""
 
     created_at: _dt.datetime | None = None
+
+    products: list[ApplicationProduct] | None = None
+    """The application's products. Always all three, in this order: `identity`, `transactions`, `authentication`. A new application has `identity` enabled with every module on, and `transactions` and `authentication` disabled. Read-only: a `products` key in a create or update body is ignored."""

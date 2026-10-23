@@ -12,7 +12,7 @@ import email.utils
 import logging
 import random
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
@@ -223,7 +223,7 @@ class BaseClient:
         auth: AuthKind,
         api: Literal["verification", "account"],
         query: Mapping[str, object] | None,
-        body: Mapping[str, object] | None,
+        body: Mapping[str, object] | Sequence[object] | None,
         multipart: Multipart,
         file_fields: tuple[str, ...],
         headers: Mapping[str, str | NotGiven | None] | None,
@@ -253,18 +253,26 @@ class BaseClient:
         json_content: bytes | None = None
         data: dict[str, str] | None = None
         files: list[tuple[str, HttpxFile]] | None = None
-        if body is not None or extra_body:
-            merged: dict[str, object] = dict(body or {})
+        if body is None or isinstance(body, Mapping):
+            if body is not None or extra_body:
+                merged: dict[str, object] = dict(body or {})
+                if extra_body:
+                    merged.update(extra_body)
+                use_multipart = multipart is True or (
+                    multipart == "auto"
+                    and any(merged.get(name) not in (None, NOT_GIVEN) for name in file_fields)
+                )
+                if use_multipart:
+                    data, files = multipart_fields(merged, file_fields)
+                else:
+                    json_content = encode_json(merged)
+        else:
+            # A JSON array body (an operation whose body is a oneOf of an object and an array).
             if extra_body:
-                merged.update(extra_body)
-            use_multipart = multipart is True or (
-                multipart == "auto"
-                and any(merged.get(name) not in (None, NOT_GIVEN) for name in file_fields)
-            )
-            if use_multipart:
-                data, files = multipart_fields(merged, file_fields)
-            else:
-                json_content = encode_json(merged)
+                raise ConfigurationError(
+                    "extra_body cannot be merged into a request body that is a JSON array."
+                )
+            json_content = encode_json(body)
 
         merged_headers: dict[str, str | None] = {
             k: v for k, v in (headers or {}).items() if not isinstance(v, NotGiven)
@@ -462,7 +470,7 @@ class SyncAPIClient(BaseClient):
         auth: AuthKind = "api_key",
         api: Literal["verification", "account"] = "verification",
         query: Mapping[str, object] | None = None,
-        body: Mapping[str, object] | None = None,
+        body: Mapping[str, object] | Sequence[object] | None = None,
         multipart: Multipart = False,
         file_fields: tuple[str, ...] = (),
         headers: Mapping[str, str | NotGiven | None] | None = None,
@@ -580,7 +588,7 @@ class AsyncAPIClient(BaseClient):
         auth: AuthKind = "api_key",
         api: Literal["verification", "account"] = "verification",
         query: Mapping[str, object] | None = None,
-        body: Mapping[str, object] | None = None,
+        body: Mapping[str, object] | Sequence[object] | None = None,
         multipart: Multipart = False,
         file_fields: tuple[str, ...] = (),
         headers: Mapping[str, str | NotGiven | None] | None = None,

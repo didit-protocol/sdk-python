@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from didit import AsyncPage, SyncPage
+from didit.types.account.resend_otp_response import AccountResendOtpResponse
 from didit.types.components.application import Application
 from didit.types.components.login_response import LoginResponse
 from didit.types.components.organization import Organization
@@ -67,12 +69,15 @@ def test_account_resend_otp() -> None:
             auth="none",
             json_body={"email": "dev@example.com", "password": "sample-secret"},
             status=200,
-            response_json={"detail": "A new verification code has been sent to your email."},
+            response_json={
+                "message": "A new verification code has been sent to your email.",
+                "email": "you@yourdomain.com",
+            },
         ),
         lambda c: c.account.resend_otp(email="dev@example.com", password="sample-secret"),
         lambda c: c.account.resend_otp(email="dev@example.com", password="sample-secret"),
-        lambda r: True,
-        lambda r: True,
+        lambda r: isinstance(r, AccountResendOtpResponse),
+        lambda r: isinstance(r, AccountResendOtpResponse),
     )
 
 
@@ -136,6 +141,23 @@ def test_account_applications_create() -> None:
                 "privacy_url": "https://acme.example/privacy",
                 "description": None,
                 "created_at": "2025-06-01T10:00:00Z",
+                "products": [
+                    {
+                        "product": "identity",
+                        "status": "enabled",
+                        "modules": {
+                            "user_verification": True,
+                            "business_verification": True,
+                            "case_management": True,
+                        },
+                    },
+                    {
+                        "product": "transactions",
+                        "status": "disabled",
+                        "modules": {"travel_rule": True, "case_management": True},
+                    },
+                    {"product": "authentication", "status": "disabled", "modules": {}},
+                ],
             },
         ),
         lambda c: c.account.applications.create(
@@ -167,14 +189,53 @@ def test_account_applications_list() -> None:
             path="/organizations/me/a1b2c3d4-5678-90ab-cdef-111111111111/applications/",
             api="account",
             auth="account_token",
+            query={"limit": ["50"], "offset": ["0"]},
             status=200,
-            response_json="value",
-            strict_type=object,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
+                        "name": "My App",
+                        "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
+                        "api_key": "sample-secret",
+                        "website_url": "https://example.com",
+                        "redirect_uris": ["https://example.com/callback"],
+                        "terms_url": "https://example.com/terms",
+                        "privacy_url": "https://example.com/privacy",
+                        "description": "Production application",
+                        "created_at": "2025-06-01T10:00:00Z",
+                        "products": [
+                            {
+                                "product": "identity",
+                                "status": "enabled",
+                                "modules": {
+                                    "user_verification": True,
+                                    "business_verification": True,
+                                    "case_management": True,
+                                },
+                            },
+                            {
+                                "product": "transactions",
+                                "status": "disabled",
+                                "modules": {"travel_rule": True, "case_management": True},
+                            },
+                            {"product": "authentication", "status": "disabled", "modules": {}},
+                        ],
+                    }
+                ],
+            },
         ),
-        lambda c: c.account.applications.list("a1b2c3d4-5678-90ab-cdef-111111111111"),
-        lambda c: c.account.applications.list("a1b2c3d4-5678-90ab-cdef-111111111111"),
-        lambda r: True,
-        lambda r: True,
+        lambda c: c.account.applications.list(
+            "a1b2c3d4-5678-90ab-cdef-111111111111", limit=50, offset=0
+        ),
+        lambda c: c.account.applications.list(
+            "a1b2c3d4-5678-90ab-cdef-111111111111", limit=50, offset=0
+        ),
+        lambda r: isinstance(r, SyncPage) and all(isinstance(x1, Application) for x1 in r.results),
+        lambda r: isinstance(r, AsyncPage) and all(isinstance(x1, Application) for x1 in r.results),
     )
 
 
@@ -198,6 +259,23 @@ def test_account_applications_retrieve() -> None:
                 "privacy_url": "https://example.com/privacy",
                 "description": "Production application",
                 "created_at": "2025-06-01T10:00:00Z",
+                "products": [
+                    {
+                        "product": "identity",
+                        "status": "enabled",
+                        "modules": {
+                            "user_verification": True,
+                            "business_verification": True,
+                            "case_management": True,
+                        },
+                    },
+                    {
+                        "product": "transactions",
+                        "status": "disabled",
+                        "modules": {"travel_rule": True, "case_management": True},
+                    },
+                    {"product": "authentication", "status": "disabled", "modules": {}},
+                ],
             },
         ),
         lambda c: c.account.applications.retrieve(
@@ -232,6 +310,23 @@ def test_account_applications_update() -> None:
                 "privacy_url": "https://acme.example/privacy",
                 "description": None,
                 "created_at": "2025-06-01T10:00:00Z",
+                "products": [
+                    {
+                        "product": "identity",
+                        "status": "enabled",
+                        "modules": {
+                            "user_verification": True,
+                            "business_verification": True,
+                            "case_management": True,
+                        },
+                    },
+                    {
+                        "product": "transactions",
+                        "status": "disabled",
+                        "modules": {"travel_rule": True, "case_management": True},
+                    },
+                    {"product": "authentication", "status": "disabled", "modules": {}},
+                ],
             },
         ),
         lambda c: c.account.applications.update(
@@ -259,18 +354,26 @@ def test_account_organizations_list() -> None:
             path="/organizations/me/",
             api="account",
             auth="account_token",
+            query={"limit": ["1"], "offset": ["1"]},
             status=200,
-            response_json=[
-                {
-                    "uuid": "a1b2c3d4-5678-90ab-cdef-111111111111",
-                    "name": "developer",
-                    "contact_email": "developer@gmail.com",
-                    "created_at": "2025-06-01T10:00:00Z",
-                }
-            ],
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "a1b2c3d4-5678-90ab-cdef-111111111111",
+                        "name": "developer",
+                        "contact_email": "developer@gmail.com",
+                        "created_at": "2025-06-01T10:00:00Z",
+                    }
+                ],
+            },
         ),
-        lambda c: c.account.organizations.list(),
-        lambda c: c.account.organizations.list(),
-        lambda r: isinstance(r, list) and all(isinstance(x1, Organization) for x1 in r),
-        lambda r: isinstance(r, list) and all(isinstance(x1, Organization) for x1 in r),
+        lambda c: c.account.organizations.list(limit=1, offset=1),
+        lambda c: c.account.organizations.list(limit=1, offset=1),
+        lambda r: isinstance(r, SyncPage) and all(isinstance(x1, Organization) for x1 in r.results),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, Organization) for x1 in r.results)
+        ),
     )

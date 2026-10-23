@@ -16,6 +16,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.account.resend_otp_response import AccountResendOtpResponse
 from didit.types.components.login_response import LoginResponse
 from didit.types.components.register_response import RegisterResponse
 from didit.types.components.verify_email_response import VerifyEmailResponse
@@ -207,7 +208,7 @@ class Account(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> AccountResendOtpResponse:
         """Resend the email verification code.
 
         Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.
@@ -225,11 +226,11 @@ class Account(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "AccountResendOtpResponse",
             self._client.request(
                 "post",
                 "/programmatic/resend-otp/",
-                cast_to=object,
+                cast_to=AccountResendOtpResponse,
                 auth="none",
                 api="account",
                 body={"email": email, "password": password},
@@ -400,7 +401,7 @@ class AsyncAccount(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> AccountResendOtpResponse:
         """Resend the email verification code.
 
         Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.
@@ -418,11 +419,11 @@ class AsyncAccount(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "AccountResendOtpResponse",
             await self._client.request(
                 "post",
                 "/programmatic/resend-otp/",
-                cast_to=object,
+                cast_to=AccountResendOtpResponse,
                 auth="none",
                 api="account",
                 body={"email": email, "password": password},

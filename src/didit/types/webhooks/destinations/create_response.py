@@ -11,7 +11,7 @@ __all__ = ["WebhooksDestinationsCreateResponse", "WebhooksDestinationsCreateResp
 
 
 class WebhooksDestinationsCreateResponseSummary(BaseModel):
-    """Delivery health summary (all zero/null on a brand-new destination)."""
+    """Delivery metrics for the last `metrics_window_days` (30) days. `last_delivery_at` is the most recent attempt, whenever it was made."""
 
     total_deliveries: int | None = None
 
@@ -26,6 +26,9 @@ class WebhooksDestinationsCreateResponseSummary(BaseModel):
     max_response_time_ms: int | None = None
 
     last_delivery_at: _dt.datetime | None = None
+
+    metrics_window_days: int | None = None
+    """Length in days of the window the other summary metrics cover. Always `30`."""
 
 
 class WebhooksDestinationsCreateResponse(BaseModel):
@@ -43,12 +46,39 @@ class WebhooksDestinationsCreateResponse(BaseModel):
     secret_shared_key: str | None = None
     """Auto-generated HMAC signing secret bound to this destination (43-character URL-safe token). Use it to verify the signature headers on incoming webhooks. Always returned in full to API-key callers; Console users need the `read:webhooks` permission, otherwise they see an empty string."""
 
+    secret_last4: str | None = None
+    """Last four characters of the destination's current signing secret, so you can tell secrets apart. Not enough to verify a signature."""
+
+    previous_secret_expires_at: _dt.datetime | None = None
+    """Set for 24 hours after the destination's signing secret is rotated in the Business Console. Until this time, every delivery to the destination also carries `X-Signature-Previous`, `X-Signature-V2-Previous` and `X-Signature-Simple-Previous`, made with the replaced secret (see [Signature verification](/integration/webhooks#signature-verification)). `null` when no rotation happened in the last 24 hours."""
+
     subscribed_events: WebhookSubscribedEvents | None = None
     """Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged."""
+
+    created_by_email: str | None = None
+    """Email of the Business Console member who created the destination. `null` for a destination created with an API key."""
+
+    created_by_name: str | None = None
+    """Name of the Business Console member who created the destination. `null` for a destination created with an API key."""
 
     created_at: _dt.datetime | None = None
 
     updated_at: _dt.datetime | None = None
 
+    health_status: Literal["healthy", "degraded", "failing"] | str | None = None
+    """Delivery health. `failing`: 3 or more consecutive events failed their first delivery attempt since the destination last answered successfully (see `failing_streak`). `degraded`: not failing, but a delivery attempt failed in the last 24 hours and no later attempt has delivered that event; a retry or resend that delivers it clears this. `healthy`: neither. Independent of `enabled`. A failed attempt is one answered with HTTP 400 or above, or not answered at all."""
+
+    failing_streak: int | None = None
+    """How many consecutive events failed their first delivery attempt since the destination last answered successfully, within the last 30 days. Retries are not counted, and any successful attempt, including a retry or a resend, ends the streak. `0` when no event has failed since the last success."""
+
+    failing_since: _dt.datetime | None = None
+    """When the first failed attempt of the current `failing_streak` was made. `null` when `failing_streak` is `0`."""
+
+    last_success_at: _dt.datetime | None = None
+    """When the destination last answered a delivery with an HTTP status under 400, within the last 30 days. `null` if it has not in that window."""
+
+    environment: Literal["live", "sandbox"] | str | None = None
+    """Environment of the application that owns the destination."""
+
     summary: WebhooksDestinationsCreateResponseSummary | None = None
-    """Delivery health summary (all zero/null on a brand-new destination)."""
+    """Delivery metrics for the last `metrics_window_days` (30) days. `last_delivery_at` is the most recent attempt, whenever it was made."""

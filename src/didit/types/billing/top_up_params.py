@@ -11,7 +11,7 @@ class BillingTopUpParams(TypedDict, total=False):
     """Amount to charge, in USD. **Must be at least 50.** Tax is added automatically at checkout based on the customer's billing address."""
 
     success_url: str
-    """URL Stripe redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want Stripe to substitute the session ID."""
+    """URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID."""
 
     cancel_url: str
-    """URL Stripe redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable."""
+    """URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable."""

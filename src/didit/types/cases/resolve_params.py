@@ -9,7 +9,19 @@ __all__ = ["CasesResolveParams"]
 
 
 class CasesResolveParams(TypedDict, total=False):
-    resolution: Required[Literal["FALSE_POSITIVE", "VALID_THREAT"] | str]
+    resolution: Required[
+        Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+    ]
 
     note: str | None
     """Required when the blueprint sets require_resolution_note."""
+
+    checker: str | None
+    """Four-eyes blueprints only. The user uuid of the member who must approve this resolution (the same id as `assigned_to.uuid` on a case, or `members[].user_id` on a review team). The member must have case access to this application and cannot be the officer who submits the resolution. Omit it or send null to leave the resolution to the checker queue."""

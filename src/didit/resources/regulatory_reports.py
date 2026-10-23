@@ -19,8 +19,8 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.regulatory_report_detail import RegulatoryReportDetail
+from didit.types.components.regulatory_report_list import RegulatoryReportList
 from didit.types.regulatory_reports.create_params import RegulatoryReportsCreateParamsNarrative
-from didit.types.regulatory_reports.list_response import RegulatoryReportsListResponse
 from didit.types.regulatory_reports.retrieve_download_url_response import (
     RegulatoryReportsRetrieveDownloadUrlResponse,
 )
@@ -90,7 +90,7 @@ class RegulatoryReports(SyncAPIResource):
             self._client.request_page(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/",
-                cast_to=RegulatoryReportsListResponse,
+                cast_to=RegulatoryReportList,
                 item_type=RegulatoryReportDetail,
                 scope="application",
                 auth="api_key",
@@ -542,7 +542,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
             self._client.request_page(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/",
-                cast_to=RegulatoryReportsListResponse,
+                cast_to=RegulatoryReportList,
                 item_type=RegulatoryReportDetail,
                 scope="application",
                 auth="api_key",

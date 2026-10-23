@@ -5,31 +5,19 @@ from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
 from didit.types.businesses.batch_delete_response import BusinessesBatchDeleteResponse
-from didit.types.businesses.list_networks_response import BusinessesListNetworksResponse
-from didit.types.businesses.retrieve_ongoing_monitoring_job_response import (
-    BusinessesRetrieveOngoingMonitoringJobResponse,
-)
-from didit.types.businesses.retrieve_session_ongoing_monitoring_job_response import (
-    BusinessesRetrieveSessionOngoingMonitoringJobResponse,
-)
-from didit.types.businesses.set_aml_monitoring_response import (
-    BusinessesSetAmlMonitoringResponse202,
-    BusinessesSetAmlMonitoringResponseVariant1,
-    BusinessesSetAmlMonitoringResponseVariant2,
-)
-from didit.types.businesses.set_ongoing_monitoring_response import (
-    BusinessesSetOngoingMonitoringResponse202,
-    BusinessesSetOngoingMonitoringResponseVariant1,
-    BusinessesSetOngoingMonitoringResponseVariant2,
-)
-from didit.types.businesses.set_session_ongoing_monitoring_response import (
-    BusinessesSetSessionOngoingMonitoringResponse202,
-    BusinessesSetSessionOngoingMonitoringResponseVariant1,
-    BusinessesSetSessionOngoingMonitoringResponseVariant2,
+from didit.types.components.aml_monitoring_job import AMLMonitoringJob
+from didit.types.components.aml_monitoring_toggle_result import (
+    AMLMonitoringToggleResultVariant1,
+    AMLMonitoringToggleResultVariant2,
 )
 from didit.types.components.business_detail_item import BusinessDetailItem
 from didit.types.components.business_list_item import BusinessListItem
-from tests.harness import Expect, check_operation
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
+from didit.types.components.ongoing_monitoring_job import OngoingMonitoringJob
+from didit.types.components.ongoing_monitoring_toggle_result import (
+    OngoingMonitoringToggleResultVariant1,
+)
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_businesses_batch_delete() -> None:
@@ -97,6 +85,25 @@ def test_businesses_create() -> None:
         ),
         lambda r: isinstance(r, BusinessDetailItem),
         lambda r: isinstance(r, BusinessDetailItem),
+    )
+
+
+def test_businesses_generate_session_pdf() -> None:
+    """``GET /v3/organization/{organization_id}/application/{application_id}/businesses/{business_session_id}/pdf/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/businesses/22222222-3333-4444-5555-666666666666/pdf/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="application/pdf",
+        ),
+        lambda c: c.businesses.generate_session_pdf("22222222-3333-4444-5555-666666666666"),
+        lambda c: c.businesses.generate_session_pdf("22222222-3333-4444-5555-666666666666"),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
     )
 
 
@@ -169,13 +176,13 @@ def test_businesses_list_networks() -> None:
                 "results": [
                     {
                         "network": {
-                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "uuid": "00000000-0000-4000-8000-000000000008",
                             "network_id": "sample",
                             "name": "sample",
                             "status": "active",
-                            "risk": {},
-                            "pattern_types": ["exact_same_device"],
-                            "signal_types": ["ip_address"],
+                            "risk": None,
+                            "pattern_types": [],
+                            "signal_types": [],
                             "member_counts": {},
                             "member_status": {},
                             "signal_coverage": {},
@@ -190,12 +197,12 @@ def test_businesses_list_networks() -> None:
                     }
                 ]
             },
-            strict_type=BusinessesListNetworksResponse,
+            strict_type=EntityNetworkMembershipList,
         ),
         lambda c: c.businesses.list_networks("00000000-0000-4000-8000-000000000001"),
         lambda c: c.businesses.list_networks("00000000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, BusinessesListNetworksResponse),
-        lambda r: isinstance(r, BusinessesListNetworksResponse),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
     )
 
 
@@ -255,7 +262,7 @@ def test_businesses_retrieve_ongoing_monitoring_job() -> None:
             auth="api_key",
             status=200,
             response_json={
-                "job_id": "00000000-0000-4000-8000-000000000002",
+                "job_id": "00000000-0000-4000-8000-000000000003",
                 "status": "PENDING",
                 "is_enabled": True,
                 "total": 1,
@@ -284,7 +291,7 @@ def test_businesses_retrieve_ongoing_monitoring_job() -> None:
                     "balance_sufficient": True,
                 },
             },
-            strict_type=BusinessesRetrieveOngoingMonitoringJobResponse,
+            strict_type=OngoingMonitoringJob,
         ),
         lambda c: c.businesses.retrieve_ongoing_monitoring_job(
             "00000000-0000-4000-8000-000000000001"
@@ -292,8 +299,8 @@ def test_businesses_retrieve_ongoing_monitoring_job() -> None:
         lambda c: c.businesses.retrieve_ongoing_monitoring_job(
             "00000000-0000-4000-8000-000000000001"
         ),
-        lambda r: isinstance(r, BusinessesRetrieveOngoingMonitoringJobResponse),
-        lambda r: isinstance(r, BusinessesRetrieveOngoingMonitoringJobResponse),
+        lambda r: isinstance(r, OngoingMonitoringJob),
+        lambda r: isinstance(r, OngoingMonitoringJob),
     )
 
 
@@ -307,7 +314,7 @@ def test_businesses_retrieve_session_ongoing_monitoring_job() -> None:
             auth="api_key",
             status=200,
             response_json={
-                "job_id": "00000000-0000-4000-8000-000000000002",
+                "job_id": "00000000-0000-4000-8000-000000000003",
                 "status": "PENDING",
                 "is_enabled": True,
                 "total": 1,
@@ -336,7 +343,7 @@ def test_businesses_retrieve_session_ongoing_monitoring_job() -> None:
                     "balance_sufficient": True,
                 },
             },
-            strict_type=BusinessesRetrieveSessionOngoingMonitoringJobResponse,
+            strict_type=OngoingMonitoringJob,
         ),
         lambda c: c.businesses.retrieve_session_ongoing_monitoring_job(
             "00000000-0000-4000-8000-000000000001"
@@ -344,8 +351,8 @@ def test_businesses_retrieve_session_ongoing_monitoring_job() -> None:
         lambda c: c.businesses.retrieve_session_ongoing_monitoring_job(
             "00000000-0000-4000-8000-000000000001"
         ),
-        lambda r: isinstance(r, BusinessesRetrieveSessionOngoingMonitoringJobResponse),
-        lambda r: isinstance(r, BusinessesRetrieveSessionOngoingMonitoringJobResponse),
+        lambda r: isinstance(r, OngoingMonitoringJob),
+        lambda r: isinstance(r, OngoingMonitoringJob),
     )
 
 
@@ -383,14 +390,18 @@ def test_businesses_set_aml_monitoring() -> None:
             is_enabled=True, estimate_only=True, vendor_data_list=["company-123", "company-456"]
         ),
         lambda r: (
-            (isinstance(r, BusinessesSetAmlMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetAmlMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetAmlMonitoringResponse202))
+            (
+                (isinstance(r, AMLMonitoringToggleResultVariant1))
+                or (isinstance(r, AMLMonitoringToggleResultVariant2))
+            )
+            or (isinstance(r, AMLMonitoringJob))
         ),
         lambda r: (
-            (isinstance(r, BusinessesSetAmlMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetAmlMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetAmlMonitoringResponse202))
+            (
+                (isinstance(r, AMLMonitoringToggleResultVariant1))
+                or (isinstance(r, AMLMonitoringToggleResultVariant2))
+            )
+            or (isinstance(r, AMLMonitoringJob))
         ),
     )
 
@@ -420,14 +431,18 @@ def test_businesses_set_ongoing_monitoring() -> None:
         lambda c: c.businesses.set_ongoing_monitoring(is_enabled=True),
         lambda c: c.businesses.set_ongoing_monitoring(is_enabled=True),
         lambda r: (
-            (isinstance(r, BusinessesSetOngoingMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetOngoingMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetOngoingMonitoringResponse202))
+            (
+                (isinstance(r, OngoingMonitoringToggleResultVariant1))
+                or (isinstance(r, OngoingMonitoringJob))
+            )
+            or (isinstance(r, OngoingMonitoringJob))
         ),
         lambda r: (
-            (isinstance(r, BusinessesSetOngoingMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetOngoingMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetOngoingMonitoringResponse202))
+            (
+                (isinstance(r, OngoingMonitoringToggleResultVariant1))
+                or (isinstance(r, OngoingMonitoringJob))
+            )
+            or (isinstance(r, OngoingMonitoringJob))
         ),
     )
 
@@ -457,14 +472,18 @@ def test_businesses_set_session_ongoing_monitoring() -> None:
         lambda c: c.businesses.set_session_ongoing_monitoring(is_enabled=True),
         lambda c: c.businesses.set_session_ongoing_monitoring(is_enabled=True),
         lambda r: (
-            (isinstance(r, BusinessesSetSessionOngoingMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetSessionOngoingMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetSessionOngoingMonitoringResponse202))
+            (
+                (isinstance(r, OngoingMonitoringToggleResultVariant1))
+                or (isinstance(r, OngoingMonitoringJob))
+            )
+            or (isinstance(r, OngoingMonitoringJob))
         ),
         lambda r: (
-            (isinstance(r, BusinessesSetSessionOngoingMonitoringResponseVariant1))
-            or (isinstance(r, BusinessesSetSessionOngoingMonitoringResponseVariant2))
-            or (isinstance(r, BusinessesSetSessionOngoingMonitoringResponse202))
+            (
+                (isinstance(r, OngoingMonitoringToggleResultVariant1))
+                or (isinstance(r, OngoingMonitoringJob))
+            )
+            or (isinstance(r, OngoingMonitoringJob))
         ),
     )
 

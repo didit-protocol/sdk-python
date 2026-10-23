@@ -52,6 +52,9 @@ class BrandingCustomization(BaseModel):
     logo_rectangular: str | None = None
     """Read-only URL of the rectangular logo. Upload via `image_rectangular`."""
 
+    logo_rectangular_dark: str | None = None
+    """Read-only. Temporary signed URL of the rectangular logo for dark mode, shown on a dark background. `null` when no dark logo is set or rectangular logos are not shown for your account. Upload it with `image_rectangular_dark`."""
+
     favicon: str | None = None
     """Read-only URL of the favicon. Upload via `image_favicon`."""
 

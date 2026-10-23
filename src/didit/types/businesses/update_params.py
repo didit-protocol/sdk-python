@@ -28,3 +28,6 @@ class BusinessesUpdateParams(TypedDict, total=False):
 
     metadata: Mapping[str, object] | None
     """Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys."""
+
+    reason: str | None
+    """Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it."""

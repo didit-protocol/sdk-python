@@ -102,6 +102,9 @@ def sample(spec: Spec, schema: Json, *, request: bool, depth: int = 0, full: boo
         if depth > MAX_DEPTH:
             return []
         item = sample(spec, schema.get("items", {}), request=request, depth=depth + 1, full=full)
+        if item is None and not spec.resolve(schema.get("items", {})).get("nullable"):
+            # The items sit past the depth limit: an empty list stays valid, a null item would not.
+            return []
         min_items = schema.get("minItems") or 1
         return [item] * max(1, min(int(min_items), 3))
     if kind == "object" or "properties" in schema:
@@ -338,6 +341,13 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
     for arg in body_args:
         if arg.wire in chosen:
             out.append((arg, scrub(chosen[arg.wire], arg.wire)))
+    whole = method.whole_body
+    if whole is not None:
+        # A body that is not a property map (a oneOf, an array) is passed whole as ``body=``.
+        if method.has_body_example and conforms(spec, whole.schema, example, request=True):
+            out.append((whole, scrub(example, "body")))
+        elif whole.required:
+            out.append((whole, scrub(sample(spec, whole.schema, request=True, full=False), "body")))
     for arg in (a for a in method.kwargs if a.location == "query"):
         if (
             arg.has_example
@@ -386,11 +396,14 @@ def _render_test(method: Method, registry: Registry, imports: set[tuple[str, str
     for arg, value in path_values:
         path = path.replace("{" + arg.wire + "}", urllib.parse.quote(value, safe=""))
     query: dict[str, list[str]] = defaultdict(list)
-    json_body: dict[str, Json] = {}
+    json_body: Json = {}
     for arg, value in kwargs:
         if arg.location == "query":
             query[arg.wire].extend(_query_text(value))
+        elif arg is method.whole_body:
+            json_body = value
         else:
+            assert isinstance(json_body, dict)
             json_body[arg.wire] = value
     call_args = [literal(v) for _, v in path_values]
     call_args += [f"{a.py}={literal(v)}" for a, v in kwargs]
@@ -399,7 +412,9 @@ def _render_test(method: Method, registry: Registry, imports: set[tuple[str, str
 
     status, response, strict = _response_value(method)
     multipart = method.body_mode == "multipart" or (
-        method.body_mode == "auto" and any(name in json_body for name in method.file_fields)
+        method.body_mode == "auto"
+        and isinstance(json_body, dict)
+        and any(name in json_body for name in method.file_fields)
     )
     resp = method.response
     if resp.kind == "page":
@@ -437,6 +452,7 @@ def _render_test(method: Method, registry: Registry, imports: set[tuple[str, str
         fields.append(f"query={literal(dict(query))}")
     if method.body_mode != "none":
         if multipart:
+            assert isinstance(json_body, dict)
             text_fields = sorted(k for k in json_body if k not in method.file_fields)
             file_fields = sorted(k for k in json_body if k in method.file_fields)
             fields.append(f"multipart_fields={literal(text_fields)}")

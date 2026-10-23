@@ -5,12 +5,34 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_chain_details import TravelRuleChainDetails
+from didit.types.components.travel_rule_data_match import TravelRuleDataMatch
+from didit.types.components.travel_rule_data_unmasked import TravelRuleDataUnmasked
+from didit.types.components.travel_rule_delivery import TravelRuleDelivery
+from didit.types.components.travel_rule_discovery_step import TravelRuleDiscoveryStep
+from didit.types.components.travel_rule_name_match import TravelRuleNameMatch
+from didit.types.components.travel_rule_next_action import TravelRuleNextAction
 
 __all__ = [
     "TravelRuleTransferDetail",
     "TravelRuleTransferDetailCounterpartyVasp",
+    "TravelRuleTransferDetailCounterpartyVaspDdScoreBreakdownValue",
     "TravelRuleTransferDetailTimeline",
 ]
+
+
+class TravelRuleTransferDetailCounterpartyVaspDdScoreBreakdownValue(BaseModel):
+    points: float | None = None
+    """Points awarded for this component."""
+
+    max: int | None = None
+    """Maximum points this component can award."""
+
+    reason: str | None = None
+    """Machine-readable code of the component's verdict."""
+
+    detail: str | None = None
+    """Human-readable reason for the awarded points."""
 
 
 class TravelRuleTransferDetailCounterpartyVasp(BaseModel):
@@ -19,6 +41,15 @@ class TravelRuleTransferDetailCounterpartyVasp(BaseModel):
     lei: str | None = None
 
     dd_score: int | None = None
+    """Due-diligence score from 0 to 100, where higher is better. Same scale as in the VASP directory."""
+
+    dd_score_breakdown: (
+        dict[str, TravelRuleTransferDetailCounterpartyVaspDdScoreBreakdownValue] | None
+    ) = None
+    """Per-component contributions to dd_score, one object per component as in the VASP directory (jurisdiction, verification, protocol, lei, history, essentials, responsiveness), each {points, max, reason, detail}. {} until the counterparty has been assessed."""
+
+    dd_assessed_at: _dt.datetime | None = None
+    """When the due-diligence assessment last ran. Null until the counterparty has been assessed."""
 
 
 class TravelRuleTransferDetailTimeline(BaseModel):
@@ -28,9 +59,15 @@ class TravelRuleTransferDetailTimeline(BaseModel):
 
     detail: str | None = None
 
+    name_match: TravelRuleNameMatch | None = None
+    """The name comparison this entry decided, next to `detail`. Absent on entries that compared no name."""
+
+    reason: str | None = None
+    """Present only on the entry of a transition a failed delivery caused: `email_undeliverable` or `delivery_failed`, the value the transfer's `reason` reports."""
+
 
 class TravelRuleTransferDetail(BaseModel):
-    """Full transfer object returned by the ownership-confirmation and finish/cancel endpoints. originator_data/beneficiary_data are omitted while PII is masked (see description)."""
+    """Full transfer object returned by the ownership-confirmation and finish/cancel endpoints. While an inbound transfer's wallet ownership is unconfirmed, the counterparty's `originator_data` and `beneficiary_data` come back masked (the first letter of each word is kept; the wallet, chain and VASP routing stay readable) and `data_masked` is true."""
 
     uuid: str | None = None
 
@@ -56,7 +93,12 @@ class TravelRuleTransferDetail(BaseModel):
 
     direction: Literal["INBOUND", "OUTBOUND"] | str | None = None
 
-    rail: Literal["INTERNAL", "TRP", "GTR", "EMAIL"] | str | None = None
+    rail: (
+        Literal["INTERNAL", "TRP", "GTR", "TRUST", "VERIFYVASP", "SYGNA", "EMAIL", "TEST_VASP"]
+        | str
+        | None
+    ) = None
+    """The rail the transfer was routed over, or null when no rail was selected (for example below the threshold, a self-hosted counterparty wallet, an after-deposit registration, or no reachable counterparty). INTERNAL means both sides are Didit applications; EMAIL means the counterparty was reached by an emailed pickup link. TEST_VASP means the Didit Test VASP answered a sandbox application's transfer. Over GTR, VERIFYVASP and SYGNA, Didit reads the counterparty's answer from the network's response or by polling it every 5 minutes. TRUST only sends, so a TRUST transfer stays AWAITING_COUNTERPARTY until it expires. A network rail is used only when you have connected your own membership for that network. It is chosen after the transaction create returns, so it is null in that response."""
 
     protocol: str | None = None
 
@@ -73,7 +115,39 @@ class TravelRuleTransferDetail(BaseModel):
     counterparty_vasp: TravelRuleTransferDetailCounterpartyVasp | None = None
 
     originator_data: dict[str, object] | None = None
+    """Originator party. For an inbound transfer the counterparty's values are masked until ownership is confirmed."""
 
     beneficiary_data: dict[str, object] | None = None
+    """Beneficiary party. For an inbound transfer the counterparty's values are masked until ownership is confirmed."""
+
+    name_match: TravelRuleNameMatch | None = None
+    """The name comparison that decided the transfer, or null until one ran. While the parties are masked, and on the other customer's copy of an INTERNAL exchange, `transfer_name`, `compared_name`, `matched_names` and `mismatched_names` are hidden. `score` and `matched` can disagree: `matched` follows the strictness, `score` is the similarity of the two full names."""
+
+    data_match: TravelRuleDataMatch | None = None
+    """Field-by-field comparison of the transfer's party data with what the other side knows about the wallet holder. It names fields and results, never values, so it stays readable while the counterparty's data is masked. Null until a comparison ran."""
+
+    mismatched_fields: list[str] | None = None
+    """Shortcut for `data_match.mismatched_fields`. Empty when nothing differs."""
+
+    data_unmasked: TravelRuleDataUnmasked | None = None
+    """Audit record of the moment the counterparty's data was unmasked. Null while the data is still masked, and for outbound transfers."""
+
+    data_masked: bool | None = None
+    """True while the counterparty's personal data is masked in this response."""
 
     created_at: _dt.datetime | None = None
+
+    delivery: TravelRuleDelivery | None = None
+    """Where the latest message this transfer owes the other side stands. Null when the transfer never owed one (for example below `threshold_amount`, a declared self-hosted wallet, or a sunrise registration)."""
+
+    discovery: list[TravelRuleDiscoveryStep] | None = None
+    """How Didit looked for the counterparty, one entry per step that ran. Empty when no discovery ran, for example on an inbound transfer."""
+
+    reason: str | None = None
+    """Why a `COUNTERPARTY_VASP_NOT_FOUND` or `COUNTERPARTY_VASP_NOT_REACHABLE` transfer is stuck; `""` for any other status. A failed delivery decides it first, on `COUNTERPARTY_VASP_NOT_REACHABLE` only: `email_undeliverable` (the mail provider refused the compliance email and no address is left to try: when it was sent, on a reminder, or as a permanent bounce reported later) or `delivery_failed` (the rail that was delivering failed for good: a network rail refused the message or ran out of retries, a `TRP` identity host did not answer, or the counterparty's `TRP` host did not accept the inquiry). Otherwise the `discovery` trace decides it: `awaiting_end_user` (no step named a counterparty Didit can reach), `directory_match_no_route` (a step named a directory VASP that has no route), `picked_member_without_proven_wallet` (the end user picked a Didit customer that has not proven control of the wallet), or `no_directory_match` when the trace gives no other reason. A resend moves the transfer on, so the reason clears. See [Why a transfer is stuck](/transaction-monitoring/travel-rule#why-a-transfer-is-stuck)."""
+
+    next_actions: list[TravelRuleNextAction] | None = None
+    """What moves the transfer on; `[]` for any status but `COUNTERPARTY_VASP_NOT_FOUND` or `COUNTERPARTY_VASP_NOT_REACHABLE`. `email_undeliverable` offers `update_compliance_email`, then `resend`. `delivery_failed` offers `resend`. A discovery reason offers `select_counterparty_vasp`, `declare_self_hosted`, `add_vasp_hint` and `resend`."""
+
+    chain_details: TravelRuleChainDetails | None = None
+    """How the transfer's chain names its two wallets, when that is more than one address paying another. Empty (`{}`) for an account-chain transfer (EVM, Solana, Tron), where the two addresses are the wallets. Matching, routing and the address book read the wallets from here first."""

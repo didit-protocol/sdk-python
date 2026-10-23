@@ -19,31 +19,14 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.businesses.batch_delete_response import BusinessesBatchDeleteResponse
-from didit.types.businesses.list_networks_response import BusinessesListNetworksResponse
 from didit.types.businesses.list_response import BusinessesListResponse
-from didit.types.businesses.retrieve_ongoing_monitoring_job_response import (
-    BusinessesRetrieveOngoingMonitoringJobResponse,
-)
-from didit.types.businesses.retrieve_session_ongoing_monitoring_job_response import (
-    BusinessesRetrieveSessionOngoingMonitoringJobResponse,
-)
-from didit.types.businesses.set_aml_monitoring_response import (
-    BusinessesSetAmlMonitoringResponse202,
-    BusinessesSetAmlMonitoringResponseVariant1,
-    BusinessesSetAmlMonitoringResponseVariant2,
-)
-from didit.types.businesses.set_ongoing_monitoring_response import (
-    BusinessesSetOngoingMonitoringResponse202,
-    BusinessesSetOngoingMonitoringResponseVariant1,
-    BusinessesSetOngoingMonitoringResponseVariant2,
-)
-from didit.types.businesses.set_session_ongoing_monitoring_response import (
-    BusinessesSetSessionOngoingMonitoringResponse202,
-    BusinessesSetSessionOngoingMonitoringResponseVariant1,
-    BusinessesSetSessionOngoingMonitoringResponseVariant2,
-)
+from didit.types.components.aml_monitoring_job import AMLMonitoringJob
+from didit.types.components.aml_monitoring_toggle_result import AMLMonitoringToggleResult
 from didit.types.components.business_detail_item import BusinessDetailItem
 from didit.types.components.business_list_item import BusinessListItem
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
+from didit.types.components.ongoing_monitoring_job import OngoingMonitoringJob
+from didit.types.components.ongoing_monitoring_toggle_result import OngoingMonitoringToggleResult
 
 __all__ = [
     "Businesses",
@@ -58,7 +41,7 @@ __all__ = [
 class Businesses(SyncAPIResource):
     """The ``businesses`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``create``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``retrieve_session_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``set_session_ongoing_monitoring``, ``update``, ``update_status``.
+    Methods: ``batch_delete``, ``create``, ``generate_session_pdf``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``retrieve_session_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``set_session_ongoing_monitoring``, ``update``, ``update_status``.
     """
 
     @cached_property
@@ -158,6 +141,7 @@ class Businesses(SyncAPIResource):
         country_code: str | None | NotGiven = NOT_GIVEN,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -165,7 +149,7 @@ class Businesses(SyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business.
 
-        Partial update of a business: `display_name`, `legal_name`, `registration_number`, `country_code`, `status`, `metadata`. `metadata` fully replaces. Setting `status` to `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry.
+        Partial update of a business: `display_name`, `legal_name`, `registration_number`, `country_code`, `status`, `metadata`. `metadata` fully replaces. Setting `status` to `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Every edit is recorded in the company's activity: a status change with the optional `reason`, and a change to `display_name`, `legal_name`, `registration_number`, `country_code` or `metadata` as a profile update.
 
         ``PATCH /v3/businesses/{vendor_data}/``
 
@@ -177,6 +161,7 @@ class Businesses(SyncAPIResource):
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
           metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
+          reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -197,6 +182,7 @@ class Businesses(SyncAPIResource):
                     "country_code": country_code,
                     "status": status,
                     "metadata": metadata,
+                    "reason": reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -210,6 +196,7 @@ class Businesses(SyncAPIResource):
         vendor_data: str,
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -217,13 +204,14 @@ class Businesses(SyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business status.
 
-        Flip only the lifecycle `status` of a business - VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
+        Flip only the lifecycle `status` of a business: `ACTIVE`, `FLAGGED` or `BLOCKED` (not session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded in the company's activity, with the optional `reason`. Sending the current status changes nothing and records no `reason`. The `business.status.updated` webhook does not carry `reason`.
 
         ``PATCH /v3/businesses/{vendor_data}/update-status/``
 
         Args:
           vendor_data: Your unique identifier for the business (free-form string, NOT a UUID).
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
+          reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -237,7 +225,7 @@ class Businesses(SyncAPIResource):
                 cast_to=BusinessDetailItem,
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
-                body={"status": status},
+                body={"status": status, "reason": reason},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -301,11 +289,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetAmlMonitoringResponseVariant1
-        | BusinessesSetAmlMonitoringResponseVariant2
-        | BusinessesSetAmlMonitoringResponse202
-    ):
+    ) -> AMLMonitoringToggleResult | AMLMonitoringJob:
         """Enable or disable AML ongoing monitoring for businesses.
 
         Turns AML ongoing monitoring on or off for the selected businesses, with the same semantics as the Business Console. Exactly one monitored AML screening is kept per business, so a profile that verified several times is monitored and billed once; disabling turns monitoring off across all of the profile's screenings. Businesses without any AML screening are screened first (billed as a regular AML screening) when they have the legal or display name needed; otherwise they are reported as `skipped_no_identity_data`.
@@ -325,15 +309,11 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetAmlMonitoringResponseVariant1 | BusinessesSetAmlMonitoringResponseVariant2 | BusinessesSetAmlMonitoringResponse202",
+            "AMLMonitoringToggleResult | AMLMonitoringJob",
             self._client.request(
                 "post",
                 "/v3/businesses/aml-monitoring/",
-                cast_to={
-                    200: BusinessesSetAmlMonitoringResponseVariant1
-                    | BusinessesSetAmlMonitoringResponseVariant2,
-                    202: BusinessesSetAmlMonitoringResponse202,
-                },
+                cast_to={200: AMLMonitoringToggleResult, 202: AMLMonitoringJob},
                 auth="api_key",
                 body={
                     "is_enabled": is_enabled,
@@ -421,11 +401,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetOngoingMonitoringResponseVariant1
-        | BusinessesSetOngoingMonitoringResponseVariant2
-        | BusinessesSetOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for businesses.
 
         Business-level equivalent of the user toggle: one monitored AML screening per business, with businesses lacking any AML screening screened first (company entity). Same estimate_only, inline fast-path and async job contract.
@@ -448,15 +424,11 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetOngoingMonitoringResponseVariant1 | BusinessesSetOngoingMonitoringResponseVariant2 | BusinessesSetOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-businesses/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: BusinessesSetOngoingMonitoringResponseVariant1
-                    | BusinessesSetOngoingMonitoringResponseVariant2,
-                    202: BusinessesSetOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -485,7 +457,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesRetrieveOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -500,11 +472,11 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesRetrieveOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-businesses/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=BusinessesRetrieveOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -533,11 +505,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetSessionOngoingMonitoringResponseVariant1
-        | BusinessesSetSessionOngoingMonitoringResponseVariant2
-        | BusinessesSetSessionOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for business sessions.
 
         Session-level toggle for KYB verifications, addressed by session number. Sessions without an AML screening get one created and attached to the session itself. Same estimate_only, inline fast-path and async job contract as the user-level endpoints. Replaces the legacy synchronous behavior that skipped sessions without an AML screening.
@@ -562,15 +530,11 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetSessionOngoingMonitoringResponseVariant1 | BusinessesSetSessionOngoingMonitoringResponseVariant2 | BusinessesSetSessionOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: BusinessesSetSessionOngoingMonitoringResponseVariant1
-                    | BusinessesSetSessionOngoingMonitoringResponseVariant2,
-                    202: BusinessesSetSessionOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -601,7 +565,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesRetrieveSessionOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -616,11 +580,11 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesRetrieveSessionOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=BusinessesRetrieveSessionOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -639,7 +603,7 @@ class Businesses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a business.
 
         List the networks a vendor business belongs to.
@@ -654,14 +618,57 @@ class Businesses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesListNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/{vendor_business_uuid}/networks/",
-                cast_to=BusinessesListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"vendor_business_uuid": vendor_business_uuid},
                 scope="application",
                 auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def generate_session_pdf(
+        self,
+        business_session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download a business session PDF report.
+
+        Render the PDF report of one Business Verification (KYB) session: company registry data, key people and beneficial owners, documents, AML results and the other workflow features, plus the session's tags and review activity. With white-label customization on, the report carries your logo and privacy policy URL. The body is the PDF itself (`application/pdf`), not JSON.
+
+        The session must be `Approved`, `Declined` or `In Review`; any other status returns `403`, so wait for the `status.updated` [webhook](https://docs.didit.me/integration/webhooks) first. The report is rendered on every call and nothing is billed, so store the file instead of fetching it repeatedly. `GET /v3/session/{sessionId}/generate-pdf/` renders the same kind of report by session ID alone.
+
+        A PDF report counts as media: a scoped API key needs `businesses: read` and `media: read`, and a key limited to some workflows or to approved sessions cannot call it.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/businesses/{business_session_id}/pdf/``
+
+        Args:
+          business_session_id: `session_id` of the Business Verification (KYB) session, as returned when the session was created. A session of another application returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/businesses/{business_session_id}/pdf/",
+                cast_to=bytes,
+                path_params={"business_session_id": business_session_id},
+                scope="application",
+                auth="api_key",
+                accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -673,7 +680,7 @@ class Businesses(SyncAPIResource):
 class AsyncBusinesses(AsyncAPIResource):
     """The ``businesses`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``create``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``retrieve_session_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``set_session_ongoing_monitoring``, ``update``, ``update_status``.
+    Methods: ``batch_delete``, ``create``, ``generate_session_pdf``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``retrieve_session_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``set_session_ongoing_monitoring``, ``update``, ``update_status``.
     """
 
     @cached_property
@@ -773,6 +780,7 @@ class AsyncBusinesses(AsyncAPIResource):
         country_code: str | None | NotGiven = NOT_GIVEN,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -780,7 +788,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business.
 
-        Partial update of a business: `display_name`, `legal_name`, `registration_number`, `country_code`, `status`, `metadata`. `metadata` fully replaces. Setting `status` to `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry.
+        Partial update of a business: `display_name`, `legal_name`, `registration_number`, `country_code`, `status`, `metadata`. `metadata` fully replaces. Setting `status` to `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Every edit is recorded in the company's activity: a status change with the optional `reason`, and a change to `display_name`, `legal_name`, `registration_number`, `country_code` or `metadata` as a profile update.
 
         ``PATCH /v3/businesses/{vendor_data}/``
 
@@ -792,6 +800,7 @@ class AsyncBusinesses(AsyncAPIResource):
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
           metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
+          reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -812,6 +821,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "country_code": country_code,
                     "status": status,
                     "metadata": metadata,
+                    "reason": reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -825,6 +835,7 @@ class AsyncBusinesses(AsyncAPIResource):
         vendor_data: str,
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -832,13 +843,14 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessDetailItem:
         """Update business status.
 
-        Flip only the lifecycle `status` of a business - VendorBusinessStatusChoices (`ACTIVE`/`FLAGGED`/`BLOCKED`, NOT session statuses). `BLOCKED` adds `vendor_data` to the system blocklist.
+        Flip only the lifecycle `status` of a business: `ACTIVE`, `FLAGGED` or `BLOCKED` (not session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded in the company's activity, with the optional `reason`. Sending the current status changes nothing and records no `reason`. The `business.status.updated` webhook does not carry `reason`.
 
         ``PATCH /v3/businesses/{vendor_data}/update-status/``
 
         Args:
           vendor_data: Your unique identifier for the business (free-form string, NOT a UUID).
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
+          reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -852,7 +864,7 @@ class AsyncBusinesses(AsyncAPIResource):
                 cast_to=BusinessDetailItem,
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
-                body={"status": status},
+                body={"status": status, "reason": reason},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -916,11 +928,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetAmlMonitoringResponseVariant1
-        | BusinessesSetAmlMonitoringResponseVariant2
-        | BusinessesSetAmlMonitoringResponse202
-    ):
+    ) -> AMLMonitoringToggleResult | AMLMonitoringJob:
         """Enable or disable AML ongoing monitoring for businesses.
 
         Turns AML ongoing monitoring on or off for the selected businesses, with the same semantics as the Business Console. Exactly one monitored AML screening is kept per business, so a profile that verified several times is monitored and billed once; disabling turns monitoring off across all of the profile's screenings. Businesses without any AML screening are screened first (billed as a regular AML screening) when they have the legal or display name needed; otherwise they are reported as `skipped_no_identity_data`.
@@ -940,15 +948,11 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetAmlMonitoringResponseVariant1 | BusinessesSetAmlMonitoringResponseVariant2 | BusinessesSetAmlMonitoringResponse202",
+            "AMLMonitoringToggleResult | AMLMonitoringJob",
             await self._client.request(
                 "post",
                 "/v3/businesses/aml-monitoring/",
-                cast_to={
-                    200: BusinessesSetAmlMonitoringResponseVariant1
-                    | BusinessesSetAmlMonitoringResponseVariant2,
-                    202: BusinessesSetAmlMonitoringResponse202,
-                },
+                cast_to={200: AMLMonitoringToggleResult, 202: AMLMonitoringJob},
                 auth="api_key",
                 body={
                     "is_enabled": is_enabled,
@@ -1036,11 +1040,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetOngoingMonitoringResponseVariant1
-        | BusinessesSetOngoingMonitoringResponseVariant2
-        | BusinessesSetOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for businesses.
 
         Business-level equivalent of the user toggle: one monitored AML screening per business, with businesses lacking any AML screening screened first (company entity). Same estimate_only, inline fast-path and async job contract.
@@ -1063,15 +1063,11 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetOngoingMonitoringResponseVariant1 | BusinessesSetOngoingMonitoringResponseVariant2 | BusinessesSetOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             await self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-businesses/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: BusinessesSetOngoingMonitoringResponseVariant1
-                    | BusinessesSetOngoingMonitoringResponseVariant2,
-                    202: BusinessesSetOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -1100,7 +1096,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesRetrieveOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -1115,11 +1111,11 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesRetrieveOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-businesses/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=BusinessesRetrieveOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -1148,11 +1144,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        BusinessesSetSessionOngoingMonitoringResponseVariant1
-        | BusinessesSetSessionOngoingMonitoringResponseVariant2
-        | BusinessesSetSessionOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for business sessions.
 
         Session-level toggle for KYB verifications, addressed by session number. Sessions without an AML screening get one created and attached to the session itself. Same estimate_only, inline fast-path and async job contract as the user-level endpoints. Replaces the legacy synchronous behavior that skipped sessions without an AML screening.
@@ -1177,15 +1169,11 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesSetSessionOngoingMonitoringResponseVariant1 | BusinessesSetSessionOngoingMonitoringResponseVariant2 | BusinessesSetSessionOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             await self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: BusinessesSetSessionOngoingMonitoringResponseVariant1
-                    | BusinessesSetSessionOngoingMonitoringResponseVariant2,
-                    202: BusinessesSetSessionOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -1216,7 +1204,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesRetrieveSessionOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -1231,11 +1219,11 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesRetrieveSessionOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=BusinessesRetrieveSessionOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -1254,7 +1242,7 @@ class AsyncBusinesses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessesListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a business.
 
         List the networks a vendor business belongs to.
@@ -1269,14 +1257,57 @@ class AsyncBusinesses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessesListNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/businesses/{vendor_business_uuid}/networks/",
-                cast_to=BusinessesListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"vendor_business_uuid": vendor_business_uuid},
                 scope="application",
                 auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def generate_session_pdf(
+        self,
+        business_session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download a business session PDF report.
+
+        Render the PDF report of one Business Verification (KYB) session: company registry data, key people and beneficial owners, documents, AML results and the other workflow features, plus the session's tags and review activity. With white-label customization on, the report carries your logo and privacy policy URL. The body is the PDF itself (`application/pdf`), not JSON.
+
+        The session must be `Approved`, `Declined` or `In Review`; any other status returns `403`, so wait for the `status.updated` [webhook](https://docs.didit.me/integration/webhooks) first. The report is rendered on every call and nothing is billed, so store the file instead of fetching it repeatedly. `GET /v3/session/{sessionId}/generate-pdf/` renders the same kind of report by session ID alone.
+
+        A PDF report counts as media: a scoped API key needs `businesses: read` and `media: read`, and a key limited to some workflows or to approved sessions cannot call it.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/businesses/{business_session_id}/pdf/``
+
+        Args:
+          business_session_id: `session_id` of the Business Verification (KYB) session, as returned when the session was created. A session of another application returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            await self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/businesses/{business_session_id}/pdf/",
+                cast_to=bytes,
+                path_params={"business_session_id": business_session_id},
+                scope="application",
+                auth="api_key",
+                accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1306,6 +1337,7 @@ class BusinessesWithRawResponse:
             resource.retrieve_session_ongoing_monitoring_job
         )
         self.list_networks = to_raw_response_wrapper(resource.list_networks)
+        self.generate_session_pdf = to_raw_response_wrapper(resource.generate_session_pdf)
 
 
 class AsyncBusinessesWithRawResponse:
@@ -1329,6 +1361,7 @@ class AsyncBusinessesWithRawResponse:
             resource.retrieve_session_ongoing_monitoring_job
         )
         self.list_networks = async_to_raw_response_wrapper(resource.list_networks)
+        self.generate_session_pdf = async_to_raw_response_wrapper(resource.generate_session_pdf)
 
 
 class BusinessesWithStreamingResponse:
@@ -1352,6 +1385,7 @@ class BusinessesWithStreamingResponse:
             resource.retrieve_session_ongoing_monitoring_job
         )
         self.list_networks = to_streamed_response_wrapper(resource.list_networks)
+        self.generate_session_pdf = to_streamed_response_wrapper(resource.generate_session_pdf)
 
 
 class AsyncBusinessesWithStreamingResponse:
@@ -1377,3 +1411,6 @@ class AsyncBusinessesWithStreamingResponse:
             resource.retrieve_session_ongoing_monitoring_job
         )
         self.list_networks = async_to_streamed_response_wrapper(resource.list_networks)
+        self.generate_session_pdf = async_to_streamed_response_wrapper(
+            resource.generate_session_pdf
+        )

@@ -6,12 +6,7 @@ from typing import Literal
 
 from didit._models import BaseModel
 
-__all__ = [
-    "SessionsBatchDeleteResponse",
-    "SessionsBatchDeleteResponse202",
-    "SessionsBatchDeleteResponse202Outcomes",
-    "SessionsBatchDeleteResponseResults",
-]
+__all__ = ["SessionsBatchDeleteResponse", "SessionsBatchDeleteResponseResults"]
 
 
 class SessionsBatchDeleteResponseResults(BaseModel):
@@ -42,56 +37,3 @@ class SessionsBatchDeleteResponseResults(BaseModel):
 
 class SessionsBatchDeleteResponse(BaseModel):
     results: list[SessionsBatchDeleteResponseResults] | None = None
-
-
-class SessionsBatchDeleteResponse202Outcomes(BaseModel):
-    """How many sessions ended in each outcome. Every key is always present."""
-
-    deleted: int | None = None
-    """Sessions deleted together with their face embedding."""
-
-    none: int | None = None
-    """Sessions deleted that had no face embedding."""
-
-    retained_with_user: int | None = None
-    """Sessions deleted while one image-free biometric template was retained for their User, as the request or the application policy asked."""
-
-    ineligible_no_vendor_user: int | None = None
-    """Sessions deleted, with their face embedding, because retention was requested but they had no linked User."""
-
-    failed_retryable: int | None = None
-    """Sessions reported as not deleted. A job retries a group it could not delete by itself instead of counting it here."""
-
-    already_deleted: int | None = None
-    """Selected sessions that were already deleted, for example by another request, when the job reached them."""
-
-
-class SessionsBatchDeleteResponse202(BaseModel):
-    """A bulk session deletion running in the background: progress and counts per outcome, never which sessions it deleted."""
-
-    job_id: str | None = None
-    """Poll `GET /v3/sessions/delete/{job_id}/` with this id."""
-
-    status: Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED"] | str | None = None
-    """`PENDING`: accepted, not started yet. `PROCESSING`: deleting; `processed` and `outcomes` are updating. `COMPLETED`: every selected session is accounted for. `FAILED`: the job stopped early; see `error`."""
-
-    total: int | None = None
-    """Sessions selected when the deletion was requested."""
-
-    processed: int | None = None
-    """Sessions the job has finished with so far."""
-
-    outcomes: SessionsBatchDeleteResponse202Outcomes | None = None
-    """How many sessions ended in each outcome. Every key is always present."""
-
-    deleted_child_verifications: int | None = None
-    """Verifications that the deleted business verifications created, deleted with them. Always `0` for a job started by `POST /v3/sessions/delete/`, which deletes KYC sessions only."""
-
-    error: str | None = None
-    """`null` unless `status` is `FAILED`; then why the deletion stopped. The sessions the job had not reached are still in place: repeat the request to delete them."""
-
-    created_at: _dt.datetime | None = None
-    """When the deletion was requested."""
-
-    completed_at: _dt.datetime | None = None
-    """When the job finished; `null` while it runs."""

@@ -8,3 +8,7 @@ __all__ = ["TransactionsTravelRuleConfirmOwnershipParams"]
 
 class TransactionsTravelRuleConfirmOwnershipParams(TypedDict, total=False):
     confirmed: Required[bool]
+    """true to confirm ownership, false to deny it."""
+
+    wallet_address: str
+    """Inbound TRP transfers: the payment address Didit returns to the originating VASP when you approve. Defaults to the matched address book entry's address, then beneficiary_data.wallet_address. On a declared self-hosted wallet transfer that names no counterparty wallet, the wallet whose ownership you verified; without it the request is rejected with 400. Ignored for other transfers."""

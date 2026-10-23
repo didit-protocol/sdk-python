@@ -49,6 +49,7 @@ def test_import_is_light() -> None:
     out = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     ).stdout.split()
-    # Only the decision model the webhook events reuse is loaded up front.
-    assert int(out[0]) < 10
+    # Only the SessionDecision component the webhook events reuse is loaded up front, with the dozen
+    # component models it references; the other ~700 generated modules stay unloaded.
+    assert int(out[0]) < 20
     assert out[1] == "False"

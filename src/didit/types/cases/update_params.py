@@ -11,9 +11,15 @@ __all__ = ["CasesUpdateParams"]
 
 class CasesUpdateParams(TypedDict, total=False):
     title: str
+    """New case title."""
 
     priority: Literal["LOW", "MEDIUM", "HIGH"] | str
 
     due_at: str | _dt.datetime | None
+    """New deadline. Send null to clear it."""
 
     tags: Sequence[str]
+    """The complete tag list. It replaces the current tags."""
+
+    team: str | None
+    """UUID of the review team that owns the case. It must be an active team of this application. Send null to clear the team."""

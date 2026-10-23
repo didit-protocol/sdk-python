@@ -13,7 +13,16 @@ class CasesBulkUpdateStatusParams(TypedDict, total=False):
 
     status: Required[Literal["OPEN", "AWAITING_USER", "RESOLVED"] | str]
 
-    resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str
+    resolution: (
+        Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+    )
     """Required when status is RESOLVED."""
 
     note: str | None

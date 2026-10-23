@@ -88,7 +88,7 @@ def generate(openapi_dir: pathlib.Path) -> dict[str, str]:
     files: dict[str, str] = {}
     for rel, text in render_types(builder.registry).items():
         files[f"src/didit/types/{rel}"] = text
-    roots = build_tree(methods)
+    roots = build_tree(methods, frozenset(builder.registry.defs))
     for rel, text in render_resources(roots, builder.registry).items():
         files[f"src/didit/resources/{rel}"] = text
     for rel, text in render_tests(methods, builder.registry).items():

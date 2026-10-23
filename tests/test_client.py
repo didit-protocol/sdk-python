@@ -11,6 +11,7 @@ import pytest
 
 import didit
 from didit import AsyncDidit, ConfigurationError, Didit
+from didit.types.components.wallet_address_import_row import WalletAddressImportRow
 from tests.mock_api import API_KEY, APP_ID, ORG_ID, SESSION, MockAPI
 
 
@@ -211,7 +212,7 @@ def test_timeout_reaches_httpx() -> None:
 def test_account_api_uses_its_own_base_url_and_token() -> None:
     api = MockAPI()
     api.json(200, {"access_token": "acct-token", "refresh_token": "r", "expires_in": 86400})
-    api.json(200, [])
+    api.json(200, {"count": 0, "next": None, "previous": None, "results": []})
     client = api.client()
     login = client.account.login(email="dev@example.com", password="pw")
     request = api.last
@@ -311,3 +312,14 @@ def test_didit_log_environment_variable(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("DIDIT_LOG", "off")
     setup_logging()
     assert logger.handlers == before
+
+
+def test_a_json_array_body_is_sent_as_an_array() -> None:
+    api = MockAPI().json(
+        200, {"total": 1, "created": 1, "existing": 0, "duplicate": 0, "failed": 0, "rows": []}
+    )
+    rows: list[WalletAddressImportRow] = [{"address": "0xBeneficiaryWallet01", "chain": "ETH"}]
+    api.client().travel_rule.wallet_addresses.bulk_import(body=rows)
+    assert api.last_json() == rows
+    with pytest.raises(ConfigurationError, match="JSON array"):
+        api.client().travel_rule.wallet_addresses.bulk_import(body=rows, extra_body={"x": 1})

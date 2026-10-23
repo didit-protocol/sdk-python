@@ -16,9 +16,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.business_sessions.list_networks_response import (
-    BusinessSessionsListNetworksResponse,
-)
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 
 __all__ = [
     "BusinessSessions",
@@ -54,7 +52,7 @@ class BusinessSessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessSessionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a business session.
 
         List the networks the business session's vendor business belongs to.
@@ -69,11 +67,11 @@ class BusinessSessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessSessionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/business-sessions/{business_session_id}/networks/",
-                cast_to=BusinessSessionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"business_session_id": business_session_id},
                 scope="application",
                 auth="api_key",
@@ -109,7 +107,7 @@ class AsyncBusinessSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BusinessSessionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a business session.
 
         List the networks the business session's vendor business belongs to.
@@ -124,11 +122,11 @@ class AsyncBusinessSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BusinessSessionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/business-sessions/{business_session_id}/networks/",
-                cast_to=BusinessSessionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"business_session_id": business_session_id},
                 scope="application",
                 auth="api_key",

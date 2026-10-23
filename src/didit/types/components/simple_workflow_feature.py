@@ -27,13 +27,14 @@ class SimpleWorkflowFeature(TypedDict, total=False):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "SIGNATURE",
         ]
         | str
     ]
     """Feature to run. Use the uppercase values shown here."""
 
     config: Mapping[str, object]
-    """Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only."""
+    """Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [Electronic Signature settings](/management-api/workflows/feature-configs#electronic-signature): `signature_level` accepts `aes` only for now, and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: "session"`."""
 
     label: str
     """Optional internal label for this workflow node."""

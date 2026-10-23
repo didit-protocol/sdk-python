@@ -71,6 +71,9 @@ class WalletScreening(SyncAPIResource):
             "BASE",
             "OP",
             "ARB",
+            "CELO",
+            "MODE",
+            "PLUME",
         ]
         | str,
         direction: Literal["inbound", "outbound", "deposit", "withdrawal"]
@@ -89,7 +92,7 @@ class WalletScreening(SyncAPIResource):
 
         Args:
           wallet_address: The crypto address or network identifier to screen. Must match the selected network (e.g. a `0x`-prefixed 40-hex-char address for EVM chains). Alias: `address`.
-          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. Celo, Mode and Plume are not currently supported. Alias: `currency`.
+          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
           direction: Optional. Whether the address is being screened as an inbound (deposit) or outbound (withdrawal) counterparty. Accepts `inbound`, `outbound`, `deposit`, or `withdrawal`. Defaults to a neutral pre-transfer screen when omitted. This is passed to the provider as context only; it does not change the returned `risk_score`, `severity`, or the `source_of_funds`/`destination_of_funds` breakdowns, which are always both returned regardless of `direction`. Changing or omitting `direction` therefore does not require re-screening an address.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -274,6 +277,9 @@ class AsyncWalletScreening(AsyncAPIResource):
             "BASE",
             "OP",
             "ARB",
+            "CELO",
+            "MODE",
+            "PLUME",
         ]
         | str,
         direction: Literal["inbound", "outbound", "deposit", "withdrawal"]
@@ -292,7 +298,7 @@ class AsyncWalletScreening(AsyncAPIResource):
 
         Args:
           wallet_address: The crypto address or network identifier to screen. Must match the selected network (e.g. a `0x`-prefixed 40-hex-char address for EVM chains). Alias: `address`.
-          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. Celo, Mode and Plume are not currently supported. Alias: `currency`.
+          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
           direction: Optional. Whether the address is being screened as an inbound (deposit) or outbound (withdrawal) counterparty. Accepts `inbound`, `outbound`, `deposit`, or `withdrawal`. Defaults to a neutral pre-transfer screen when omitted. This is passed to the provider as context only; it does not change the returned `risk_score`, `severity`, or the `source_of_funds`/`destination_of_funds` breakdowns, which are always both returned regardless of `direction`. Changing or omitting `direction` therefore does not require re-screening an address.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

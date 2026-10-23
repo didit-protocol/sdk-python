@@ -4,15 +4,45 @@ from __future__ import annotations
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_data_sharing_fields import TravelRuleDataSharingFields
+from didit.types.components.travel_rule_matching_rules import TravelRuleMatchingRules
 
 __all__ = [
     "TravelRuleSettingsDetail",
+    "TravelRuleSettingsDetailDiditNetwork",
     "TravelRuleSettingsDetailNetworks",
     "TravelRuleSettingsDetailNetworksGtr",
     "TravelRuleSettingsDetailNetworksSygna",
     "TravelRuleSettingsDetailNetworksTrust",
     "TravelRuleSettingsDetailNetworksVerifyvasp",
 ]
+
+
+class TravelRuleSettingsDetailDiditNetwork(BaseModel):
+    """Whether the Didit network lists your VASP profile, so other Didit customers find it in the directory and reach it on the INTERNAL rail, and each condition it still misses."""
+
+    listed: bool | None = None
+
+    missing: (
+        list[
+            Literal[
+                "travel_rule_off",
+                "sandbox_application",
+                "not_discoverable",
+                "legal_name_missing",
+                "compliance_email_missing",
+                "compliance_email_unconfirmed",
+                "excluded_by_staff",
+                "internal_organization",
+            ]
+            | str
+        ]
+        | None
+    ) = None
+    """Empty when listed. compliance_email_unconfirmed: send the confirmation with POST /v3/travel-rule/settings/compliance-email/confirmation/ and open the emailed link. excluded_by_staff: Didit marked the application as a test, demo or internal one."""
+
+    compliance_email_confirmed: bool | None = None
+    """Whether the current compliance_email was confirmed through the emailed link."""
 
 
 class TravelRuleSettingsDetailNetworksGtr(BaseModel):
@@ -84,19 +114,33 @@ class TravelRuleSettingsDetail(BaseModel):
     """Whether the managed Travel Rule negotiation flow is active for outbound `travelRule` transactions on this application."""
 
     jurisdiction: str | None = None
-    """Your VASP's operating jurisdiction code. Default `"EU"`."""
+    """Your VASP's operating jurisdiction code. Default `"EU"`. Didit maps it to the regime it stamps on your Travel Rule transactions as `travel_rule_regime` (for example `EU` or an EU member code becomes `eu`), which transaction rules can key on. Other Didit customers see it as your jurisdiction in the VASP directory once the Didit network lists your profile."""
 
-    name_matching_strictness: Literal["NONE", "STRICT", "DEFAULT", "FUZZY"] | str | None = None
-    """How strictly beneficiary names must match before a transfer can reach COMPLETED."""
+    name_matching_strictness: (
+        Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"] | str | None
+    ) = None
+    """How strictly beneficiary names must match before a transfer can reach COMPLETED. `CONTAINS` accepts one name whose words all appear in the other."""
 
     confirmation_timeout_hours: int | None = None
     """Hours an AWAITING_COUNTERPARTY transfer may remain unconfirmed before the periodic sweeper expires it. Default 48."""
 
     timeout_outcome: Literal["HOLD", "REJECT", "PROCEED"] | str | None = None
-    """What happens to the underlying transaction when a transfer expires. Default HOLD."""
+    """What happens to the underlying transaction when a transfer expires. Default HOLD. sunrise_policy and non_responsive_policy take precedence when they apply and are set."""
 
     threshold_amount: str | None = None
-    """Decimal string. Minimum transfer amount that triggers a managed exchange; transfers below it resolve straight to NOT_APPLICABLE. Defaults to "0.00" (EU TFR applies no minimum amount)."""
+    """Decimal string, in your application's default currency. Minimum transfer amount that triggers a managed exchange; transfers below it resolve straight to NOT_APPLICABLE. Didit compares the transaction amount converted to your default currency, or the `amount_in_default_currency` you send; when no converted amount is available, the threshold does not apply. Defaults to "0.00" (EU TFR applies no minimum amount)."""
+
+    ownership_validation_mode: Literal["FULL", "SIMPLIFIED", "AUTOMATED"] | str | None = None
+    """How much proof a wallet's ownership takes. `FULL` always needs a proof (signed message, test deposit or reviewed screenshot), never the end user's word. `SIMPLIFIED` accepts a self-declaration below `simplified_validation_threshold` and a proof above it. `AUTOMATED` lets the address book and earlier proofs answer on their own, self-declarations included while `allow_self_declaration` is true. Default `AUTOMATED`."""
+
+    simplified_validation_threshold: str | None = None
+    """Decimal string, default "0.00". In `SIMPLIFIED` mode a transfer below this amount (in the threshold currency) accepts a self-declaration. A transfer with no amount in that currency counts as above it."""
+
+    data_sharing_fields: TravelRuleDataSharingFields | None = None
+    """The fields Didit sends to the counterparty VASP about your own users, per entity type. The `name` and the `wallet_address` are always sent, whatever the list says. An entity type you never chose shares every field. An empty list is a choice too: it shares the name and the wallet only."""
+
+    matching_rules: TravelRuleMatchingRules | None = None
+    """How strictly each field of the counterparty's data is compared with what you hold, per entity type. A field you leave out keeps its default. `NONE` skips the comparison, `STRICT` needs exactly the same words, `CONTAINS` accepts one value whose words all appear in the other, `DEFAULT` is the standard subset match, and `FUZZY` accepts close spellings (and, for dates of birth, a swapped day and month)."""
 
     legal_name: str | None = None
     """Your VASP's legal name. Required (non-blank) to set is_enabled to true."""
@@ -105,16 +149,16 @@ class TravelRuleSettingsDetail(BaseModel):
     """Your Legal Entity Identifier, surfaced in the VASP directory."""
 
     compliance_email: str | None = None
-    """Compliance contact email for your VASP profile."""
+    """Compliance contact email for your VASP profile. The Didit network lists your profile only once this address is confirmed through an emailed link (POST /v3/travel-rule/settings/compliance-email/confirmation/); changing it needs a new confirmation."""
 
     is_discoverable: bool | None = None
-    """Whether your VASP profile appears in GET /v3/travel-rule/vasps/ search results and can be reached on the INTERNAL rail. Default true."""
+    """Whether your VASP profile can be listed in the Didit network: found in GET /v3/travel-rule/vasps/ by other Didit customers and reached on the INTERNAL rail. Listing also needs a live application, Travel Rule on, a legal name and a confirmed compliance email; didit_network says which are missing. Default true."""
 
     inbound_auto_accept: bool | None = None
-    """When true, inbound transfers whose beneficiary wallet is a verified address-book entry with a matching name are accepted automatically, without a manual review step. Default false."""
+    """When true, an inbound TRP inquiry whose beneficiary wallet is a verified address-book entry with a matching name is approved automatically. When false, that inquiry waits in ON_HOLD for you to approve or deny it with the ownership endpoint. INTERNAL-rail and after-deposit transfers are not affected. Default true."""
 
     allow_self_declaration: bool | None = None
-    """When true, the wallet-ownership widget offers self-declaration as a fallback proof method. Default false."""
+    """When true, the wallet-ownership widget offers self-declaration as a fallback proof method. Default true."""
 
     allow_screenshot_proof: bool | None = None
     """When true, the wallet-ownership widget offers screenshot upload as an ownership evidence method. Default true."""
@@ -125,11 +169,26 @@ class TravelRuleSettingsDetail(BaseModel):
     vasp_attribution_enabled: bool | None = None
     """When true, an outbound Travel Rule transfer that no rail can route is attributed through blockchain analytics: the destination wallet is resolved to its owning VASP, the entity is recorded on the transfer and in the VASP directory, and the rails are re-run once with the attributed name. Default true."""
 
+    counterparty_screening_enabled: bool | None = None
+    """Opt-in sanctions and adverse-media screening of counterparty VASPs, billed per screening at the Company AML Screening price. When on, Didit screens the counterparty an outbound exchange reaches (reusing a screening younger than 30 days) and you can screen one with POST /v3/travel-rule/vasps/{vasp_id}/screening/. Default false: nothing is screened or billed."""
+
+    sunrise_policy: Literal["", "HOLD", "REJECT", "PROCEED"] | str | None = None
+    """What an expired transfer does to its transaction when the counterparty is a directory entry in a jurisdiction on sunrise_jurisdictions, which does not enforce the Travel Rule yet: HOLD moves it to review, REJECT declines it, PROCEED leaves its status untouched. Empty (the default) follows timeout_outcome. Applies before non_responsive_policy."""
+
+    sunrise_jurisdictions: list[str] | None = None
+    """Read-only. The countries (ISO 3166 alpha-2) Didit treats as in a Travel Rule sunrise period, where sunrise_policy applies. Currently CO, KH and VN. Any other jurisdiction, and an empty or unknown one, follows timeout_outcome."""
+
+    non_responsive_policy: Literal["", "HOLD", "REJECT", "PROCEED"] | str | None = None
+    """What an expired transfer does to its transaction when the counterparty is a directory entry whose responsiveness is UNRESPONSIVE: HOLD, REJECT or PROCEED, as for timeout_outcome. Empty (the default) follows timeout_outcome. sunrise_policy applies first when both fit."""
+
     travel_address: str | None = None
-    """Read-only. Your VASP's own travel address - the encoded inbound TRP inquiry endpoint other VASPs use to reach you. Populated once your VASP profile is complete."""
+    """Read-only. Your VASP's own travel address - the encoded inbound TRP inquiry endpoint other VASPs use to reach you. Empty while `is_enabled` is false."""
 
     disabled_networks: list[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str] | None = None
     """Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks."""
 
     networks: TravelRuleSettingsDetailNetworks | None = None
     """Effective membership configuration for each network. No network, including GTR, is included by default. This is not a live health or delivery check."""
+
+    didit_network: TravelRuleSettingsDetailDiditNetwork | None = None
+    """Whether the Didit network lists your VASP profile, so other Didit customers find it in the directory and reach it on the INTERNAL rail, and each condition it still misses."""

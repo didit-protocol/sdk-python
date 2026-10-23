@@ -5,11 +5,16 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.transaction_travel_rule import TransactionTravelRule
+from didit.types.components.transaction_verification_session_action import (
+    TransactionVerificationSessionAction,
+)
+from didit.types.components.transaction_wallet_ownership_action import (
+    TransactionWalletOwnershipAction,
+)
 
 __all__ = [
     "TransactionDetail",
-    "TransactionDetailActionRequiredVerificationSession",
-    "TransactionDetailActionRequiredWalletOwnership",
     "TransactionDetailActivities",
     "TransactionDetailAlerts",
     "TransactionDetailDocuments",
@@ -23,37 +28,7 @@ __all__ = [
     "TransactionDetailRemediation",
     "TransactionDetailRuleRuns",
     "TransactionDetailTags",
-    "TransactionDetailTravelRule",
 ]
-
-
-class TransactionDetailActionRequiredVerificationSession(BaseModel):
-    type: Literal["verification_session"] | str
-
-    url: str
-    """Hosted verification URL to open for the end user."""
-
-    session_id: str | None = None
-    """Verification session id."""
-
-    session_token: str | None = None
-    """Session token, used by the mobile SDKs to launch the flow natively."""
-
-    status: str | None = None
-    """Verification session status."""
-
-
-class TransactionDetailActionRequiredWalletOwnership(BaseModel):
-    type: Literal["wallet_ownership"] | str
-
-    url: str
-    """Hosted wallet-ownership widget URL. Open it in a real browser surface - on mobile use SFSafariViewController or a Chrome Custom Tab, never an embedded webview."""
-
-    widget_session_id: str | None = None
-    """Wallet-ownership widget session id."""
-
-    expires_at: _dt.datetime | None = None
-    """When the widget session expires."""
 
 
 class TransactionDetailActivities(BaseModel):
@@ -354,7 +329,7 @@ class TransactionDetailRuleRuns(BaseModel):
     """Summary of the actions the rule executed, joined with `; ` (e.g. `score +30; change_status:IN_REVIEW; add_tag:high_risk_country`). Parts: `score +N`, `change_status:<STATUS>`, `add_tag:<name>`, `add_note`, `add_to_list`, `open_case`. `null` when the rule executed no action."""
 
     metadata: dict[str, object] | None = None
-    """Evaluation detail: `scope_match`, `conditions[]` and `aggregations[]`. Each condition entry carries `field`, `operator`, `expected_value`, the `current_value` read from the transaction, `matched`, `group_index` and `group_logic`. Each aggregation entry (velocity / count / sum) carries `metric`, `field`, `operator`, `expected_value`, the `computed_value` the aggregate evaluated to, `window`, `filters`, `matched` and `sample_references`; deferred async aggregations have `computed_value: null` and `deferred: true`."""
+    """Evaluation detail: `scope_match`, `conditions[]` and `aggregations[]`. Each condition entry carries `field`, `operator`, `expected_value`, the `current_value` read from the transaction, `matched`, `group_index` and `group_logic`. Each aggregation entry (velocity / count / sum) carries `metric`, `field`, `operator`, `expected_value`, the `computed_value` the aggregate evaluated to, `window`, `filters`, `matched` and `sample_references`; deferred async aggregations have `computed_value: null` and `deferred: true`. A nested condition group is one `conditions[]` entry with `operator` `any_of` or `all_of`, `field` null, and its members' results under its own `conditions`."""
 
     created_at: _dt.datetime | None = None
 
@@ -370,26 +345,6 @@ class TransactionDetailTags(BaseModel):
 
     source: Literal["didit", "custom"] | str | None = None
     """Whether the tag is a Didit preset or a custom tag."""
-
-
-class TransactionDetailTravelRule(BaseModel):
-    """Travel Rule transfer or check. Populated when `travel_rule_details` was submitted, and also when Travel Rule is enabled and the transaction was created with `transaction_category: travelRule` (Didit initiates the exchange itself, even without `travel_rule_details`). `null` when no transfer or check exists."""
-
-    uuid: str | None = None
-
-    status: str | None = None
-
-    protocol: str | None = None
-
-    required: bool | None = None
-
-    obligations_count: int | None = None
-
-    originator_data: dict[str, object] | None = None
-
-    beneficiary_data: dict[str, object] | None = None
-
-    metadata: dict[str, object] | None = None
 
 
 class TransactionDetail(BaseModel):
@@ -498,8 +453,8 @@ class TransactionDetail(BaseModel):
     provider_results: list[TransactionDetailProviderResults] | None = None
     """Raw provider payloads (AML screening, blockchain analytics, etc.)."""
 
-    travel_rule: TransactionDetailTravelRule | None = None
-    """Travel Rule transfer or check. Populated when `travel_rule_details` was submitted, and also when Travel Rule is enabled and the transaction was created with `transaction_category: travelRule` (Didit initiates the exchange itself, even without `travel_rule_details`). `null` when no transfer or check exists."""
+    travel_rule: TransactionTravelRule | None = None
+    """Travel Rule transfer or check. Populated when `travel_rule_details` was submitted, and also when Travel Rule is enabled and the transaction was created with `transaction_category: travelRule` (Didit initiates the exchange itself, even without `travel_rule_details`). `null` when no transfer or check exists. On an inbound transfer, the counterparty's `originator_data` and `beneficiary_data` stay masked (`data_masked: true`) until wallet ownership is confirmed."""
 
     network_snapshot: TransactionDetailNetworkSnapshot | None = None
     """Graph snapshot of related transactions/parties used by the rules engine. Either the `network_snapshot` submitted with the transaction or the graph Didit builds from a successful AML wallet screening (which replaces a submitted one). `null` when neither exists."""
@@ -508,9 +463,7 @@ class TransactionDetail(BaseModel):
     """Remediation session offered to the user when re-verification is required. Superseded by `action_required`, which is the canonical block; kept for backward compatibility."""
 
     action_required: (
-        TransactionDetailActionRequiredVerificationSession
-        | TransactionDetailActionRequiredWalletOwnership
-        | None
+        TransactionVerificationSessionAction | TransactionWalletOwnershipAction | None
     ) = None
     """Pending end-user action required to complete this transaction, or null when there is none. The Didit SDKs auto-launch the action by default and refresh the transaction when it finishes. Two variants, discriminated by `type`: `verification_session` (a hosted verification session created by a rule action) and `wallet_ownership` (a wallet-ownership widget session auto-minted for a Travel Rule transfer that needs proof of wallet control, gated by the `auto_wallet_verification` Travel Rule setting). When both could apply, `wallet_ownership` takes precedence because it blocks the Travel Rule exchange."""
 

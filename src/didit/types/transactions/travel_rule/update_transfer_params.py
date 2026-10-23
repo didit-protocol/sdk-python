@@ -9,10 +9,19 @@ __all__ = ["TransactionsTravelRuleUpdateTransferParams"]
 
 
 class TransactionsTravelRuleUpdateTransferParams(TypedDict, total=False):
-    """Provide exactly one of: payment_txn_id (finish), action=cancel, or action=resend."""
+    """Provide exactly one of: payment_txn_id (finish), action=cancel, action=resend, action=update_compliance_email with compliance_email, or action=update_originator_wallet with wallet_address."""
 
     payment_txn_id: str
     """The on-chain transaction hash. Requires the transfer to be an outbound transfer in COMPLETED status."""
 
-    action: Literal["cancel", "resend"] | str
-    """"cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA."""
+    action: Literal["cancel", "resend", "update_compliance_email", "update_originator_wallet"] | str
+    """"cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`)."""
+
+    compliance_email: str
+    """Required with `action: update_compliance_email`. Kept as this transfer's `beneficiary_data.counterparty_vasp_email`: it belongs to this transfer only and joins no directory entry and no contact list."""
+
+    wallet_address: str
+    """With `action: update_originator_wallet`: the wallet the funds left from. When the transfer's UTXO inputs are known it must be one of them."""
+
+    memo: str
+    """With `action: update_originator_wallet`: the wallet's memo or tag on a memo network. Optional."""

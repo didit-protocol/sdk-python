@@ -4,12 +4,7 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
-from didit.types.cases.blueprints.install_presets_response import (
-    CasesBlueprintsInstallPresetsResponse,
-)
 from didit.types.cases.blueprints.list_presets_response import CasesBlueprintsListPresetsResponse
-from didit.types.cases.bulk_assign_response import CasesBulkAssignResponse
-from didit.types.cases.bulk_update_status_response import CasesBulkUpdateStatusResponse
 from didit.types.cases.list_reviewers_response import CasesListReviewersResponse
 from didit.types.cases.notes.create_attachment_upload_response import (
     CasesNotesCreateAttachmentUploadResponse,
@@ -18,7 +13,9 @@ from didit.types.cases.notes.retrieve_attachment_url_response import (
     CasesNotesRetrieveAttachmentUrlResponse,
 )
 from didit.types.cases.print_response import CasesPrintResponse
+from didit.types.cases.requests.remind_response import CasesRequestsRemindResponse
 from didit.types.cases.retrieve_statistics_response import CasesRetrieveStatisticsResponse
+from didit.types.components.aml_screening import AMLScreening
 from didit.types.components.case_action_case_action_receipt import CaseActionCaseActionReceipt
 from didit.types.components.case_action_case_action_receipt_page import (
     CaseActionCaseActionReceiptPage,
@@ -28,6 +25,10 @@ from didit.types.components.case_action_case_entity_action_result import (
 )
 from didit.types.components.case_blueprint_detail import CaseBlueprintDetail
 from didit.types.components.case_blueprint_list_item import CaseBlueprintListItem
+from didit.types.components.case_blueprint_preset_install_result import (
+    CaseBlueprintPresetInstallResult,
+)
+from didit.types.components.case_bulk_update_result import CaseBulkUpdateResult
 from didit.types.components.case_checklist_item import CaseChecklistItem
 from didit.types.components.case_collaboration_case_note import CaseCollaborationCaseNote
 from didit.types.components.case_detail import CaseDetail
@@ -134,6 +135,8 @@ def test_cases_approve_resolution() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -141,6 +144,7 @@ def test_cases_approve_resolution() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -149,8 +153,14 @@ def test_cases_approve_resolution() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -286,6 +296,8 @@ def test_cases_assign() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -293,6 +305,7 @@ def test_cases_assign() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -301,8 +314,14 @@ def test_cases_assign() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -435,10 +454,10 @@ def test_cases_bulk_assign() -> None:
             response_json={
                 "updated": 1,
                 "failures": [
-                    {"case_uuid": "00000000-0000-4000-8000-000000000004", "detail": "sample"}
+                    {"case_uuid": "00000000-0000-4000-8000-000000000005", "detail": "sample"}
                 ],
             },
-            strict_type=CasesBulkAssignResponse,
+            strict_type=CaseBulkUpdateResult,
         ),
         lambda c: c.cases.bulk_assign(
             case_uuids=["00000000-0000-4000-8000-000000000002"],
@@ -448,8 +467,8 @@ def test_cases_bulk_assign() -> None:
             case_uuids=["00000000-0000-4000-8000-000000000002"],
             assignee_user_id="00000000-0000-4000-8000-000000000001",
         ),
-        lambda r: isinstance(r, CasesBulkAssignResponse),
-        lambda r: isinstance(r, CasesBulkAssignResponse),
+        lambda r: isinstance(r, CaseBulkUpdateResult),
+        lambda r: isinstance(r, CaseBulkUpdateResult),
     )
 
 
@@ -466,10 +485,10 @@ def test_cases_bulk_update_status() -> None:
             response_json={
                 "updated": 1,
                 "failures": [
-                    {"case_uuid": "00000000-0000-4000-8000-000000000004", "detail": "sample"}
+                    {"case_uuid": "00000000-0000-4000-8000-000000000005", "detail": "sample"}
                 ],
             },
-            strict_type=CasesBulkUpdateStatusResponse,
+            strict_type=CaseBulkUpdateResult,
         ),
         lambda c: c.cases.bulk_update_status(
             case_uuids=["00000000-0000-4000-8000-000000000002"], status="OPEN"
@@ -477,8 +496,8 @@ def test_cases_bulk_update_status() -> None:
         lambda c: c.cases.bulk_update_status(
             case_uuids=["00000000-0000-4000-8000-000000000002"], status="OPEN"
         ),
-        lambda r: isinstance(r, CasesBulkUpdateStatusResponse),
-        lambda r: isinstance(r, CasesBulkUpdateStatusResponse),
+        lambda r: isinstance(r, CaseBulkUpdateResult),
+        lambda r: isinstance(r, CaseBulkUpdateResult),
     )
 
 
@@ -507,6 +526,8 @@ def test_cases_create() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -514,6 +535,7 @@ def test_cases_create() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -522,8 +544,14 @@ def test_cases_create() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -675,6 +703,8 @@ def test_cases_escalate() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -682,6 +712,7 @@ def test_cases_escalate() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -690,8 +721,14 @@ def test_cases_escalate() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -876,6 +913,20 @@ def test_cases_list() -> None:
                         "title": "sample",
                         "status": "OPEN",
                         "resolution": "FALSE_POSITIVE",
+                        "pending_resolution": {
+                            "resolution": "FALSE_POSITIVE",
+                            "resolution_notes": "sample",
+                            "maker_email": "user@example.com",
+                            "maker_name": "sample",
+                            "maker_user_id": "00000000-0000-4000-8000-000000000006",
+                            "maker_blueprint_id": "00000000-0000-4000-8000-000000000006",
+                            "staged_at": "2026-01-01T00:00:00Z",
+                        },
+                        "checker": {
+                            "member_uuid": "00000000-0000-4000-8000-000000000007",
+                            "name": "sample",
+                            "email": "user@example.com",
+                        },
                         "priority": "LOW",
                         "source": "MANUAL",
                         "tags": ["sample"],
@@ -884,6 +935,8 @@ def test_cases_list() -> None:
                             "uuid": "00000000-0000-4000-8000-000000000007",
                             "name": "sample",
                             "external_id": "sample",
+                            "country": "ESP",
+                            "portrait": "https://example.com/resource",
                         },
                         "assigned_to": {
                             "uuid": "00000000-0000-4000-8000-000000000007",
@@ -891,6 +944,7 @@ def test_cases_list() -> None:
                             "email": "user@example.com",
                         },
                         "assigned_at": "2026-01-01T00:00:00Z",
+                        "team": {"uuid": "00000000-0000-4000-8000-000000000007", "name": "sample"},
                         "due_at": "2026-01-01T00:00:00Z",
                         "resolved_at": "2026-01-01T00:00:00Z",
                         "created_by_email": "sample",
@@ -998,13 +1052,205 @@ def test_cases_list_aml_hits() -> None:
             api="verification",
             auth="api_key",
             status=200,
-            response_json=[{}],
-            strict_type=list[dict[str, object]],
+            response_json=[
+                {
+                    "node_id": "sample",
+                    "status": "Not Finished",
+                    "total_hits": 1,
+                    "entity_type": "sample",
+                    "hits": [
+                        {
+                            "id": "sample",
+                            "url": "https://example.com/resource",
+                            "match": True,
+                            "score": 1.5,
+                            "target": True,
+                            "caption": "sample",
+                            "datasets": ["PEP"],
+                            "features": {},
+                            "rca_name": "sample",
+                            "last_seen": "2026-01-01T00:00:00Z",
+                            "risk_view": {
+                                "crimes": {
+                                    "score": 1,
+                                    "weightage": 1,
+                                    "risk_level": "sample",
+                                    "risk_scores": {},
+                                },
+                                "countries": {
+                                    "score": 1,
+                                    "weightage": 1,
+                                    "risk_level": "sample",
+                                    "risk_scores": {},
+                                },
+                                "categories": {
+                                    "score": 1,
+                                    "weightage": 1,
+                                    "risk_level": "sample",
+                                    "risk_scores": {},
+                                },
+                                "custom_list": {},
+                            },
+                            "first_seen": "2026-01-01T00:00:00Z",
+                            "properties": {
+                                "name": ["sample"],
+                                "alias": ["sample"],
+                                "notes": ["sample"],
+                                "title": "sample",
+                                "gender": ["sample"],
+                                "height": "sample",
+                                "topics": "sample",
+                                "weight": "sample",
+                                "address": "sample",
+                                "country": "sample",
+                                "website": "sample",
+                                "eyeColor": "sample",
+                                "keywords": "sample",
+                                "lastName": ["sample"],
+                                "position": "sample",
+                                "religion": "sample",
+                                "birthDate": ["sample"],
+                                "education": ["sample"],
+                                "ethnicity": "sample",
+                                "firstName": ["sample"],
+                                "hairColor": "sample",
+                                "weakAlias": "sample",
+                                "birthPlace": ["sample"],
+                                "modifiedAt": "sample",
+                                "wikidataId": "sample",
+                                "citizenship": "sample",
+                                "nationality": "sample",
+                            },
+                            "match_score": 1.5,
+                            "risk_score": 1.5,
+                            "review_status": "Unreviewed",
+                            "score_breakdown": {
+                                "name_score": 1,
+                                "name_weight": 1,
+                                "name_weight_normalized": 1.5,
+                                "name_contribution": 1.5,
+                                "dob_score": 1,
+                                "dob_weight": 1,
+                                "dob_weight_normalized": 1.5,
+                                "dob_contribution": 1.5,
+                                "country_score": 1,
+                                "country_weight": 1,
+                                "country_weight_normalized": 1.5,
+                                "country_contribution": 1.5,
+                                "document_number_match_type": "MATCH",
+                                "document_number_effect": "sample",
+                                "total_score": 1,
+                            },
+                            "pep_matches": [
+                                {
+                                    "aliases": [],
+                                    "education": [],
+                                    "list_name": "sample",
+                                    "publisher": "sample",
+                                    "source_url": "https://example.com/resource",
+                                    "description": "sample",
+                                    "matched_name": "sample",
+                                    "pep_position": "sample",
+                                    "date_of_birth": "sample",
+                                    "other_sources": [],
+                                    "place_of_birth": "sample",
+                                }
+                            ],
+                            "linked_entities": [
+                                {
+                                    "name": [],
+                                    "active": [],
+                                    "status": [],
+                                    "details": [],
+                                    "relation": [],
+                                }
+                            ],
+                            "warning_matches": [
+                                {
+                                    "list_name": "sample",
+                                    "matched_name": "sample",
+                                    "description": "sample",
+                                    "publisher": "sample",
+                                    "source_url": "https://example.com/resource",
+                                    "other_sources": [],
+                                    "countries": [],
+                                    "created_at": "sample",
+                                    "updated_at": "sample",
+                                    "additional_data": {},
+                                }
+                            ],
+                            "sanction_matches": [
+                                {
+                                    "list_name": [],
+                                    "matched_name": "sample",
+                                    "description": "sample",
+                                    "reason": "sample",
+                                    "source_url": "https://example.com/resource",
+                                    "other_sources": [],
+                                    "details": [],
+                                    "legal_basis": [],
+                                    "listed_on": [],
+                                    "sanction_list": [],
+                                    "sanction_program": [],
+                                    "sanctioning_authority": [],
+                                    "updated_on": [],
+                                    "additional_data": {},
+                                }
+                            ],
+                            "adverse_media_details": {
+                                "sentiment": "sample",
+                                "entity_type": "sample",
+                                "sentiment_score": 1,
+                                "adverse_keywords": {"key": 1},
+                            },
+                            "adverse_media_matches": [
+                                {
+                                    "country": "sample",
+                                    "summary": "sample",
+                                    "headline": "sample",
+                                    "sentiment": "sample",
+                                    "thumbnail": "https://example.com/resource",
+                                    "source_url": "https://example.com/resource",
+                                    "author_name": "sample",
+                                    "other_sources": [],
+                                    "adverse_keywords": [],
+                                    "sentiment_score": 1,
+                                    "publication_date": "2026-01-01T00:00:00Z",
+                                }
+                            ],
+                            "additional_information": {},
+                        }
+                    ],
+                    "score": 1.5,
+                    "screened_data": {
+                        "full_name": "sample",
+                        "nationality": "sample",
+                        "date_of_birth": "2026-01-01",
+                        "document_number": "sample",
+                    },
+                    "is_ongoing_monitoring_enabled": True,
+                    "next_ongoing_monitoring_bill_date": "2026-01-01",
+                    "last_ongoing_screening_at": "2026-01-01T00:00:00Z",
+                    "last_ongoing_screening_datasets_updated_at": "2026-01-01T00:00:00Z",
+                    "warnings": [
+                        {
+                            "feature": "ID_VERIFICATION",
+                            "risk": "sample",
+                            "additional_data": {},
+                            "log_type": "sample",
+                            "short_description": "sample",
+                            "long_description": "sample",
+                            "node_id": "sample",
+                        }
+                    ],
+                }
+            ],
+            strict_type=list[AMLScreening],
         ),
         lambda c: c.cases.list_aml_hits("c1a5e000-0000-4000-8000-000000000001"),
         lambda c: c.cases.list_aml_hits("c1a5e000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, list) and all(isinstance(x1, dict) for x1 in r),
-        lambda r: isinstance(r, list) and all(isinstance(x1, dict) for x1 in r),
+        lambda r: isinstance(r, list) and all(isinstance(x1, AMLScreening) for x1 in r),
+        lambda r: isinstance(r, list) and all(isinstance(x1, AMLScreening) for x1 in r),
     )
 
 
@@ -1114,6 +1360,8 @@ def test_cases_reject_resolution() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -1121,6 +1369,7 @@ def test_cases_reject_resolution() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -1129,8 +1378,14 @@ def test_cases_reject_resolution() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -1265,6 +1520,8 @@ def test_cases_reopen() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -1272,6 +1529,7 @@ def test_cases_reopen() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -1280,8 +1538,14 @@ def test_cases_reopen() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -1416,6 +1680,8 @@ def test_cases_request_info() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -1423,6 +1689,7 @@ def test_cases_request_info() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -1431,8 +1698,14 @@ def test_cases_request_info() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -1551,7 +1824,10 @@ def test_cases_resolve() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/resolve/",
             api="verification",
             auth="api_key",
-            json_body={"resolution": "FALSE_POSITIVE"},
+            json_body={
+                "resolution": "FALSE_POSITIVE",
+                "note": "Confirmed legitimate activity after reviewing documents.",
+            },
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -1568,6 +1844,8 @@ def test_cases_resolve() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -1575,6 +1853,7 @@ def test_cases_resolve() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -1583,8 +1862,14 @@ def test_cases_resolve() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -1689,10 +1974,14 @@ def test_cases_resolve() -> None:
             strict_type=CaseDetail,
         ),
         lambda c: c.cases.resolve(
-            "c1a5e000-0000-4000-8000-000000000001", resolution="FALSE_POSITIVE"
+            "c1a5e000-0000-4000-8000-000000000001",
+            resolution="FALSE_POSITIVE",
+            note="Confirmed legitimate activity after reviewing documents.",
         ),
         lambda c: c.cases.resolve(
-            "c1a5e000-0000-4000-8000-000000000001", resolution="FALSE_POSITIVE"
+            "c1a5e000-0000-4000-8000-000000000001",
+            resolution="FALSE_POSITIVE",
+            note="Confirmed legitimate activity after reviewing documents.",
         ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
@@ -1723,6 +2012,8 @@ def test_cases_retrieve() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -1730,6 +2021,7 @@ def test_cases_retrieve() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -1738,8 +2030,14 @@ def test_cases_retrieve() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -2035,6 +2333,8 @@ def test_cases_transfer() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -2042,6 +2342,7 @@ def test_cases_transfer() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -2050,8 +2351,14 @@ def test_cases_transfer() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -2176,7 +2483,7 @@ def test_cases_update() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/",
             api="verification",
             auth="api_key",
-            json_body={"title": "sample"},
+            json_body={"priority": "HIGH", "due_at": "2026-11-01T00:00:00Z"},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -2193,6 +2500,8 @@ def test_cases_update() -> None:
                     "uuid": "00000000-0000-4000-8000-000000000005",
                     "name": "sample",
                     "external_id": "sample",
+                    "country": "ESP",
+                    "portrait": "https://example.com/resource",
                 },
                 "assigned_to": {
                     "uuid": "00000000-0000-4000-8000-000000000005",
@@ -2200,6 +2509,7 @@ def test_cases_update() -> None:
                     "email": "user@example.com",
                 },
                 "assigned_at": "2026-01-01T00:00:00Z",
+                "team": {"uuid": "00000000-0000-4000-8000-000000000005", "name": "sample"},
                 "due_at": "2026-01-01T00:00:00Z",
                 "resolved_at": "2026-01-01T00:00:00Z",
                 "resolved_by_email": "sample",
@@ -2208,8 +2518,14 @@ def test_cases_update() -> None:
                     "resolution_notes": "sample",
                     "maker_email": "user@example.com",
                     "maker_name": "sample",
+                    "maker_user_id": "00000000-0000-4000-8000-000000000004",
                     "maker_blueprint_id": "00000000-0000-4000-8000-000000000004",
                     "staged_at": "2026-01-01T00:00:00Z",
+                },
+                "checker": {
+                    "member_uuid": "00000000-0000-4000-8000-000000000005",
+                    "name": "sample",
+                    "email": "user@example.com",
                 },
                 "metadata": {},
                 "blueprint": {
@@ -2313,8 +2629,12 @@ def test_cases_update() -> None:
             },
             strict_type=CaseDetail,
         ),
-        lambda c: c.cases.update("c1a5e000-0000-4000-8000-000000000001", title="sample"),
-        lambda c: c.cases.update("c1a5e000-0000-4000-8000-000000000001", title="sample"),
+        lambda c: c.cases.update(
+            "c1a5e000-0000-4000-8000-000000000001", priority="HIGH", due_at="2026-11-01T00:00:00Z"
+        ),
+        lambda c: c.cases.update(
+            "c1a5e000-0000-4000-8000-000000000001", priority="HIGH", due_at="2026-11-01T00:00:00Z"
+        ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
     )
@@ -2443,12 +2763,12 @@ def test_cases_blueprints_install_presets() -> None:
             json_body={"preset_keys": ["sample"]},
             status=200,
             response_json={"created": ["sample"]},
-            strict_type=CasesBlueprintsInstallPresetsResponse,
+            strict_type=CaseBlueprintPresetInstallResult,
         ),
         lambda c: c.cases.blueprints.install_presets(preset_keys=["sample"]),
         lambda c: c.cases.blueprints.install_presets(preset_keys=["sample"]),
-        lambda r: isinstance(r, CasesBlueprintsInstallPresetsResponse),
-        lambda r: isinstance(r, CasesBlueprintsInstallPresetsResponse),
+        lambda r: isinstance(r, CaseBlueprintPresetInstallResult),
+        lambda r: isinstance(r, CaseBlueprintPresetInstallResult),
     )
 
 
@@ -3278,8 +3598,8 @@ def test_cases_regulatory_reports_list() -> None:
                 "previous": "sample",
                 "results": [
                     {
-                        "uuid": "00000000-0000-4000-8000-000000000005",
-                        "case_uuid": "00000000-0000-4000-8000-000000000005",
+                        "uuid": "00000000-0000-4000-8000-000000000006",
+                        "case_uuid": "00000000-0000-4000-8000-000000000006",
                         "case_number": "sample",
                         "report_type": "SAR",
                         "report_type_display": "sample",
@@ -3310,7 +3630,7 @@ def test_cases_regulatory_reports_list() -> None:
                         },
                         "report_indicators": ["sample"],
                         "included_fields": ["sample"],
-                        "transactions": ["00000000-0000-4000-8000-000000000006"],
+                        "transactions": ["00000000-0000-4000-8000-000000000007"],
                         "validation_errors": [{"field": "sample", "message": "sample"}],
                         "validated_at": "2026-01-01T00:00:00Z",
                         "finalized_at": "2026-01-01T00:00:00Z",
@@ -3517,6 +3837,47 @@ def test_cases_requests_preview() -> None:
         ),
         lambda r: isinstance(r, CustomerMessagingCaseRequestPreviewResponse),
         lambda r: isinstance(r, CustomerMessagingCaseRequestPreviewResponse),
+    )
+
+
+def test_cases_requests_remind() -> None:
+    """``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/requests/{request_uuid}/remind/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/00000000-0000-4000-8000-000000000001/requests/00000000-0000-4000-8000-000000000002/remind/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "request": {
+                    "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "purpose": "confirm_details",
+                    "language": "en",
+                    "recipient": "customer@example.com",
+                    "expires_at": "2026-10-20T09:00:00Z",
+                    "actor_email": "reviewer@example.com",
+                    "delivery_status": "SENT",
+                    "delivered_at": "2026-10-13T09:00:04Z",
+                    "cancelled_at": None,
+                    "responded_at": None,
+                    "response": None,
+                    "has_attachment": False,
+                    "created_at": "2026-10-13T09:00:00Z",
+                },
+                "reminded_at": "2026-10-14T10:30:00Z",
+                "delivery_status": "SENT",
+                "next_reminder_at": "2026-10-15T10:30:00Z",
+            },
+        ),
+        lambda c: c.cases.requests.remind(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda c: c.cases.requests.remind(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda r: isinstance(r, CasesRequestsRemindResponse),
+        lambda r: isinstance(r, CasesRequestsRemindResponse),
     )
 
 

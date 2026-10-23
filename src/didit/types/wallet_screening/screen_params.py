@@ -30,10 +30,13 @@ class WalletScreeningScreenParams(TypedDict, total=False):
             "BASE",
             "OP",
             "ARB",
+            "CELO",
+            "MODE",
+            "PLUME",
         ]
         | str
     ]
-    """Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. Celo, Mode and Plume are not currently supported. Alias: `currency`."""
+    """Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`."""
 
     direction: Literal["inbound", "outbound", "deposit", "withdrawal"] | str
     """Optional. Whether the address is being screened as an inbound (deposit) or outbound (withdrawal) counterparty. Accepts `inbound`, `outbound`, `deposit`, or `withdrawal`. Defaults to a neutral pre-transfer screen when omitted. This is passed to the provider as context only; it does not change the returned `risk_score`, `severity`, or the `source_of_funds`/`destination_of_funds` breakdowns, which are always both returned regardless of `direction`. Changing or omitting `direction` therefore does not require re-screening an address."""

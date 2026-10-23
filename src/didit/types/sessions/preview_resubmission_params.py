@@ -48,8 +48,8 @@ class SessionsPreviewResubmissionParams(TypedDict, total=False):
     nodes_to_resubmit: Sequence[SessionsPreviewResubmissionParamsNodesToResubmit]
     """Steps to preview, using the same validation, selection and workflow ordering as a resubmission. Omit to auto-select recorded attempts needing resubmission."""
 
-    email_address: Required[str]
-    """Recipient shown in the preview. No email is sent."""
+    email_address: str
+    """Optional. Send the email to this address instead of the person's own. Without it, the recipient is the address the person verified in the flow, else the one given in `contact_details`. No email is sent by this call."""
 
     email_language: str
     """Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`)."""

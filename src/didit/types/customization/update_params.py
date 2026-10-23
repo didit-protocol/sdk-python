@@ -86,14 +86,20 @@ class CustomizationUpdateParams(TypedDict, total=False):
     delete_logo_rectangular: bool
     """When `true`, removes the current rectangular logo."""
 
+    delete_logo_rectangular_dark: bool
+    """When `true`, removes the current dark-mode logo, and `logo_rectangular_dark` then reads `null`. If the same multipart request also uploads `image_rectangular_dark`, the upload wins."""
+
     delete_favicon: bool
     """When `true`, removes the current favicon."""
 
     image_square: FileTypes
-    """Square logo (1:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`."""
+    """Square logo (1:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**."""
 
     image_rectangular: FileTypes
-    """Rectangular logo (2:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`."""
+    """Rectangular logo (2:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**."""
+
+    image_rectangular_dark: FileTypes
+    """Rectangular logo for dark mode (2:1 aspect ratio), shown on a dark background. PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**. Returned as `logo_rectangular_dark`."""
 
     image_favicon: FileTypes
     """Favicon image. Max **500 KB**."""
