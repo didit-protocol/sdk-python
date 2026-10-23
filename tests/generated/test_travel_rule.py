@@ -1258,7 +1258,27 @@ def test_travel_rule_wallet_addresses_bulk_import() -> None:
             path="/v3/travel-rule/wallet-addresses/import/",
             api="verification",
             auth="api_key",
-            json_body={},
+            json_body={
+                "entries": [
+                    {
+                        "address": "0xBeneficiaryWallet01",
+                        "chain": "ETH",
+                        "holder_name": "Ana Diaz",
+                        "holder_vendor_data": "user-042",
+                    },
+                    {
+                        "address_hash": "4f7d2e1c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e",
+                        "chain": "bitcoin",
+                        "holder_vendor_data": "user-043",
+                    },
+                    {
+                        "address": "rExchangeSharedAddress01",
+                        "chain": "XRP",
+                        "memo": "104729",
+                        "holder_name": "Ana Diaz",
+                    },
+                ]
+            },
             status=200,
             response_json={
                 "total": 3,
@@ -1291,8 +1311,52 @@ def test_travel_rule_wallet_addresses_bulk_import() -> None:
                 ],
             },
         ),
-        lambda c: c.travel_rule.wallet_addresses.bulk_import(),
-        lambda c: c.travel_rule.wallet_addresses.bulk_import(),
+        lambda c: c.travel_rule.wallet_addresses.bulk_import(
+            body={
+                "entries": [
+                    {
+                        "address": "0xBeneficiaryWallet01",
+                        "chain": "ETH",
+                        "holder_name": "Ana Diaz",
+                        "holder_vendor_data": "user-042",
+                    },
+                    {
+                        "address_hash": "4f7d2e1c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e",
+                        "chain": "bitcoin",
+                        "holder_vendor_data": "user-043",
+                    },
+                    {
+                        "address": "rExchangeSharedAddress01",
+                        "chain": "XRP",
+                        "memo": "104729",
+                        "holder_name": "Ana Diaz",
+                    },
+                ]
+            }
+        ),
+        lambda c: c.travel_rule.wallet_addresses.bulk_import(
+            body={
+                "entries": [
+                    {
+                        "address": "0xBeneficiaryWallet01",
+                        "chain": "ETH",
+                        "holder_name": "Ana Diaz",
+                        "holder_vendor_data": "user-042",
+                    },
+                    {
+                        "address_hash": "4f7d2e1c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e",
+                        "chain": "bitcoin",
+                        "holder_vendor_data": "user-043",
+                    },
+                    {
+                        "address": "rExchangeSharedAddress01",
+                        "chain": "XRP",
+                        "memo": "104729",
+                        "holder_name": "Ana Diaz",
+                    },
+                ]
+            }
+        ),
         lambda r: isinstance(r, WalletAddressImportReport),
         lambda r: isinstance(r, WalletAddressImportReport),
     )

@@ -22,30 +22,30 @@ from didit.types.components.travel_rule_workspace_domain_code_response import (
 )
 
 __all__ = [
-    "TravelRuleWorkspace",
-    "AsyncTravelRuleWorkspace",
-    "TravelRuleWorkspaceWithRawResponse",
-    "AsyncTravelRuleWorkspaceWithRawResponse",
-    "TravelRuleWorkspaceWithStreamingResponse",
-    "AsyncTravelRuleWorkspaceWithStreamingResponse",
+    "TravelRuleWorkspaceResource",
+    "AsyncTravelRuleWorkspaceResource",
+    "TravelRuleWorkspaceResourceWithRawResponse",
+    "AsyncTravelRuleWorkspaceResourceWithRawResponse",
+    "TravelRuleWorkspaceResourceWithStreamingResponse",
+    "AsyncTravelRuleWorkspaceResourceWithStreamingResponse",
 ]
 
 
-class TravelRuleWorkspace(SyncAPIResource):
+class TravelRuleWorkspaceResource(SyncAPIResource):
     """The ``travel_rule.workspace`` resource of the Didit API.
 
     Methods: ``claim``, ``confirm_domain``, ``enable_billing``, ``get``, ``send_domain_code``, ``verify_domain_dns``.
     """
 
     @cached_property
-    def with_raw_response(self) -> TravelRuleWorkspaceWithRawResponse:
+    def with_raw_response(self) -> TravelRuleWorkspaceResourceWithRawResponse:
         """Every method of this resource, returning the raw HTTP response."""
-        return TravelRuleWorkspaceWithRawResponse(self)
+        return TravelRuleWorkspaceResourceWithRawResponse(self)
 
     @cached_property
-    def with_streaming_response(self) -> TravelRuleWorkspaceWithStreamingResponse:
+    def with_streaming_response(self) -> TravelRuleWorkspaceResourceWithStreamingResponse:
         """Every method of this resource, returning the HTTP response before reading its body."""
-        return TravelRuleWorkspaceWithStreamingResponse(self)
+        return TravelRuleWorkspaceResourceWithStreamingResponse(self)
 
     def get(
         self,
@@ -261,21 +261,21 @@ class TravelRuleWorkspace(SyncAPIResource):
         )
 
 
-class AsyncTravelRuleWorkspace(AsyncAPIResource):
+class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
     """The ``travel_rule.workspace`` resource of the Didit API.
 
     Methods: ``claim``, ``confirm_domain``, ``enable_billing``, ``get``, ``send_domain_code``, ``verify_domain_dns``.
     """
 
     @cached_property
-    def with_raw_response(self) -> AsyncTravelRuleWorkspaceWithRawResponse:
+    def with_raw_response(self) -> AsyncTravelRuleWorkspaceResourceWithRawResponse:
         """Every method of this resource, returning the raw HTTP response."""
-        return AsyncTravelRuleWorkspaceWithRawResponse(self)
+        return AsyncTravelRuleWorkspaceResourceWithRawResponse(self)
 
     @cached_property
-    def with_streaming_response(self) -> AsyncTravelRuleWorkspaceWithStreamingResponse:
+    def with_streaming_response(self) -> AsyncTravelRuleWorkspaceResourceWithStreamingResponse:
         """Every method of this resource, returning the HTTP response before reading its body."""
-        return AsyncTravelRuleWorkspaceWithStreamingResponse(self)
+        return AsyncTravelRuleWorkspaceResourceWithStreamingResponse(self)
 
     async def get(
         self,
@@ -491,8 +491,8 @@ class AsyncTravelRuleWorkspace(AsyncAPIResource):
         )
 
 
-class TravelRuleWorkspaceWithRawResponse:
-    def __init__(self, resource: TravelRuleWorkspace) -> None:
+class TravelRuleWorkspaceResourceWithRawResponse:
+    def __init__(self, resource: TravelRuleWorkspaceResource) -> None:
         self._resource = resource
         self.get = to_raw_response_wrapper(resource.get)
         self.claim = to_raw_response_wrapper(resource.claim)
@@ -502,8 +502,8 @@ class TravelRuleWorkspaceWithRawResponse:
         self.enable_billing = to_raw_response_wrapper(resource.enable_billing)
 
 
-class AsyncTravelRuleWorkspaceWithRawResponse:
-    def __init__(self, resource: AsyncTravelRuleWorkspace) -> None:
+class AsyncTravelRuleWorkspaceResourceWithRawResponse:
+    def __init__(self, resource: AsyncTravelRuleWorkspaceResource) -> None:
         self._resource = resource
         self.get = async_to_raw_response_wrapper(resource.get)
         self.claim = async_to_raw_response_wrapper(resource.claim)
@@ -513,8 +513,8 @@ class AsyncTravelRuleWorkspaceWithRawResponse:
         self.enable_billing = async_to_raw_response_wrapper(resource.enable_billing)
 
 
-class TravelRuleWorkspaceWithStreamingResponse:
-    def __init__(self, resource: TravelRuleWorkspace) -> None:
+class TravelRuleWorkspaceResourceWithStreamingResponse:
+    def __init__(self, resource: TravelRuleWorkspaceResource) -> None:
         self._resource = resource
         self.get = to_streamed_response_wrapper(resource.get)
         self.claim = to_streamed_response_wrapper(resource.claim)
@@ -524,8 +524,8 @@ class TravelRuleWorkspaceWithStreamingResponse:
         self.enable_billing = to_streamed_response_wrapper(resource.enable_billing)
 
 
-class AsyncTravelRuleWorkspaceWithStreamingResponse:
-    def __init__(self, resource: AsyncTravelRuleWorkspace) -> None:
+class AsyncTravelRuleWorkspaceResourceWithStreamingResponse:
+    def __init__(self, resource: AsyncTravelRuleWorkspaceResource) -> None:
         self._resource = resource
         self.get = async_to_streamed_response_wrapper(resource.get)
         self.claim = async_to_streamed_response_wrapper(resource.claim)

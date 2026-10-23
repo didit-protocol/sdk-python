@@ -75,12 +75,12 @@ if TYPE_CHECKING:
         TravelRuleWalletAddressesWithStreamingResponse,
     )
     from didit.resources.travel_rule.workspace import (
-        AsyncTravelRuleWorkspace,
-        AsyncTravelRuleWorkspaceWithRawResponse,
-        AsyncTravelRuleWorkspaceWithStreamingResponse,
-        TravelRuleWorkspace,
-        TravelRuleWorkspaceWithRawResponse,
-        TravelRuleWorkspaceWithStreamingResponse,
+        AsyncTravelRuleWorkspaceResource,
+        AsyncTravelRuleWorkspaceResourceWithRawResponse,
+        AsyncTravelRuleWorkspaceResourceWithStreamingResponse,
+        TravelRuleWorkspaceResource,
+        TravelRuleWorkspaceResourceWithRawResponse,
+        TravelRuleWorkspaceResourceWithStreamingResponse,
     )
 
 __all__ = [
@@ -120,10 +120,10 @@ class TravelRule(SyncAPIResource):
         return TravelRuleWalletAddresses(self._client)
 
     @cached_property
-    def workspace(self) -> TravelRuleWorkspace:
-        from didit.resources.travel_rule.workspace import TravelRuleWorkspace
+    def workspace(self) -> TravelRuleWorkspaceResource:
+        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceResource
 
-        return TravelRuleWorkspace(self._client)
+        return TravelRuleWorkspaceResource(self._client)
 
     @cached_property
     def with_raw_response(self) -> TravelRuleWithRawResponse:
@@ -846,10 +846,10 @@ class AsyncTravelRule(AsyncAPIResource):
         return AsyncTravelRuleWalletAddresses(self._client)
 
     @cached_property
-    def workspace(self) -> AsyncTravelRuleWorkspace:
-        from didit.resources.travel_rule.workspace import AsyncTravelRuleWorkspace
+    def workspace(self) -> AsyncTravelRuleWorkspaceResource:
+        from didit.resources.travel_rule.workspace import AsyncTravelRuleWorkspaceResource
 
-        return AsyncTravelRuleWorkspace(self._client)
+        return AsyncTravelRuleWorkspaceResource(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncTravelRuleWithRawResponse:
@@ -1586,10 +1586,10 @@ class TravelRuleWithRawResponse:
         return TravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
 
     @cached_property
-    def workspace(self) -> TravelRuleWorkspaceWithRawResponse:
-        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceWithRawResponse
+    def workspace(self) -> TravelRuleWorkspaceResourceWithRawResponse:
+        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceResourceWithRawResponse
 
-        return TravelRuleWorkspaceWithRawResponse(self._resource.workspace)
+        return TravelRuleWorkspaceResourceWithRawResponse(self._resource.workspace)
 
 
 class AsyncTravelRuleWithRawResponse:
@@ -1643,10 +1643,12 @@ class AsyncTravelRuleWithRawResponse:
         return AsyncTravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
 
     @cached_property
-    def workspace(self) -> AsyncTravelRuleWorkspaceWithRawResponse:
-        from didit.resources.travel_rule.workspace import AsyncTravelRuleWorkspaceWithRawResponse
+    def workspace(self) -> AsyncTravelRuleWorkspaceResourceWithRawResponse:
+        from didit.resources.travel_rule.workspace import (
+            AsyncTravelRuleWorkspaceResourceWithRawResponse,
+        )
 
-        return AsyncTravelRuleWorkspaceWithRawResponse(self._resource.workspace)
+        return AsyncTravelRuleWorkspaceResourceWithRawResponse(self._resource.workspace)
 
 
 class TravelRuleWithStreamingResponse:
@@ -1700,10 +1702,12 @@ class TravelRuleWithStreamingResponse:
         return TravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
 
     @cached_property
-    def workspace(self) -> TravelRuleWorkspaceWithStreamingResponse:
-        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceWithStreamingResponse
+    def workspace(self) -> TravelRuleWorkspaceResourceWithStreamingResponse:
+        from didit.resources.travel_rule.workspace import (
+            TravelRuleWorkspaceResourceWithStreamingResponse,
+        )
 
-        return TravelRuleWorkspaceWithStreamingResponse(self._resource.workspace)
+        return TravelRuleWorkspaceResourceWithStreamingResponse(self._resource.workspace)
 
 
 class AsyncTravelRuleWithStreamingResponse:
@@ -1765,9 +1769,9 @@ class AsyncTravelRuleWithStreamingResponse:
         return AsyncTravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
 
     @cached_property
-    def workspace(self) -> AsyncTravelRuleWorkspaceWithStreamingResponse:
+    def workspace(self) -> AsyncTravelRuleWorkspaceResourceWithStreamingResponse:
         from didit.resources.travel_rule.workspace import (
-            AsyncTravelRuleWorkspaceWithStreamingResponse,
+            AsyncTravelRuleWorkspaceResourceWithStreamingResponse,
         )
 
-        return AsyncTravelRuleWorkspaceWithStreamingResponse(self._resource.workspace)
+        return AsyncTravelRuleWorkspaceResourceWithStreamingResponse(self._resource.workspace)

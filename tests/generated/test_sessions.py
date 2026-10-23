@@ -3582,7 +3582,7 @@ def test_sessions_signatures_validate() -> None:
                                     "size_bytes": 1,
                                     "converter": "sample",
                                 },
-                                "fields": [None],
+                                "fields": [],
                             }
                         ],
                         "adopted_signature": {

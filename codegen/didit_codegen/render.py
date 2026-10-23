@@ -268,14 +268,19 @@ def _render_types_init(registry: Registry) -> str:
 
 
 class ResourceNode:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, type_names: frozenset[str] = frozenset()) -> None:
         self.path = path
+        self.type_names = type_names
         self.methods: list[Method] = []
         self.children: dict[str, ResourceNode] = {}
 
     @property
     def cls(self) -> str:
-        return resource_class(self.path)
+        """The resource class. A type of the same name (resource ``travel_rule.workspace`` and the
+        ``TravelRuleWorkspace`` response type) would be shadowed in the resource's module, so the
+        resource takes a ``Resource`` suffix."""
+        name = resource_class(self.path)
+        return f"{name}Resource" if name in self.type_names else name
 
     @property
     def module(self) -> str:
@@ -292,7 +297,9 @@ class ResourceNode:
         return "/".join(parts) + ".py"
 
 
-def build_tree(methods: list[Method]) -> dict[str, ResourceNode]:
+def build_tree(
+    methods: list[Method], type_names: frozenset[str] = frozenset()
+) -> dict[str, ResourceNode]:
     roots: dict[str, ResourceNode] = {}
     nodes: dict[str, ResourceNode] = {}
     for method in methods:
@@ -300,7 +307,7 @@ def build_tree(methods: list[Method]) -> dict[str, ResourceNode]:
         for i in range(1, len(parts) + 1):
             path = ".".join(parts[:i])
             if path not in nodes:
-                nodes[path] = ResourceNode(path)
+                nodes[path] = ResourceNode(path, type_names)
                 if i == 1:
                     roots[path] = nodes[path]
                 else:

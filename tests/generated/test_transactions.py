@@ -1052,7 +1052,7 @@ def test_transactions_rules_list() -> None:
                                 "filters": {},
                             }
                         ],
-                        "actions": [None],
+                        "actions": [],
                         "metadata": {},
                         "severity": "UNKNOWN",
                         "source": "PRESET",
@@ -1157,7 +1157,7 @@ def test_transactions_rules_list_library() -> None:
                                 "filters": {},
                             }
                         ],
-                        "actions": [None],
+                        "actions": [],
                         "metadata": {},
                         "bundle": "sample",
                         "tags": ["sample"],
