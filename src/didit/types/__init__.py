@@ -80,6 +80,12 @@ if TYPE_CHECKING:
     from didit.types.aml_monitoring.retrieve_job_response import (
         AmlMonitoringRetrieveJobResponseResults as AmlMonitoringRetrieveJobResponseResults,
     )
+    from didit.types.bank.account_check_params import (
+        BankAccountCheckParams as BankAccountCheckParams,
+    )
+    from didit.types.bank.account_check_params import (
+        BankAccountCheckParamsAccount as BankAccountCheckParamsAccount,
+    )
     from didit.types.billing.retrieve_balance_response import (
         BillingRetrieveBalanceResponse as BillingRetrieveBalanceResponse,
     )
@@ -486,6 +492,33 @@ if TYPE_CHECKING:
         ApplicationCredentialsSummary as ApplicationCredentialsSummary,
     )
     from didit.types.components.application_product import ApplicationProduct as ApplicationProduct
+    from didit.types.components.bank_account_check_holder import (
+        BankAccountCheckHolder as BankAccountCheckHolder,
+    )
+    from didit.types.components.bank_account_check_response import (
+        BankAccountCheckResponse as BankAccountCheckResponse,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResult as BankVerificationResult,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultAccount as BankVerificationResultAccount,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultBilling as BankVerificationResultBilling,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultConnection as BankVerificationResultConnection,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultFinancialData as BankVerificationResultFinancialData,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultOwnership as BankVerificationResultOwnership,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultRoute as BankVerificationResultRoute,
+    )
     from didit.types.components.blocklisted_item import BlocklistedItem as BlocklistedItem
     from didit.types.components.branding_customization import (
         BrandingCustomization as BrandingCustomization,
@@ -3101,6 +3134,17 @@ _MODULES: dict[str, str] = {
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue": "components.application_analytics_workflow_funnel",
     "ApplicationCredentialsSummary": "components.application_credentials_summary",
     "ApplicationProduct": "components.application_product",
+    "BankAccountCheckHolder": "components.bank_account_check_holder",
+    "BankAccountCheckParams": "bank.account_check_params",
+    "BankAccountCheckParamsAccount": "bank.account_check_params",
+    "BankAccountCheckResponse": "components.bank_account_check_response",
+    "BankVerificationResult": "components.bank_verification_result",
+    "BankVerificationResultAccount": "components.bank_verification_result",
+    "BankVerificationResultBilling": "components.bank_verification_result",
+    "BankVerificationResultConnection": "components.bank_verification_result",
+    "BankVerificationResultFinancialData": "components.bank_verification_result",
+    "BankVerificationResultOwnership": "components.bank_verification_result",
+    "BankVerificationResultRoute": "components.bank_verification_result",
     "BillingRetrieveBalanceResponse": "billing.retrieve_balance_response",
     "BillingTopUpParams": "billing.top_up_params",
     "BillingTopUpResponse": "billing.top_up_response",
@@ -4202,6 +4246,17 @@ __all__ = [
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue",
     "ApplicationCredentialsSummary",
     "ApplicationProduct",
+    "BankAccountCheckHolder",
+    "BankAccountCheckParams",
+    "BankAccountCheckParamsAccount",
+    "BankAccountCheckResponse",
+    "BankVerificationResult",
+    "BankVerificationResultAccount",
+    "BankVerificationResultBilling",
+    "BankVerificationResultConnection",
+    "BankVerificationResultFinancialData",
+    "BankVerificationResultOwnership",
+    "BankVerificationResultRoute",
     "BillingRetrieveBalanceResponse",
     "BillingTopUpParams",
     "BillingTopUpResponse",
