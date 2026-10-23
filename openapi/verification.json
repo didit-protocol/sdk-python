@@ -15542,6 +15542,285 @@
         ]
       }
     },
+    "/v3/bank/account-check/": {
+      "post": {
+        "summary": "Check a bank account",
+        "description": "Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.\n\n**What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.\n\n**What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.\n\n**Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.\n\n**Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.\n\n**Sandbox.** A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.\n\n**API keys.** A scoped API key needs write access to sessions.",
+        "operationId": "post_v3_bank_account_check",
+        "tags": [
+          "Standalone APIs"
+        ],
+        "x-didit-sdk": {
+          "resource": "bank",
+          "method": "account_check",
+          "auth": "api_key",
+          "server": true
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankAccountCheckRequest"
+              },
+              "examples": {
+                "Person, United Kingdom": {
+                  "summary": "A sort code and account number, checked against a person's name",
+                  "value": {
+                    "country": "GBR",
+                    "account": {
+                      "sort_code": "20-45-67",
+                      "account_number": "31926819"
+                    },
+                    "holder": {
+                      "full_name": "Maria Oliveira"
+                    },
+                    "vendor_data": "payout_20481"
+                  }
+                },
+                "Company, IBAN": {
+                  "summary": "An IBAN, checked against a company's name",
+                  "value": {
+                    "country": "DEU",
+                    "account": {
+                      "iban": "DE89 3704 0044 0532 0130 00"
+                    },
+                    "holder": {
+                      "business_name": "Northwind Trading GmbH"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The bank answered. The check is billed, whatever the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckResponse"
+                },
+                "examples": {
+                  "Close match": {
+                    "summary": "The bank holds the account under a close name",
+                    "value": {
+                      "request_id": "c2f4a9e0-7b1d-4c3a-9e55-1d0a6b8f2a47",
+                      "result": "close_match",
+                      "holder_name": "MARIA R OLIVEIRA",
+                      "account": "****6819",
+                      "vendor_data": "payout_20481",
+                      "created_at": "2026-10-21T14:32:08Z"
+                    }
+                  },
+                  "Match": {
+                    "summary": "The bank holds the account under the name sent",
+                    "value": {
+                      "request_id": "5b0e2d7c-41a8-4f6e-9c3b-8e7d1a2f6c90",
+                      "result": "match",
+                      "holder_name": null,
+                      "account": "****3000",
+                      "vendor_data": null,
+                      "created_at": "2026-10-21T14:35:41Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Refused as sent, and not billed. `field` names the body field to correct and `reason` says why, with the same reasons the hosted account form shows. Only the first refused field is reported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Missing field": {
+                    "summary": "The country's check needs a sort code",
+                    "value": {
+                      "detail": "The sort code is not valid (required).",
+                      "code": "invalid_account_input",
+                      "field": "account.sort_code",
+                      "reason": "required"
+                    }
+                  },
+                  "Invalid IBAN": {
+                    "summary": "The IBAN has the wrong length for its country",
+                    "value": {
+                      "detail": "The iban is not valid (length).",
+                      "code": "invalid_account_input",
+                      "field": "account.iban",
+                      "reason": "length"
+                    }
+                  },
+                  "Refused by the bank": {
+                    "summary": "The bank refused the account as sent",
+                    "value": {
+                      "detail": "The account was refused as typed (rejected).",
+                      "code": "invalid_account_input",
+                      "field": "account.account_number",
+                      "reason": "rejected"
+                    }
+                  },
+                  "No name": {
+                    "summary": "`holder` has neither `full_name` nor `business_name`",
+                    "value": {
+                      "detail": "Send full_name for a person or business_name for a company.",
+                      "code": "invalid_account_input",
+                      "field": "holder",
+                      "reason": "required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The scoped API key has expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Expired key": {
+                    "summary": "The key's expiry date has passed",
+                    "value": {
+                      "detail": "This API key has expired."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The check cannot be paid for, so it did not run. Top up your balance, then send it again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Out of credit": {
+                    "summary": "Your balance cannot cover one check",
+                    "value": {
+                      "detail": "You don't have enough credits to perform this request. Please top up at https://business.didit.me",
+                      "code": "insufficient_credits"
+                    }
+                  },
+                  "Not in your contract": {
+                    "summary": "Your contract has no price for the Account check API",
+                    "value": {
+                      "detail": "Your contract does not price the Account check API. Contact your account manager.",
+                      "code": "contract_rate_missing"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The `x-api-key` header or the bearer token is missing or invalid, the request came from an address outside the key's IP list, or a scoped key has no write access to sessions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Missing or invalid credentials": {
+                    "summary": "No valid API key or token",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "No sessions write": {
+                    "summary": "A scoped key without write access to sessions",
+                    "value": {
+                      "detail": "This API key has no write access to sessions."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No account check serves this account yet, so nothing was checked or billed. `country_not_covered`: none serves its country, or its kind of account (person or business) there. `bank_not_covered`: none serves its bank. `bank_verification_not_available`: Bank Verification is not available yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Country not covered": {
+                    "summary": "No account check serves the country",
+                    "value": {
+                      "detail": "No account check serves this country yet.",
+                      "code": "country_not_covered"
+                    }
+                  },
+                  "Bank not covered": {
+                    "summary": "No account check serves the account's bank",
+                    "value": {
+                      "detail": "No account check serves this account's bank yet.",
+                      "code": "bank_not_covered"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          },
+          "503": {
+            "description": "The bank could not answer. Nothing was checked or billed; send the check again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCheckError"
+                },
+                "examples": {
+                  "Unavailable": {
+                    "summary": "The bank did not answer",
+                    "value": {
+                      "detail": "The account check is temporarily unavailable and this request was not charged. Please try again.",
+                      "code": "account_check_unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST https://verification.didit.me/v3/bank/account-check/ \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"country\": \"GBR\",\n    \"account\": {\"sort_code\": \"20-45-67\", \"account_number\": \"31926819\"},\n    \"holder\": {\"full_name\": \"Maria Oliveira\"},\n    \"vendor_data\": \"payout_20481\"\n  }'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import os, requests\n\nresp = requests.post(\n    \"https://verification.didit.me/v3/bank/account-check/\",\n    headers={\"x-api-key\": os.environ[\"DIDIT_API_KEY\"]},\n    json={\n        \"country\": \"GBR\",\n        \"account\": {\"sort_code\": \"20-45-67\", \"account_number\": \"31926819\"},\n        \"holder\": {\"full_name\": \"Maria Oliveira\"},\n        \"vendor_data\": \"payout_20481\",\n    },\n    timeout=30,\n)\nresp.raise_for_status()\ncheck = resp.json()\nif check[\"result\"] == \"match\":\n    pass  # send the payout\nelif check[\"result\"] == \"close_match\":\n    print(check[\"holder_name\"])  # the name the bank holds, when it returned one"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const res = await fetch('https://verification.didit.me/v3/bank/account-check/', {\n  method: 'POST',\n  headers: {\n    'x-api-key': process.env.DIDIT_API_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({\n    country: 'GBR',\n    account: { sort_code: '20-45-67', account_number: '31926819' },\n    holder: { full_name: 'Maria Oliveira' },\n    vendor_data: 'payout_20481',\n  }),\n});\nconst check = await res.json();\n// check.result: match, close_match, no_match or cannot_verify"
+          }
+        ]
+      }
+    },
     "/v3/email/send/": {
       "post": {
         "summary": "Send Email Code",
@@ -92013,6 +92292,14 @@
               }
             }
           },
+          "bank_verifications": {
+            "type": "array",
+            "nullable": true,
+            "description": "Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `microdeposits` or `statement` fallback. See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
+            "items": {
+              "$ref": "#/components/schemas/BankVerificationResult"
+            }
+          },
           "signatures": {
             "type": "array",
             "description": "Electronic Signature results, one item per signer and signature step, for User and Business Verification. Present only when the workflow has an Electronic Signature step; an empty array until a signer reaches it. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature).",
@@ -103650,6 +103937,692 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BankAccountCheckHolder": {
+        "description": "The name the account is checked against. Send exactly one of `full_name` and `business_name`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BankAccountCheckPersonHolder"
+          },
+          {
+            "$ref": "#/components/schemas/BankAccountCheckBusinessHolder"
+          }
+        ]
+      },
+      "BankAccountCheckRequest": {
+        "type": "object",
+        "required": [
+          "country",
+          "account",
+          "holder"
+        ],
+        "properties": {
+          "country": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "The account's country, as an ISO 3166-1 alpha-3 code, for example `GBR`. Lowercase is accepted.",
+            "example": "GBR"
+          },
+          "account": {
+            "type": "object",
+            "description": "The account the way its country writes it: an `iban`, or an `account_number` with the bank or branch code the country needs (`sort_code`, `routing_number`, `transit_institution`, `bsb`, `ifsc`, `bank_code` or `bic`). Mexico takes a `clabe` and Argentina a `cbu_cvu`, which already name the bank. A business account adds a `registration_id` where the country asks for one. Spaces, dashes and dots are ignored. Keys the country's check does not use are ignored; a key it needs and does not get is a `400` that names it.",
+            "properties": {
+              "iban": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "The IBAN, in a country that uses IBANs. It must belong to `country`."
+              },
+              "account_number": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "The account number, in a country that writes the account with a separate bank or branch code."
+              },
+              "sort_code": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "United Kingdom: the 6-digit sort code."
+              },
+              "routing_number": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "United States: the 9-digit ABA routing number."
+              },
+              "transit_institution": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Canada: the 8-digit transit and institution number."
+              },
+              "bsb": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Australia: the 6-digit BSB."
+              },
+              "ifsc": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "India: the 11-character IFSC."
+              },
+              "bank_code": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "The bank's code, where the country needs one, for example in Nigeria."
+              },
+              "bic": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "The bank's BIC, where the country's check asks for one."
+              },
+              "clabe": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Mexico: the 18-digit CLABE. It already names the bank."
+              },
+              "cbu_cvu": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Argentina: the 22-digit CBU or CVU. It already names the bank."
+              },
+              "registration_id": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "A business account's registration number, where the country asks for one."
+              }
+            },
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "example": {
+              "sort_code": "20-45-67",
+              "account_number": "31926819"
+            }
+          },
+          "holder": {
+            "$ref": "#/components/schemas/BankAccountCheckHolder"
+          },
+          "vendor_data": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your own reference for this check, returned unchanged.",
+            "example": "payout_20481"
+          }
+        }
+      },
+      "BankAccountCheckResponse": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "result",
+          "holder_name",
+          "account",
+          "vendor_data",
+          "created_at"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The ID of this check."
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "match",
+              "close_match",
+              "no_match",
+              "cannot_verify"
+            ],
+            "description": "`match`: the bank holds the account under the name you sent. `close_match`: under a close name, for example a missing middle name or a typo. `no_match`: under another name, or there is no such account. `cannot_verify`: the bank answered without comparing the name, for example for a blocked or closed account."
+          },
+          "holder_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Only on a `close_match`, and only when the bank returned it: the name on the account, as the bank holds it. `null` otherwise."
+          },
+          "account": {
+            "type": "string",
+            "description": "The account, masked to its last 4 characters."
+          },
+          "vendor_data": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your own reference, as you sent it."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the check ran, in UTC."
+          }
+        }
+      },
+      "BankAccountCheckError": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "What went wrong, in English."
+          },
+          "code": {
+            "type": "string",
+            "description": "A stable code to branch on. Absent on `401` and `403`."
+          },
+          "field": {
+            "type": "string",
+            "description": "`400` only: the body field to correct, as a dotted path, for example `account.sort_code`."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "required",
+              "length",
+              "format",
+              "checksum",
+              "country_mismatch",
+              "rejected"
+            ],
+            "description": "`400` only: why the field was refused. `required`, `length`, `format`, `checksum` and `country_mismatch` (an IBAN of another country) are Didit's own checks; `rejected` means the bank refused the account as sent."
+          }
+        }
+      },
+      "BankVerificationResult": {
+        "type": "object",
+        "description": "One Bank Verification step's result, for User and Business Verification. `method` says how the account was verified. See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "description": "Version of this result shape. `1` today."
+          },
+          "bank_verification_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The ID of this result."
+          },
+          "node_id": {
+            "type": "string",
+            "description": "The workflow node this result belongs to."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Not Finished",
+              "Approved",
+              "Declined",
+              "In Review",
+              "Expired"
+            ],
+            "description": "The step's verdict, after its actions and status rules."
+          },
+          "original_status": {
+            "type": "string",
+            "nullable": true,
+            "description": "The first verdict the step reached, before any later change such as a manual review."
+          },
+          "method": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "open_banking",
+              "account_lookup",
+              "microdeposits",
+              "statement"
+            ],
+            "description": "How the account was verified: `open_banking` (bank sign-in: the person signed in at their bank), `account_lookup` (account check: the person typed the account details and the bank confirmed the name), `microdeposits` or `statement` (a statement upload). `null` until an account is evaluated. Workflow rules read the same value as `bank.method`."
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "The key of the route that ran the connection. Read `method`, not this key, to tell how the account was verified."
+          },
+          "credential_source": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "native",
+              "byok"
+            ],
+            "description": "`native`: Didit's own route, billed to your Didit balance. `byok`: a marketplace provider you connected with your own credentials."
+          },
+          "route": {
+            "type": "object",
+            "nullable": true,
+            "description": "The route chosen before consent. It never changes afterwards.",
+            "properties": {
+              "provider_key": {
+                "type": "string",
+                "nullable": true,
+                "description": "The route's key."
+              },
+              "credential_source": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "byok"
+                ]
+              },
+              "is_fallback": {
+                "type": "boolean",
+                "description": "Whether Didit's own route stood in for a marketplace provider that could not connect."
+              },
+              "provider_connection_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The marketplace connection used, for `byok`."
+              },
+              "requested_scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The data the connection asked for, for example `ownership` or `balances`."
+              }
+            }
+          },
+          "connection": {
+            "type": "object",
+            "nullable": true,
+            "description": "The latest attempt's connection. `null` before the first attempt.",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "connected",
+                  "cancelled",
+                  "timeout",
+                  "failed",
+                  "unsupported",
+                  "revoked",
+                  "expired"
+                ]
+              },
+              "institution_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The bank's ID. `null` for an account check, where no bank is picked."
+              },
+              "institution_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "The bank's name. `null` for an account check."
+              },
+              "institution_country": {
+                "type": "string",
+                "nullable": true,
+                "description": "The account's country, ISO 3166-1 alpha-3."
+              },
+              "oauth": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "Whether the bank sign-in ran over OAuth or app-to-app. `null` for an account check."
+              },
+              "connected_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the connection succeeded."
+              },
+              "consent_expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the bank consent ends, for bank sign-in."
+              },
+              "last_refreshed_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the financial data was last read again."
+              },
+              "attempts": {
+                "type": "integer",
+                "description": "The attempts the person spent on this step, every method together."
+              },
+              "reason_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "Why the connection is not simply `connected`, for example `USER_CANCELLED`, `INSTITUTION_DOWN`, `ACCOUNT_NOT_FOUND`, `REFERENCE_IDENTITY_MISSING` or `VERIFICATION_COMPLETED`."
+              }
+            }
+          },
+          "account": {
+            "type": "object",
+            "nullable": true,
+            "description": "The evaluated account. `null` until an account is evaluated.",
+            "properties": {
+              "account_id_masked": {
+                "type": "string",
+                "nullable": true,
+                "description": "The account number, masked."
+              },
+              "iban_masked": {
+                "type": "string",
+                "nullable": true,
+                "description": "The IBAN, masked."
+              },
+              "sort_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The sort code, in the United Kingdom."
+              },
+              "routing_number_masked": {
+                "type": "string",
+                "nullable": true,
+                "description": "The routing number, masked."
+              },
+              "type": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "checking",
+                  "current",
+                  "savings",
+                  "business",
+                  "other"
+                ]
+              },
+              "subtype": {
+                "type": "string",
+                "nullable": true,
+                "description": "The bank's own account subtype."
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "description": "ISO 4217 currency of the account."
+              },
+              "holder_type": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "person",
+                  "business",
+                  "unknown"
+                ]
+              },
+              "holders_count": {
+                "type": "integer",
+                "nullable": true
+              },
+              "is_joint": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "is_business": {
+                "type": "boolean",
+                "nullable": true
+              }
+            }
+          },
+          "ownership": {
+            "type": "object",
+            "nullable": true,
+            "description": "How the account holder compared with the verified identity. `null` until an account is evaluated.",
+            "properties": {
+              "result": {
+                "type": "string",
+                "enum": [
+                  "match",
+                  "partial_match",
+                  "no_match",
+                  "unknown",
+                  "not_verifiable"
+                ],
+                "description": "`partial_match` is a close match. `not_verifiable`: the bank answered with no holder to compare. `unknown`: the evidence could not be read, or there was no identity to compare."
+              },
+              "reference_identity_source": {
+                "type": "string",
+                "nullable": true,
+                "description": "The step whose identity the holder was compared against: `kyc`, `database_validation`, `expected_details`, `questionnaire`, `document_ai` or `kyb`."
+              },
+              "name_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "Didit's holder name score."
+              },
+              "provider_name_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "The bank's own holder name score, when it returned one."
+              },
+              "address_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "The holder address score, when address matching ran."
+              },
+              "email_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "The holder email score, when email matching ran."
+              },
+              "phone_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "The holder phone score, when phone matching ran."
+              },
+              "dob_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "The holder date of birth score, when the bank shared one."
+              },
+              "close_match": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "Whether the name landed in the close-match band."
+              },
+              "holder_confirmation": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "pending",
+                  "confirmed",
+                  "rejected"
+                ],
+                "description": "The person's answer when asked to confirm a close-match name. `null` when never asked."
+              },
+              "method": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "exact",
+                  "token_set",
+                  "nickname",
+                  "transliteration",
+                  "fuzzy",
+                  "provider_only",
+                  "microdeposits"
+                ],
+                "description": "Which name comparison produced the score. This is not the verification method: read the top-level `method` for that."
+              },
+              "matched_holder_index": {
+                "type": "integer",
+                "nullable": true
+              },
+              "holders": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Each holder the bank listed, with its scores."
+              },
+              "owner_identity_available": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "evidence_freshness": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "live",
+                  "cached",
+                  "refreshed"
+                ]
+              },
+              "evaluated_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the verdict was computed."
+              }
+            }
+          },
+          "financial_data": {
+            "type": "object",
+            "description": "The financial data the step read. Only bank sign-in reads it.",
+            "properties": {
+              "balances": {
+                "type": "object",
+                "nullable": true,
+                "description": "With the `balances` scope."
+              },
+              "transactions": {
+                "type": "object",
+                "nullable": true,
+                "description": "With the `transactions` scope."
+              },
+              "income": {
+                "type": "object",
+                "nullable": true,
+                "description": "With the `income` scope."
+              },
+              "categorization": {
+                "type": "object",
+                "nullable": true,
+                "description": "Didit's categorization of the transactions read. `null` without them."
+              },
+              "not_collected": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "balances",
+                    "income",
+                    "transactions"
+                  ]
+                },
+                "description": "The data the step asked for that the method which verified the account does not collect. Balances, transactions and income come from bank sign-in only, so an account verified by account check lists them here. Never a failure. Empty otherwise."
+              }
+            }
+          },
+          "billing": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "route": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "byok"
+                ]
+              },
+              "billed": {
+                "type": "boolean"
+              },
+              "marketplace_fee": {
+                "type": "string",
+                "nullable": true,
+                "description": "The marketplace platform fee charged, for `byok`."
+              },
+              "usage_type": {
+                "type": "string",
+                "nullable": true,
+                "description": "The usage line the charge was booked on."
+              }
+            }
+          },
+          "reference_identity": {
+            "type": "object",
+            "nullable": true,
+            "description": "The identity the holder was compared against, with its source."
+          },
+          "signals": {
+            "type": "object",
+            "nullable": true,
+            "description": "Account signals read from the transaction history, when the step read one."
+          },
+          "connection_abandoned": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the step ended without a match after the person left at their bank."
+          },
+          "not_covered": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the person's bank or country could not be reached on this step."
+          },
+          "evidence_purged_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the bank evidence was deleted under `bank_evidence_retention_days`. `null` otherwise."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Informational codes, for example `holder_declared`. A warning never changes the status on its own."
+          },
+          "reason_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Why the verdict came out the way it did, for example `OWNER_NAME_PARTIAL`. Several may apply."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BankAccountCheckPersonHolder": {
+        "type": "object",
+        "description": "The person who should hold the account.",
+        "required": [
+          "full_name"
+        ],
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "The full name of the person who should hold the account.",
+            "example": "Maria Oliveira"
+          }
+        }
+      },
+      "BankAccountCheckBusinessHolder": {
+        "type": "object",
+        "description": "The company that should hold the account. Checks a business account.",
+        "required": [
+          "business_name"
+        ],
+        "properties": {
+          "business_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "The name of the company that should hold the account. Checks a business account."
           }
         }
       }

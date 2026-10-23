@@ -6,6 +6,7 @@ from typing import Literal
 
 from didit._models import BaseModel
 from didit.types.components.aml_screening import AMLScreening
+from didit.types.components.bank_verification_result import BankVerificationResult
 from didit.types.components.document_ai_detected_code import DocumentAIDetectedCode
 from didit.types.components.investigator_block import InvestigatorBlock
 from didit.types.components.kyb_registry_address import KYBRegistryAddress
@@ -3553,6 +3554,9 @@ class SessionDecision(BaseModel):
 
     questionnaire_responses: list[SessionDecisionQuestionnaireResponses] | None = None
     """**Array of questionnaire response reports** - always a JSON array, never a singular `questionnaire` object. `null` until at least one questionnaire step has produced data. Each item is the full report, including `node_id`, the questionnaire metadata, sections with form elements, and the user's answers."""
+
+    bank_verifications: list[BankVerificationResult] | None = None
+    """Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `microdeposits` or `statement` fallback. See [Bank verification methods](/core-technology/bank-verification/verification-methods)."""
 
     signatures: list[SignatureResult] | None = None
     """Electronic Signature results, one item per signer and signature step, for User and Business Verification. Present only when the workflow has an Electronic Signature step; an empty array until a signer reaches it. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature)."""
