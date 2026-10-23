@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from didit.resources.aml import Aml, AsyncAml
     from didit.resources.aml_monitoring import AmlMonitoring, AsyncAmlMonitoring
     from didit.resources.analytics import Analytics, AsyncAnalytics
+    from didit.resources.bank import AsyncBank, Bank
     from didit.resources.billing import AsyncBilling, Billing
     from didit.resources.biometric_templates import AsyncBiometricTemplates, BiometricTemplates
     from didit.resources.blocklist import AsyncBlocklist, Blocklist
@@ -84,6 +85,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.analytics import Analytics
 
         return Analytics(self)
+
+    @cached_property
+    def bank(self) -> Bank:
+        from didit.resources.bank import Bank
+
+        return Bank(self)
 
     @cached_property
     def billing(self) -> Billing:
@@ -322,6 +329,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.analytics import AsyncAnalytics
 
         return AsyncAnalytics(self)
+
+    @cached_property
+    def bank(self) -> AsyncBank:
+        from didit.resources.bank import AsyncBank
+
+        return AsyncBank(self)
 
     @cached_property
     def billing(self) -> AsyncBilling:
