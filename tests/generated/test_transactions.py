@@ -4,19 +4,22 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 from didit.types.components.transaction_detail import TransactionDetail
+from didit.types.components.transaction_note import TransactionNote
 from didit.types.components.transaction_rule_backtest_result import TransactionRuleBacktestResult
 from didit.types.components.transaction_rule_detail import TransactionRuleDetail
 from didit.types.components.transaction_rule_install_result import TransactionRuleInstallResult
 from didit.types.components.transaction_rule_library_entry import TransactionRuleLibraryEntry
+from didit.types.components.transaction_summary import TransactionSummary
+from didit.types.components.travel_rule_message import TravelRuleMessage
+from didit.types.components.travel_rule_test_vasp_inbound_response import (
+    TravelRuleTestVaspInboundResponse,
+)
 from didit.types.components.travel_rule_transfer_detail import TravelRuleTransferDetail
 from didit.types.transactions.create_sdk_token_response import TransactionsCreateSdkTokenResponse
-from didit.types.transactions.list_networks_response import TransactionsListNetworksResponse
-from didit.types.transactions.list_party_networks_response import (
-    TransactionsListPartyNetworksResponse,
-)
 from didit.types.transactions.list_response import TransactionsListResponseResults
-from tests.harness import Expect, check_operation
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_transactions_create() -> None:
@@ -120,6 +123,7 @@ def test_transactions_create() -> None:
                 "travel_rule": None,
                 "network_snapshot": None,
                 "remediation": None,
+                "action_required": None,
                 "cost_breakdown": None,
             },
         ),
@@ -181,6 +185,25 @@ def test_transactions_create_sdk_token() -> None:
     )
 
 
+def test_transactions_generate_pdf() -> None:
+    """``GET /v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/pdf/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/transactions/abcdef12-3456-7890-abcd-ef1234567890/pdf/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="application/pdf",
+        ),
+        lambda c: c.transactions.generate_pdf("abcdef12-3456-7890-abcd-ef1234567890"),
+        lambda c: c.transactions.generate_pdf("abcdef12-3456-7890-abcd-ef1234567890"),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
 def test_transactions_list() -> None:
     """``GET /v3/transactions/``"""
     check_operation(
@@ -189,7 +212,7 @@ def test_transactions_list() -> None:
             path="/v3/transactions/",
             api="verification",
             auth="api_key",
-            query={"limit": ["1"], "offset": ["1"]},
+            query={"limit": ["1"], "offset": ["1"], "travel_rule_status": ["sample"]},
             status=200,
             response_json={
                 "count": 1,
@@ -232,12 +255,14 @@ def test_transactions_list() -> None:
                         "counterparty_country": None,
                         "subject_country": None,
                         "assigned_to_name": "Alex Reviewer",
+                        "travel_rule_status": None,
+                        "travel_rule": None,
                     }
                 ],
             },
         ),
-        lambda c: c.transactions.list(limit=1, offset=1),
-        lambda c: c.transactions.list(limit=1, offset=1),
+        lambda c: c.transactions.list(limit=1, offset=1, travel_rule_status="sample"),
+        lambda c: c.transactions.list(limit=1, offset=1, travel_rule_status="sample"),
         lambda r: (
             isinstance(r, SyncPage)
             and all(isinstance(x1, TransactionsListResponseResults) for x1 in r.results)
@@ -262,13 +287,13 @@ def test_transactions_list_networks() -> None:
                 "results": [
                     {
                         "network": {
-                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "uuid": "00000000-0000-4000-8000-000000000008",
                             "network_id": "sample",
                             "name": "sample",
                             "status": "active",
-                            "risk": {},
-                            "pattern_types": ["exact_same_device"],
-                            "signal_types": ["ip_address"],
+                            "risk": None,
+                            "pattern_types": [],
+                            "signal_types": [],
                             "member_counts": {},
                             "member_status": {},
                             "signal_coverage": {},
@@ -283,12 +308,12 @@ def test_transactions_list_networks() -> None:
                     }
                 ]
             },
-            strict_type=TransactionsListNetworksResponse,
+            strict_type=EntityNetworkMembershipList,
         ),
         lambda c: c.transactions.list_networks("00000000-0000-4000-8000-000000000001"),
         lambda c: c.transactions.list_networks("00000000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, TransactionsListNetworksResponse),
-        lambda r: isinstance(r, TransactionsListNetworksResponse),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
     )
 
 
@@ -305,13 +330,13 @@ def test_transactions_list_party_networks() -> None:
                 "results": [
                     {
                         "network": {
-                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "uuid": "00000000-0000-4000-8000-000000000008",
                             "network_id": "sample",
                             "name": "sample",
                             "status": "active",
-                            "risk": {},
-                            "pattern_types": ["exact_same_device"],
-                            "signal_types": ["ip_address"],
+                            "risk": None,
+                            "pattern_types": [],
+                            "signal_types": [],
                             "member_counts": {},
                             "member_status": {},
                             "signal_coverage": {},
@@ -326,7 +351,7 @@ def test_transactions_list_party_networks() -> None:
                     }
                 ]
             },
-            strict_type=TransactionsListPartyNetworksResponse,
+            strict_type=EntityNetworkMembershipList,
         ),
         lambda c: c.transactions.list_party_networks(
             "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
@@ -334,8 +359,78 @@ def test_transactions_list_party_networks() -> None:
         lambda c: c.transactions.list_party_networks(
             "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
         ),
-        lambda r: isinstance(r, TransactionsListPartyNetworksResponse),
-        lambda r: isinstance(r, TransactionsListPartyNetworksResponse),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+    )
+
+
+def test_transactions_list_related() -> None:
+    """``GET /v3/transactions/{transaction_id}/related/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/transactions/abcdef12-3456-7890-abcd-ef1234567890/related/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "abcdef99-3456-4890-abcd-ef1234567890",
+                        "transaction_number": 4087,
+                        "txn_id": "your-txn-2026-10-02-017",
+                        "transaction_type": "finance",
+                        "action_type": "deposit",
+                        "status": "APPROVED",
+                        "source": "LIVE",
+                        "direction": "INBOUND",
+                        "amount": "250",
+                        "currency": "EUR",
+                        "currency_type": "fiat",
+                        "preferred_currency_amount": "270.08",
+                        "preferred_currency_code": "USD",
+                        "payment_details": "Card top-up",
+                        "txn_date": "2026-10-02T14:10:00Z",
+                        "created_at": "2026-10-02T14:10:03.512244Z",
+                        "score": 12,
+                        "severity": "LOW",
+                        "decision_reason_code": None,
+                        "decision_reason_label": None,
+                        "tags": [],
+                        "subject_name": "Maria Garcia",
+                        "subject_vendor_data": "user-12345",
+                        "subject_type": "user",
+                        "subject_uuid": "e1111111-2222-4333-8444-555555555555",
+                        "counterparty_name": None,
+                        "counterparty_vendor_data": None,
+                        "counterparty_country": None,
+                        "subject_country": "ESP",
+                        "assigned_to_name": None,
+                        "travel_rule_status": None,
+                        "application_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                        "application_name": "Production app",
+                        "organization_id": "11111111-2222-3333-4444-555555555555",
+                        "organization_name": "Example Org",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.transactions.list_related(
+            "abcdef12-3456-7890-abcd-ef1234567890", limit=1, offset=1
+        ),
+        lambda c: c.transactions.list_related(
+            "abcdef12-3456-7890-abcd-ef1234567890", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, TransactionSummary) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, TransactionSummary) for x1 in r.results)
+        ),
     )
 
 
@@ -426,6 +521,7 @@ def test_transactions_retrieve() -> None:
                 "travel_rule": None,
                 "network_snapshot": None,
                 "remediation": None,
+                "action_required": None,
                 "cost_breakdown": None,
             },
         ),
@@ -433,6 +529,109 @@ def test_transactions_retrieve() -> None:
         lambda c: c.transactions.retrieve("abcdef12-3456-7890-abcd-ef1234567890"),
         lambda r: isinstance(r, TransactionDetail),
         lambda r: isinstance(r, TransactionDetail),
+    )
+
+
+def test_transactions_notes_create() -> None:
+    """``POST /v3/transactions/{transaction_id}/notes/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/transactions/abcdef12-3456-7890-abcd-ef1234567890/notes/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "note": "Customer confirmed the withdrawal by phone.",
+                "mentioned_emails": ["analyst@example.com"],
+            },
+            status=201,
+            response_json={
+                "uuid": "c1111111-2222-4333-8444-555555555555",
+                "note": "Customer confirmed the withdrawal by phone.",
+                "actor_email": None,
+                "actor_name": None,
+                "metadata": {"mentioned_emails": ["analyst@example.com"]},
+                "created_at": "2026-10-16T10:05:12.481203Z",
+            },
+        ),
+        lambda c: c.transactions.notes.create(
+            "abcdef12-3456-7890-abcd-ef1234567890",
+            note="Customer confirmed the withdrawal by phone.",
+            mentioned_emails=["analyst@example.com"],
+        ),
+        lambda c: c.transactions.notes.create(
+            "abcdef12-3456-7890-abcd-ef1234567890",
+            note="Customer confirmed the withdrawal by phone.",
+            mentioned_emails=["analyst@example.com"],
+        ),
+        lambda r: isinstance(r, TransactionNote),
+        lambda r: isinstance(r, TransactionNote),
+    )
+
+
+def test_transactions_notes_list() -> None:
+    """``GET /v3/transactions/{transaction_id}/notes/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/transactions/abcdef12-3456-7890-abcd-ef1234567890/notes/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 3,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "c1111111-2222-4333-8444-555555555555",
+                        "note": "Customer confirmed the withdrawal by phone.",
+                        "actor_email": None,
+                        "actor_name": None,
+                        "metadata": {"mentioned_emails": ["analyst@example.com"]},
+                        "created_at": "2026-10-16T10:05:12.481203Z",
+                    },
+                    {
+                        "uuid": "c2222222-3333-4444-8555-666666666666",
+                        "note": "Status changed from IN_REVIEW to APPROVED. Reason: Source of funds verified",
+                        "actor_email": "reviewer@example.com",
+                        "actor_name": "Alex Reviewer",
+                        "metadata": {
+                            "type": "status_change",
+                            "previous_status": "IN_REVIEW",
+                            "new_status": "APPROVED",
+                            "reason_code": "SOF_VERIFIED",
+                            "reason_label": "Source of funds verified",
+                        },
+                        "created_at": "2026-10-15T17:22:40.103911Z",
+                    },
+                    {
+                        "uuid": "c3333333-4444-4555-8666-777777777777",
+                        "note": "Large withdrawal to a new wallet: check the source of funds.",
+                        "actor_email": None,
+                        "actor_name": "Rule Engine",
+                        "metadata": {
+                            "rule_uuid": "d1111111-2222-4333-8444-555555555555",
+                            "source": "rule_action",
+                        },
+                        "created_at": "2026-10-15T08:42:12.004518Z",
+                    },
+                ],
+            },
+        ),
+        lambda c: c.transactions.notes.list(
+            "abcdef12-3456-7890-abcd-ef1234567890", limit=1, offset=1
+        ),
+        lambda c: c.transactions.notes.list(
+            "abcdef12-3456-7890-abcd-ef1234567890", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, TransactionNote) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, TransactionNote) for x1 in r.results)
+        ),
     )
 
 
@@ -853,7 +1052,7 @@ def test_transactions_rules_list() -> None:
                                 "filters": {},
                             }
                         ],
-                        "actions": [{"type": "add_score", "value": 1}],
+                        "actions": [None],
                         "metadata": {},
                         "severity": "UNKNOWN",
                         "source": "PRESET",
@@ -958,7 +1157,7 @@ def test_transactions_rules_list_library() -> None:
                                 "filters": {},
                             }
                         ],
-                        "actions": [{"type": "add_score", "value": 1}],
+                        "actions": [None],
                         "metadata": {},
                         "bundle": "sample",
                         "tags": ["sample"],
@@ -1169,12 +1368,97 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
                 "ownership_confirmed": True,
                 "deadline_at": "2026-01-01T00:00:00Z",
                 "timeline": [
-                    {"status": "sample", "at": "2026-01-01T00:00:00Z", "detail": "sample"}
+                    {
+                        "status": "sample",
+                        "at": "2026-01-01T00:00:00Z",
+                        "detail": "sample",
+                        "name_match": {
+                            "score": 1,
+                            "matched": True,
+                            "method": "none",
+                            "strictness": "NONE",
+                            "compared_with": "wallet_holder",
+                            "transfer_name": "sample",
+                            "compared_name": "sample",
+                            "matched_names": ["sample"],
+                            "mismatched_names": ["sample"],
+                        },
+                        "reason": "sample",
+                    }
                 ],
-                "counterparty_vasp": {"name": "sample", "lei": "sample", "dd_score": 1},
+                "counterparty_vasp": {
+                    "name": "sample",
+                    "lei": "sample",
+                    "dd_score": 1,
+                    "dd_score_breakdown": {
+                        "key": {"points": 1.5, "max": 1, "reason": "sample", "detail": "sample"}
+                    },
+                    "dd_assessed_at": "2026-01-01T00:00:00Z",
+                },
                 "originator_data": {},
                 "beneficiary_data": {},
+                "name_match": {
+                    "score": 1,
+                    "matched": True,
+                    "method": "none",
+                    "strictness": "NONE",
+                    "compared_with": "wallet_holder",
+                    "transfer_name": "sample",
+                    "compared_name": "sample",
+                    "matched_names": ["sample"],
+                    "mismatched_names": ["sample"],
+                },
+                "data_match": {
+                    "matched": True,
+                    "mismatched_fields": ["name"],
+                    "fields": {"key": {"result": "matched", "strictness": "NONE"}},
+                },
+                "mismatched_fields": ["sample"],
+                "data_unmasked": {
+                    "at": "2026-01-01T00:00:00Z",
+                    "reason": "ownership_confirmed",
+                    "actor": "sample",
+                },
+                "data_masked": True,
                 "created_at": "2026-01-01T00:00:00Z",
+                "delivery": {
+                    "kind": "SEND",
+                    "status": "QUEUED",
+                    "rail": "INTERNAL",
+                    "attempts": 1,
+                    "last_error": "email undeliverable",
+                    "next_attempt_at": "2026-01-01T00:00:00Z",
+                    "delivered_at": "2026-01-01T00:00:00Z",
+                },
+                "discovery": [
+                    {
+                        "step": "internal_address_book",
+                        "outcome": "match",
+                        "reason": "sample",
+                        "vasp": "00000000-0000-4000-8000-000000000006",
+                        "rail": "sample",
+                        "at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+                "reason": "sample",
+                "next_actions": [
+                    {"action": "select_counterparty_vasp", "url": "https://example.com/resource"}
+                ],
+                "chain_details": {
+                    "chain": "sample",
+                    "shape": "utxo",
+                    "originator": {"address": "sample", "memo": "sample", "source": "declared"},
+                    "beneficiary": {"address": "sample", "memo": "sample", "source": "declared"},
+                    "utxo": {
+                        "inputs": [{"address": "sample"}],
+                        "outputs": [{"address": "sample"}],
+                        "change_output_indexes": [1],
+                        "beneficiary_output_index": 1,
+                    },
+                    "lightning": {},
+                    "warnings": ["declared_originator_not_an_input"],
+                    "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
+                },
             },
             strict_type=TravelRuleTransferDetail,
         ),
@@ -1186,6 +1470,249 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
         ),
         lambda r: isinstance(r, TravelRuleTransferDetail),
         lambda r: isinstance(r, TravelRuleTransferDetail),
+    )
+
+
+def test_transactions_travel_rule_create_message() -> None:
+    """``POST /v3/transactions/{transaction_id}/travel-rule/messages/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/transactions/00000000-0000-4000-8000-000000000001/travel-rule/messages/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "kind": "DOCUMENT_REQUEST",
+                "body": "Please confirm the date of birth of the beneficiary.",
+                "requested_documents": ["Proof of address"],
+            },
+            status=201,
+            response_json={
+                "id": "00000000-0000-4000-8000-000000000003",
+                "kind": "MESSAGE",
+                "direction": "INBOUND",
+                "author": "sample",
+                "body": "sample",
+                "requested_documents": ["sample"],
+                "reply_to": "00000000-0000-4000-8000-000000000003",
+                "fulfilled_at": "2026-01-01T00:00:00Z",
+                "attachment": {
+                    "uuid": "00000000-0000-4000-8000-000000000005",
+                    "label": "sample",
+                    "note": "sample",
+                    "uploaded_by": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "files": [
+                        {
+                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "file_url": "sample",
+                            "original_filename": "sample",
+                            "file_size": 1,
+                        }
+                    ],
+                },
+                "created_at": "2026-01-01T00:00:00Z",
+            },
+            strict_type=TravelRuleMessage,
+        ),
+        lambda c: c.transactions.travel_rule.create_message(
+            "00000000-0000-4000-8000-000000000001",
+            kind="DOCUMENT_REQUEST",
+            body="Please confirm the date of birth of the beneficiary.",
+            requested_documents=["Proof of address"],
+        ),
+        lambda c: c.transactions.travel_rule.create_message(
+            "00000000-0000-4000-8000-000000000001",
+            kind="DOCUMENT_REQUEST",
+            body="Please confirm the date of birth of the beneficiary.",
+            requested_documents=["Proof of address"],
+        ),
+        lambda r: isinstance(r, TravelRuleMessage),
+        lambda r: isinstance(r, TravelRuleMessage),
+    )
+
+
+def test_transactions_travel_rule_list_messages() -> None:
+    """``GET /v3/transactions/{transaction_id}/travel-rule/messages/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/transactions/00000000-0000-4000-8000-000000000001/travel-rule/messages/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json=[
+                {
+                    "id": "00000000-0000-4000-8000-000000000004",
+                    "kind": "MESSAGE",
+                    "direction": "INBOUND",
+                    "author": "sample",
+                    "body": "sample",
+                    "requested_documents": ["sample"],
+                    "reply_to": "00000000-0000-4000-8000-000000000004",
+                    "fulfilled_at": "2026-01-01T00:00:00Z",
+                    "attachment": {
+                        "uuid": "00000000-0000-4000-8000-000000000006",
+                        "label": "sample",
+                        "note": "sample",
+                        "uploaded_by": "sample",
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "files": [
+                            {
+                                "uuid": "00000000-0000-4000-8000-000000000008",
+                                "file_url": "sample",
+                                "original_filename": "sample",
+                                "file_size": 1,
+                            }
+                        ],
+                    },
+                    "created_at": "2026-01-01T00:00:00Z",
+                }
+            ],
+            strict_type=list[TravelRuleMessage],
+        ),
+        lambda c: c.transactions.travel_rule.list_messages("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.transactions.travel_rule.list_messages("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, list) and all(isinstance(x1, TravelRuleMessage) for x1 in r),
+        lambda r: isinstance(r, list) and all(isinstance(x1, TravelRuleMessage) for x1 in r),
+    )
+
+
+def test_transactions_travel_rule_trigger_test_vasp_inbound() -> None:
+    """``POST /v3/travel-rule/test-vasp/inbound/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/test-vasp/inbound/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "beneficiary_wallet_address": "0xYourSandboxWallet",
+                "scenario": "accept",
+                "amount": "1",
+                "reference": "demo-001",
+            },
+            status=201,
+            response_json={
+                "transaction_id": "00000000-0000-4000-8000-000000000003",
+                "txn_id": "sample",
+                "scenario": "sample",
+                "travel_rule_status": "sample",
+                "detail": "sample",
+                "test_vasp": True,
+                "travel_rule": {
+                    "uuid": "00000000-0000-4000-8000-000000000005",
+                    "status": "AWAITING_COUNTERPARTY",
+                    "direction": "INBOUND",
+                    "rail": "INTERNAL",
+                    "protocol": "sample",
+                    "ivms_version": "ivms101.2023",
+                    "required": True,
+                    "ownership_confirmed": True,
+                    "deadline_at": "2026-01-01T00:00:00Z",
+                    "timeline": [
+                        {
+                            "status": "sample",
+                            "at": "2026-01-01T00:00:00Z",
+                            "detail": "sample",
+                            "name_match": {},
+                            "reason": "sample",
+                        }
+                    ],
+                    "counterparty_vasp": {
+                        "name": "sample",
+                        "lei": "sample",
+                        "dd_score": 1,
+                        "dd_score_breakdown": {
+                            "key": {"points": 1.5, "max": 1, "reason": "sample", "detail": "sample"}
+                        },
+                        "dd_assessed_at": "2026-01-01T00:00:00Z",
+                    },
+                    "originator_data": {},
+                    "beneficiary_data": {},
+                    "name_match": {
+                        "score": 1,
+                        "matched": True,
+                        "method": "none",
+                        "strictness": "NONE",
+                        "compared_with": "wallet_holder",
+                        "transfer_name": "sample",
+                        "compared_name": "sample",
+                        "matched_names": ["sample"],
+                        "mismatched_names": ["sample"],
+                    },
+                    "data_match": {
+                        "matched": True,
+                        "mismatched_fields": ["name"],
+                        "fields": {"key": {}},
+                    },
+                    "mismatched_fields": ["sample"],
+                    "data_unmasked": {
+                        "at": "2026-01-01T00:00:00Z",
+                        "reason": "ownership_confirmed",
+                        "actor": "sample",
+                    },
+                    "data_masked": True,
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "delivery": {
+                        "kind": "SEND",
+                        "status": "QUEUED",
+                        "rail": "INTERNAL",
+                        "attempts": 1,
+                        "last_error": "email undeliverable",
+                        "next_attempt_at": "2026-01-01T00:00:00Z",
+                        "delivered_at": "2026-01-01T00:00:00Z",
+                    },
+                    "discovery": [
+                        {
+                            "step": "internal_address_book",
+                            "outcome": "match",
+                            "reason": "sample",
+                            "vasp": "00000000-0000-4000-8000-000000000008",
+                            "rail": "sample",
+                            "at": "2026-01-01T00:00:00Z",
+                        }
+                    ],
+                    "reason": "sample",
+                    "next_actions": [
+                        {
+                            "action": "select_counterparty_vasp",
+                            "url": "https://example.com/resource",
+                        }
+                    ],
+                    "chain_details": {
+                        "chain": "sample",
+                        "shape": "utxo",
+                        "originator": {},
+                        "beneficiary": {},
+                        "utxo": {
+                            "inputs": [],
+                            "outputs": [],
+                            "change_output_indexes": [],
+                            "beneficiary_output_index": 1,
+                        },
+                        "lightning": {},
+                        "warnings": ["declared_originator_not_an_input"],
+                        "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
+                    },
+                },
+            },
+            strict_type=TravelRuleTestVaspInboundResponse,
+        ),
+        lambda c: c.transactions.travel_rule.trigger_test_vasp_inbound(
+            beneficiary_wallet_address="0xYourSandboxWallet",
+            scenario="accept",
+            amount="1",
+            reference="demo-001",
+        ),
+        lambda c: c.transactions.travel_rule.trigger_test_vasp_inbound(
+            beneficiary_wallet_address="0xYourSandboxWallet",
+            scenario="accept",
+            amount="1",
+            reference="demo-001",
+        ),
+        lambda r: isinstance(r, TravelRuleTestVaspInboundResponse),
+        lambda r: isinstance(r, TravelRuleTestVaspInboundResponse),
     )
 
 
@@ -1210,12 +1737,97 @@ def test_transactions_travel_rule_update_transfer() -> None:
                 "ownership_confirmed": True,
                 "deadline_at": "2026-01-01T00:00:00Z",
                 "timeline": [
-                    {"status": "sample", "at": "2026-01-01T00:00:00Z", "detail": "sample"}
+                    {
+                        "status": "sample",
+                        "at": "2026-01-01T00:00:00Z",
+                        "detail": "sample",
+                        "name_match": {
+                            "score": 1,
+                            "matched": True,
+                            "method": "none",
+                            "strictness": "NONE",
+                            "compared_with": "wallet_holder",
+                            "transfer_name": "sample",
+                            "compared_name": "sample",
+                            "matched_names": ["sample"],
+                            "mismatched_names": ["sample"],
+                        },
+                        "reason": "sample",
+                    }
                 ],
-                "counterparty_vasp": {"name": "sample", "lei": "sample", "dd_score": 1},
+                "counterparty_vasp": {
+                    "name": "sample",
+                    "lei": "sample",
+                    "dd_score": 1,
+                    "dd_score_breakdown": {
+                        "key": {"points": 1.5, "max": 1, "reason": "sample", "detail": "sample"}
+                    },
+                    "dd_assessed_at": "2026-01-01T00:00:00Z",
+                },
                 "originator_data": {},
                 "beneficiary_data": {},
+                "name_match": {
+                    "score": 1,
+                    "matched": True,
+                    "method": "none",
+                    "strictness": "NONE",
+                    "compared_with": "wallet_holder",
+                    "transfer_name": "sample",
+                    "compared_name": "sample",
+                    "matched_names": ["sample"],
+                    "mismatched_names": ["sample"],
+                },
+                "data_match": {
+                    "matched": True,
+                    "mismatched_fields": ["name"],
+                    "fields": {"key": {"result": "matched", "strictness": "NONE"}},
+                },
+                "mismatched_fields": ["sample"],
+                "data_unmasked": {
+                    "at": "2026-01-01T00:00:00Z",
+                    "reason": "ownership_confirmed",
+                    "actor": "sample",
+                },
+                "data_masked": True,
                 "created_at": "2026-01-01T00:00:00Z",
+                "delivery": {
+                    "kind": "SEND",
+                    "status": "QUEUED",
+                    "rail": "INTERNAL",
+                    "attempts": 1,
+                    "last_error": "email undeliverable",
+                    "next_attempt_at": "2026-01-01T00:00:00Z",
+                    "delivered_at": "2026-01-01T00:00:00Z",
+                },
+                "discovery": [
+                    {
+                        "step": "internal_address_book",
+                        "outcome": "match",
+                        "reason": "sample",
+                        "vasp": "00000000-0000-4000-8000-000000000006",
+                        "rail": "sample",
+                        "at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+                "reason": "sample",
+                "next_actions": [
+                    {"action": "select_counterparty_vasp", "url": "https://example.com/resource"}
+                ],
+                "chain_details": {
+                    "chain": "sample",
+                    "shape": "utxo",
+                    "originator": {"address": "sample", "memo": "sample", "source": "declared"},
+                    "beneficiary": {"address": "sample", "memo": "sample", "source": "declared"},
+                    "utxo": {
+                        "inputs": [{"address": "sample"}],
+                        "outputs": [{"address": "sample"}],
+                        "change_output_indexes": [1],
+                        "beneficiary_output_index": 1,
+                    },
+                    "lightning": {},
+                    "warnings": ["declared_originator_not_an_input"],
+                    "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
+                },
             },
             strict_type=TravelRuleTransferDetail,
         ),

@@ -19,3 +19,9 @@ class CaseSubject(BaseModel):
 
     external_id: str | None = None
     """The subject's vendor_data."""
+
+    country: str | None = None
+    """Three-letter country code of the subject (ISO 3166-1 alpha-3), or null when it is not known. For a business, its country of incorporation. For a person, the issuing country of an identity document from their verifications; a person with documents from several countries shows one of them, and ICAO document codes such as `XXA` can appear."""
+
+    portrait: str | None = None
+    """Short-lived signed URL of the person's portrait image. Always null for a business, and null for a person without a portrait. The URL expires, so download the image when you read the case instead of storing the URL."""

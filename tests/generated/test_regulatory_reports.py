@@ -181,8 +181,8 @@ def test_regulatory_reports_list() -> None:
                 "previous": "sample",
                 "results": [
                     {
-                        "uuid": "00000000-0000-4000-8000-000000000005",
-                        "case_uuid": "00000000-0000-4000-8000-000000000005",
+                        "uuid": "00000000-0000-4000-8000-000000000006",
+                        "case_uuid": "00000000-0000-4000-8000-000000000006",
                         "case_number": "sample",
                         "report_type": "SAR",
                         "report_type_display": "sample",
@@ -213,7 +213,7 @@ def test_regulatory_reports_list() -> None:
                         },
                         "report_indicators": ["sample"],
                         "included_fields": ["sample"],
-                        "transactions": ["00000000-0000-4000-8000-000000000006"],
+                        "transactions": ["00000000-0000-4000-8000-000000000007"],
                         "validation_errors": [{"field": "sample", "message": "sample"}],
                         "validated_at": "2026-01-01T00:00:00Z",
                         "finalized_at": "2026-01-01T00:00:00Z",

@@ -17,13 +17,13 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.cases.blueprints.install_presets_response import (
-    CasesBlueprintsInstallPresetsResponse,
-)
 from didit.types.cases.blueprints.list_presets_response import CasesBlueprintsListPresetsResponse
 from didit.types.cases.blueprints.list_response import CasesBlueprintsListResponse
 from didit.types.components.case_blueprint_detail import CaseBlueprintDetail
 from didit.types.components.case_blueprint_list_item import CaseBlueprintListItem
+from didit.types.components.case_blueprint_preset_install_result import (
+    CaseBlueprintPresetInstallResult,
+)
 from didit.types.components.case_content_config import CaseContentConfigParam
 from didit.types.components.case_publication_case_blueprint import CasePublicationCaseBlueprint
 from didit.types.components.case_publication_paginated_policy_revision_list import (
@@ -382,7 +382,7 @@ class CasesBlueprints(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBlueprintsInstallPresetsResponse:
+    ) -> CaseBlueprintPresetInstallResult:
         """Install blueprint presets.
 
         Copy one or more presets into the application as editable blueprints. Idempotent per preset_key; omit preset_keys to install every preset not yet installed.
@@ -397,11 +397,11 @@ class CasesBlueprints(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBlueprintsInstallPresetsResponse",
+            "CaseBlueprintPresetInstallResult",
             self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/blueprints/presets/install/",
-                cast_to=CasesBlueprintsInstallPresetsResponse,
+                cast_to=CaseBlueprintPresetInstallResult,
                 scope="application",
                 auth="api_key",
                 body={"preset_keys": preset_keys},
@@ -949,7 +949,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBlueprintsInstallPresetsResponse:
+    ) -> CaseBlueprintPresetInstallResult:
         """Install blueprint presets.
 
         Copy one or more presets into the application as editable blueprints. Idempotent per preset_key; omit preset_keys to install every preset not yet installed.
@@ -964,11 +964,11 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBlueprintsInstallPresetsResponse",
+            "CaseBlueprintPresetInstallResult",
             await self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/blueprints/presets/install/",
-                cast_to=CasesBlueprintsInstallPresetsResponse,
+                cast_to=CaseBlueprintPresetInstallResult,
                 scope="application",
                 auth="api_key",
                 body={"preset_keys": preset_keys},

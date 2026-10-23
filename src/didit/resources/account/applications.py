@@ -8,6 +8,7 @@ from typing import Sequence, cast
 
 import httpx
 
+from didit._pagination import AsyncPaginator, SyncPage
 from didit._resource import AsyncAPIResource, SyncAPIResource
 from didit._response import (
     async_to_raw_response_wrapper,
@@ -17,6 +18,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.application import Application
+from didit.types.components.paginated_application_list import PaginatedApplicationList
 
 __all__ = [
     "AccountApplications",
@@ -48,33 +50,39 @@ class AccountApplications(SyncAPIResource):
         self,
         org_id: str,
         *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SyncPage[Application]:
         """List the organization's applications.
 
-        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine - follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
+        List the organization's applications, 50 per page by default. Use this to discover `app_id` values when recovering credentials from a new machine, then call `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
 
         ``GET /organizations/me/{org_id}/applications/``
 
         Args:
           org_id: UUID of the organization. Look it up with `GET /organizations/me/`.
+          limit: Number of applications per page. Defaults to 50.
+          offset: Number of applications to skip before the page starts. Defaults to 0.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
-            self._client.request(
+            "SyncPage[Application]",
+            self._client.request_page(
                 "get",
                 "/organizations/me/{org_id}/applications/",
-                cast_to=object,
+                cast_to=PaginatedApplicationList,
+                item_type=Application,
                 path_params={"org_id": org_id},
                 auth="account_token",
                 api="account",
+                query={"limit": limit, "offset": offset},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -198,7 +206,7 @@ class AccountApplications(SyncAPIResource):
     ) -> Application:
         """Update Application.
 
-        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. Requires owner/admin JWT.
+        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. Requires owner/admin JWT.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 
@@ -257,37 +265,43 @@ class AsyncAccountApplications(AsyncAPIResource):
         """Every method of this resource, returning the HTTP response before reading its body."""
         return AsyncAccountApplicationsWithStreamingResponse(self)
 
-    async def list(
+    def list(
         self,
         org_id: str,
         *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> AsyncPaginator[Application]:
         """List the organization's applications.
 
-        List every application in the organization. Use this to discover `app_id` values when recovering credentials from a new machine - follow with `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
+        List the organization's applications, 50 per page by default. Use this to discover `app_id` values when recovering credentials from a new machine, then call `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.
 
         ``GET /organizations/me/{org_id}/applications/``
 
         Args:
           org_id: UUID of the organization. Look it up with `GET /organizations/me/`.
+          limit: Number of applications per page. Defaults to 50.
+          offset: Number of applications to skip before the page starts. Defaults to 0.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
-            await self._client.request(
+            "AsyncPaginator[Application]",
+            self._client.request_page(
                 "get",
                 "/organizations/me/{org_id}/applications/",
-                cast_to=object,
+                cast_to=PaginatedApplicationList,
+                item_type=Application,
                 path_params={"org_id": org_id},
                 auth="account_token",
                 api="account",
+                query={"limit": limit, "offset": offset},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -411,7 +425,7 @@ class AsyncAccountApplications(AsyncAPIResource):
     ) -> Application:
         """Update Application.
 
-        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. Requires owner/admin JWT.
+        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. Requires owner/admin JWT.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 

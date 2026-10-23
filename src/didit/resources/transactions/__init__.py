@@ -18,7 +18,9 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 from didit.types.components.transaction_detail import TransactionDetail
+from didit.types.components.transaction_summary import TransactionSummary
 from didit.types.transactions.create_params import (
     TransactionsCreateParamsCounterparty,
     TransactionsCreateParamsNetworkSnapshot,
@@ -27,16 +29,21 @@ from didit.types.transactions.create_params import (
     TransactionsCreateParamsTravelRuleDetails,
 )
 from didit.types.transactions.create_sdk_token_response import TransactionsCreateSdkTokenResponse
-from didit.types.transactions.list_networks_response import TransactionsListNetworksResponse
-from didit.types.transactions.list_party_networks_response import (
-    TransactionsListPartyNetworksResponse,
-)
+from didit.types.transactions.list_related_response import TransactionsListRelatedResponse
 from didit.types.transactions.list_response import (
     TransactionsListResponse,
     TransactionsListResponseResults,
 )
 
 if TYPE_CHECKING:
+    from didit.resources.transactions.notes import (
+        AsyncTransactionsNotes,
+        AsyncTransactionsNotesWithRawResponse,
+        AsyncTransactionsNotesWithStreamingResponse,
+        TransactionsNotes,
+        TransactionsNotesWithRawResponse,
+        TransactionsNotesWithStreamingResponse,
+    )
     from didit.resources.transactions.rules import (
         AsyncTransactionsRules,
         AsyncTransactionsRulesWithRawResponse,
@@ -67,10 +74,16 @@ __all__ = [
 class Transactions(SyncAPIResource):
     """The ``transactions`` resource of the Didit API.
 
-    Methods: ``create``, ``create_sdk_token``, ``list``, ``list_networks``, ``list_party_networks``, ``retrieve``.
+    Methods: ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
 
-    Nested resources: ``rules``, ``travel_rule``.
+    Nested resources: ``notes``, ``rules``, ``travel_rule``.
     """
+
+    @cached_property
+    def notes(self) -> TransactionsNotes:
+        from didit.resources.transactions.notes import TransactionsNotes
+
+        return TransactionsNotes(self._client)
 
     @cached_property
     def rules(self) -> TransactionsRules:
@@ -99,6 +112,7 @@ class Transactions(SyncAPIResource):
         *,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        travel_rule_status: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -113,6 +127,7 @@ class Transactions(SyncAPIResource):
         Args:
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page.
+          travel_rule_status: Return only transactions whose Travel Rule transfer is in this exact status (for example `ON_HOLD` or `AWAITING_COUNTERPARTY`). `count` follows this filter; `total_transactions` still counts every transaction in the application.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -126,7 +141,7 @@ class Transactions(SyncAPIResource):
                 cast_to=TransactionsListResponse,
                 item_type=TransactionsListResponseResults,
                 auth="api_key",
-                query={"limit": limit, "offset": offset},
+                query={"limit": limit, "offset": offset, "travel_rule_status": travel_rule_status},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -166,7 +181,7 @@ class Transactions(SyncAPIResource):
     ) -> TransactionDetail:
         """Create transaction.
 
-        Submit a transaction for synchronous AML/risk monitoring. The transaction is created `APPROVED`, then your rules (and crypto screening, when applicable) run inline and may flip the returned `status` to `IN_REVIEW` or `DECLINED`. **`transaction_id` is your idempotency key** (max 128 chars, unique per app); reusing it returns 400. A `transaction.created` webhook is dispatched on success (sandbox applications are not billed and do not emit webhooks).
+        Submit a transaction for synchronous AML/risk monitoring. The transaction is created `APPROVED`, then your rules (and crypto screening, when applicable) run inline and may flip the returned `status` to `IN_REVIEW` or `DECLINED`. **`transaction_id` is your idempotency key** (max 128 chars, unique per app); reusing it returns 400. A `transaction.created` webhook is dispatched on success for live applications. Sandbox applications are not billed and do not emit `transaction.created` or `transaction.status.updated` webhooks. Sandbox Travel Rule exchanges do emit `travel_rule.status.updated` webhooks with `environment: sandbox`. A Travel Rule transfer is stored and returned before any counterparty is contacted: `travel_rule.status` comes back `AWAITING_COUNTERPARTY` (or `NOT_APPLICABLE` below your threshold, `UNCONFIRMED_OWNERSHIP` for a declared self-hosted wallet, `COMPLETED` when the other wallet is your own verified wallet) and `travel_rule.protocol` is null. Didit then chooses the rail and sends the exchange, and every later status change of the transfer, including `COUNTERPARTY_VASP_NOT_FOUND` when no rail reaches the counterparty, arrives as a `travel_rule.status.updated` webhook. Your rules run again when the rail or the status changes.
 
         ``POST /v3/transactions/``
 
@@ -179,7 +194,7 @@ class Transactions(SyncAPIResource):
           time_zone: IANA time zone identifier, e.g. `Europe/Madrid`.
           counterparty: The counterparty of the transaction (optional).
           custom_properties: Arbitrary key-value pairs attached to the transaction. Each key can be referenced in rule conditions with the field path `custom_values.<key>`.
-          travel_rule_details: Travel Rule compliance metadata.
+          travel_rule_details: Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name."
           network_snapshot: Pre-computed network graph snapshot.
           include_crypto_screening: Per-transaction override for crypto blockchain analytics screening. When `true`, crypto screening is performed regardless of the application default. When `false`, crypto screening is skipped even if enabled in the application settings. When omitted or `null`, the application-level default configured in the Console is used. Crypto screening requires `transaction_details.direction`, `currency_kind: "crypto"`, a chain/currency, and the wallet address selected by the direction: inbound pre-transfer screening uses `counterparty.payment_method.account_id`, inbound transaction-hash screening uses `subject.payment_method.account_id`, and outbound screening uses `counterparty.payment_method.account_id`. When `transaction_details.payment_reference_id` contains a blockchain transaction hash, Didit performs transaction screening and returns transaction summary enrichment when available.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -300,7 +315,7 @@ class Transactions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> TransactionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a transaction.
 
         List the networks the transaction's backing KYC/KYB subject belongs to (resolved through the transaction's session or business session).
@@ -315,11 +330,11 @@ class Transactions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "TransactionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/networks/",
-                cast_to=TransactionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"transaction_uuid": transaction_uuid},
                 scope="application",
                 auth="api_key",
@@ -339,7 +354,7 @@ class Transactions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> TransactionsListPartyNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a transaction party.
 
         List the networks a transaction party (remitter, beneficiary, or counterparty) belongs to, resolved through the party itself rather than through the transaction's backing session.
@@ -355,11 +370,11 @@ class Transactions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "TransactionsListPartyNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/parties/{transaction_party_uuid}/networks/",
-                cast_to=TransactionsListPartyNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={
                     "transaction_uuid": transaction_uuid,
                     "transaction_party_uuid": transaction_party_uuid,
@@ -373,14 +388,110 @@ class Transactions(SyncAPIResource):
             ),
         )
 
+    def list_related(
+        self,
+        transaction_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[TransactionSummary]:
+        """List related transactions.
+
+        List the other transactions in your application that involve the same people or companies as this one. A transaction is related when any of its parties, in any role, has the same `vendor_data` as one of this transaction's parties. The transaction itself is never returned, and parties without `vendor_data` are ignored: when none of this transaction's parties has one, the result is always empty.
+
+        Results use the summary shape of `GET /v3/transactions/`, newest first (`txn_date`, then `created_at`). Paginated with `limit` and `offset`; `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`.
+
+        A scoped API key needs `transactions: read`; a key limited to some workflows or to approved sessions cannot call this endpoint. Send the same `vendor_data` for the same person or company on every [transaction](https://docs.didit.me/transaction-monitoring/transactions#subject-and-counterparty) to make this list complete.
+
+        ``GET /v3/transactions/{transaction_id}/related/``
+
+        Args:
+          transaction_id: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
+          limit: Number of transactions per page. Defaults to 50. A value that is not a positive integer falls back to 50; a value above 1000000 returns `400`.
+          offset: Zero-based position of the first transaction to return. Prefer following `next`. A value that is not a whole number falls back to 0; a value above 1000000 returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[TransactionSummary]",
+            self._client.request_page(
+                "get",
+                "/v3/transactions/{transaction_id}/related/",
+                cast_to=TransactionsListRelatedResponse,
+                item_type=TransactionSummary,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def generate_pdf(
+        self,
+        transaction_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download a transaction PDF report.
+
+        Render one monitored transaction as a PDF report: overview and verdict, parties and payment methods, custom properties, alerts and rule runs, screening and Travel Rule results, the network summary, the cost breakdown, up to 50 related transactions and the 20 most recent activity entries. The body is the PDF itself (`application/pdf`), not JSON.
+
+        The report is rendered from the transaction's current data on every call, so request it again after a status change. Nothing is stored and nothing is billed. Rendering can take a few seconds, so use a generous client timeout.
+
+        This endpoint lives on an application-scoped path: put your organization ID and the ID of the application your API key belongs to in the URL ([find your organization ID](https://docs.didit.me/getting-started/api-authentication#find-your-organization-id)). A PDF report counts as media: a scoped API key needs `media: read` and `transactions: read`, and a key limited to some workflows or to approved sessions cannot call it.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/pdf/``
+
+        Args:
+          transaction_uuid: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/pdf/",
+                cast_to=bytes,
+                path_params={"transaction_uuid": transaction_uuid},
+                scope="application",
+                auth="api_key",
+                accept="application/pdf, application/json",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTransactions(AsyncAPIResource):
     """The ``transactions`` resource of the Didit API.
 
-    Methods: ``create``, ``create_sdk_token``, ``list``, ``list_networks``, ``list_party_networks``, ``retrieve``.
+    Methods: ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
 
-    Nested resources: ``rules``, ``travel_rule``.
+    Nested resources: ``notes``, ``rules``, ``travel_rule``.
     """
+
+    @cached_property
+    def notes(self) -> AsyncTransactionsNotes:
+        from didit.resources.transactions.notes import AsyncTransactionsNotes
+
+        return AsyncTransactionsNotes(self._client)
 
     @cached_property
     def rules(self) -> AsyncTransactionsRules:
@@ -409,6 +520,7 @@ class AsyncTransactions(AsyncAPIResource):
         *,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        travel_rule_status: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -423,6 +535,7 @@ class AsyncTransactions(AsyncAPIResource):
         Args:
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page.
+          travel_rule_status: Return only transactions whose Travel Rule transfer is in this exact status (for example `ON_HOLD` or `AWAITING_COUNTERPARTY`). `count` follows this filter; `total_transactions` still counts every transaction in the application.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -436,7 +549,7 @@ class AsyncTransactions(AsyncAPIResource):
                 cast_to=TransactionsListResponse,
                 item_type=TransactionsListResponseResults,
                 auth="api_key",
-                query={"limit": limit, "offset": offset},
+                query={"limit": limit, "offset": offset, "travel_rule_status": travel_rule_status},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -476,7 +589,7 @@ class AsyncTransactions(AsyncAPIResource):
     ) -> TransactionDetail:
         """Create transaction.
 
-        Submit a transaction for synchronous AML/risk monitoring. The transaction is created `APPROVED`, then your rules (and crypto screening, when applicable) run inline and may flip the returned `status` to `IN_REVIEW` or `DECLINED`. **`transaction_id` is your idempotency key** (max 128 chars, unique per app); reusing it returns 400. A `transaction.created` webhook is dispatched on success (sandbox applications are not billed and do not emit webhooks).
+        Submit a transaction for synchronous AML/risk monitoring. The transaction is created `APPROVED`, then your rules (and crypto screening, when applicable) run inline and may flip the returned `status` to `IN_REVIEW` or `DECLINED`. **`transaction_id` is your idempotency key** (max 128 chars, unique per app); reusing it returns 400. A `transaction.created` webhook is dispatched on success for live applications. Sandbox applications are not billed and do not emit `transaction.created` or `transaction.status.updated` webhooks. Sandbox Travel Rule exchanges do emit `travel_rule.status.updated` webhooks with `environment: sandbox`. A Travel Rule transfer is stored and returned before any counterparty is contacted: `travel_rule.status` comes back `AWAITING_COUNTERPARTY` (or `NOT_APPLICABLE` below your threshold, `UNCONFIRMED_OWNERSHIP` for a declared self-hosted wallet, `COMPLETED` when the other wallet is your own verified wallet) and `travel_rule.protocol` is null. Didit then chooses the rail and sends the exchange, and every later status change of the transfer, including `COUNTERPARTY_VASP_NOT_FOUND` when no rail reaches the counterparty, arrives as a `travel_rule.status.updated` webhook. Your rules run again when the rail or the status changes.
 
         ``POST /v3/transactions/``
 
@@ -489,7 +602,7 @@ class AsyncTransactions(AsyncAPIResource):
           time_zone: IANA time zone identifier, e.g. `Europe/Madrid`.
           counterparty: The counterparty of the transaction (optional).
           custom_properties: Arbitrary key-value pairs attached to the transaction. Each key can be referenced in rule conditions with the field path `custom_values.<key>`.
-          travel_rule_details: Travel Rule compliance metadata.
+          travel_rule_details: Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name."
           network_snapshot: Pre-computed network graph snapshot.
           include_crypto_screening: Per-transaction override for crypto blockchain analytics screening. When `true`, crypto screening is performed regardless of the application default. When `false`, crypto screening is skipped even if enabled in the application settings. When omitted or `null`, the application-level default configured in the Console is used. Crypto screening requires `transaction_details.direction`, `currency_kind: "crypto"`, a chain/currency, and the wallet address selected by the direction: inbound pre-transfer screening uses `counterparty.payment_method.account_id`, inbound transaction-hash screening uses `subject.payment_method.account_id`, and outbound screening uses `counterparty.payment_method.account_id`. When `transaction_details.payment_reference_id` contains a blockchain transaction hash, Didit performs transaction screening and returns transaction summary enrichment when available.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -610,7 +723,7 @@ class AsyncTransactions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> TransactionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a transaction.
 
         List the networks the transaction's backing KYC/KYB subject belongs to (resolved through the transaction's session or business session).
@@ -625,11 +738,11 @@ class AsyncTransactions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "TransactionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/networks/",
-                cast_to=TransactionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"transaction_uuid": transaction_uuid},
                 scope="application",
                 auth="api_key",
@@ -649,7 +762,7 @@ class AsyncTransactions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> TransactionsListPartyNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a transaction party.
 
         List the networks a transaction party (remitter, beneficiary, or counterparty) belongs to, resolved through the party itself rather than through the transaction's backing session.
@@ -665,17 +778,107 @@ class AsyncTransactions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "TransactionsListPartyNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/parties/{transaction_party_uuid}/networks/",
-                cast_to=TransactionsListPartyNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={
                     "transaction_uuid": transaction_uuid,
                     "transaction_party_uuid": transaction_party_uuid,
                 },
                 scope="application",
                 auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_related(
+        self,
+        transaction_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[TransactionSummary]:
+        """List related transactions.
+
+        List the other transactions in your application that involve the same people or companies as this one. A transaction is related when any of its parties, in any role, has the same `vendor_data` as one of this transaction's parties. The transaction itself is never returned, and parties without `vendor_data` are ignored: when none of this transaction's parties has one, the result is always empty.
+
+        Results use the summary shape of `GET /v3/transactions/`, newest first (`txn_date`, then `created_at`). Paginated with `limit` and `offset`; `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`.
+
+        A scoped API key needs `transactions: read`; a key limited to some workflows or to approved sessions cannot call this endpoint. Send the same `vendor_data` for the same person or company on every [transaction](https://docs.didit.me/transaction-monitoring/transactions#subject-and-counterparty) to make this list complete.
+
+        ``GET /v3/transactions/{transaction_id}/related/``
+
+        Args:
+          transaction_id: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
+          limit: Number of transactions per page. Defaults to 50. A value that is not a positive integer falls back to 50; a value above 1000000 returns `400`.
+          offset: Zero-based position of the first transaction to return. Prefer following `next`. A value that is not a whole number falls back to 0; a value above 1000000 returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[TransactionSummary]",
+            self._client.request_page(
+                "get",
+                "/v3/transactions/{transaction_id}/related/",
+                cast_to=TransactionsListRelatedResponse,
+                item_type=TransactionSummary,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def generate_pdf(
+        self,
+        transaction_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download a transaction PDF report.
+
+        Render one monitored transaction as a PDF report: overview and verdict, parties and payment methods, custom properties, alerts and rule runs, screening and Travel Rule results, the network summary, the cost breakdown, up to 50 related transactions and the 20 most recent activity entries. The body is the PDF itself (`application/pdf`), not JSON.
+
+        The report is rendered from the transaction's current data on every call, so request it again after a status change. Nothing is stored and nothing is billed. Rendering can take a few seconds, so use a generous client timeout.
+
+        This endpoint lives on an application-scoped path: put your organization ID and the ID of the application your API key belongs to in the URL ([find your organization ID](https://docs.didit.me/getting-started/api-authentication#find-your-organization-id)). A PDF report counts as media: a scoped API key needs `media: read` and `transactions: read`, and a key limited to some workflows or to approved sessions cannot call it.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/pdf/``
+
+        Args:
+          transaction_uuid: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            await self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/transactions/{transaction_uuid}/pdf/",
+                cast_to=bytes,
+                path_params={"transaction_uuid": transaction_uuid},
+                scope="application",
+                auth="api_key",
+                accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -693,6 +896,14 @@ class TransactionsWithRawResponse:
         self.create_sdk_token = to_raw_response_wrapper(resource.create_sdk_token)
         self.list_networks = to_raw_response_wrapper(resource.list_networks)
         self.list_party_networks = to_raw_response_wrapper(resource.list_party_networks)
+        self.list_related = to_raw_response_wrapper(resource.list_related)
+        self.generate_pdf = to_raw_response_wrapper(resource.generate_pdf)
+
+    @cached_property
+    def notes(self) -> TransactionsNotesWithRawResponse:
+        from didit.resources.transactions.notes import TransactionsNotesWithRawResponse
+
+        return TransactionsNotesWithRawResponse(self._resource.notes)
 
     @cached_property
     def rules(self) -> TransactionsRulesWithRawResponse:
@@ -716,6 +927,14 @@ class AsyncTransactionsWithRawResponse:
         self.create_sdk_token = async_to_raw_response_wrapper(resource.create_sdk_token)
         self.list_networks = async_to_raw_response_wrapper(resource.list_networks)
         self.list_party_networks = async_to_raw_response_wrapper(resource.list_party_networks)
+        self.list_related = async_to_raw_response_wrapper(resource.list_related)
+        self.generate_pdf = async_to_raw_response_wrapper(resource.generate_pdf)
+
+    @cached_property
+    def notes(self) -> AsyncTransactionsNotesWithRawResponse:
+        from didit.resources.transactions.notes import AsyncTransactionsNotesWithRawResponse
+
+        return AsyncTransactionsNotesWithRawResponse(self._resource.notes)
 
     @cached_property
     def rules(self) -> AsyncTransactionsRulesWithRawResponse:
@@ -741,6 +960,14 @@ class TransactionsWithStreamingResponse:
         self.create_sdk_token = to_streamed_response_wrapper(resource.create_sdk_token)
         self.list_networks = to_streamed_response_wrapper(resource.list_networks)
         self.list_party_networks = to_streamed_response_wrapper(resource.list_party_networks)
+        self.list_related = to_streamed_response_wrapper(resource.list_related)
+        self.generate_pdf = to_streamed_response_wrapper(resource.generate_pdf)
+
+    @cached_property
+    def notes(self) -> TransactionsNotesWithStreamingResponse:
+        from didit.resources.transactions.notes import TransactionsNotesWithStreamingResponse
+
+        return TransactionsNotesWithStreamingResponse(self._resource.notes)
 
     @cached_property
     def rules(self) -> TransactionsRulesWithStreamingResponse:
@@ -766,6 +993,14 @@ class AsyncTransactionsWithStreamingResponse:
         self.create_sdk_token = async_to_streamed_response_wrapper(resource.create_sdk_token)
         self.list_networks = async_to_streamed_response_wrapper(resource.list_networks)
         self.list_party_networks = async_to_streamed_response_wrapper(resource.list_party_networks)
+        self.list_related = async_to_streamed_response_wrapper(resource.list_related)
+        self.generate_pdf = async_to_streamed_response_wrapper(resource.generate_pdf)
+
+    @cached_property
+    def notes(self) -> AsyncTransactionsNotesWithStreamingResponse:
+        from didit.resources.transactions.notes import AsyncTransactionsNotesWithStreamingResponse
+
+        return AsyncTransactionsNotesWithStreamingResponse(self._resource.notes)
 
     @cached_property
     def rules(self) -> AsyncTransactionsRulesWithStreamingResponse:

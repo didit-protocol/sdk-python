@@ -140,7 +140,7 @@ class Phone(SyncAPIResource):
 
         **Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS - the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).
 
-        **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message and are not branded.
+        **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.
 
         **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.
 
@@ -375,7 +375,7 @@ class AsyncPhone(AsyncAPIResource):
 
         **Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS - the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).
 
-        **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message and are not branded.
+        **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.
 
         **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.
 

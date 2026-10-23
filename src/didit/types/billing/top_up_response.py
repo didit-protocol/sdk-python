@@ -8,7 +8,7 @@ __all__ = ["BillingTopUpResponse"]
 
 class BillingTopUpResponse(BaseModel):
     checkout_session_id: str
-    """Stripe Checkout Session identifier (e.g. `cs_test_a1B2c3...`). Useful for server-side reconciliation."""
+    """Hosted checkout session identifier (e.g. `cs_test_a1B2c3...`). Useful for server-side reconciliation."""
 
     checkout_session_url: str
-    """Single-use Stripe-hosted payment page URL. Redirect the customer here to complete payment."""
+    """Single-use hosted payment page URL. Redirect the customer here to complete payment."""

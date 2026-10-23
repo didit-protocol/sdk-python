@@ -30,11 +30,14 @@ class ReviewItem(BaseModel):
             "KYB_DOCUMENT_UPLOADED",
             "TAG_ADDED",
             "TAG_REMOVED",
+            "FEATURE_OVERRIDE_PENDING",
+            "FEATURE_OVERRIDE_APPLIED",
+            "FEATURE_OVERRIDE_CANCELLED",
         ]
         | str
         | None
     ) = None
-    """What kind of activity this entry records. `STATUS_UPDATED` rows come from manual decisions (`PATCH /v3/session/{session_id}/update-status/`) and from entries added via `POST …/reviews/` (which default to this type even when no status is recorded). `COMMENT` rows come from Console reviewers; Console detail-page views are also stored as `COMMENT` rows flagged with `metadata.system_event = "DETAIL_VIEWED"`. The remaining types track data edits, file changes, tags, and AML monitoring activity. STATUS_UPDATED rows are also written by system actors (e.g. AML ongoing monitoring with actor_type SYSTEM, and automatic feature-status updates), not only by the update-status endpoint and manual review posts."""
+    """What kind of activity this entry records. `STATUS_UPDATED` rows come from manual decisions (`PATCH /v3/session/{session_id}/update-status/`) and from entries added via `POST …/reviews/` (which default to this type even when no status is recorded). `COMMENT` rows come from Console reviewers; Console detail-page views are also stored as `COMMENT` rows flagged with `metadata.system_event = "DETAIL_VIEWED"`. The remaining types track data edits, file changes, tags, and AML monitoring activity. STATUS_UPDATED rows are also written by system actors (e.g. AML ongoing monitoring with actor_type SYSTEM, and automatic feature-status updates), not only by the update-status endpoint and manual review posts. `FEATURE_OVERRIDE_PENDING`, `FEATURE_OVERRIDE_APPLIED` and `FEATURE_OVERRIDE_CANCELLED` record an override of one check's status (`PATCH /v3/session/{session_id}/features/{node_id}/update-status/`): requested to wait for the flow to finish, applied, or cancelled. They carry the check's status in `previous_value` / `new_value` (`{"status": ...}`), leave `previous_status` and `new_status` `null`, and name the override in `metadata` (`feature_override_id`, `node_id`, `feature_model`, `forced`, `state`, `cancel_reason`). The entry for the request carries the reviewer's `comment`; an override applied when the flow finishes is recorded with `actor_type` `SYSTEM`."""
 
     actor_display: str | None = None
     """Human-readable author label, resolved in order: actor's full name → Console account identifier → local part of `actor_email` → `"API Client"` (for `API_KEY` actors) → `"System"` (for `SYSTEM` actors) → `"Unknown"`. Entries created via `POST …/reviews/` always display `"Unknown"` because that endpoint records no actor attribution."""

@@ -8,8 +8,10 @@ __all__ = ["TravelRuleWalletAddressesCreateParams"]
 
 class TravelRuleWalletAddressesCreateParams(TypedDict, total=False):
     address: Required[str]
+    """The wallet address. An XRP X-address is stored as its classic address and its tag, so it matches transfers that name either form."""
 
     chain: str
+    """Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain."""
 
     holder_vendor_data: str
 
@@ -18,7 +20,10 @@ class TravelRuleWalletAddressesCreateParams(TypedDict, total=False):
     entity_type: str
 
     self_declared: bool
-    """Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof."""
+    """Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof. Returns 400 when `allow_self_declaration` is off in your Travel Rule settings."""
 
     travel_address: str
-    """Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing."""
+    """Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing for the assets TRP carries (BTC, ETH, and USDC on a named network). An invalid travel address returns 400."""
+
+    memo: str
+    """Optional. The destination tag or memo that is part of the wallet. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`."""

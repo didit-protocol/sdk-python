@@ -21,8 +21,8 @@ from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.cases.regulatory_reports.create_params import (
     CasesRegulatoryReportsCreateParamsNarrative,
 )
-from didit.types.cases.regulatory_reports.list_response import CasesRegulatoryReportsListResponse
 from didit.types.components.regulatory_report_detail import RegulatoryReportDetail
+from didit.types.components.regulatory_report_list import RegulatoryReportList
 
 __all__ = [
     "CasesRegulatoryReports",
@@ -81,7 +81,7 @@ class CasesRegulatoryReports(SyncAPIResource):
             self._client.request_page(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/regulatory-reports/",
-                cast_to=CasesRegulatoryReportsListResponse,
+                cast_to=RegulatoryReportList,
                 item_type=RegulatoryReportDetail,
                 path_params={"case_uuid": case_uuid},
                 scope="application",
@@ -241,7 +241,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
             self._client.request_page(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/regulatory-reports/",
-                cast_to=CasesRegulatoryReportsListResponse,
+                cast_to=RegulatoryReportList,
                 item_type=RegulatoryReportDetail,
                 path_params={"case_uuid": case_uuid},
                 scope="application",

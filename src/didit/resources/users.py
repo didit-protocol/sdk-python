@@ -18,24 +18,16 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.aml_monitoring_job import AMLMonitoringJob
+from didit.types.components.aml_monitoring_toggle_result import AMLMonitoringToggleResult
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
+from didit.types.components.ongoing_monitoring_job import OngoingMonitoringJob
+from didit.types.components.ongoing_monitoring_toggle_result import OngoingMonitoringToggleResult
 from didit.types.components.user_detail_item import UserDetailItem
 from didit.types.components.user_list_item import UserListItem
 from didit.types.users.batch_delete_response import UsersBatchDeleteResponse
-from didit.types.users.list_networks_response import UsersListNetworksResponse
+from didit.types.users.create_response import UsersCreateResponse
 from didit.types.users.list_response import UsersListResponse
-from didit.types.users.retrieve_ongoing_monitoring_job_response import (
-    UsersRetrieveOngoingMonitoringJobResponse,
-)
-from didit.types.users.set_aml_monitoring_response import (
-    UsersSetAmlMonitoringResponse202,
-    UsersSetAmlMonitoringResponseVariant1,
-    UsersSetAmlMonitoringResponseVariant2,
-)
-from didit.types.users.set_ongoing_monitoring_response import (
-    UsersSetOngoingMonitoringResponse202,
-    UsersSetOngoingMonitoringResponseVariant1,
-    UsersSetOngoingMonitoringResponseVariant2,
-)
 from didit.types.users.upload_face_response import UsersUploadFaceResponse
 
 __all__ = [
@@ -153,6 +145,7 @@ class Users(SyncAPIResource):
         approved_emails: Sequence[str] | NotGiven = NOT_GIVEN,
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -160,7 +153,7 @@ class Users(SyncAPIResource):
     ) -> UserDetailItem:
         """Update user.
 
-        Partial update of a user: `display_name`, `full_name`, `date_of_birth`, `status`, `metadata`, `approved_emails`/`approved_phones`/`issuing_states`. `metadata` fully replaces. **Note:** unlike [Update User Status](#patch-/v3/users/-vendor_data-/update-status/), changing `status` here does NOT record a status-change activity and does NOT sync the system blocklist - use the dedicated update-status endpoint for `BLOCKED`/unblock flows.
+        Partial update of a user: `display_name`, `full_name`, `date_of_birth`, `status`, `metadata`, `approved_emails`/`approved_phones`/`issuing_states`. `metadata` fully replaces. Changing `status` here works like [Update User Status](#patch-/v3/users/-vendor_data-/update-status/): it records a `STATUS_CHANGED` activity with the optional `reason`, and `BLOCKED` adds the `vendor_data` to the system blocklist (moving away from `BLOCKED` removes that entry). Changes to `display_name`, `full_name`, `date_of_birth` or `metadata` are recorded as a `PROFILE_UPDATED` activity.
 
         ``PATCH /v3/users/{vendor_data}/``
 
@@ -169,11 +162,12 @@ class Users(SyncAPIResource):
           full_name: Full name of the user
           display_name: Custom display name for this user
           date_of_birth: Date of birth in YYYY-MM-DD format
-          status: User lifecycle status. Changing it via this generic PATCH does NOT sync the system blocklist or record a status-change activity; prefer the update-status endpoint.
+          status: User lifecycle status. A change is recorded as a `STATUS_CHANGED` activity, and `BLOCKED` adds the `vendor_data` to the system blocklist (moving away from `BLOCKED` removes that entry).
           metadata: Arbitrary JSON object you attach to the user. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           approved_emails: Verified email addresses for this user, e.g. `["john@example.com"]`. Fully replaces the stored list.
           approved_phones: Verified phone numbers for this user. Fully replaces the stored list.
           issuing_states: Issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`. Fully replaces the stored list.
+          reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -196,6 +190,7 @@ class Users(SyncAPIResource):
                     "approved_emails": approved_emails,
                     "approved_phones": approved_phones,
                     "issuing_states": issuing_states,
+                    "reason": reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -271,7 +266,7 @@ class Users(SyncAPIResource):
     ) -> UsersBatchDeleteResponse:
         """Batch delete users.
 
-        **Permanently delete** users - the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. The Console's `filter_*` batch params are rejected with a `400` rather than ignored, so a narrowed intent can never turn into a full wipe.
+        **Permanently delete** users: the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. This endpoint never narrows `delete_all` with filters. The Console's People filters are refused with a `400` (see the `400` response), so a narrowed intent does not turn into a full wipe. Two exceptions: `filter_has_approved_sessions` and `filter_has_declined_sessions` are not refused and not applied, so with `delete_all: true` they still delete every user; do not send them.
 
         **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
 
@@ -316,11 +311,7 @@ class Users(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        UsersSetAmlMonitoringResponseVariant1
-        | UsersSetAmlMonitoringResponseVariant2
-        | UsersSetAmlMonitoringResponse202
-    ):
+    ) -> AMLMonitoringToggleResult | AMLMonitoringJob:
         """Enable or disable AML ongoing monitoring for users.
 
         Turns AML ongoing monitoring on or off for the selected users, with the same semantics as the Business Console. Exactly one monitored AML screening is kept per user, so a profile that verified several times is monitored and billed once; disabling turns monitoring off across all of the profile's screenings. Users without any AML screening are screened first (billed as a regular AML screening) when they have the full name, date of birth and country needed; otherwise they are reported as `skipped_no_identity_data`.
@@ -340,15 +331,11 @@ class Users(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersSetAmlMonitoringResponseVariant1 | UsersSetAmlMonitoringResponseVariant2 | UsersSetAmlMonitoringResponse202",
+            "AMLMonitoringToggleResult | AMLMonitoringJob",
             self._client.request(
                 "post",
                 "/v3/users/aml-monitoring/",
-                cast_to={
-                    200: UsersSetAmlMonitoringResponseVariant1
-                    | UsersSetAmlMonitoringResponseVariant2,
-                    202: UsersSetAmlMonitoringResponse202,
-                },
+                cast_to={200: AMLMonitoringToggleResult, 202: AMLMonitoringJob},
                 auth="api_key",
                 body={
                     "is_enabled": is_enabled,
@@ -368,6 +355,7 @@ class Users(SyncAPIResource):
         vendor_data: str,
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -375,13 +363,14 @@ class Users(SyncAPIResource):
     ) -> UserDetailItem:
         """Update user status.
 
-        Flip only the lifecycle `status` of a user - `ACTIVE`/`FLAGGED`/`BLOCKED` (NOT session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded as a `STATUS_CHANGED` activity on the user.
+        Flip only the lifecycle `status` of a user: `ACTIVE`, `FLAGGED` or `BLOCKED` (not session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded as a `STATUS_CHANGED` activity on the user, with the optional `reason` as its `comment`. Sending the current status changes nothing and records no `reason`. The `user.status.updated` webhook does not carry `reason`.
 
         ``PATCH /v3/users/{vendor_data}/update-status/``
 
         Args:
           vendor_data: Your unique identifier for the user.
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
+          reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -395,7 +384,7 @@ class Users(SyncAPIResource):
                 cast_to=UserDetailItem,
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
-                body={"status": status},
+                body={"status": status, "reason": reason},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -415,19 +404,33 @@ class Users(SyncAPIResource):
         approved_emails: Sequence[str] | NotGiven = NOT_GIVEN,
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        country: str | NotGiven = NOT_GIVEN,
+        send_verification_link: bool | NotGiven = NOT_GIVEN,
+        workflow_id: str | NotGiven = NOT_GIVEN,
+        language: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UserDetailItem:
+    ) -> UsersCreateResponse:
         """Create user.
 
-        Pre-create a [user](/entities/users) by `vendor_data` *without* a verification session. `vendor_data` must be unique among non-deleted users for the application (exact match; conflicts return 400). Not idempotent.
+        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent.
+
+        **Contact details:** `email` and `phone_number` are stored in `metadata.contact`, and `country` in `metadata.address`. When you send `first_name` or `last_name` without `full_name`, Didit joins them into `full_name`.
+
+        **Verification link:** with `send_verification_link: true`, Didit also creates a verification session for the person on `workflow_id` and emails them the link at `email`. The session runs the same checks as [Create Session](/sessions-api/create-session), such as the blocklist and your credit balance. The person and the session are created together or not at all: if any check fails, nothing is written and no email is sent. The response's `verification_link` describes the session, and is `null` when you don't ask for a link.
+
+        **API key access:** a scoped API key needs `users` write. With `send_verification_link: true` it also needs `sessions` write, or the call answers `403` before anything is written. Full-access keys are unaffected. See [API keys](/console/api-keys).
 
         ``POST /v3/users/create/``
 
         Args:
-          vendor_data: Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among non-deleted users for the application; matched exactly as sent.
+          vendor_data: Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among the application's users; matched exactly as sent.
           full_name: Full legal name of the user.
           display_name: Friendly display name shown in the console (takes precedence over `full_name` for UI display).
           date_of_birth: Date of birth in `YYYY-MM-DD` format.
@@ -436,17 +439,25 @@ class Users(SyncAPIResource):
           approved_emails: Pre-trusted email addresses for this user, e.g. `["john@example.com"]`.
           approved_phones: Pre-trusted phone numbers for this user, e.g. `["+14155551234"]`.
           issuing_states: Pre-recorded issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`.
+          first_name: Given name. When `full_name` is not sent, Didit joins `first_name` and `last_name` with a space into `full_name`. Not returned as a separate field.
+          last_name: Family name. Joined with `first_name` into `full_name` when `full_name` is not sent. Not returned as a separate field.
+          email: Contact email, stored in `metadata.contact.email` (it replaces an `email` you send inside `metadata.contact`). Required when `send_verification_link` is `true`: the link is sent to this address. If `metadata.contact` is not a JSON object, the call answers `400` on this field.
+          phone_number: Contact phone number, stored in `metadata.contact.phone_number`. If `metadata.contact` is not a JSON object, the call answers `400` on this field.
+          country: Country as an ISO 3166 code, alpha-2 or alpha-3 (`ES` or `ESP`). Stored uppercased in `metadata.address.country`. If `metadata.address` is not a JSON object, the call answers `400` on this field.
+          send_verification_link: When `true`, Didit creates a verification session for the person on `workflow_id` and emails them the link at `email`. Requires `email` and `workflow_id`. A scoped API key also needs `sessions` write.
+          workflow_id: The workflow of the verification session. Required when `send_verification_link` is `true`. It must verify a person: a Business Verification (KYB) workflow is refused. Ignored otherwise.
+          language: Language of the verification email, as a [supported language](/integration/supported-languages) code. English when omitted. Ignored when `send_verification_link` is not `true`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UserDetailItem",
+            "UsersCreateResponse",
             self._client.request(
                 "post",
                 "/v3/users/create/",
-                cast_to=UserDetailItem,
+                cast_to=UsersCreateResponse,
                 auth="api_key",
                 body={
                     "vendor_data": vendor_data,
@@ -458,6 +469,14 @@ class Users(SyncAPIResource):
                     "approved_emails": approved_emails,
                     "approved_phones": approved_phones,
                     "issuing_states": issuing_states,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "email": email,
+                    "phone_number": phone_number,
+                    "country": country,
+                    "send_verification_link": send_verification_link,
+                    "workflow_id": workflow_id,
+                    "language": language,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -525,11 +544,7 @@ class Users(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        UsersSetOngoingMonitoringResponseVariant1
-        | UsersSetOngoingMonitoringResponseVariant2
-        | UsersSetOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for users.
 
         Enables or disables AML ongoing monitoring at the user level. Exactly one monitored AML screening is kept per user; users without any AML screening (for example imported users) get one created and screened first, billed as a regular AML screening. Set estimate_only to preview counts and costs without writing. Batches of 20 or fewer resolve inline (200, COMPLETED); larger batches return 202 and run asynchronously.
@@ -552,15 +567,11 @@ class Users(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersSetOngoingMonitoringResponseVariant1 | UsersSetOngoingMonitoringResponseVariant2 | UsersSetOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-users/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: UsersSetOngoingMonitoringResponseVariant1
-                    | UsersSetOngoingMonitoringResponseVariant2,
-                    202: UsersSetOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -589,7 +600,7 @@ class Users(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UsersRetrieveOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -604,11 +615,11 @@ class Users(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersRetrieveOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-users/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=UsersRetrieveOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -627,7 +638,7 @@ class Users(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UsersListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a user.
 
         List the networks a vendor user belongs to.
@@ -642,11 +653,11 @@ class Users(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersListNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/users/{vendor_user_uuid}/networks/",
-                cast_to=UsersListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"vendor_user_uuid": vendor_user_uuid},
                 scope="application",
                 auth="api_key",
@@ -763,6 +774,7 @@ class AsyncUsers(AsyncAPIResource):
         approved_emails: Sequence[str] | NotGiven = NOT_GIVEN,
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -770,7 +782,7 @@ class AsyncUsers(AsyncAPIResource):
     ) -> UserDetailItem:
         """Update user.
 
-        Partial update of a user: `display_name`, `full_name`, `date_of_birth`, `status`, `metadata`, `approved_emails`/`approved_phones`/`issuing_states`. `metadata` fully replaces. **Note:** unlike [Update User Status](#patch-/v3/users/-vendor_data-/update-status/), changing `status` here does NOT record a status-change activity and does NOT sync the system blocklist - use the dedicated update-status endpoint for `BLOCKED`/unblock flows.
+        Partial update of a user: `display_name`, `full_name`, `date_of_birth`, `status`, `metadata`, `approved_emails`/`approved_phones`/`issuing_states`. `metadata` fully replaces. Changing `status` here works like [Update User Status](#patch-/v3/users/-vendor_data-/update-status/): it records a `STATUS_CHANGED` activity with the optional `reason`, and `BLOCKED` adds the `vendor_data` to the system blocklist (moving away from `BLOCKED` removes that entry). Changes to `display_name`, `full_name`, `date_of_birth` or `metadata` are recorded as a `PROFILE_UPDATED` activity.
 
         ``PATCH /v3/users/{vendor_data}/``
 
@@ -779,11 +791,12 @@ class AsyncUsers(AsyncAPIResource):
           full_name: Full name of the user
           display_name: Custom display name for this user
           date_of_birth: Date of birth in YYYY-MM-DD format
-          status: User lifecycle status. Changing it via this generic PATCH does NOT sync the system blocklist or record a status-change activity; prefer the update-status endpoint.
+          status: User lifecycle status. A change is recorded as a `STATUS_CHANGED` activity, and `BLOCKED` adds the `vendor_data` to the system blocklist (moving away from `BLOCKED` removes that entry).
           metadata: Arbitrary JSON object you attach to the user. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           approved_emails: Verified email addresses for this user, e.g. `["john@example.com"]`. Fully replaces the stored list.
           approved_phones: Verified phone numbers for this user. Fully replaces the stored list.
           issuing_states: Issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`. Fully replaces the stored list.
+          reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -806,6 +819,7 @@ class AsyncUsers(AsyncAPIResource):
                     "approved_emails": approved_emails,
                     "approved_phones": approved_phones,
                     "issuing_states": issuing_states,
+                    "reason": reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -881,7 +895,7 @@ class AsyncUsers(AsyncAPIResource):
     ) -> UsersBatchDeleteResponse:
         """Batch delete users.
 
-        **Permanently delete** users - the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. The Console's `filter_*` batch params are rejected with a `400` rather than ignored, so a narrowed intent can never turn into a full wipe.
+        **Permanently delete** users: the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. This endpoint never narrows `delete_all` with filters. The Console's People filters are refused with a `400` (see the `400` response), so a narrowed intent does not turn into a full wipe. Two exceptions: `filter_has_approved_sessions` and `filter_has_declined_sessions` are not refused and not applied, so with `delete_all: true` they still delete every user; do not send them.
 
         **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
 
@@ -926,11 +940,7 @@ class AsyncUsers(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        UsersSetAmlMonitoringResponseVariant1
-        | UsersSetAmlMonitoringResponseVariant2
-        | UsersSetAmlMonitoringResponse202
-    ):
+    ) -> AMLMonitoringToggleResult | AMLMonitoringJob:
         """Enable or disable AML ongoing monitoring for users.
 
         Turns AML ongoing monitoring on or off for the selected users, with the same semantics as the Business Console. Exactly one monitored AML screening is kept per user, so a profile that verified several times is monitored and billed once; disabling turns monitoring off across all of the profile's screenings. Users without any AML screening are screened first (billed as a regular AML screening) when they have the full name, date of birth and country needed; otherwise they are reported as `skipped_no_identity_data`.
@@ -950,15 +960,11 @@ class AsyncUsers(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersSetAmlMonitoringResponseVariant1 | UsersSetAmlMonitoringResponseVariant2 | UsersSetAmlMonitoringResponse202",
+            "AMLMonitoringToggleResult | AMLMonitoringJob",
             await self._client.request(
                 "post",
                 "/v3/users/aml-monitoring/",
-                cast_to={
-                    200: UsersSetAmlMonitoringResponseVariant1
-                    | UsersSetAmlMonitoringResponseVariant2,
-                    202: UsersSetAmlMonitoringResponse202,
-                },
+                cast_to={200: AMLMonitoringToggleResult, 202: AMLMonitoringJob},
                 auth="api_key",
                 body={
                     "is_enabled": is_enabled,
@@ -978,6 +984,7 @@ class AsyncUsers(AsyncAPIResource):
         vendor_data: str,
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
+        reason: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -985,13 +992,14 @@ class AsyncUsers(AsyncAPIResource):
     ) -> UserDetailItem:
         """Update user status.
 
-        Flip only the lifecycle `status` of a user - `ACTIVE`/`FLAGGED`/`BLOCKED` (NOT session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded as a `STATUS_CHANGED` activity on the user.
+        Flip only the lifecycle `status` of a user: `ACTIVE`, `FLAGGED` or `BLOCKED` (not session statuses). `BLOCKED` adds the `vendor_data` to the system blocklist; moving away from `BLOCKED` removes that entry. Each change is recorded as a `STATUS_CHANGED` activity on the user, with the optional `reason` as its `comment`. Sending the current status changes nothing and records no `reason`. The `user.status.updated` webhook does not carry `reason`.
 
         ``PATCH /v3/users/{vendor_data}/update-status/``
 
         Args:
           vendor_data: Your unique identifier for the user.
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
+          reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1005,7 +1013,7 @@ class AsyncUsers(AsyncAPIResource):
                 cast_to=UserDetailItem,
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
-                body={"status": status},
+                body={"status": status, "reason": reason},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1025,19 +1033,33 @@ class AsyncUsers(AsyncAPIResource):
         approved_emails: Sequence[str] | NotGiven = NOT_GIVEN,
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        country: str | NotGiven = NOT_GIVEN,
+        send_verification_link: bool | NotGiven = NOT_GIVEN,
+        workflow_id: str | NotGiven = NOT_GIVEN,
+        language: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UserDetailItem:
+    ) -> UsersCreateResponse:
         """Create user.
 
-        Pre-create a [user](/entities/users) by `vendor_data` *without* a verification session. `vendor_data` must be unique among non-deleted users for the application (exact match; conflicts return 400). Not idempotent.
+        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent.
+
+        **Contact details:** `email` and `phone_number` are stored in `metadata.contact`, and `country` in `metadata.address`. When you send `first_name` or `last_name` without `full_name`, Didit joins them into `full_name`.
+
+        **Verification link:** with `send_verification_link: true`, Didit also creates a verification session for the person on `workflow_id` and emails them the link at `email`. The session runs the same checks as [Create Session](/sessions-api/create-session), such as the blocklist and your credit balance. The person and the session are created together or not at all: if any check fails, nothing is written and no email is sent. The response's `verification_link` describes the session, and is `null` when you don't ask for a link.
+
+        **API key access:** a scoped API key needs `users` write. With `send_verification_link: true` it also needs `sessions` write, or the call answers `403` before anything is written. Full-access keys are unaffected. See [API keys](/console/api-keys).
 
         ``POST /v3/users/create/``
 
         Args:
-          vendor_data: Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among non-deleted users for the application; matched exactly as sent.
+          vendor_data: Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among the application's users; matched exactly as sent.
           full_name: Full legal name of the user.
           display_name: Friendly display name shown in the console (takes precedence over `full_name` for UI display).
           date_of_birth: Date of birth in `YYYY-MM-DD` format.
@@ -1046,17 +1068,25 @@ class AsyncUsers(AsyncAPIResource):
           approved_emails: Pre-trusted email addresses for this user, e.g. `["john@example.com"]`.
           approved_phones: Pre-trusted phone numbers for this user, e.g. `["+14155551234"]`.
           issuing_states: Pre-recorded issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`.
+          first_name: Given name. When `full_name` is not sent, Didit joins `first_name` and `last_name` with a space into `full_name`. Not returned as a separate field.
+          last_name: Family name. Joined with `first_name` into `full_name` when `full_name` is not sent. Not returned as a separate field.
+          email: Contact email, stored in `metadata.contact.email` (it replaces an `email` you send inside `metadata.contact`). Required when `send_verification_link` is `true`: the link is sent to this address. If `metadata.contact` is not a JSON object, the call answers `400` on this field.
+          phone_number: Contact phone number, stored in `metadata.contact.phone_number`. If `metadata.contact` is not a JSON object, the call answers `400` on this field.
+          country: Country as an ISO 3166 code, alpha-2 or alpha-3 (`ES` or `ESP`). Stored uppercased in `metadata.address.country`. If `metadata.address` is not a JSON object, the call answers `400` on this field.
+          send_verification_link: When `true`, Didit creates a verification session for the person on `workflow_id` and emails them the link at `email`. Requires `email` and `workflow_id`. A scoped API key also needs `sessions` write.
+          workflow_id: The workflow of the verification session. Required when `send_verification_link` is `true`. It must verify a person: a Business Verification (KYB) workflow is refused. Ignored otherwise.
+          language: Language of the verification email, as a [supported language](/integration/supported-languages) code. English when omitted. Ignored when `send_verification_link` is not `true`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UserDetailItem",
+            "UsersCreateResponse",
             await self._client.request(
                 "post",
                 "/v3/users/create/",
-                cast_to=UserDetailItem,
+                cast_to=UsersCreateResponse,
                 auth="api_key",
                 body={
                     "vendor_data": vendor_data,
@@ -1068,6 +1098,14 @@ class AsyncUsers(AsyncAPIResource):
                     "approved_emails": approved_emails,
                     "approved_phones": approved_phones,
                     "issuing_states": issuing_states,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "email": email,
+                    "phone_number": phone_number,
+                    "country": country,
+                    "send_verification_link": send_verification_link,
+                    "workflow_id": workflow_id,
+                    "language": language,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1135,11 +1173,7 @@ class AsyncUsers(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> (
-        UsersSetOngoingMonitoringResponseVariant1
-        | UsersSetOngoingMonitoringResponseVariant2
-        | UsersSetOngoingMonitoringResponse202
-    ):
+    ) -> OngoingMonitoringToggleResult | OngoingMonitoringJob:
         """Toggle AML ongoing monitoring for users.
 
         Enables or disables AML ongoing monitoring at the user level. Exactly one monitored AML screening is kept per user; users without any AML screening (for example imported users) get one created and screened first, billed as a regular AML screening. Set estimate_only to preview counts and costs without writing. Batches of 20 or fewer resolve inline (200, COMPLETED); larger batches return 202 and run asynchronously.
@@ -1162,15 +1196,11 @@ class AsyncUsers(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersSetOngoingMonitoringResponseVariant1 | UsersSetOngoingMonitoringResponseVariant2 | UsersSetOngoingMonitoringResponse202",
+            "OngoingMonitoringToggleResult | OngoingMonitoringJob",
             await self._client.request(
                 "patch",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-users/toggle-ongoing-monitoring/",
-                cast_to={
-                    200: UsersSetOngoingMonitoringResponseVariant1
-                    | UsersSetOngoingMonitoringResponseVariant2,
-                    202: UsersSetOngoingMonitoringResponse202,
-                },
+                cast_to={200: OngoingMonitoringToggleResult, 202: OngoingMonitoringJob},
                 scope="application",
                 auth="api_key",
                 body={
@@ -1199,7 +1229,7 @@ class AsyncUsers(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UsersRetrieveOngoingMonitoringJobResponse:
+    ) -> OngoingMonitoringJob:
         """Get AML ongoing monitoring job.
 
         Progress and per-outcome counters of a monitoring toggle job. Poll every couple of seconds while status is PENDING or PROCESSING.
@@ -1214,11 +1244,11 @@ class AsyncUsers(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersRetrieveOngoingMonitoringJobResponse",
+            "OngoingMonitoringJob",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/vendor-users/toggle-ongoing-monitoring/{job_id}/",
-                cast_to=UsersRetrieveOngoingMonitoringJobResponse,
+                cast_to=OngoingMonitoringJob,
                 path_params={"job_id": job_id},
                 scope="application",
                 auth="api_key",
@@ -1237,7 +1267,7 @@ class AsyncUsers(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> UsersListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a user.
 
         List the networks a vendor user belongs to.
@@ -1252,11 +1282,11 @@ class AsyncUsers(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "UsersListNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/users/{vendor_user_uuid}/networks/",
-                cast_to=UsersListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"vendor_user_uuid": vendor_user_uuid},
                 scope="application",
                 auth="api_key",

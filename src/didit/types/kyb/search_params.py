@@ -18,8 +18,11 @@ class KybSearchParams(TypedDict, total=False):
     registration_number: str
     """Registry registration number to search for. Either `name` or `registration_number` is required."""
 
-    search_type: Literal["contains", "start_with", "fuzzy"] | str
-    """Name-matching strategy applied by the registry search."""
+    tier: Literal["basic", "shareholders", "ubo"] | str
+    """Registry tier whose provider chain this search runs on. `basic` (default) searches the country's Lite chain; `shareholders` and `ubo` search that tier's ownership chain, which can be a different source, so an empty Lite search does not prove the registry lacks the company. A country that does not offer the named tier is searched at the highest tier it offers up to that one. Retrieve the candidate from the endpoint that sells the tier you searched: `POST /v3/kyb/select/` (Lite), `POST /v3/kyb/shareholders/` or `POST /v3/kyb/ubo/`."""
+
+    search_type: Literal["contains"] | str
+    """Name-matching strategy applied by the registry search. `contains` is the only accepted value: no registry source behind the search offers a prefix or fuzzy mode, so `start_with` and `fuzzy` are rejected with `400` (`not a valid choice`)."""
 
     vendor_data: str
     """Your identifier for this lookup; echoed back and included in the webhook callback."""

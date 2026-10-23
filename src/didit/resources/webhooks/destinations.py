@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import builtins
+import datetime as _dt
 from functools import cached_property
 from typing import Literal, cast
 
 import httpx
 
+from didit._pagination import AsyncPaginator, SyncPage
 from didit._resource import AsyncAPIResource, SyncAPIResource
 from didit._response import (
     async_to_raw_response_wrapper,
@@ -17,9 +19,19 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.webhook_destination_delivery import WebhookDestinationDelivery
+from didit.types.components.webhook_destination_delivery_detail import (
+    WebhookDestinationDeliveryDetail,
+)
 from didit.types.components.webhook_subscribed_events import WebhookSubscribedEventsParam
 from didit.types.webhooks.destinations.create_response import WebhooksDestinationsCreateResponse
+from didit.types.webhooks.destinations.list_deliveries_response import (
+    WebhooksDestinationsListDeliveriesResponse,
+)
 from didit.types.webhooks.destinations.list_response import WebhooksDestinationsListResponseItem
+from didit.types.webhooks.destinations.retrieve_analytics_response import (
+    WebhooksDestinationsRetrieveAnalyticsResponse,
+)
 from didit.types.webhooks.destinations.retrieve_response import WebhooksDestinationsRetrieveResponse
 from didit.types.webhooks.destinations.update_response import WebhooksDestinationsUpdateResponse
 
@@ -36,7 +48,7 @@ __all__ = [
 class WebhooksDestinations(SyncAPIResource):
     """The ``webhooks.destinations`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``retrieve``, ``update``.
+    Methods: ``create``, ``delete``, ``list``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
     """
 
     @cached_property
@@ -59,7 +71,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
-        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list - fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
+        List all webhook destinations (unpaginated array, oldest first). Each item carries the destination's configuration, its delivery metrics for the last 30 days (`metrics_window_days`) with one `daily_points` entry per day, and its health (`health_status`, `failing_streak`, `failing_since`, `last_success_at`). The list has no `summary` object and never includes the signing secret: each item shows only `secret_last4`. Fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
 
         ``GET /v3/webhook/destinations/``
 
@@ -98,13 +110,13 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> WebhooksDestinationsCreateResponse:
         """Create webhook destination.
 
-        Create a webhook destination. The response includes the auto-generated `secret_shared_key` HMAC signing secret (also readable later via `GET /v3/webhook/destinations/{destination_uuid}/`). Always send `subscribed_events` with at least one event (no wildcards): an explicit empty list is rejected with 400, and omitting the field creates a destination subscribed to nothing, which never receives a webhook. The `(application, url)` pair must be unique among non-deleted destinations.
+        Create a webhook destination. The response includes the auto-generated `secret_shared_key` HMAC signing secret (also readable later via `GET /v3/webhook/destinations/{destination_uuid}/`). Always send `subscribed_events` with at least one event (no wildcards): an explicit empty list is rejected with 400, and omitting the field creates a destination subscribed to nothing, which never receives a webhook. The `(application, url)` pair must be unique among the application's destinations.
 
         ``POST /v3/webhook/destinations/``
 
         Args:
           label: Human-readable name displayed in Console → Webhooks. Helps distinguish destinations when you have several (e.g. "Prod", "Staging mirror").
-          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint - Didit retries failed deliveries on a backoff schedule.
+          url: HTTPS URL that will receive `POST` requests. Must be unique among the application's destinations. Use a stable, hardened endpoint: Didit retries failed deliveries on a backoff schedule.
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
@@ -145,7 +157,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> WebhooksDestinationsRetrieveResponse:
         """Get webhook destination.
 
-        Retrieve one webhook destination with its `secret_shared_key` signing secret and delivery health summary. API-key callers always receive the secret in full; Console users without `read:webhooks` see an empty string.
+        Retrieve one webhook destination with its `secret_shared_key` signing secret, its health (`health_status`, `failing_streak`, `failing_since`, `last_success_at`) and a delivery `summary` for the last 30 days. API-key callers always receive the secret in full; Console users without `read:webhooks` see an empty string.
 
         ``GET /v3/webhook/destinations/{destination_uuid}/``
 
@@ -182,7 +194,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> None:
         """Delete webhook destination.
 
-        Delete a webhook destination. Future events stop being pushed to its URL. Past delivery records are not affected and stay queryable from the Business Console, so deleting a destination is not a way to remove your delivery history. Calling again returns 404.
+        Permanently delete a webhook destination, its signing secret and its entire delivery log. This cannot be undone. No new webhook is sent to the destination's URL; other destinations subscribed to the same events keep receiving them. Afterwards the destination no longer appears in `GET /v3/webhook/destinations/`, and every route under `/v3/webhook/destinations/{destination_uuid}/`, including its deliveries, a delivery's detail and its resend, answers 404. The application's legacy `webhook_url` is set to the URL of the oldest remaining enabled destination, or cleared when no enabled destination is left. Calling DELETE again returns 404.
 
         ``DELETE /v3/webhook/destinations/{destination_uuid}/``
 
@@ -224,7 +236,7 @@ class WebhooksDestinations(SyncAPIResource):
     ) -> WebhooksDestinationsUpdateResponse:
         """Update webhook destination.
 
-        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** - fetch first, append, resend. Secret is not rotated.
+        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged**: fetch first, append, resend. Secret is not rotated. A `uuid` in the body is ignored: the path names the destination.
 
         ``PATCH /v3/webhook/destinations/{destination_uuid}/``
 
@@ -262,11 +274,183 @@ class WebhooksDestinations(SyncAPIResource):
             ),
         )
 
+    def retrieve_analytics(
+        self,
+        destination_uuid: str,
+        *,
+        date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhooksDestinationsRetrieveAnalyticsResponse:
+        """Get webhook destination analytics.
+
+        Delivery totals, failure rate and response times for one webhook destination, over the whole range (`summary`) and per UTC day (`points`). Every attempt counts as a delivery: the first send of an event, each automatic [retry](https://docs.didit.me/integration/webhooks#retry-policy) and each resend. A delivery is failed when its recorded HTTP status is 400 or above, so timeouts (recorded as `504`) and connection failures (`503`) count as failed; a delivery still queued counts in `total_deliveries` only. Delivery records are available for about 30 days. A scoped API key needs `webhooks: read`.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/analytics/``
+
+        Args:
+          destination_uuid: UUID of the destination (the `uuid` returned by `GET /v3/webhook/destinations/`).
+          date_from: First UTC day to include, as `YYYY-MM-DD` (inclusive). Omit to start from the oldest delivery available. `dateFrom` is accepted as an alias.
+          date_to: Last UTC day to include, as `YYYY-MM-DD` (inclusive). Must not be earlier than `date_from`. `dateTo` is accepted as an alias.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhooksDestinationsRetrieveAnalyticsResponse",
+            self._client.request(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/analytics/",
+                cast_to=WebhooksDestinationsRetrieveAnalyticsResponse,
+                path_params={"destination_uuid": destination_uuid},
+                auth="api_key",
+                query={"date_from": date_from, "date_to": date_to},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_deliveries(
+        self,
+        destination_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[WebhookDestinationDelivery]:
+        """List webhook destination deliveries.
+
+        Page through every delivery attempt to one webhook destination, newest first. The first send of each event, each automatic [retry](https://docs.didit.me/integration/webhooks#retry-policy) and each resend are separate entries. Entries carry the HTTP status and response time but not the payload: fetch one delivery to read its headers and body. `count` is exact up to 100 and reads 100 above that, so follow `next` until it is `null`. Delivery records are available for about 30 days. A scoped API key needs `webhooks: read` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/deliveries/``
+
+        Args:
+          destination_uuid: UUID of the destination (the `uuid` returned by `GET /v3/webhook/destinations/`).
+          limit: Maximum number of deliveries per page. Defaults to 50. A value that is not a positive integer falls back to 50; a value above 1000000 returns `400`.
+          offset: Number of deliveries to skip. Defaults to 0. Prefer following the `next` and `previous` URLs from the response.
+          date_from: First UTC day to include, as `YYYY-MM-DD` (inclusive). Omit to start from the oldest delivery available. `dateFrom` is accepted as an alias.
+          date_to: Last UTC day to include, as `YYYY-MM-DD` (inclusive). Must not be earlier than `date_from`. `dateTo` is accepted as an alias.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[WebhookDestinationDelivery]",
+            self._client.request_page(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/",
+                cast_to=WebhooksDestinationsListDeliveriesResponse,
+                item_type=WebhookDestinationDelivery,
+                path_params={"destination_uuid": destination_uuid},
+                auth="api_key",
+                query={
+                    "limit": limit,
+                    "offset": offset,
+                    "date_from": date_from,
+                    "date_to": date_to,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retrieve_delivery(
+        self,
+        destination_uuid: str,
+        delivery_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookDestinationDeliveryDetail:
+        """Get webhook destination delivery.
+
+        Retrieve one delivery attempt to a webhook destination with the exact request headers and JSON body Didit sent, the HTTP status your endpoint returned and the response time. `request_header` and `request_body` are JSON text: parse them to read the signature headers and the payload, for example to check your [signature verification](https://docs.didit.me/integration/webhooks#signature-verification) against the destination's `secret_shared_key`. A delivery never contains the signing secret, and Didit does not record your endpoint's response body. A scoped API key needs `webhooks: read` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/``
+
+        Args:
+          destination_uuid: UUID of the destination the delivery was sent to.
+          delivery_uuid: UUID of the delivery: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookDestinationDeliveryDetail",
+            self._client.request(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/",
+                cast_to=WebhookDestinationDeliveryDetail,
+                path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def resend_delivery(
+        self,
+        destination_uuid: str,
+        delivery_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookDestinationDeliveryDetail:
+        """Resend webhook destination delivery.
+
+        Send a past delivery again, for example after your endpoint was down. Didit takes the stored payload, sets a fresh `timestamp`, signs it again with the destination's current `secret_shared_key` (`X-Signature`, `X-Signature-V2`, `X-Signature-Simple` and `X-Timestamp`) and posts it to the delivery's `request_url`, even if the destination's URL has changed since or the destination is disabled. `event_id` and the rest of the payload are unchanged, so deduplicate on `event_id`. The call waits up to 5 seconds for your endpoint and returns the new delivery with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, every call sends again and creates a new delivery, and the request has no body. A scoped API key needs `webhooks: write` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``POST /v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/resend/``
+
+        Args:
+          destination_uuid: UUID of the destination the delivery was sent to.
+          delivery_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookDestinationDeliveryDetail",
+            self._client.request(
+                "post",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/resend/",
+                cast_to=WebhookDestinationDeliveryDetail,
+                path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncWebhooksDestinations(AsyncAPIResource):
     """The ``webhooks.destinations`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``retrieve``, ``update``.
+    Methods: ``create``, ``delete``, ``list``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
     """
 
     @cached_property
@@ -289,7 +473,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> builtins.list[WebhooksDestinationsListResponseItem]:
         """List webhook destinations.
 
-        List all webhook destinations (unpaginated array, oldest first). Each row includes URL, subscribed events, and delivery health metrics. The signing secret is NOT included in the list - fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
+        List all webhook destinations (unpaginated array, oldest first). Each item carries the destination's configuration, its delivery metrics for the last 30 days (`metrics_window_days`) with one `daily_points` entry per day, and its health (`health_status`, `failing_streak`, `failing_since`, `last_success_at`). The list has no `summary` object and never includes the signing secret: each item shows only `secret_last4`. Fetch a single destination (`GET /v3/webhook/destinations/{destination_uuid}/`) to read `secret_shared_key`.
 
         ``GET /v3/webhook/destinations/``
 
@@ -328,13 +512,13 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> WebhooksDestinationsCreateResponse:
         """Create webhook destination.
 
-        Create a webhook destination. The response includes the auto-generated `secret_shared_key` HMAC signing secret (also readable later via `GET /v3/webhook/destinations/{destination_uuid}/`). Always send `subscribed_events` with at least one event (no wildcards): an explicit empty list is rejected with 400, and omitting the field creates a destination subscribed to nothing, which never receives a webhook. The `(application, url)` pair must be unique among non-deleted destinations.
+        Create a webhook destination. The response includes the auto-generated `secret_shared_key` HMAC signing secret (also readable later via `GET /v3/webhook/destinations/{destination_uuid}/`). Always send `subscribed_events` with at least one event (no wildcards): an explicit empty list is rejected with 400, and omitting the field creates a destination subscribed to nothing, which never receives a webhook. The `(application, url)` pair must be unique among the application's destinations.
 
         ``POST /v3/webhook/destinations/``
 
         Args:
           label: Human-readable name displayed in Console → Webhooks. Helps distinguish destinations when you have several (e.g. "Prod", "Staging mirror").
-          url: HTTPS URL that will receive `POST` requests. Must be unique per application among non-deleted destinations. Use a stable, hardened endpoint - Didit retries failed deliveries on a backoff schedule.
+          url: HTTPS URL that will receive `POST` requests. Must be unique among the application's destinations. Use a stable, hardened endpoint: Didit retries failed deliveries on a backoff schedule.
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
@@ -375,7 +559,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> WebhooksDestinationsRetrieveResponse:
         """Get webhook destination.
 
-        Retrieve one webhook destination with its `secret_shared_key` signing secret and delivery health summary. API-key callers always receive the secret in full; Console users without `read:webhooks` see an empty string.
+        Retrieve one webhook destination with its `secret_shared_key` signing secret, its health (`health_status`, `failing_streak`, `failing_since`, `last_success_at`) and a delivery `summary` for the last 30 days. API-key callers always receive the secret in full; Console users without `read:webhooks` see an empty string.
 
         ``GET /v3/webhook/destinations/{destination_uuid}/``
 
@@ -412,7 +596,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> None:
         """Delete webhook destination.
 
-        Delete a webhook destination. Future events stop being pushed to its URL. Past delivery records are not affected and stay queryable from the Business Console, so deleting a destination is not a way to remove your delivery history. Calling again returns 404.
+        Permanently delete a webhook destination, its signing secret and its entire delivery log. This cannot be undone. No new webhook is sent to the destination's URL; other destinations subscribed to the same events keep receiving them. Afterwards the destination no longer appears in `GET /v3/webhook/destinations/`, and every route under `/v3/webhook/destinations/{destination_uuid}/`, including its deliveries, a delivery's detail and its resend, answers 404. The application's legacy `webhook_url` is set to the URL of the oldest remaining enabled destination, or cleared when no enabled destination is left. Calling DELETE again returns 404.
 
         ``DELETE /v3/webhook/destinations/{destination_uuid}/``
 
@@ -454,7 +638,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
     ) -> WebhooksDestinationsUpdateResponse:
         """Update webhook destination.
 
-        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged** - fetch first, append, resend. Secret is not rotated.
+        Update a webhook destination. **`subscribed_events` is REPLACED wholesale, not merged**: fetch first, append, resend. Secret is not rotated. A `uuid` in the body is ignored: the path names the destination.
 
         ``PATCH /v3/webhook/destinations/{destination_uuid}/``
 
@@ -492,6 +676,178 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
             ),
         )
 
+    async def retrieve_analytics(
+        self,
+        destination_uuid: str,
+        *,
+        date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhooksDestinationsRetrieveAnalyticsResponse:
+        """Get webhook destination analytics.
+
+        Delivery totals, failure rate and response times for one webhook destination, over the whole range (`summary`) and per UTC day (`points`). Every attempt counts as a delivery: the first send of an event, each automatic [retry](https://docs.didit.me/integration/webhooks#retry-policy) and each resend. A delivery is failed when its recorded HTTP status is 400 or above, so timeouts (recorded as `504`) and connection failures (`503`) count as failed; a delivery still queued counts in `total_deliveries` only. Delivery records are available for about 30 days. A scoped API key needs `webhooks: read`.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/analytics/``
+
+        Args:
+          destination_uuid: UUID of the destination (the `uuid` returned by `GET /v3/webhook/destinations/`).
+          date_from: First UTC day to include, as `YYYY-MM-DD` (inclusive). Omit to start from the oldest delivery available. `dateFrom` is accepted as an alias.
+          date_to: Last UTC day to include, as `YYYY-MM-DD` (inclusive). Must not be earlier than `date_from`. `dateTo` is accepted as an alias.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhooksDestinationsRetrieveAnalyticsResponse",
+            await self._client.request(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/analytics/",
+                cast_to=WebhooksDestinationsRetrieveAnalyticsResponse,
+                path_params={"destination_uuid": destination_uuid},
+                auth="api_key",
+                query={"date_from": date_from, "date_to": date_to},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_deliveries(
+        self,
+        destination_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[WebhookDestinationDelivery]:
+        """List webhook destination deliveries.
+
+        Page through every delivery attempt to one webhook destination, newest first. The first send of each event, each automatic [retry](https://docs.didit.me/integration/webhooks#retry-policy) and each resend are separate entries. Entries carry the HTTP status and response time but not the payload: fetch one delivery to read its headers and body. `count` is exact up to 100 and reads 100 above that, so follow `next` until it is `null`. Delivery records are available for about 30 days. A scoped API key needs `webhooks: read` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/deliveries/``
+
+        Args:
+          destination_uuid: UUID of the destination (the `uuid` returned by `GET /v3/webhook/destinations/`).
+          limit: Maximum number of deliveries per page. Defaults to 50. A value that is not a positive integer falls back to 50; a value above 1000000 returns `400`.
+          offset: Number of deliveries to skip. Defaults to 0. Prefer following the `next` and `previous` URLs from the response.
+          date_from: First UTC day to include, as `YYYY-MM-DD` (inclusive). Omit to start from the oldest delivery available. `dateFrom` is accepted as an alias.
+          date_to: Last UTC day to include, as `YYYY-MM-DD` (inclusive). Must not be earlier than `date_from`. `dateTo` is accepted as an alias.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[WebhookDestinationDelivery]",
+            self._client.request_page(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/",
+                cast_to=WebhooksDestinationsListDeliveriesResponse,
+                item_type=WebhookDestinationDelivery,
+                path_params={"destination_uuid": destination_uuid},
+                auth="api_key",
+                query={
+                    "limit": limit,
+                    "offset": offset,
+                    "date_from": date_from,
+                    "date_to": date_to,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retrieve_delivery(
+        self,
+        destination_uuid: str,
+        delivery_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookDestinationDeliveryDetail:
+        """Get webhook destination delivery.
+
+        Retrieve one delivery attempt to a webhook destination with the exact request headers and JSON body Didit sent, the HTTP status your endpoint returned and the response time. `request_header` and `request_body` are JSON text: parse them to read the signature headers and the payload, for example to check your [signature verification](https://docs.didit.me/integration/webhooks#signature-verification) against the destination's `secret_shared_key`. A delivery never contains the signing secret, and Didit does not record your endpoint's response body. A scoped API key needs `webhooks: read` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``GET /v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/``
+
+        Args:
+          destination_uuid: UUID of the destination the delivery was sent to.
+          delivery_uuid: UUID of the delivery: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookDestinationDeliveryDetail",
+            await self._client.request(
+                "get",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/",
+                cast_to=WebhookDestinationDeliveryDetail,
+                path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def resend_delivery(
+        self,
+        destination_uuid: str,
+        delivery_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookDestinationDeliveryDetail:
+        """Resend webhook destination delivery.
+
+        Send a past delivery again, for example after your endpoint was down. Didit takes the stored payload, sets a fresh `timestamp`, signs it again with the destination's current `secret_shared_key` (`X-Signature`, `X-Signature-V2`, `X-Signature-Simple` and `X-Timestamp`) and posts it to the delivery's `request_url`, even if the destination's URL has changed since or the destination is disabled. `event_id` and the rest of the payload are unchanged, so deduplicate on `event_id`. The call waits up to 5 seconds for your endpoint and returns the new delivery with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, every call sends again and creates a new delivery, and the request has no body. A scoped API key needs `webhooks: write` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.
+
+        ``POST /v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/resend/``
+
+        Args:
+          destination_uuid: UUID of the destination the delivery was sent to.
+          delivery_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookDestinationDeliveryDetail",
+            await self._client.request(
+                "post",
+                "/v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/resend/",
+                cast_to=WebhookDestinationDeliveryDetail,
+                path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class WebhooksDestinationsWithRawResponse:
     def __init__(self, resource: WebhooksDestinations) -> None:
@@ -501,6 +857,10 @@ class WebhooksDestinationsWithRawResponse:
         self.retrieve = to_raw_response_wrapper(resource.retrieve)
         self.delete = to_raw_response_wrapper(resource.delete)
         self.update = to_raw_response_wrapper(resource.update)
+        self.retrieve_analytics = to_raw_response_wrapper(resource.retrieve_analytics)
+        self.list_deliveries = to_raw_response_wrapper(resource.list_deliveries)
+        self.retrieve_delivery = to_raw_response_wrapper(resource.retrieve_delivery)
+        self.resend_delivery = to_raw_response_wrapper(resource.resend_delivery)
 
 
 class AsyncWebhooksDestinationsWithRawResponse:
@@ -511,6 +871,10 @@ class AsyncWebhooksDestinationsWithRawResponse:
         self.retrieve = async_to_raw_response_wrapper(resource.retrieve)
         self.delete = async_to_raw_response_wrapper(resource.delete)
         self.update = async_to_raw_response_wrapper(resource.update)
+        self.retrieve_analytics = async_to_raw_response_wrapper(resource.retrieve_analytics)
+        self.list_deliveries = async_to_raw_response_wrapper(resource.list_deliveries)
+        self.retrieve_delivery = async_to_raw_response_wrapper(resource.retrieve_delivery)
+        self.resend_delivery = async_to_raw_response_wrapper(resource.resend_delivery)
 
 
 class WebhooksDestinationsWithStreamingResponse:
@@ -521,6 +885,10 @@ class WebhooksDestinationsWithStreamingResponse:
         self.retrieve = to_streamed_response_wrapper(resource.retrieve)
         self.delete = to_streamed_response_wrapper(resource.delete)
         self.update = to_streamed_response_wrapper(resource.update)
+        self.retrieve_analytics = to_streamed_response_wrapper(resource.retrieve_analytics)
+        self.list_deliveries = to_streamed_response_wrapper(resource.list_deliveries)
+        self.retrieve_delivery = to_streamed_response_wrapper(resource.retrieve_delivery)
+        self.resend_delivery = to_streamed_response_wrapper(resource.resend_delivery)
 
 
 class AsyncWebhooksDestinationsWithStreamingResponse:
@@ -531,3 +899,7 @@ class AsyncWebhooksDestinationsWithStreamingResponse:
         self.retrieve = async_to_streamed_response_wrapper(resource.retrieve)
         self.delete = async_to_streamed_response_wrapper(resource.delete)
         self.update = async_to_streamed_response_wrapper(resource.update)
+        self.retrieve_analytics = async_to_streamed_response_wrapper(resource.retrieve_analytics)
+        self.list_deliveries = async_to_streamed_response_wrapper(resource.list_deliveries)
+        self.retrieve_delivery = async_to_streamed_response_wrapper(resource.retrieve_delivery)
+        self.resend_delivery = async_to_streamed_response_wrapper(resource.resend_delivery)

@@ -13,8 +13,10 @@ if TYPE_CHECKING:
     from didit.resources.age_estimation import AgeEstimation, AsyncAgeEstimation
     from didit.resources.aml import Aml, AsyncAml
     from didit.resources.aml_monitoring import AmlMonitoring, AsyncAmlMonitoring
+    from didit.resources.analytics import Analytics, AsyncAnalytics
     from didit.resources.billing import AsyncBilling, Billing
     from didit.resources.biometric_templates import AsyncBiometricTemplates, BiometricTemplates
+    from didit.resources.blocklist import AsyncBlocklist, Blocklist
     from didit.resources.business_sessions import AsyncBusinessSessions, BusinessSessions
     from didit.resources.businesses import AsyncBusinesses, Businesses
     from didit.resources.cases import AsyncCases, Cases
@@ -27,8 +29,11 @@ if TYPE_CHECKING:
     from didit.resources.fraud_checks import AsyncFraudChecks, FraudChecks
     from didit.resources.id_verification import AsyncIdVerification, IdVerification
     from didit.resources.id_wallets import AsyncIdWallets, IdWallets
+    from didit.resources.investigator import AsyncInvestigator, Investigator
     from didit.resources.ip import AsyncIp, Ip
     from didit.resources.kyb import AsyncKyb, Kyb
+    from didit.resources.lists import AsyncLists, Lists
+    from didit.resources.monitoring_events import AsyncMonitoringEvents, MonitoringEvents
     from didit.resources.networks import AsyncNetworks, Networks
     from didit.resources.passive_liveness import AsyncPassiveLiveness, PassiveLiveness
     from didit.resources.phone import AsyncPhone, Phone
@@ -75,6 +80,12 @@ class SyncRootResources(SyncAPIClient):
         return AmlMonitoring(self)
 
     @cached_property
+    def analytics(self) -> Analytics:
+        from didit.resources.analytics import Analytics
+
+        return Analytics(self)
+
+    @cached_property
     def billing(self) -> Billing:
         from didit.resources.billing import Billing
 
@@ -85,6 +96,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.biometric_templates import BiometricTemplates
 
         return BiometricTemplates(self)
+
+    @cached_property
+    def blocklist(self) -> Blocklist:
+        from didit.resources.blocklist import Blocklist
+
+        return Blocklist(self)
 
     @cached_property
     def business_sessions(self) -> BusinessSessions:
@@ -159,6 +176,12 @@ class SyncRootResources(SyncAPIClient):
         return IdWallets(self)
 
     @cached_property
+    def investigator(self) -> Investigator:
+        from didit.resources.investigator import Investigator
+
+        return Investigator(self)
+
+    @cached_property
     def ip(self) -> Ip:
         from didit.resources.ip import Ip
 
@@ -169,6 +192,18 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.kyb import Kyb
 
         return Kyb(self)
+
+    @cached_property
+    def lists(self) -> Lists:
+        from didit.resources.lists import Lists
+
+        return Lists(self)
+
+    @cached_property
+    def monitoring_events(self) -> MonitoringEvents:
+        from didit.resources.monitoring_events import MonitoringEvents
+
+        return MonitoringEvents(self)
 
     @cached_property
     def networks(self) -> Networks:
@@ -283,6 +318,12 @@ class AsyncRootResources(AsyncAPIClient):
         return AsyncAmlMonitoring(self)
 
     @cached_property
+    def analytics(self) -> AsyncAnalytics:
+        from didit.resources.analytics import AsyncAnalytics
+
+        return AsyncAnalytics(self)
+
+    @cached_property
     def billing(self) -> AsyncBilling:
         from didit.resources.billing import AsyncBilling
 
@@ -293,6 +334,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.biometric_templates import AsyncBiometricTemplates
 
         return AsyncBiometricTemplates(self)
+
+    @cached_property
+    def blocklist(self) -> AsyncBlocklist:
+        from didit.resources.blocklist import AsyncBlocklist
+
+        return AsyncBlocklist(self)
 
     @cached_property
     def business_sessions(self) -> AsyncBusinessSessions:
@@ -367,6 +414,12 @@ class AsyncRootResources(AsyncAPIClient):
         return AsyncIdWallets(self)
 
     @cached_property
+    def investigator(self) -> AsyncInvestigator:
+        from didit.resources.investigator import AsyncInvestigator
+
+        return AsyncInvestigator(self)
+
+    @cached_property
     def ip(self) -> AsyncIp:
         from didit.resources.ip import AsyncIp
 
@@ -377,6 +430,18 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.kyb import AsyncKyb
 
         return AsyncKyb(self)
+
+    @cached_property
+    def lists(self) -> AsyncLists:
+        from didit.resources.lists import AsyncLists
+
+        return AsyncLists(self)
+
+    @cached_property
+    def monitoring_events(self) -> AsyncMonitoringEvents:
+        from didit.resources.monitoring_events import AsyncMonitoringEvents
+
+        return AsyncMonitoringEvents(self)
 
     @cached_property
     def networks(self) -> AsyncNetworks:

@@ -18,6 +18,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.cases.requests.remind_response import CasesRequestsRemindResponse
 from didit.types.components.customer_messaging_case_request import CustomerMessagingCaseRequest
 from didit.types.components.customer_messaging_case_request_options import (
     CustomerMessagingCaseRequestOptions,
@@ -44,7 +45,7 @@ __all__ = [
 class CasesRequests(SyncAPIResource):
     """The ``cases.requests`` resource of the Didit API.
 
-    Methods: ``cancel``, ``create``, ``list``, ``preview``, ``retrieve_attachment``, ``retrieve_options``.
+    Methods: ``cancel``, ``create``, ``list``, ``preview``, ``remind``, ``retrieve_attachment``, ``retrieve_options``.
     """
 
     @cached_property
@@ -305,11 +306,51 @@ class CasesRequests(SyncAPIResource):
             ),
         )
 
+    def remind(
+        self,
+        case_uuid: str,
+        request_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> CasesRequestsRemindResponse:
+        """Remind the customer of a request.
+
+        Send a waiting customer request's email again, to the same verified recipient, with the same content. You can remind a request at most once every 24 hours. A reminder changes nothing else: the request keeps its deadline and the case keeps its status. Each reminder is logged on the case as a CUSTOMER_REQUEST event with action `reminded`. The response's `delivery_status` is how this reminder's delivery ended: SENT, SIMULATED (the email was not sent), or UNKNOWN (the email might have been accepted; it is not sent again automatically). `next_reminder_at` is when you can remind this request again. Returns 409 with a `reason` when the customer no longer has the request to answer, and 429 with `retry_at` and a `Retry-After` header when the request was reminded in the last 24 hours. Requires `write:cases`.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/requests/{request_uuid}/remind/``
+
+        Args:
+          case_uuid: Case UUID.
+          request_uuid: Customer request UUID, from the case's request list.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "CasesRequestsRemindResponse",
+            self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/requests/{request_uuid}/remind/",
+                cast_to=CasesRequestsRemindResponse,
+                path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
+                scope="application",
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncCasesRequests(AsyncAPIResource):
     """The ``cases.requests`` resource of the Didit API.
 
-    Methods: ``cancel``, ``create``, ``list``, ``preview``, ``retrieve_attachment``, ``retrieve_options``.
+    Methods: ``cancel``, ``create``, ``list``, ``preview``, ``remind``, ``retrieve_attachment``, ``retrieve_options``.
     """
 
     @cached_property
@@ -570,6 +611,46 @@ class AsyncCasesRequests(AsyncAPIResource):
             ),
         )
 
+    async def remind(
+        self,
+        case_uuid: str,
+        request_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> CasesRequestsRemindResponse:
+        """Remind the customer of a request.
+
+        Send a waiting customer request's email again, to the same verified recipient, with the same content. You can remind a request at most once every 24 hours. A reminder changes nothing else: the request keeps its deadline and the case keeps its status. Each reminder is logged on the case as a CUSTOMER_REQUEST event with action `reminded`. The response's `delivery_status` is how this reminder's delivery ended: SENT, SIMULATED (the email was not sent), or UNKNOWN (the email might have been accepted; it is not sent again automatically). `next_reminder_at` is when you can remind this request again. Returns 409 with a `reason` when the customer no longer has the request to answer, and 429 with `retry_at` and a `Retry-After` header when the request was reminded in the last 24 hours. Requires `write:cases`.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/requests/{request_uuid}/remind/``
+
+        Args:
+          case_uuid: Case UUID.
+          request_uuid: Customer request UUID, from the case's request list.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "CasesRequestsRemindResponse",
+            await self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/requests/{request_uuid}/remind/",
+                cast_to=CasesRequestsRemindResponse,
+                path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
+                scope="application",
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class CasesRequestsWithRawResponse:
     def __init__(self, resource: CasesRequests) -> None:
@@ -580,6 +661,7 @@ class CasesRequestsWithRawResponse:
         self.retrieve_options = to_raw_response_wrapper(resource.retrieve_options)
         self.retrieve_attachment = to_raw_response_wrapper(resource.retrieve_attachment)
         self.preview = to_raw_response_wrapper(resource.preview)
+        self.remind = to_raw_response_wrapper(resource.remind)
 
 
 class AsyncCasesRequestsWithRawResponse:
@@ -591,6 +673,7 @@ class AsyncCasesRequestsWithRawResponse:
         self.retrieve_options = async_to_raw_response_wrapper(resource.retrieve_options)
         self.retrieve_attachment = async_to_raw_response_wrapper(resource.retrieve_attachment)
         self.preview = async_to_raw_response_wrapper(resource.preview)
+        self.remind = async_to_raw_response_wrapper(resource.remind)
 
 
 class CasesRequestsWithStreamingResponse:
@@ -602,6 +685,7 @@ class CasesRequestsWithStreamingResponse:
         self.retrieve_options = to_streamed_response_wrapper(resource.retrieve_options)
         self.retrieve_attachment = to_streamed_response_wrapper(resource.retrieve_attachment)
         self.preview = to_streamed_response_wrapper(resource.preview)
+        self.remind = to_streamed_response_wrapper(resource.remind)
 
 
 class AsyncCasesRequestsWithStreamingResponse:
@@ -613,3 +697,4 @@ class AsyncCasesRequestsWithStreamingResponse:
         self.retrieve_options = async_to_streamed_response_wrapper(resource.retrieve_options)
         self.retrieve_attachment = async_to_streamed_response_wrapper(resource.retrieve_attachment)
         self.preview = async_to_streamed_response_wrapper(resource.preview)
+        self.remind = async_to_streamed_response_wrapper(resource.remind)

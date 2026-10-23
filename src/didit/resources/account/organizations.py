@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-import builtins
 from functools import cached_property
 from typing import cast
 
 import httpx
 
+from didit._pagination import AsyncPaginator, SyncPage
 from didit._resource import AsyncAPIResource, SyncAPIResource
 from didit._response import (
     async_to_raw_response_wrapper,
@@ -18,6 +18,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.organization import Organization
+from didit.types.components.paginated_organization_list import PaginatedOrganizationList
 
 __all__ = [
     "AccountOrganizations",
@@ -48,11 +49,13 @@ class AccountOrganizations(SyncAPIResource):
     def list(
         self,
         *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> builtins.list[Organization]:
+    ) -> SyncPage[Organization]:
         """List My Organizations.
 
         List organizations the authenticated user belongs to. Each entry's `uuid` is the `org_id` used on the application endpoints.
@@ -60,19 +63,23 @@ class AccountOrganizations(SyncAPIResource):
         ``GET /organizations/me/``
 
         Args:
+          limit: Page size. Defaults to 50.
+          offset: Zero-based offset of the first result.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "builtins.list[Organization]",
-            self._client.request(
+            "SyncPage[Organization]",
+            self._client.request_page(
                 "get",
                 "/organizations/me/",
-                cast_to=builtins.list[Organization],
+                cast_to=PaginatedOrganizationList,
+                item_type=Organization,
                 auth="account_token",
                 api="account",
+                query={"limit": limit, "offset": offset},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -97,14 +104,16 @@ class AsyncAccountOrganizations(AsyncAPIResource):
         """Every method of this resource, returning the HTTP response before reading its body."""
         return AsyncAccountOrganizationsWithStreamingResponse(self)
 
-    async def list(
+    def list(
         self,
         *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> builtins.list[Organization]:
+    ) -> AsyncPaginator[Organization]:
         """List My Organizations.
 
         List organizations the authenticated user belongs to. Each entry's `uuid` is the `org_id` used on the application endpoints.
@@ -112,19 +121,23 @@ class AsyncAccountOrganizations(AsyncAPIResource):
         ``GET /organizations/me/``
 
         Args:
+          limit: Page size. Defaults to 50.
+          offset: Zero-based offset of the first result.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "builtins.list[Organization]",
-            await self._client.request(
+            "AsyncPaginator[Organization]",
+            self._client.request_page(
                 "get",
                 "/organizations/me/",
-                cast_to=builtins.list[Organization],
+                cast_to=PaginatedOrganizationList,
+                item_type=Organization,
                 auth="account_token",
                 api="account",
+                query={"limit": limit, "offset": offset},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

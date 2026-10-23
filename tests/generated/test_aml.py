@@ -3,8 +3,48 @@
 
 from __future__ import annotations
 
+from didit.types.aml.retrieve_dataset_freshness_response import AmlRetrieveDatasetFreshnessResponse
 from didit.types.aml.screen_response import AmlScreenResponse
 from tests.harness import Expect, check_operation
+
+
+def test_aml_retrieve_dataset_freshness() -> None:
+    """``GET /v3/aml/dataset-freshness/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/aml/dataset-freshness/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "dataset_freshness": {
+                    "captured_at": "2026-10-17T06:00:12.345678+00:00",
+                    "provider": "aml_data_source",
+                    "catalog_version": "20261017054500-abc",
+                    "sources": {
+                        "sanctions": {
+                            "last_updated_at": "2026-10-17T04:10:00+00:00",
+                            "oldest_updated_at": "2026-10-15T22:30:00+00:00",
+                            "dataset_count": 48,
+                            "dated_dataset_count": 48,
+                        },
+                        "pep": {
+                            "last_updated_at": "2026-10-16T23:05:00+00:00",
+                            "oldest_updated_at": None,
+                            "dataset_count": 12,
+                            "dated_dataset_count": 11,
+                        },
+                    },
+                },
+                "availability": "available",
+            },
+        ),
+        lambda c: c.aml.retrieve_dataset_freshness(),
+        lambda c: c.aml.retrieve_dataset_freshness(),
+        lambda r: isinstance(r, AmlRetrieveDatasetFreshnessResponse),
+        lambda r: isinstance(r, AmlRetrieveDatasetFreshnessResponse),
+    )
 
 
 def test_aml_screen() -> None:

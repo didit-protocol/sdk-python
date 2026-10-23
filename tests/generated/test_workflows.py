@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
+from didit.types.components.workflow_detail import WorkflowDetail
 from didit.types.components.workflow_list_item import WorkflowListItem
 from tests.harness import Expect, check_operation
 
@@ -87,8 +88,8 @@ def test_workflows_create() -> None:
             ],
             workflow_label="Standard KYC",
         ),
-        lambda r: isinstance(r, dict),
-        lambda r: isinstance(r, dict),
+        lambda r: isinstance(r, WorkflowDetail),
+        lambda r: isinstance(r, WorkflowDetail),
     )
 
 
@@ -250,8 +251,8 @@ def test_workflows_retrieve() -> None:
         ),
         lambda c: c.workflows.retrieve("00000000-0000-4000-8000-000000000001"),
         lambda c: c.workflows.retrieve("00000000-0000-4000-8000-000000000001"),
-        lambda r: True,
-        lambda r: True,
+        lambda r: isinstance(r, WorkflowDetail),
+        lambda r: isinstance(r, WorkflowDetail),
     )
 
 
@@ -265,8 +266,34 @@ def test_workflows_update() -> None:
             auth="api_key",
             json_body={"features": [{"feature": "OCR"}, {"feature": "AML"}]},
             status=200,
-            response_json={},
-            strict_type=dict[str, object],
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "workflow_id": "00000000-0000-4000-8000-000000000003",
+                "workflow_label": "sample",
+                "workflow_type": "kyc",
+                "is_default": True,
+                "is_archived": True,
+                "version": 1,
+                "status": "draft",
+                "published_at": "2026-01-01T00:00:00Z",
+                "is_simple_workflow": True,
+                "is_editable": True,
+                "workflow_url": "https://example.com/resource",
+                "workflow_graph": {},
+                "features": "sample",
+                "total_price": 1.5,
+                "min_price": 1.5,
+                "max_price": 1.5,
+                "special_add_on_prices": {},
+                "max_retry_attempts": 1,
+                "retry_window_days": 1,
+                "session_expiration_time": 1,
+                "questionnaire": {},
+                "kyb_role_settings": [{}],
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+            },
+            strict_type=WorkflowDetail,
         ),
         lambda c: c.workflows.update(
             "00000000-0000-4000-8000-000000000001",
@@ -276,6 +303,6 @@ def test_workflows_update() -> None:
             "00000000-0000-4000-8000-000000000001",
             features=[{"feature": "OCR"}, {"feature": "AML"}],
         ),
-        lambda r: isinstance(r, dict),
-        lambda r: isinstance(r, dict),
+        lambda r: isinstance(r, WorkflowDetail),
+        lambda r: isinstance(r, WorkflowDetail),
     )

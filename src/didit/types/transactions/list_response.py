@@ -5,6 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.transaction_travel_rule import TransactionTravelRule
 
 __all__ = [
     "TransactionsListResponse",
@@ -104,6 +105,12 @@ class TransactionsListResponseResults(BaseModel):
 
     assigned_to_name: str | None = None
     """Display name of the Console reviewer assigned to this transaction."""
+
+    travel_rule_status: str | None = None
+    """Status of the transaction's Travel Rule transfer (for example `COMPLETED`), or `null` when it has none."""
+
+    travel_rule: TransactionTravelRule | None = None
+    """The transaction's Travel Rule transfer, the same block as `travel_rule` on `GET /v3/transactions/{transaction_id}/`, or `null` when the transaction has none."""
 
 
 class TransactionsListResponse(BaseModel):

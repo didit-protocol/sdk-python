@@ -14,3 +14,40 @@ class SessionsUpdateFeatureStatusParams(TypedDict, total=False):
 
     comment: str
     """Optional free-text note recorded on the session's review trail for this feature change."""
+
+    feature_type: (
+        Literal[
+            "ID_VERIFICATION",
+            "OCR",
+            "OCR_BACK",
+            "NFC",
+            "LIVENESS",
+            "FACE",
+            "AGE_ESTIMATION",
+            "AGE_VERIFICATION",
+            "FACE_SEARCH",
+            "FACE_MATCH",
+            "IP_ANALYSIS",
+            "AML",
+            "PHONE",
+            "PHONE_VERIFICATION",
+            "EMAIL",
+            "EMAIL_VERIFICATION",
+            "POA",
+            "PROOF_OF_ADDRESS",
+            "DATABASE_VALIDATION",
+            "DATA_VALIDATION",
+            "QUESTIONNAIRE",
+            "DOCUMENT_AI",
+            "KYB_REGISTRY",
+            "KYB_DOCUMENTS",
+            "KYB_KEY_PEOPLE",
+            "BANK_VERIFICATION",
+            "GEOLOCATION",
+        ]
+        | str
+    )
+    """Which kind of step to target. Needed on non-graph workflows (`nodeId` = `default`), where every step shares no node; optional otherwise. An unknown value returns `400`."""
+
+    defer_until_flow_finishes: bool
+    """While the person is still in the flow, store the override as `pending_until_flow_finishes` and apply it when the flow finishes, instead of at once. Omitted or `false`, the override applies at once. On a session whose flow already ended it applies at once either way."""

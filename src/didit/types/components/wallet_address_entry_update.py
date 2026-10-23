@@ -7,7 +7,7 @@ __all__ = ["WalletAddressEntryUpdate"]
 
 
 class WalletAddressEntryUpdate(BaseModel):
-    """PATCH is a partial update; the response echoes only holder_name, holder_vendor_data, entity_type, and travel_address."""
+    """PATCH is a partial update; the response echoes only holder_name, holder_vendor_data, entity_type, travel_address, receiving_travel_address, label, and owner_type."""
 
     holder_name: str | None = None
 

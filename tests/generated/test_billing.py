@@ -43,7 +43,7 @@ def test_billing_top_up() -> None:
             status=200,
             response_json={
                 "checkout_session_id": "cs_test_a1B2c3D4e5F6g7H8i9J0",
-                "checkout_session_url": "https://checkout.stripe.com/c/pay/cs_test_a1B2c3D4e5F6g7H8i9J0",
+                "checkout_session_url": "https://checkout.example.com/c/pay/cs_test_a1B2c3D4e5F6g7H8i9J0",
             },
         ),
         lambda c: c.billing.top_up(amount_in_dollars=50),

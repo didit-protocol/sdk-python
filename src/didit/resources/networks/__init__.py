@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from functools import cached_property
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Literal, Sequence, cast
 
 import httpx
 
@@ -18,14 +18,15 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.components.network_detail import NetworkDetail
+from didit.types.components.network_detail_response import NetworkDetailResponse
 from didit.types.components.network_graph import NetworkGraph
 from didit.types.components.network_list_item import NetworkListItem
 from didit.types.components.network_map import NetworkMap
+from didit.types.components.network_timeline import NetworkTimeline
+from didit.types.components.network_timeline_page import NetworkTimelinePage
 from didit.types.networks.list_members_response import NetworksListMembersResponse
 from didit.types.networks.list_response import NetworksListResponse
 from didit.types.networks.list_signals_response import NetworksListSignalsResponse
-from didit.types.networks.retrieve_timeline_response import NetworksRetrieveTimelineResponse
 
 if TYPE_CHECKING:
     from didit.resources.networks.notes import (
@@ -50,7 +51,7 @@ __all__ = [
 class Networks(SyncAPIResource):
     """The ``networks`` resource of the Didit API.
 
-    Methods: ``download_report``, ``list``, ``list_members``, ``list_signals``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
+    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
 
     Nested resources: ``notes``.
     """
@@ -75,17 +76,23 @@ class Networks(SyncAPIResource):
         self,
         *,
         status: str | NotGiven = NOT_GIVEN,
+        scope: Literal["identity", "transactions"] | str | NotGiven = NOT_GIVEN,
         signal_type: str | NotGiven = NOT_GIVEN,
         pattern_type: str | NotGiven = NOT_GIVEN,
         risk_band: str | NotGiven = NOT_GIVEN,
         min_size: int | NotGiven = NOT_GIVEN,
         max_size: int | NotGiven = NOT_GIVEN,
+        assignee: str | NotGiven = NOT_GIVEN,
+        priority: str | NotGiven = NOT_GIVEN,
+        risk_min: int | NotGiven = NOT_GIVEN,
+        has_case: bool | NotGiven = NOT_GIVEN,
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         q: str | NotGiven = NOT_GIVEN,
         ordering: str | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        summary: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -93,23 +100,29 @@ class Networks(SyncAPIResource):
     ) -> SyncPage[NetworkListItem]:
         """List networks.
 
-        List fraud networks detected within this application's organization, newest activity first by default. By default dismissed networks are excluded; pass status to include them. Sandbox applications never have networks - clustering excludes sandbox data entirely.
+        List fraud networks detected within this application's organization, highest risk first by default. By default dismissed networks are excluded; pass status to include them. Sandbox applications never have networks: clustering excludes sandbox data entirely. Every response carries the organization's `sharing_mode` and whether cross-organization signals apply to it (`cross_org_available`, `cross_org_unavailable_reason`). `kpis` aggregate the networks that match your filters and `counts` aggregate every network the application can see; pass `summary=false` to skip both when you only need the page. Requires a full-access API key, or `list:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/``
 
         Args:
           status: Comma-separated statuses to include: active,in_review,resolved,dismissed. Omit to exclude dismissed.
+          scope: `transactions` keeps networks whose members are all transaction parties; `identity` keeps every other network. Omit for both. It also narrows `counts.views` and `counts.facets`. Any other value returns 400.
           signal_type: Comma-separated signal types: ip_address,device,face,document_number,phone,email,address.
           pattern_type: Comma-separated pattern types, e.g. exact_same_device,same_email.
           risk_band: Comma-separated bands: low,medium,high.
           min_size: Minimum member count.
           max_size: Maximum member count.
+          assignee: Comma-separated assignees: `unassigned`, member emails (matched case-insensitively), or `me` for the calling console member. A network matches any value. `me` needs a console member token: an API key gets 400 `{"assignee": ["\\"me\\" needs a user token; an API key has no assignee identity."]}`.
+          priority: Comma-separated priorities: `low`, `medium`, `high`, or `none` for networks without a priority. Any other value returns 400 `{"priority": "Unknown priority: <values>."}`.
+          risk_min: Minimum risk score, a whole number from 0 to 100. A value that is not a whole number returns 400 `{"risk_min": "Use a whole number from 0 to 100."}`.
+          has_case: `true` keeps the networks your application opened a case for, `false` the others. Any other value is ignored.
           date_from: Lower bound on last_activity_at (ISO 8601 date or datetime).
           date_to: Upper bound on first_activity_at (ISO 8601 date or datetime).
           q: Free-text search across network name, member names, the network_id (N-0001), and exact pattern_type tokens.
           ordering: One of risk_score, -risk_score, last_activity_at, -last_activity_at, first_activity_at, -first_activity_at, network_number, -network_number. Defaults to -risk_score,-last_activity_at.
           limit: Page size, 1-500. Defaults to 100.
           offset: Zero-based offset of the first record.
+          summary: `false` returns the page and its `count` only, without `kpis` and `counts`. Defaults to `true`. Any value other than `true` or `false` returns 400.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -126,17 +139,23 @@ class Networks(SyncAPIResource):
                 auth="api_key",
                 query={
                     "status": status,
+                    "scope": scope,
                     "signal_type": signal_type,
                     "pattern_type": pattern_type,
                     "risk_band": risk_band,
                     "min_size": min_size,
                     "max_size": max_size,
+                    "assignee": assignee,
+                    "priority": priority,
+                    "risk_min": risk_min,
+                    "has_case": has_case,
                     "date_from": date_from,
                     "date_to": date_to,
                     "q": q,
                     "ordering": ordering,
                     "limit": limit,
                     "offset": offset,
+                    "summary": summary,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -153,10 +172,10 @@ class Networks(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> NetworkDetail:
+    ) -> NetworkDetailResponse:
         """Get network.
 
-        Retrieve a single network's full detail, including stats, fraud tags, and risk signals.
+        Retrieve a single network's full detail: stats, fraud tags and risk signals, plus the organization's `sharing_mode` and cross-organization availability, your application's `tags` on the network, member `outcomes` and pattern scores (`patterns`). Requires a full-access API key, or `read:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/``
 
@@ -168,11 +187,11 @@ class Networks(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "NetworkDetail",
+            "NetworkDetailResponse",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/",
-                cast_to=NetworkDetail,
+                cast_to=NetworkDetailResponse,
                 path_params={"network_uuid": network_uuid},
                 scope="application",
                 auth="api_key",
@@ -310,33 +329,64 @@ class Networks(SyncAPIResource):
         self,
         network_uuid: str,
         *,
+        contract: Literal["2"] | str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        cursor: str | NotGiven = NOT_GIVEN,
+        event_type: Sequence[
+            Literal[
+                "network_detected",
+                "signal_observed",
+                "network_active",
+                "network_in_review",
+                "network_resolved",
+                "network_dismissed",
+                "verification_attempt",
+                "transaction",
+                "login",
+                "rule_hit",
+                "case_linked",
+                "note_added",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> NetworksRetrieveTimelineResponse:
+    ) -> NetworkTimeline | NetworkTimelinePage:
         """Get network timeline.
 
-        Chronological events for this network: detection, each signal's observation, and lifecycle status changes.
+        Without `contract`: the network's own events (detection, each signal's latest observation and its review), oldest first and not paginated. `limit`, `cursor` and `event_type` are ignored. With `contract=2`: the typed timeline, newest first and paginated by cursor. It adds what the member accounts did (verification attempts, transactions, sign-ins you post through the events API and the live rules they hit) and the cases opened for the network. `note_added` events are returned to console members only, never to an API key. Requires a full-access API key, or `read:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/timeline/``
 
         Args:
           network_uuid: Network UUID.
+          contract: `2` returns the typed timeline. Omit it for the default timeline. Any other value returns 400.
+          limit: Typed timeline only. Events per page, 1 to 500. Defaults to 100.
+          cursor: Typed timeline only. The previous page's `next_cursor`. An invalid or empty cursor returns 400.
+          event_type: Typed timeline only. Event types to keep, repeated or comma-separated, at most 20 values. Defaults to every type.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "NetworksRetrieveTimelineResponse",
+            "NetworkTimeline | NetworkTimelinePage",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/timeline/",
-                cast_to=NetworksRetrieveTimelineResponse,
+                cast_to=NetworkTimeline | NetworkTimelinePage,
                 path_params={"network_uuid": network_uuid},
                 scope="application",
                 auth="api_key",
+                query={
+                    "contract": contract,
+                    "limit": limit,
+                    "cursor": cursor,
+                    "event_type": event_type,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -421,11 +471,93 @@ class Networks(SyncAPIResource):
             ),
         )
 
+    def add_tag(
+        self,
+        network_uuid: str,
+        *,
+        tag_uuid: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkDetailResponse:
+        """Add a tag to a network.
+
+        Put one of your application's tags on the network. Returns the network detail, whose `tags` lists your application's tags on the network, with `201` when the tag was added and `200` when it was already on the network. A tag that belongs to another application, or does not exist, returns 404 `Tag not found.`. Requires a full-access API key, or `write:networks` for a console member.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/add/``
+
+        Args:
+          network_uuid: Network UUID.
+          tag_uuid: UUID of one of your application's tags.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkDetailResponse",
+            self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/add/",
+                cast_to=NetworkDetailResponse,
+                path_params={"network_uuid": network_uuid},
+                scope="application",
+                auth="api_key",
+                body={"tag_uuid": tag_uuid},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def remove_tag(
+        self,
+        network_uuid: str,
+        *,
+        tag_uuid: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkDetailResponse:
+        """Remove a tag from a network.
+
+        Remove one of your application's tags from the network. Returns the network detail. 404 when the tag is not on the network, or does not belong to your application. Requires a full-access API key, or `write:networks` for a console member.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/remove/``
+
+        Args:
+          network_uuid: Network UUID.
+          tag_uuid: UUID of one of your application's tags.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkDetailResponse",
+            self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/remove/",
+                cast_to=NetworkDetailResponse,
+                path_params={"network_uuid": network_uuid},
+                scope="application",
+                auth="api_key",
+                body={"tag_uuid": tag_uuid},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncNetworks(AsyncAPIResource):
     """The ``networks`` resource of the Didit API.
 
-    Methods: ``download_report``, ``list``, ``list_members``, ``list_signals``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
+    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
 
     Nested resources: ``notes``.
     """
@@ -450,17 +582,23 @@ class AsyncNetworks(AsyncAPIResource):
         self,
         *,
         status: str | NotGiven = NOT_GIVEN,
+        scope: Literal["identity", "transactions"] | str | NotGiven = NOT_GIVEN,
         signal_type: str | NotGiven = NOT_GIVEN,
         pattern_type: str | NotGiven = NOT_GIVEN,
         risk_band: str | NotGiven = NOT_GIVEN,
         min_size: int | NotGiven = NOT_GIVEN,
         max_size: int | NotGiven = NOT_GIVEN,
+        assignee: str | NotGiven = NOT_GIVEN,
+        priority: str | NotGiven = NOT_GIVEN,
+        risk_min: int | NotGiven = NOT_GIVEN,
+        has_case: bool | NotGiven = NOT_GIVEN,
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         q: str | NotGiven = NOT_GIVEN,
         ordering: str | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        summary: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -468,23 +606,29 @@ class AsyncNetworks(AsyncAPIResource):
     ) -> AsyncPaginator[NetworkListItem]:
         """List networks.
 
-        List fraud networks detected within this application's organization, newest activity first by default. By default dismissed networks are excluded; pass status to include them. Sandbox applications never have networks - clustering excludes sandbox data entirely.
+        List fraud networks detected within this application's organization, highest risk first by default. By default dismissed networks are excluded; pass status to include them. Sandbox applications never have networks: clustering excludes sandbox data entirely. Every response carries the organization's `sharing_mode` and whether cross-organization signals apply to it (`cross_org_available`, `cross_org_unavailable_reason`). `kpis` aggregate the networks that match your filters and `counts` aggregate every network the application can see; pass `summary=false` to skip both when you only need the page. Requires a full-access API key, or `list:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/``
 
         Args:
           status: Comma-separated statuses to include: active,in_review,resolved,dismissed. Omit to exclude dismissed.
+          scope: `transactions` keeps networks whose members are all transaction parties; `identity` keeps every other network. Omit for both. It also narrows `counts.views` and `counts.facets`. Any other value returns 400.
           signal_type: Comma-separated signal types: ip_address,device,face,document_number,phone,email,address.
           pattern_type: Comma-separated pattern types, e.g. exact_same_device,same_email.
           risk_band: Comma-separated bands: low,medium,high.
           min_size: Minimum member count.
           max_size: Maximum member count.
+          assignee: Comma-separated assignees: `unassigned`, member emails (matched case-insensitively), or `me` for the calling console member. A network matches any value. `me` needs a console member token: an API key gets 400 `{"assignee": ["\\"me\\" needs a user token; an API key has no assignee identity."]}`.
+          priority: Comma-separated priorities: `low`, `medium`, `high`, or `none` for networks without a priority. Any other value returns 400 `{"priority": "Unknown priority: <values>."}`.
+          risk_min: Minimum risk score, a whole number from 0 to 100. A value that is not a whole number returns 400 `{"risk_min": "Use a whole number from 0 to 100."}`.
+          has_case: `true` keeps the networks your application opened a case for, `false` the others. Any other value is ignored.
           date_from: Lower bound on last_activity_at (ISO 8601 date or datetime).
           date_to: Upper bound on first_activity_at (ISO 8601 date or datetime).
           q: Free-text search across network name, member names, the network_id (N-0001), and exact pattern_type tokens.
           ordering: One of risk_score, -risk_score, last_activity_at, -last_activity_at, first_activity_at, -first_activity_at, network_number, -network_number. Defaults to -risk_score,-last_activity_at.
           limit: Page size, 1-500. Defaults to 100.
           offset: Zero-based offset of the first record.
+          summary: `false` returns the page and its `count` only, without `kpis` and `counts`. Defaults to `true`. Any value other than `true` or `false` returns 400.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -501,17 +645,23 @@ class AsyncNetworks(AsyncAPIResource):
                 auth="api_key",
                 query={
                     "status": status,
+                    "scope": scope,
                     "signal_type": signal_type,
                     "pattern_type": pattern_type,
                     "risk_band": risk_band,
                     "min_size": min_size,
                     "max_size": max_size,
+                    "assignee": assignee,
+                    "priority": priority,
+                    "risk_min": risk_min,
+                    "has_case": has_case,
                     "date_from": date_from,
                     "date_to": date_to,
                     "q": q,
                     "ordering": ordering,
                     "limit": limit,
                     "offset": offset,
+                    "summary": summary,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -528,10 +678,10 @@ class AsyncNetworks(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> NetworkDetail:
+    ) -> NetworkDetailResponse:
         """Get network.
 
-        Retrieve a single network's full detail, including stats, fraud tags, and risk signals.
+        Retrieve a single network's full detail: stats, fraud tags and risk signals, plus the organization's `sharing_mode` and cross-organization availability, your application's `tags` on the network, member `outcomes` and pattern scores (`patterns`). Requires a full-access API key, or `read:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/``
 
@@ -543,11 +693,11 @@ class AsyncNetworks(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "NetworkDetail",
+            "NetworkDetailResponse",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/",
-                cast_to=NetworkDetail,
+                cast_to=NetworkDetailResponse,
                 path_params={"network_uuid": network_uuid},
                 scope="application",
                 auth="api_key",
@@ -685,33 +835,64 @@ class AsyncNetworks(AsyncAPIResource):
         self,
         network_uuid: str,
         *,
+        contract: Literal["2"] | str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        cursor: str | NotGiven = NOT_GIVEN,
+        event_type: Sequence[
+            Literal[
+                "network_detected",
+                "signal_observed",
+                "network_active",
+                "network_in_review",
+                "network_resolved",
+                "network_dismissed",
+                "verification_attempt",
+                "transaction",
+                "login",
+                "rule_hit",
+                "case_linked",
+                "note_added",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> NetworksRetrieveTimelineResponse:
+    ) -> NetworkTimeline | NetworkTimelinePage:
         """Get network timeline.
 
-        Chronological events for this network: detection, each signal's observation, and lifecycle status changes.
+        Without `contract`: the network's own events (detection, each signal's latest observation and its review), oldest first and not paginated. `limit`, `cursor` and `event_type` are ignored. With `contract=2`: the typed timeline, newest first and paginated by cursor. It adds what the member accounts did (verification attempts, transactions, sign-ins you post through the events API and the live rules they hit) and the cases opened for the network. `note_added` events are returned to console members only, never to an API key. Requires a full-access API key, or `read:networks` for a console member.
 
         ``GET /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/timeline/``
 
         Args:
           network_uuid: Network UUID.
+          contract: `2` returns the typed timeline. Omit it for the default timeline. Any other value returns 400.
+          limit: Typed timeline only. Events per page, 1 to 500. Defaults to 100.
+          cursor: Typed timeline only. The previous page's `next_cursor`. An invalid or empty cursor returns 400.
+          event_type: Typed timeline only. Event types to keep, repeated or comma-separated, at most 20 values. Defaults to every type.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "NetworksRetrieveTimelineResponse",
+            "NetworkTimeline | NetworkTimelinePage",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/timeline/",
-                cast_to=NetworksRetrieveTimelineResponse,
+                cast_to=NetworkTimeline | NetworkTimelinePage,
                 path_params={"network_uuid": network_uuid},
                 scope="application",
                 auth="api_key",
+                query={
+                    "contract": contract,
+                    "limit": limit,
+                    "cursor": cursor,
+                    "event_type": event_type,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -796,6 +977,88 @@ class AsyncNetworks(AsyncAPIResource):
             ),
         )
 
+    async def add_tag(
+        self,
+        network_uuid: str,
+        *,
+        tag_uuid: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkDetailResponse:
+        """Add a tag to a network.
+
+        Put one of your application's tags on the network. Returns the network detail, whose `tags` lists your application's tags on the network, with `201` when the tag was added and `200` when it was already on the network. A tag that belongs to another application, or does not exist, returns 404 `Tag not found.`. Requires a full-access API key, or `write:networks` for a console member.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/add/``
+
+        Args:
+          network_uuid: Network UUID.
+          tag_uuid: UUID of one of your application's tags.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkDetailResponse",
+            await self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/add/",
+                cast_to=NetworkDetailResponse,
+                path_params={"network_uuid": network_uuid},
+                scope="application",
+                auth="api_key",
+                body={"tag_uuid": tag_uuid},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def remove_tag(
+        self,
+        network_uuid: str,
+        *,
+        tag_uuid: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkDetailResponse:
+        """Remove a tag from a network.
+
+        Remove one of your application's tags from the network. Returns the network detail. 404 when the tag is not on the network, or does not belong to your application. Requires a full-access API key, or `write:networks` for a console member.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/remove/``
+
+        Args:
+          network_uuid: Network UUID.
+          tag_uuid: UUID of one of your application's tags.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkDetailResponse",
+            await self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/remove/",
+                cast_to=NetworkDetailResponse,
+                path_params={"network_uuid": network_uuid},
+                scope="application",
+                auth="api_key",
+                body={"tag_uuid": tag_uuid},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class NetworksWithRawResponse:
     def __init__(self, resource: Networks) -> None:
@@ -808,6 +1071,8 @@ class NetworksWithRawResponse:
         self.retrieve_timeline = to_raw_response_wrapper(resource.retrieve_timeline)
         self.retrieve_map = to_raw_response_wrapper(resource.retrieve_map)
         self.download_report = to_raw_response_wrapper(resource.download_report)
+        self.add_tag = to_raw_response_wrapper(resource.add_tag)
+        self.remove_tag = to_raw_response_wrapper(resource.remove_tag)
 
     @cached_property
     def notes(self) -> NetworksNotesWithRawResponse:
@@ -827,6 +1092,8 @@ class AsyncNetworksWithRawResponse:
         self.retrieve_timeline = async_to_raw_response_wrapper(resource.retrieve_timeline)
         self.retrieve_map = async_to_raw_response_wrapper(resource.retrieve_map)
         self.download_report = async_to_raw_response_wrapper(resource.download_report)
+        self.add_tag = async_to_raw_response_wrapper(resource.add_tag)
+        self.remove_tag = async_to_raw_response_wrapper(resource.remove_tag)
 
     @cached_property
     def notes(self) -> AsyncNetworksNotesWithRawResponse:
@@ -846,6 +1113,8 @@ class NetworksWithStreamingResponse:
         self.retrieve_timeline = to_streamed_response_wrapper(resource.retrieve_timeline)
         self.retrieve_map = to_streamed_response_wrapper(resource.retrieve_map)
         self.download_report = to_streamed_response_wrapper(resource.download_report)
+        self.add_tag = to_streamed_response_wrapper(resource.add_tag)
+        self.remove_tag = to_streamed_response_wrapper(resource.remove_tag)
 
     @cached_property
     def notes(self) -> NetworksNotesWithStreamingResponse:
@@ -865,6 +1134,8 @@ class AsyncNetworksWithStreamingResponse:
         self.retrieve_timeline = async_to_streamed_response_wrapper(resource.retrieve_timeline)
         self.retrieve_map = async_to_streamed_response_wrapper(resource.retrieve_map)
         self.download_report = async_to_streamed_response_wrapper(resource.download_report)
+        self.add_tag = async_to_streamed_response_wrapper(resource.add_tag)
+        self.remove_tag = async_to_streamed_response_wrapper(resource.remove_tag)
 
     @cached_property
     def notes(self) -> AsyncNetworksNotesWithStreamingResponse:

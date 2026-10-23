@@ -4,15 +4,117 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
-from didit.types.components.network_detail import NetworkDetail
+from didit.types.components.network_detail_response import NetworkDetailResponse
 from didit.types.components.network_graph import NetworkGraph
 from didit.types.components.network_list_item import NetworkListItem
 from didit.types.components.network_map import NetworkMap
 from didit.types.components.network_note import NetworkNote
+from didit.types.components.network_timeline import NetworkTimeline
+from didit.types.components.network_timeline_page import NetworkTimelinePage
 from didit.types.networks.list_members_response import NetworksListMembersResponse
 from didit.types.networks.list_signals_response import NetworksListSignalsResponse
-from didit.types.networks.retrieve_timeline_response import NetworksRetrieveTimelineResponse
 from tests.harness import BINARY_BODY, Expect, check_operation
+
+
+def test_networks_add_tag() -> None:
+    """``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/add/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/networks/3fa85f64-5717-4562-b3fc-2c963f66afa6/tags/add/",
+            api="verification",
+            auth="api_key",
+            json_body={"tag_uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7"},
+            status=200,
+            response_json={
+                "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "network_id": "N-0042",
+                "name": None,
+                "status": "in_review",
+                "risk": {"score": 82, "band": "high", "bar": 0.82},
+                "pattern_types": ["exact_same_device", "same_email"],
+                "signal_types": ["device", "email"],
+                "member_counts": {
+                    "total": 3,
+                    "users": 3,
+                    "businesses": 0,
+                    "transaction_parties": 0,
+                },
+                "member_status": {"approved": 1, "declined": 1, "in_review": 0, "not_completed": 1},
+                "signal_coverage": {
+                    "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                    "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                },
+                "first_activity_at": "2026-10-01T09:12:44Z",
+                "last_activity_at": "2026-10-12T16:03:10Z",
+                "stats": {
+                    "members": {"total": 3, "users": 3, "businesses": 0, "transaction_parties": 0},
+                    "member_status": {
+                        "approved": 1,
+                        "declined": 1,
+                        "in_review": 0,
+                        "not_completed": 1,
+                    },
+                    "signals": {
+                        "total": 2,
+                        "by_type": {
+                            "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                            "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                        },
+                    },
+                },
+                "fraud_tags": [],
+                "risk_signals": {
+                    "residential_proxy_reuse": {
+                        "detected": False,
+                        "signal_count": 0,
+                        "max_subject_count": 0,
+                    },
+                    "email_intelligence": {
+                        "enriched_signal_count": 1,
+                        "high_risk_count": 0,
+                        "social_profile_count": 0,
+                    },
+                    "phone_intelligence": {"enriched_signal_count": 0, "high_risk_count": 0},
+                },
+                "reviewed_at": "2026-10-12T16:30:00Z",
+                "reviewed_by": "reviewer@example.com",
+                "review_reason": "Shared device across three new accounts.",
+                "notes_count": 0,
+                "sharing_mode": "global",
+                "cross_org_available": True,
+                "cross_org_unavailable_reason": None,
+                "tags": [
+                    {
+                        "uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                        "name": "SUSPICIOUS",
+                        "color": "#6366F1",
+                        "source": "custom",
+                        "added_by": None,
+                        "added_at": "2026-10-13T08:15:00Z",
+                    }
+                ],
+                "outcomes": {"approved": 1, "declined": 1, "in_review": 0, "total": 3},
+                "patterns": [
+                    {
+                        "type": "background",
+                        "score": 0.8125,
+                        "members": 3,
+                        "reason": None,
+                        "computed_at": "2026-10-13T08:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.networks.add_tag(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", tag_uuid="7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        ),
+        lambda c: c.networks.add_tag(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", tag_uuid="7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        ),
+        lambda r: isinstance(r, NetworkDetailResponse),
+        lambda r: isinstance(r, NetworkDetailResponse),
+    )
 
 
 def test_networks_download_report() -> None:
@@ -44,17 +146,23 @@ def test_networks_list() -> None:
             auth="api_key",
             query={
                 "status": ["sample"],
+                "scope": ["identity"],
                 "signal_type": ["sample"],
                 "pattern_type": ["sample"],
                 "risk_band": ["sample"],
                 "min_size": ["1"],
                 "max_size": ["1"],
+                "assignee": ["sample"],
+                "priority": ["sample"],
+                "risk_min": ["1"],
+                "has_case": ["true"],
                 "date_from": ["2026-01-01"],
                 "date_to": ["2026-01-01"],
                 "q": ["sample"],
                 "ordering": ["sample"],
                 "limit": ["1"],
                 "offset": ["1"],
+                "summary": ["true"],
             },
             status=200,
             response_json={
@@ -84,35 +192,91 @@ def test_networks_list() -> None:
                     "detected_this_period": {},
                     "false_positive_rate": {},
                 },
+                "counts": {
+                    "scopes": {"all": 1, "identity": 1, "transactions": 1},
+                    "views": {
+                        "all": 1,
+                        "active": 1,
+                        "in_review": 1,
+                        "resolved": 1,
+                        "dismissed": 1,
+                        "mine": 1,
+                        "high_risk": 1,
+                    },
+                    "facets": {
+                        "total": 1,
+                        "last_activity_days": {"7": 1, "30": 1, "90": 1},
+                        "risk_min": {"50": 1, "80": 1},
+                        "signal_types": {
+                            "ip_address": 1,
+                            "device": 1,
+                            "face": 1,
+                            "document_number": 1,
+                            "phone": 1,
+                            "email": 1,
+                            "address": 1,
+                        },
+                        "priority": {"low": 1, "medium": 1, "high": 1, "none": 1},
+                        "assignee": {
+                            "me": 1,
+                            "unassigned": 1,
+                            "users": [
+                                {
+                                    "uuid": "00000000-0000-4000-8000-000000000008",
+                                    "full_name": "sample",
+                                    "email": "sample",
+                                    "count": 1,
+                                }
+                            ],
+                        },
+                        "has_case": 1,
+                        "min_size": {"10": 1},
+                    },
+                },
+                "sharing_mode": "off",
+                "cross_org_available": True,
+                "cross_org_unavailable_reason": "plan",
             },
         ),
         lambda c: c.networks.list(
             status="sample",
+            scope="identity",
             signal_type="sample",
             pattern_type="sample",
             risk_band="sample",
             min_size=1,
             max_size=1,
+            assignee="sample",
+            priority="sample",
+            risk_min=1,
+            has_case=True,
             date_from="2026-01-01",
             date_to="2026-01-01",
             q="sample",
             ordering="sample",
             limit=1,
             offset=1,
+            summary=True,
         ),
         lambda c: c.networks.list(
             status="sample",
+            scope="identity",
             signal_type="sample",
             pattern_type="sample",
             risk_band="sample",
             min_size=1,
             max_size=1,
+            assignee="sample",
+            priority="sample",
+            risk_min=1,
+            has_case=True,
             date_from="2026-01-01",
             date_to="2026-01-01",
             q="sample",
             ordering="sample",
             limit=1,
             offset=1,
+            summary=True,
         ),
         lambda r: (
             isinstance(r, SyncPage) and all(isinstance(x1, NetworkListItem) for x1 in r.results)
@@ -213,6 +377,98 @@ def test_networks_list_signals() -> None:
     )
 
 
+def test_networks_remove_tag() -> None:
+    """``POST /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/tags/remove/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/networks/3fa85f64-5717-4562-b3fc-2c963f66afa6/tags/remove/",
+            api="verification",
+            auth="api_key",
+            json_body={"tag_uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7"},
+            status=200,
+            response_json={
+                "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "network_id": "N-0042",
+                "name": None,
+                "status": "in_review",
+                "risk": {"score": 82, "band": "high", "bar": 0.82},
+                "pattern_types": ["exact_same_device", "same_email"],
+                "signal_types": ["device", "email"],
+                "member_counts": {
+                    "total": 3,
+                    "users": 3,
+                    "businesses": 0,
+                    "transaction_parties": 0,
+                },
+                "member_status": {"approved": 1, "declined": 1, "in_review": 0, "not_completed": 1},
+                "signal_coverage": {
+                    "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                    "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                },
+                "first_activity_at": "2026-10-01T09:12:44Z",
+                "last_activity_at": "2026-10-12T16:03:10Z",
+                "stats": {
+                    "members": {"total": 3, "users": 3, "businesses": 0, "transaction_parties": 0},
+                    "member_status": {
+                        "approved": 1,
+                        "declined": 1,
+                        "in_review": 0,
+                        "not_completed": 1,
+                    },
+                    "signals": {
+                        "total": 2,
+                        "by_type": {
+                            "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                            "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                        },
+                    },
+                },
+                "fraud_tags": [],
+                "risk_signals": {
+                    "residential_proxy_reuse": {
+                        "detected": False,
+                        "signal_count": 0,
+                        "max_subject_count": 0,
+                    },
+                    "email_intelligence": {
+                        "enriched_signal_count": 1,
+                        "high_risk_count": 0,
+                        "social_profile_count": 0,
+                    },
+                    "phone_intelligence": {"enriched_signal_count": 0, "high_risk_count": 0},
+                },
+                "reviewed_at": "2026-10-12T16:30:00Z",
+                "reviewed_by": "reviewer@example.com",
+                "review_reason": "Shared device across three new accounts.",
+                "notes_count": 0,
+                "sharing_mode": "global",
+                "cross_org_available": True,
+                "cross_org_unavailable_reason": None,
+                "tags": [],
+                "outcomes": {"approved": 1, "declined": 1, "in_review": 0, "total": 3},
+                "patterns": [
+                    {
+                        "type": "background",
+                        "score": 0.8125,
+                        "members": 3,
+                        "reason": None,
+                        "computed_at": "2026-10-13T08:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.networks.remove_tag(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", tag_uuid="7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        ),
+        lambda c: c.networks.remove_tag(
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6", tag_uuid="7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        ),
+        lambda r: isinstance(r, NetworkDetailResponse),
+        lambda r: isinstance(r, NetworkDetailResponse),
+    )
+
+
 def test_networks_retrieve() -> None:
     """``GET /v3/organization/{organization_id}/application/{application_id}/networks/{network_uuid}/``"""
     check_operation(
@@ -223,32 +479,89 @@ def test_networks_retrieve() -> None:
             auth="api_key",
             status=200,
             response_json={
-                "uuid": "00000000-0000-4000-8000-000000000004",
-                "network_id": "sample",
-                "name": "sample",
-                "status": "active",
-                "risk": {"score": 1, "band": "low", "bar": 1.5},
-                "pattern_types": ["exact_same_device"],
-                "signal_types": ["ip_address"],
-                "member_counts": {},
-                "member_status": {},
-                "signal_coverage": {},
-                "first_activity_at": "2026-01-01T00:00:00Z",
-                "last_activity_at": "2026-01-01T00:00:00Z",
-                "stats": {},
-                "fraud_tags": [{}],
-                "risk_signals": {},
-                "reviewed_at": "2026-01-01T00:00:00Z",
-                "reviewed_by": "sample",
-                "review_reason": "sample",
-                "notes_count": 1,
+                "uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "network_id": "N-0042",
+                "name": None,
+                "status": "in_review",
+                "risk": {"score": 82, "band": "high", "bar": 0.82},
+                "pattern_types": ["exact_same_device", "same_email"],
+                "signal_types": ["device", "email"],
+                "member_counts": {
+                    "total": 3,
+                    "users": 3,
+                    "businesses": 0,
+                    "transaction_parties": 0,
+                },
+                "member_status": {"approved": 1, "declined": 1, "in_review": 0, "not_completed": 1},
+                "signal_coverage": {
+                    "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                    "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                },
+                "first_activity_at": "2026-10-01T09:12:44Z",
+                "last_activity_at": "2026-10-12T16:03:10Z",
+                "stats": {
+                    "members": {"total": 3, "users": 3, "businesses": 0, "transaction_parties": 0},
+                    "member_status": {
+                        "approved": 1,
+                        "declined": 1,
+                        "in_review": 0,
+                        "not_completed": 1,
+                    },
+                    "signals": {
+                        "total": 2,
+                        "by_type": {
+                            "device": {"signals": 1, "subjects": 3, "coverage": 1.0},
+                            "email": {"signals": 1, "subjects": 2, "coverage": 0.6667},
+                        },
+                    },
+                },
+                "fraud_tags": [],
+                "risk_signals": {
+                    "residential_proxy_reuse": {
+                        "detected": False,
+                        "signal_count": 0,
+                        "max_subject_count": 0,
+                    },
+                    "email_intelligence": {
+                        "enriched_signal_count": 1,
+                        "high_risk_count": 0,
+                        "social_profile_count": 0,
+                    },
+                    "phone_intelligence": {"enriched_signal_count": 0, "high_risk_count": 0},
+                },
+                "reviewed_at": "2026-10-12T16:30:00Z",
+                "reviewed_by": "reviewer@example.com",
+                "review_reason": "Shared device across three new accounts.",
+                "notes_count": 0,
+                "sharing_mode": "global",
+                "cross_org_available": True,
+                "cross_org_unavailable_reason": None,
+                "tags": [
+                    {
+                        "uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                        "name": "SUSPICIOUS",
+                        "color": "#6366F1",
+                        "source": "custom",
+                        "added_by": None,
+                        "added_at": "2026-10-13T08:15:00Z",
+                    }
+                ],
+                "outcomes": {"approved": 1, "declined": 1, "in_review": 0, "total": 3},
+                "patterns": [
+                    {
+                        "type": "background",
+                        "score": 0.8125,
+                        "members": 3,
+                        "reason": None,
+                        "computed_at": "2026-10-13T08:00:00Z",
+                    }
+                ],
             },
-            strict_type=NetworkDetail,
         ),
         lambda c: c.networks.retrieve("n3a5e000-0000-4000-8000-000000000001"),
         lambda c: c.networks.retrieve("n3a5e000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, NetworkDetail),
-        lambda r: isinstance(r, NetworkDetail),
+        lambda r: isinstance(r, NetworkDetailResponse),
+        lambda r: isinstance(r, NetworkDetailResponse),
     )
 
 
@@ -387,23 +700,52 @@ def test_networks_retrieve_timeline() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/networks/n3a5e000-0000-4000-8000-000000000001/timeline/",
             api="verification",
             auth="api_key",
+            query={
+                "contract": ["2"],
+                "limit": ["1"],
+                "cursor": ["sample"],
+                "event_type": ["network_detected"],
+            },
             status=200,
             response_json={
                 "results": [
                     {
-                        "event_type": "sample",
-                        "occurred_at": "2026-01-01T00:00:00Z",
-                        "label": "sample",
-                        "metadata": {},
-                    }
+                        "event_type": "network_detected",
+                        "occurred_at": "2026-10-01T09:12:44Z",
+                        "label": "Network detected",
+                        "metadata": {"network_id": "N-0042"},
+                    },
+                    {
+                        "event_type": "signal_observed",
+                        "occurred_at": "2026-10-12T16:03:10Z",
+                        "label": "device observed",
+                        "metadata": {"signal_type": "device", "subject_count": 3, "is_hub": False},
+                    },
+                    {
+                        "event_type": "network_in_review",
+                        "occurred_at": "2026-10-12T16:30:00Z",
+                        "label": "Network in_review",
+                        "metadata": {"reason": "Shared device across three new accounts."},
+                    },
                 ]
             },
-            strict_type=NetworksRetrieveTimelineResponse,
         ),
-        lambda c: c.networks.retrieve_timeline("n3a5e000-0000-4000-8000-000000000001"),
-        lambda c: c.networks.retrieve_timeline("n3a5e000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, NetworksRetrieveTimelineResponse),
-        lambda r: isinstance(r, NetworksRetrieveTimelineResponse),
+        lambda c: c.networks.retrieve_timeline(
+            "n3a5e000-0000-4000-8000-000000000001",
+            contract="2",
+            limit=1,
+            cursor="sample",
+            event_type=["network_detected"],
+        ),
+        lambda c: c.networks.retrieve_timeline(
+            "n3a5e000-0000-4000-8000-000000000001",
+            contract="2",
+            limit=1,
+            cursor="sample",
+            event_type=["network_detected"],
+        ),
+        lambda r: (isinstance(r, NetworkTimeline)) or (isinstance(r, NetworkTimelinePage)),
+        lambda r: (isinstance(r, NetworkTimeline)) or (isinstance(r, NetworkTimelinePage)),
     )
 
 

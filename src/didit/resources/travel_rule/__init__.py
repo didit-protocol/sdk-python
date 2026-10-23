@@ -17,8 +17,26 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.travel_rule_counterparty_decision_response import (
+    TravelRuleCounterpartyDecisionResponse,
+)
+from didit.types.components.travel_rule_counterparty_questionnaire import (
+    TravelRuleCounterpartyQuestionnaire,
+)
+from didit.types.components.travel_rule_counterparty_questionnaire_list import (
+    TravelRuleCounterpartyQuestionnaireList,
+)
+from didit.types.components.travel_rule_counterparty_screening_result import (
+    TravelRuleCounterpartyScreeningResult,
+)
+from didit.types.components.travel_rule_counterparty_screening_status import (
+    TravelRuleCounterpartyScreeningStatus,
+)
+from didit.types.components.travel_rule_data_sharing_fields import TravelRuleDataSharingFieldsParam
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse
+from didit.types.components.travel_rule_matching_rules import TravelRuleMatchingRulesParam
 from didit.types.components.travel_rule_settings_detail import TravelRuleSettingsDetail
+from didit.types.components.travel_rule_utxo import TravelRuleUtxo
 from didit.types.components.travel_rule_widget_session_response import (
     TravelRuleWidgetSessionResponse,
 )
@@ -27,8 +45,27 @@ from didit.types.travel_rule.list_vasps_response import TravelRuleListVaspsRespo
 from didit.types.travel_rule.register_inbound_params import (
     TravelRuleRegisterInboundParamsOriginatingVasp,
 )
+from didit.types.travel_rule.send_compliance_email_confirmation_response import (
+    TravelRuleSendComplianceEmailConfirmationResponse,
+)
 
 if TYPE_CHECKING:
+    from didit.resources.travel_rule.counterparty_contacts import (
+        AsyncTravelRuleCounterpartyContacts,
+        AsyncTravelRuleCounterpartyContactsWithRawResponse,
+        AsyncTravelRuleCounterpartyContactsWithStreamingResponse,
+        TravelRuleCounterpartyContacts,
+        TravelRuleCounterpartyContactsWithRawResponse,
+        TravelRuleCounterpartyContactsWithStreamingResponse,
+    )
+    from didit.resources.travel_rule.transfers import (
+        AsyncTravelRuleTransfers,
+        AsyncTravelRuleTransfersWithRawResponse,
+        AsyncTravelRuleTransfersWithStreamingResponse,
+        TravelRuleTransfers,
+        TravelRuleTransfersWithRawResponse,
+        TravelRuleTransfersWithStreamingResponse,
+    )
     from didit.resources.travel_rule.wallet_addresses import (
         AsyncTravelRuleWalletAddresses,
         AsyncTravelRuleWalletAddressesWithRawResponse,
@@ -36,6 +73,14 @@ if TYPE_CHECKING:
         TravelRuleWalletAddresses,
         TravelRuleWalletAddressesWithRawResponse,
         TravelRuleWalletAddressesWithStreamingResponse,
+    )
+    from didit.resources.travel_rule.workspace import (
+        AsyncTravelRuleWorkspace,
+        AsyncTravelRuleWorkspaceWithRawResponse,
+        AsyncTravelRuleWorkspaceWithStreamingResponse,
+        TravelRuleWorkspace,
+        TravelRuleWorkspaceWithRawResponse,
+        TravelRuleWorkspaceWithStreamingResponse,
     )
 
 __all__ = [
@@ -51,16 +96,34 @@ __all__ = [
 class TravelRule(SyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``create_widget_session``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``update_settings``.
+    Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``wallet_addresses``.
+    Nested resources: ``counterparty_contacts``, ``transfers``, ``wallet_addresses``, ``workspace``.
     """
+
+    @cached_property
+    def counterparty_contacts(self) -> TravelRuleCounterpartyContacts:
+        from didit.resources.travel_rule.counterparty_contacts import TravelRuleCounterpartyContacts
+
+        return TravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def transfers(self) -> TravelRuleTransfers:
+        from didit.resources.travel_rule.transfers import TravelRuleTransfers
+
+        return TravelRuleTransfers(self._client)
 
     @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddresses:
         from didit.resources.travel_rule.wallet_addresses import TravelRuleWalletAddresses
 
         return TravelRuleWalletAddresses(self._client)
+
+    @cached_property
+    def workspace(self) -> TravelRuleWorkspace:
+        from didit.resources.travel_rule.workspace import TravelRuleWorkspace
+
+        return TravelRuleWorkspace(self._client)
 
     @cached_property
     def with_raw_response(self) -> TravelRuleWithRawResponse:
@@ -113,7 +176,7 @@ class TravelRule(SyncAPIResource):
         legal_name: str | NotGiven = NOT_GIVEN,
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
-        name_matching_strictness: Literal["NONE", "STRICT", "DEFAULT", "FUZZY"]
+        name_matching_strictness: Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"]
         | str
         | NotGiven = NOT_GIVEN,
         confirmation_timeout_hours: int | NotGiven = NOT_GIVEN,
@@ -121,11 +184,22 @@ class TravelRule(SyncAPIResource):
         compliance_email: str | NotGiven = NOT_GIVEN,
         is_discoverable: bool | NotGiven = NOT_GIVEN,
         threshold_amount: str | NotGiven = NOT_GIVEN,
+        ownership_validation_mode: Literal["FULL", "SIMPLIFIED", "AUTOMATED"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        simplified_validation_threshold: str | NotGiven = NOT_GIVEN,
+        data_sharing_fields: TravelRuleDataSharingFieldsParam | NotGiven = NOT_GIVEN,
+        matching_rules: TravelRuleMatchingRulesParam | NotGiven = NOT_GIVEN,
         inbound_auto_accept: bool | NotGiven = NOT_GIVEN,
         allow_self_declaration: bool | NotGiven = NOT_GIVEN,
         allow_screenshot_proof: bool | NotGiven = NOT_GIVEN,
         auto_wallet_verification: bool | NotGiven = NOT_GIVEN,
         vasp_attribution_enabled: bool | NotGiven = NOT_GIVEN,
+        counterparty_screening_enabled: bool | NotGiven = NOT_GIVEN,
+        sunrise_policy: Literal["", "HOLD", "REJECT", "PROCEED"] | str | NotGiven = NOT_GIVEN,
+        non_responsive_policy: Literal["", "HOLD", "REJECT", "PROCEED"]
+        | str
+        | NotGiven = NOT_GIVEN,
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
@@ -144,17 +218,24 @@ class TravelRule(SyncAPIResource):
           legal_name
           lei
           jurisdiction
-          name_matching_strictness
+          name_matching_strictness: `CONTAINS` accepts one name whose words all appear in the other.
           confirmation_timeout_hours
           timeout_outcome
-          compliance_email
-          is_discoverable
-          threshold_amount: Decimal string. Minimum transfer amount that triggers a managed exchange.
+          compliance_email: Compliance contact email for your VASP profile. The Didit network lists your profile only once this address is confirmed through an emailed link (POST /v3/travel-rule/settings/compliance-email/confirmation/); changing it needs a new confirmation.
+          is_discoverable: Whether your VASP profile can be listed in the Didit network: found in GET /v3/travel-rule/vasps/ by other Didit customers and reached on the INTERNAL rail. Listing also needs a live application, Travel Rule on, a legal name and a confirmed compliance email; didit_network says which are missing. Default true.
+          threshold_amount: Decimal string, zero or greater, in your application's default currency. Minimum transfer amount that triggers a managed exchange.
+          ownership_validation_mode: See the response field of the same name.
+          simplified_validation_threshold: Decimal string, 0 or more.
+          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR or FATF Recommendation 16), an empty list included, is refused with `400`.
+          matching_rules: Merged per entity type, and per field inside it. A field that entity type does not compare (for example `date_of_birth` for `company`) is refused with `400`.
           inbound_auto_accept
           allow_self_declaration
           allow_screenshot_proof: When true, the wallet-ownership widget offers screenshot upload as an ownership evidence method. Default true.
           auto_wallet_verification
           vasp_attribution_enabled
+          counterparty_screening_enabled: Opt-in sanctions and adverse-media screening of counterparty VASPs, billed per screening at the Company AML Screening price. When on, Didit screens the counterparty an outbound exchange reaches (reusing a screening younger than 30 days) and you can screen one with POST /v3/travel-rule/vasps/{vasp_id}/screening/. Default false: nothing is screened or billed.
+          sunrise_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
+          non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -179,13 +260,54 @@ class TravelRule(SyncAPIResource):
                     "compliance_email": compliance_email,
                     "is_discoverable": is_discoverable,
                     "threshold_amount": threshold_amount,
+                    "ownership_validation_mode": ownership_validation_mode,
+                    "simplified_validation_threshold": simplified_validation_threshold,
+                    "data_sharing_fields": data_sharing_fields,
+                    "matching_rules": matching_rules,
                     "inbound_auto_accept": inbound_auto_accept,
                     "allow_self_declaration": allow_self_declaration,
                     "allow_screenshot_proof": allow_screenshot_proof,
                     "auto_wallet_verification": auto_wallet_verification,
                     "vasp_attribution_enabled": vasp_attribution_enabled,
+                    "counterparty_screening_enabled": counterparty_screening_enabled,
+                    "sunrise_policy": sunrise_policy,
+                    "non_responsive_policy": non_responsive_policy,
                     "disabled_networks": disabled_networks,
                 },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def send_compliance_email_confirmation(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleSendComplianceEmailConfirmationResponse:
+        """Send the compliance email confirmation.
+
+        Emails a single-use confirmation link to your VASP profile's compliance_email. Opening the link and pressing its confirm button confirms the address, which the Didit network needs before it lists your profile. A new request replaces the previous link; the link stops working when the compliance email changes. One email per minute per address.
+
+        ``POST /v3/travel-rule/settings/compliance-email/confirmation/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleSendComplianceEmailConfirmationResponse",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/settings/compliance-email/confirmation/",
+                cast_to=TravelRuleSendComplianceEmailConfirmationResponse,
+                auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -197,6 +319,16 @@ class TravelRule(SyncAPIResource):
         self,
         *,
         search: str | NotGiven = NOT_GIVEN,
+        network: Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA", "TRISA"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        jurisdiction: str | NotGiven = NOT_GIVEN,
+        reachable: bool | NotGiven = NOT_GIVEN,
+        kind: Literal["directory", "didit"] | str | NotGiven = NOT_GIVEN,
+        risk: Literal["LOW", "MEDIUM", "HIGH"] | str | NotGiven = NOT_GIVEN,
+        responsiveness: Literal["RESPONSIVE", "UNRESPONSIVE", "UNKNOWN"]
+        | str
+        | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
@@ -206,12 +338,18 @@ class TravelRule(SyncAPIResource):
     ) -> SyncPage[VaspDirectoryEntry]:
         """Search the VASP directory.
 
-        Paginated search across discoverable Didit customers with Travel Rule enabled, plus VASPs catalogued in the internal counterparty registry. Excludes your own application's profile.
+        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires.
 
         ``GET /v3/travel-rule/vasps/``
 
         Args:
-          search: Case-insensitive substring match on VASP name.
+          search: A name or alias fragment (case-insensitive), an exact LEI, or a domain (example.com or a URL on it). Didit network members match on their legal name, LEI or the domain of their compliance email.
+          network: Only directory entries a network's member directory currently lists.
+          jurisdiction: ISO 3166 alpha-2 or alpha-3 country code. 400 for anything else.
+          reachable: true: only VASPs your application has an available route to (Didit network members included). false: only directory entries it cannot reach today.
+          kind: Only directory entries, or only Didit network members.
+          risk: Only directory entries whose risk_level is this band. Didit network members, which are not scored, never match.
+          responsiveness: Only directory entries whose responsiveness.status is this value. Didit network members never match.
           limit
           offset
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -227,7 +365,324 @@ class TravelRule(SyncAPIResource):
                 cast_to=TravelRuleListVaspsResponse,
                 item_type=VaspDirectoryEntry,
                 auth="api_key",
-                query={"search": search, "limit": limit, "offset": offset},
+                query={
+                    "search": search,
+                    "network": network,
+                    "jurisdiction": jurisdiction,
+                    "reachable": reachable,
+                    "kind": kind,
+                    "risk": risk,
+                    "responsiveness": responsiveness,
+                    "limit": limit,
+                    "offset": offset,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retrieve_vasp(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> VaspDirectoryEntry:
+        """Get a VASP directory entry.
+
+        One directory entry or Didit network member by the id the search returned, with the same fields and the routes your application has to it.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "VaspDirectoryEntry",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/",
+                cast_to=VaspDirectoryEntry,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retrieve_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Get your decision on a VASP.
+
+        Your application's decision on a counterparty (a directory entry or a Didit network member): approved, restricted or blocked. An entity of a brand with no decision of its own follows the brand's decision, named in inherited_from. Private to your application.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def update_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        decision: Literal["APPROVED", "RESTRICTED", "BLOCKED"] | str,
+        reason: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Set your decision on a VASP.
+
+        Make or change your application's decision on a counterparty: APPROVED, RESTRICTED or BLOCKED, with an optional reason. It never changes the shared directory entry and acts only through your transaction rules (counterparty_dd_status). A decision on a brand also covers each of its entities that has no decision of its own.
+
+        ``PUT /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          decision
+          reason: Optional. Replaces the previous reason; omit it to clear it.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            self._client.request(
+                "put",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"decision": decision, "reason": reason},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def clear_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Clear your decision on a VASP.
+
+        Clear your application's own decision on a counterparty. The response shows the decision that applies afterwards: null, or for an entity of a brand the brand's decision, which the entity follows again.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retrieve_vasp_screening(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyScreeningStatus:
+        """Get a VASP's entity screening.
+
+        Whether counterparty screening is on for your application, what one screening costs your organization, how long a result stays fresh, and your latest sanctions and adverse-media screening of the counterparty. Reading it is free.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyScreeningStatus",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleCounterpartyScreeningStatus,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def screen_vasp(
+        self,
+        vasp_id: str,
+        *,
+        refresh: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyScreeningResult:
+        """Screen a VASP.
+
+        Screen the counterparty entity against sanctions and adverse media for your application. Opt-in: counterparty_screening_enabled must be on in your Travel Rule settings. Each new screening is billed at your organization's Company AML Screening price; a screening younger than 30 days is returned instead (200, not billed) unless you send refresh: true. One screening of a counterparty runs at a time per application. The result is private to your application. Sandbox applications are never screened.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          refresh: true screens again (and bills again) even when a fresh screening exists.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyScreeningResult",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleCounterpartyScreeningResult,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"refresh": refresh},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_vasp_questionnaires(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyQuestionnaireList:
+        """List due-diligence questionnaires with a VASP.
+
+        Every due-diligence questionnaire your application sent the counterparty, newest first, with its status and, once answered, the answers. Private to your application.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/questionnaires/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyQuestionnaireList",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/",
+                cast_to=TravelRuleCounterpartyQuestionnaireList,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def send_vasp_questionnaire(
+        self,
+        vasp_id: str,
+        *,
+        sent_to: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyQuestionnaire:
+        """Send a due-diligence questionnaire to a VASP.
+
+        Email Didit's standard due-diligence questionnaire to a compliance address on record for the counterparty, with a single-use answer link. The counterparty has 30 days to answer every question; the answers stay current for 365 days. A new send replaces your earlier unanswered questionnaire to the same counterparty, whose link stops working. One email per minute per address.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/questionnaires/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyQuestionnaire",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/",
+                cast_to=TravelRuleCounterpartyQuestionnaire,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"sent_to": sent_to},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -246,6 +701,8 @@ class TravelRule(SyncAPIResource):
         originator_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
         beneficiary_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
         originating_vasp: TravelRuleRegisterInboundParamsOriginatingVasp | NotGiven = NOT_GIVEN,
+        memo: str | NotGiven = NOT_GIVEN,
+        utxo: TravelRuleUtxo | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -253,19 +710,21 @@ class TravelRule(SyncAPIResource):
     ) -> TravelRuleInboundResponse:
         """Register an after-deposit (sunrise) inbound transfer.
 
-        Register Travel Rule data for a crypto deposit that already settled on-chain before any exchange took place. Creates an inbound travelRule transaction (or reuses an unclaimed deposit) and resolves the transfer against your wallet address book. A transaction.created webhook fires for newly-created transactions.
+        Register Travel Rule data for a crypto deposit that already settled on-chain before any exchange took place. Creates an inbound travelRule transaction (or reuses an unclaimed deposit) and resolves the transfer against your wallet address book. For a newly created transaction, Didit sends transaction.created first and the travel_rule.status.updated webhooks after it.
 
         ``POST /v3/travel-rule/inbound/``
 
         Args:
-          chain: Chain the deposit settled on, e.g. "ethereum".
+          chain: Chain the deposit settled on, for example `ETH`. Stored lowercase and compared case-insensitively with your wallet address book entries, so use the same chain token there.
           txid: On-chain transaction hash. Deduped together with wallet_address.
-          wallet_address: The destination wallet you received the deposit on.
-          amount: Deposit amount as a decimal string.
+          wallet_address: The destination wallet you received the deposit on. An XRP X-address is split into its classic address and tag.
+          amount: Deposit amount as a decimal string, zero or greater, with up to 18 decimal places.
           currency: Deposit asset, e.g. "USDC".
-          originator_data: IVMS-101 originator payload from the sending VASP, if known.
-          beneficiary_data: IVMS-101 beneficiary payload (your customer).
-          originating_vasp: Optional description of the sending VASP.
+          originator_data: Originator details from the sending VASP, if known, as a flat object such as `{"name": "..."}`. Didit reads name (or full_name), first_name, last_name and vendor_data from it.
+          beneficiary_data: Beneficiary details (your customer), as a flat object such as `{"name": "..."}`. Didit matches name against the holder_name of the matched address book entry, and sets wallet_address and chain from the request.
+          originating_vasp: Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry.
+          memo: Optional. The deposit's destination tag or memo on a memo network: on a shared deposit address it is what tells your customers apart, and the address-book entry for that memo is matched. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
+          utxo: Optional, UTXO chains only. The deposit transaction's inputs and outputs: the sender's wallet is the declared `originator_data.wallet_address`, else the largest input.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -287,6 +746,8 @@ class TravelRule(SyncAPIResource):
                     "originator_data": originator_data,
                     "beneficiary_data": beneficiary_data,
                     "originating_vasp": originating_vasp,
+                    "memo": memo,
+                    "utxo": utxo,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -298,11 +759,11 @@ class TravelRule(SyncAPIResource):
     def create_widget_session(
         self,
         *,
-        wallet_address: str,
-        chain: str,
+        wallet_address: str | NotGiven = NOT_GIVEN,
+        chain: str | NotGiven = NOT_GIVEN,
         holder_name: str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
-        transaction_id: str | NotGiven = NOT_GIVEN,
+        transaction_id: str | None | NotGiven = NOT_GIVEN,
         satoshi_deposit_address: str | NotGiven = NOT_GIVEN,
         callback_url: str | NotGiven = NOT_GIVEN,
         expires_in_minutes: int | NotGiven = NOT_GIVEN,
@@ -318,13 +779,13 @@ class TravelRule(SyncAPIResource):
         ``POST /v3/travel-rule/widget-session/``
 
         Args:
-          wallet_address: The wallet address to verify.
-          chain: Chain identifier for the address, e.g. "ethereum", "bitcoin", "solana".
+          wallet_address: The wallet address to verify. Optional; when empty, the address must be supplied when a proof is started.
+          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain.
           holder_name: Name of the wallet holder, used for the beneficiary name match.
           vendor_data: Your internal identifier for the holder, carried onto the created address-book entry.
           transaction_id: Optional. Didit transaction UUID of a Travel Rule transfer to advance when the proof verifies.
           satoshi_deposit_address: Optional. A deposit address you control; supplying it enables the SATOSHI_TEST proof method.
-          callback_url: Optional. Where the widget returns the customer after completion.
+          callback_url: Optional. Absolute http(s) URL where the widget returns the customer after completion.
           expires_in_minutes: Optional. Lifetime of the minted link, in minutes. Automatically extended to cover the Satoshi test window when SATOSHI_TEST is offered.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -359,16 +820,36 @@ class TravelRule(SyncAPIResource):
 class AsyncTravelRule(AsyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``create_widget_session``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``update_settings``.
+    Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``wallet_addresses``.
+    Nested resources: ``counterparty_contacts``, ``transfers``, ``wallet_addresses``, ``workspace``.
     """
+
+    @cached_property
+    def counterparty_contacts(self) -> AsyncTravelRuleCounterpartyContacts:
+        from didit.resources.travel_rule.counterparty_contacts import (
+            AsyncTravelRuleCounterpartyContacts,
+        )
+
+        return AsyncTravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def transfers(self) -> AsyncTravelRuleTransfers:
+        from didit.resources.travel_rule.transfers import AsyncTravelRuleTransfers
+
+        return AsyncTravelRuleTransfers(self._client)
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddresses:
         from didit.resources.travel_rule.wallet_addresses import AsyncTravelRuleWalletAddresses
 
         return AsyncTravelRuleWalletAddresses(self._client)
+
+    @cached_property
+    def workspace(self) -> AsyncTravelRuleWorkspace:
+        from didit.resources.travel_rule.workspace import AsyncTravelRuleWorkspace
+
+        return AsyncTravelRuleWorkspace(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncTravelRuleWithRawResponse:
@@ -421,7 +902,7 @@ class AsyncTravelRule(AsyncAPIResource):
         legal_name: str | NotGiven = NOT_GIVEN,
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
-        name_matching_strictness: Literal["NONE", "STRICT", "DEFAULT", "FUZZY"]
+        name_matching_strictness: Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"]
         | str
         | NotGiven = NOT_GIVEN,
         confirmation_timeout_hours: int | NotGiven = NOT_GIVEN,
@@ -429,11 +910,22 @@ class AsyncTravelRule(AsyncAPIResource):
         compliance_email: str | NotGiven = NOT_GIVEN,
         is_discoverable: bool | NotGiven = NOT_GIVEN,
         threshold_amount: str | NotGiven = NOT_GIVEN,
+        ownership_validation_mode: Literal["FULL", "SIMPLIFIED", "AUTOMATED"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        simplified_validation_threshold: str | NotGiven = NOT_GIVEN,
+        data_sharing_fields: TravelRuleDataSharingFieldsParam | NotGiven = NOT_GIVEN,
+        matching_rules: TravelRuleMatchingRulesParam | NotGiven = NOT_GIVEN,
         inbound_auto_accept: bool | NotGiven = NOT_GIVEN,
         allow_self_declaration: bool | NotGiven = NOT_GIVEN,
         allow_screenshot_proof: bool | NotGiven = NOT_GIVEN,
         auto_wallet_verification: bool | NotGiven = NOT_GIVEN,
         vasp_attribution_enabled: bool | NotGiven = NOT_GIVEN,
+        counterparty_screening_enabled: bool | NotGiven = NOT_GIVEN,
+        sunrise_policy: Literal["", "HOLD", "REJECT", "PROCEED"] | str | NotGiven = NOT_GIVEN,
+        non_responsive_policy: Literal["", "HOLD", "REJECT", "PROCEED"]
+        | str
+        | NotGiven = NOT_GIVEN,
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
@@ -452,17 +944,24 @@ class AsyncTravelRule(AsyncAPIResource):
           legal_name
           lei
           jurisdiction
-          name_matching_strictness
+          name_matching_strictness: `CONTAINS` accepts one name whose words all appear in the other.
           confirmation_timeout_hours
           timeout_outcome
-          compliance_email
-          is_discoverable
-          threshold_amount: Decimal string. Minimum transfer amount that triggers a managed exchange.
+          compliance_email: Compliance contact email for your VASP profile. The Didit network lists your profile only once this address is confirmed through an emailed link (POST /v3/travel-rule/settings/compliance-email/confirmation/); changing it needs a new confirmation.
+          is_discoverable: Whether your VASP profile can be listed in the Didit network: found in GET /v3/travel-rule/vasps/ by other Didit customers and reached on the INTERNAL rail. Listing also needs a live application, Travel Rule on, a legal name and a confirmed compliance email; didit_network says which are missing. Default true.
+          threshold_amount: Decimal string, zero or greater, in your application's default currency. Minimum transfer amount that triggers a managed exchange.
+          ownership_validation_mode: See the response field of the same name.
+          simplified_validation_threshold: Decimal string, 0 or more.
+          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR or FATF Recommendation 16), an empty list included, is refused with `400`.
+          matching_rules: Merged per entity type, and per field inside it. A field that entity type does not compare (for example `date_of_birth` for `company`) is refused with `400`.
           inbound_auto_accept
           allow_self_declaration
           allow_screenshot_proof: When true, the wallet-ownership widget offers screenshot upload as an ownership evidence method. Default true.
           auto_wallet_verification
           vasp_attribution_enabled
+          counterparty_screening_enabled: Opt-in sanctions and adverse-media screening of counterparty VASPs, billed per screening at the Company AML Screening price. When on, Didit screens the counterparty an outbound exchange reaches (reusing a screening younger than 30 days) and you can screen one with POST /v3/travel-rule/vasps/{vasp_id}/screening/. Default false: nothing is screened or billed.
+          sunrise_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
+          non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -487,13 +986,54 @@ class AsyncTravelRule(AsyncAPIResource):
                     "compliance_email": compliance_email,
                     "is_discoverable": is_discoverable,
                     "threshold_amount": threshold_amount,
+                    "ownership_validation_mode": ownership_validation_mode,
+                    "simplified_validation_threshold": simplified_validation_threshold,
+                    "data_sharing_fields": data_sharing_fields,
+                    "matching_rules": matching_rules,
                     "inbound_auto_accept": inbound_auto_accept,
                     "allow_self_declaration": allow_self_declaration,
                     "allow_screenshot_proof": allow_screenshot_proof,
                     "auto_wallet_verification": auto_wallet_verification,
                     "vasp_attribution_enabled": vasp_attribution_enabled,
+                    "counterparty_screening_enabled": counterparty_screening_enabled,
+                    "sunrise_policy": sunrise_policy,
+                    "non_responsive_policy": non_responsive_policy,
                     "disabled_networks": disabled_networks,
                 },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def send_compliance_email_confirmation(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleSendComplianceEmailConfirmationResponse:
+        """Send the compliance email confirmation.
+
+        Emails a single-use confirmation link to your VASP profile's compliance_email. Opening the link and pressing its confirm button confirms the address, which the Didit network needs before it lists your profile. A new request replaces the previous link; the link stops working when the compliance email changes. One email per minute per address.
+
+        ``POST /v3/travel-rule/settings/compliance-email/confirmation/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleSendComplianceEmailConfirmationResponse",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/settings/compliance-email/confirmation/",
+                cast_to=TravelRuleSendComplianceEmailConfirmationResponse,
+                auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -505,6 +1045,16 @@ class AsyncTravelRule(AsyncAPIResource):
         self,
         *,
         search: str | NotGiven = NOT_GIVEN,
+        network: Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA", "TRISA"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        jurisdiction: str | NotGiven = NOT_GIVEN,
+        reachable: bool | NotGiven = NOT_GIVEN,
+        kind: Literal["directory", "didit"] | str | NotGiven = NOT_GIVEN,
+        risk: Literal["LOW", "MEDIUM", "HIGH"] | str | NotGiven = NOT_GIVEN,
+        responsiveness: Literal["RESPONSIVE", "UNRESPONSIVE", "UNKNOWN"]
+        | str
+        | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
@@ -514,12 +1064,18 @@ class AsyncTravelRule(AsyncAPIResource):
     ) -> AsyncPaginator[VaspDirectoryEntry]:
         """Search the VASP directory.
 
-        Paginated search across discoverable Didit customers with Travel Rule enabled, plus VASPs catalogued in the internal counterparty registry. Excludes your own application's profile.
+        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires.
 
         ``GET /v3/travel-rule/vasps/``
 
         Args:
-          search: Case-insensitive substring match on VASP name.
+          search: A name or alias fragment (case-insensitive), an exact LEI, or a domain (example.com or a URL on it). Didit network members match on their legal name, LEI or the domain of their compliance email.
+          network: Only directory entries a network's member directory currently lists.
+          jurisdiction: ISO 3166 alpha-2 or alpha-3 country code. 400 for anything else.
+          reachable: true: only VASPs your application has an available route to (Didit network members included). false: only directory entries it cannot reach today.
+          kind: Only directory entries, or only Didit network members.
+          risk: Only directory entries whose risk_level is this band. Didit network members, which are not scored, never match.
+          responsiveness: Only directory entries whose responsiveness.status is this value. Didit network members never match.
           limit
           offset
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -535,7 +1091,324 @@ class AsyncTravelRule(AsyncAPIResource):
                 cast_to=TravelRuleListVaspsResponse,
                 item_type=VaspDirectoryEntry,
                 auth="api_key",
-                query={"search": search, "limit": limit, "offset": offset},
+                query={
+                    "search": search,
+                    "network": network,
+                    "jurisdiction": jurisdiction,
+                    "reachable": reachable,
+                    "kind": kind,
+                    "risk": risk,
+                    "responsiveness": responsiveness,
+                    "limit": limit,
+                    "offset": offset,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retrieve_vasp(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> VaspDirectoryEntry:
+        """Get a VASP directory entry.
+
+        One directory entry or Didit network member by the id the search returned, with the same fields and the routes your application has to it.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "VaspDirectoryEntry",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/",
+                cast_to=VaspDirectoryEntry,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retrieve_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Get your decision on a VASP.
+
+        Your application's decision on a counterparty (a directory entry or a Didit network member): approved, restricted or blocked. An entity of a brand with no decision of its own follows the brand's decision, named in inherited_from. Private to your application.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def update_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        decision: Literal["APPROVED", "RESTRICTED", "BLOCKED"] | str,
+        reason: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Set your decision on a VASP.
+
+        Make or change your application's decision on a counterparty: APPROVED, RESTRICTED or BLOCKED, with an optional reason. It never changes the shared directory entry and acts only through your transaction rules (counterparty_dd_status). A decision on a brand also covers each of its entities that has no decision of its own.
+
+        ``PUT /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          decision
+          reason: Optional. Replaces the previous reason; omit it to clear it.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            await self._client.request(
+                "put",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"decision": decision, "reason": reason},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def clear_vasp_decision(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyDecisionResponse:
+        """Clear your decision on a VASP.
+
+        Clear your application's own decision on a counterparty. The response shows the decision that applies afterwards: null, or for an entity of a brand the brand's decision, which the entity follows again.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/decision/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyDecisionResponse",
+            await self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/decision/",
+                cast_to=TravelRuleCounterpartyDecisionResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retrieve_vasp_screening(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyScreeningStatus:
+        """Get a VASP's entity screening.
+
+        Whether counterparty screening is on for your application, what one screening costs your organization, how long a result stays fresh, and your latest sanctions and adverse-media screening of the counterparty. Reading it is free.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyScreeningStatus",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleCounterpartyScreeningStatus,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def screen_vasp(
+        self,
+        vasp_id: str,
+        *,
+        refresh: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyScreeningResult:
+        """Screen a VASP.
+
+        Screen the counterparty entity against sanctions and adverse media for your application. Opt-in: counterparty_screening_enabled must be on in your Travel Rule settings. Each new screening is billed at your organization's Company AML Screening price; a screening younger than 30 days is returned instead (200, not billed) unless you send refresh: true. One screening of a counterparty runs at a time per application. The result is private to your application. Sandbox applications are never screened.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          refresh: true screens again (and bills again) even when a fresh screening exists.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyScreeningResult",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleCounterpartyScreeningResult,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"refresh": refresh},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_vasp_questionnaires(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyQuestionnaireList:
+        """List due-diligence questionnaires with a VASP.
+
+        Every due-diligence questionnaire your application sent the counterparty, newest first, with its status and, once answered, the answers. Private to your application.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/questionnaires/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyQuestionnaireList",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/",
+                cast_to=TravelRuleCounterpartyQuestionnaireList,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def send_vasp_questionnaire(
+        self,
+        vasp_id: str,
+        *,
+        sent_to: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyQuestionnaire:
+        """Send a due-diligence questionnaire to a VASP.
+
+        Email Didit's standard due-diligence questionnaire to a compliance address on record for the counterparty, with a single-use answer link. The counterparty has 30 days to answer every question; the answers stay current for 365 days. A new send replaces your earlier unanswered questionnaire to the same counterparty, whose link stops working. One email per minute per address.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/questionnaires/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyQuestionnaire",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/",
+                cast_to=TravelRuleCounterpartyQuestionnaire,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"sent_to": sent_to},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -554,6 +1427,8 @@ class AsyncTravelRule(AsyncAPIResource):
         originator_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
         beneficiary_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
         originating_vasp: TravelRuleRegisterInboundParamsOriginatingVasp | NotGiven = NOT_GIVEN,
+        memo: str | NotGiven = NOT_GIVEN,
+        utxo: TravelRuleUtxo | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -561,19 +1436,21 @@ class AsyncTravelRule(AsyncAPIResource):
     ) -> TravelRuleInboundResponse:
         """Register an after-deposit (sunrise) inbound transfer.
 
-        Register Travel Rule data for a crypto deposit that already settled on-chain before any exchange took place. Creates an inbound travelRule transaction (or reuses an unclaimed deposit) and resolves the transfer against your wallet address book. A transaction.created webhook fires for newly-created transactions.
+        Register Travel Rule data for a crypto deposit that already settled on-chain before any exchange took place. Creates an inbound travelRule transaction (or reuses an unclaimed deposit) and resolves the transfer against your wallet address book. For a newly created transaction, Didit sends transaction.created first and the travel_rule.status.updated webhooks after it.
 
         ``POST /v3/travel-rule/inbound/``
 
         Args:
-          chain: Chain the deposit settled on, e.g. "ethereum".
+          chain: Chain the deposit settled on, for example `ETH`. Stored lowercase and compared case-insensitively with your wallet address book entries, so use the same chain token there.
           txid: On-chain transaction hash. Deduped together with wallet_address.
-          wallet_address: The destination wallet you received the deposit on.
-          amount: Deposit amount as a decimal string.
+          wallet_address: The destination wallet you received the deposit on. An XRP X-address is split into its classic address and tag.
+          amount: Deposit amount as a decimal string, zero or greater, with up to 18 decimal places.
           currency: Deposit asset, e.g. "USDC".
-          originator_data: IVMS-101 originator payload from the sending VASP, if known.
-          beneficiary_data: IVMS-101 beneficiary payload (your customer).
-          originating_vasp: Optional description of the sending VASP.
+          originator_data: Originator details from the sending VASP, if known, as a flat object such as `{"name": "..."}`. Didit reads name (or full_name), first_name, last_name and vendor_data from it.
+          beneficiary_data: Beneficiary details (your customer), as a flat object such as `{"name": "..."}`. Didit matches name against the holder_name of the matched address book entry, and sets wallet_address and chain from the request.
+          originating_vasp: Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry.
+          memo: Optional. The deposit's destination tag or memo on a memo network: on a shared deposit address it is what tells your customers apart, and the address-book entry for that memo is matched. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
+          utxo: Optional, UTXO chains only. The deposit transaction's inputs and outputs: the sender's wallet is the declared `originator_data.wallet_address`, else the largest input.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -595,6 +1472,8 @@ class AsyncTravelRule(AsyncAPIResource):
                     "originator_data": originator_data,
                     "beneficiary_data": beneficiary_data,
                     "originating_vasp": originating_vasp,
+                    "memo": memo,
+                    "utxo": utxo,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -606,11 +1485,11 @@ class AsyncTravelRule(AsyncAPIResource):
     async def create_widget_session(
         self,
         *,
-        wallet_address: str,
-        chain: str,
+        wallet_address: str | NotGiven = NOT_GIVEN,
+        chain: str | NotGiven = NOT_GIVEN,
         holder_name: str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
-        transaction_id: str | NotGiven = NOT_GIVEN,
+        transaction_id: str | None | NotGiven = NOT_GIVEN,
         satoshi_deposit_address: str | NotGiven = NOT_GIVEN,
         callback_url: str | NotGiven = NOT_GIVEN,
         expires_in_minutes: int | NotGiven = NOT_GIVEN,
@@ -626,13 +1505,13 @@ class AsyncTravelRule(AsyncAPIResource):
         ``POST /v3/travel-rule/widget-session/``
 
         Args:
-          wallet_address: The wallet address to verify.
-          chain: Chain identifier for the address, e.g. "ethereum", "bitcoin", "solana".
+          wallet_address: The wallet address to verify. Optional; when empty, the address must be supplied when a proof is started.
+          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain.
           holder_name: Name of the wallet holder, used for the beneficiary name match.
           vendor_data: Your internal identifier for the holder, carried onto the created address-book entry.
           transaction_id: Optional. Didit transaction UUID of a Travel Rule transfer to advance when the proof verifies.
           satoshi_deposit_address: Optional. A deposit address you control; supplying it enables the SATOSHI_TEST proof method.
-          callback_url: Optional. Where the widget returns the customer after completion.
+          callback_url: Optional. Absolute http(s) URL where the widget returns the customer after completion.
           expires_in_minutes: Optional. Lifetime of the minted link, in minutes. Automatically extended to cover the Satoshi test window when SATOSHI_TEST is offered.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -669,9 +1548,34 @@ class TravelRuleWithRawResponse:
         self._resource = resource
         self.retrieve_settings = to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_raw_response_wrapper(resource.update_settings)
+        self.send_compliance_email_confirmation = to_raw_response_wrapper(
+            resource.send_compliance_email_confirmation
+        )
         self.list_vasps = to_raw_response_wrapper(resource.list_vasps)
+        self.retrieve_vasp = to_raw_response_wrapper(resource.retrieve_vasp)
+        self.retrieve_vasp_decision = to_raw_response_wrapper(resource.retrieve_vasp_decision)
+        self.update_vasp_decision = to_raw_response_wrapper(resource.update_vasp_decision)
+        self.clear_vasp_decision = to_raw_response_wrapper(resource.clear_vasp_decision)
+        self.retrieve_vasp_screening = to_raw_response_wrapper(resource.retrieve_vasp_screening)
+        self.screen_vasp = to_raw_response_wrapper(resource.screen_vasp)
+        self.list_vasp_questionnaires = to_raw_response_wrapper(resource.list_vasp_questionnaires)
+        self.send_vasp_questionnaire = to_raw_response_wrapper(resource.send_vasp_questionnaire)
         self.register_inbound = to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_raw_response_wrapper(resource.create_widget_session)
+
+    @cached_property
+    def counterparty_contacts(self) -> TravelRuleCounterpartyContactsWithRawResponse:
+        from didit.resources.travel_rule.counterparty_contacts import (
+            TravelRuleCounterpartyContactsWithRawResponse,
+        )
+
+        return TravelRuleCounterpartyContactsWithRawResponse(self._resource.counterparty_contacts)
+
+    @cached_property
+    def transfers(self) -> TravelRuleTransfersWithRawResponse:
+        from didit.resources.travel_rule.transfers import TravelRuleTransfersWithRawResponse
+
+        return TravelRuleTransfersWithRawResponse(self._resource.transfers)
 
     @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddressesWithRawResponse:
@@ -681,15 +1585,54 @@ class TravelRuleWithRawResponse:
 
         return TravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
 
+    @cached_property
+    def workspace(self) -> TravelRuleWorkspaceWithRawResponse:
+        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceWithRawResponse
+
+        return TravelRuleWorkspaceWithRawResponse(self._resource.workspace)
+
 
 class AsyncTravelRuleWithRawResponse:
     def __init__(self, resource: AsyncTravelRule) -> None:
         self._resource = resource
         self.retrieve_settings = async_to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_raw_response_wrapper(resource.update_settings)
+        self.send_compliance_email_confirmation = async_to_raw_response_wrapper(
+            resource.send_compliance_email_confirmation
+        )
         self.list_vasps = async_to_raw_response_wrapper(resource.list_vasps)
+        self.retrieve_vasp = async_to_raw_response_wrapper(resource.retrieve_vasp)
+        self.retrieve_vasp_decision = async_to_raw_response_wrapper(resource.retrieve_vasp_decision)
+        self.update_vasp_decision = async_to_raw_response_wrapper(resource.update_vasp_decision)
+        self.clear_vasp_decision = async_to_raw_response_wrapper(resource.clear_vasp_decision)
+        self.retrieve_vasp_screening = async_to_raw_response_wrapper(
+            resource.retrieve_vasp_screening
+        )
+        self.screen_vasp = async_to_raw_response_wrapper(resource.screen_vasp)
+        self.list_vasp_questionnaires = async_to_raw_response_wrapper(
+            resource.list_vasp_questionnaires
+        )
+        self.send_vasp_questionnaire = async_to_raw_response_wrapper(
+            resource.send_vasp_questionnaire
+        )
         self.register_inbound = async_to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = async_to_raw_response_wrapper(resource.create_widget_session)
+
+    @cached_property
+    def counterparty_contacts(self) -> AsyncTravelRuleCounterpartyContactsWithRawResponse:
+        from didit.resources.travel_rule.counterparty_contacts import (
+            AsyncTravelRuleCounterpartyContactsWithRawResponse,
+        )
+
+        return AsyncTravelRuleCounterpartyContactsWithRawResponse(
+            self._resource.counterparty_contacts
+        )
+
+    @cached_property
+    def transfers(self) -> AsyncTravelRuleTransfersWithRawResponse:
+        from didit.resources.travel_rule.transfers import AsyncTravelRuleTransfersWithRawResponse
+
+        return AsyncTravelRuleTransfersWithRawResponse(self._resource.transfers)
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddressesWithRawResponse:
@@ -699,15 +1642,54 @@ class AsyncTravelRuleWithRawResponse:
 
         return AsyncTravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
 
+    @cached_property
+    def workspace(self) -> AsyncTravelRuleWorkspaceWithRawResponse:
+        from didit.resources.travel_rule.workspace import AsyncTravelRuleWorkspaceWithRawResponse
+
+        return AsyncTravelRuleWorkspaceWithRawResponse(self._resource.workspace)
+
 
 class TravelRuleWithStreamingResponse:
     def __init__(self, resource: TravelRule) -> None:
         self._resource = resource
         self.retrieve_settings = to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_streamed_response_wrapper(resource.update_settings)
+        self.send_compliance_email_confirmation = to_streamed_response_wrapper(
+            resource.send_compliance_email_confirmation
+        )
         self.list_vasps = to_streamed_response_wrapper(resource.list_vasps)
+        self.retrieve_vasp = to_streamed_response_wrapper(resource.retrieve_vasp)
+        self.retrieve_vasp_decision = to_streamed_response_wrapper(resource.retrieve_vasp_decision)
+        self.update_vasp_decision = to_streamed_response_wrapper(resource.update_vasp_decision)
+        self.clear_vasp_decision = to_streamed_response_wrapper(resource.clear_vasp_decision)
+        self.retrieve_vasp_screening = to_streamed_response_wrapper(
+            resource.retrieve_vasp_screening
+        )
+        self.screen_vasp = to_streamed_response_wrapper(resource.screen_vasp)
+        self.list_vasp_questionnaires = to_streamed_response_wrapper(
+            resource.list_vasp_questionnaires
+        )
+        self.send_vasp_questionnaire = to_streamed_response_wrapper(
+            resource.send_vasp_questionnaire
+        )
         self.register_inbound = to_streamed_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_streamed_response_wrapper(resource.create_widget_session)
+
+    @cached_property
+    def counterparty_contacts(self) -> TravelRuleCounterpartyContactsWithStreamingResponse:
+        from didit.resources.travel_rule.counterparty_contacts import (
+            TravelRuleCounterpartyContactsWithStreamingResponse,
+        )
+
+        return TravelRuleCounterpartyContactsWithStreamingResponse(
+            self._resource.counterparty_contacts
+        )
+
+    @cached_property
+    def transfers(self) -> TravelRuleTransfersWithStreamingResponse:
+        from didit.resources.travel_rule.transfers import TravelRuleTransfersWithStreamingResponse
+
+        return TravelRuleTransfersWithStreamingResponse(self._resource.transfers)
 
     @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddressesWithStreamingResponse:
@@ -717,17 +1699,62 @@ class TravelRuleWithStreamingResponse:
 
         return TravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
 
+    @cached_property
+    def workspace(self) -> TravelRuleWorkspaceWithStreamingResponse:
+        from didit.resources.travel_rule.workspace import TravelRuleWorkspaceWithStreamingResponse
+
+        return TravelRuleWorkspaceWithStreamingResponse(self._resource.workspace)
+
 
 class AsyncTravelRuleWithStreamingResponse:
     def __init__(self, resource: AsyncTravelRule) -> None:
         self._resource = resource
         self.retrieve_settings = async_to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_streamed_response_wrapper(resource.update_settings)
+        self.send_compliance_email_confirmation = async_to_streamed_response_wrapper(
+            resource.send_compliance_email_confirmation
+        )
         self.list_vasps = async_to_streamed_response_wrapper(resource.list_vasps)
+        self.retrieve_vasp = async_to_streamed_response_wrapper(resource.retrieve_vasp)
+        self.retrieve_vasp_decision = async_to_streamed_response_wrapper(
+            resource.retrieve_vasp_decision
+        )
+        self.update_vasp_decision = async_to_streamed_response_wrapper(
+            resource.update_vasp_decision
+        )
+        self.clear_vasp_decision = async_to_streamed_response_wrapper(resource.clear_vasp_decision)
+        self.retrieve_vasp_screening = async_to_streamed_response_wrapper(
+            resource.retrieve_vasp_screening
+        )
+        self.screen_vasp = async_to_streamed_response_wrapper(resource.screen_vasp)
+        self.list_vasp_questionnaires = async_to_streamed_response_wrapper(
+            resource.list_vasp_questionnaires
+        )
+        self.send_vasp_questionnaire = async_to_streamed_response_wrapper(
+            resource.send_vasp_questionnaire
+        )
         self.register_inbound = async_to_streamed_response_wrapper(resource.register_inbound)
         self.create_widget_session = async_to_streamed_response_wrapper(
             resource.create_widget_session
         )
+
+    @cached_property
+    def counterparty_contacts(self) -> AsyncTravelRuleCounterpartyContactsWithStreamingResponse:
+        from didit.resources.travel_rule.counterparty_contacts import (
+            AsyncTravelRuleCounterpartyContactsWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleCounterpartyContactsWithStreamingResponse(
+            self._resource.counterparty_contacts
+        )
+
+    @cached_property
+    def transfers(self) -> AsyncTravelRuleTransfersWithStreamingResponse:
+        from didit.resources.travel_rule.transfers import (
+            AsyncTravelRuleTransfersWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleTransfersWithStreamingResponse(self._resource.transfers)
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddressesWithStreamingResponse:
@@ -736,3 +1763,11 @@ class AsyncTravelRuleWithStreamingResponse:
         )
 
         return AsyncTravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
+
+    @cached_property
+    def workspace(self) -> AsyncTravelRuleWorkspaceWithStreamingResponse:
+        from didit.resources.travel_rule.workspace import (
+            AsyncTravelRuleWorkspaceWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleWorkspaceWithStreamingResponse(self._resource.workspace)

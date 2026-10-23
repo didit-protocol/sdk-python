@@ -3,9 +3,7 @@
 
 from __future__ import annotations
 
-from didit.types.business_sessions.list_networks_response import (
-    BusinessSessionsListNetworksResponse,
-)
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 from tests.harness import Expect, check_operation
 
 
@@ -22,13 +20,13 @@ def test_business_sessions_list_networks() -> None:
                 "results": [
                     {
                         "network": {
-                            "uuid": "00000000-0000-4000-8000-000000000007",
+                            "uuid": "00000000-0000-4000-8000-000000000008",
                             "network_id": "sample",
                             "name": "sample",
                             "status": "active",
-                            "risk": {},
-                            "pattern_types": ["exact_same_device"],
-                            "signal_types": ["ip_address"],
+                            "risk": None,
+                            "pattern_types": [],
+                            "signal_types": [],
                             "member_counts": {},
                             "member_status": {},
                             "signal_coverage": {},
@@ -43,10 +41,10 @@ def test_business_sessions_list_networks() -> None:
                     }
                 ]
             },
-            strict_type=BusinessSessionsListNetworksResponse,
+            strict_type=EntityNetworkMembershipList,
         ),
         lambda c: c.business_sessions.list_networks("00000000-0000-4000-8000-000000000001"),
         lambda c: c.business_sessions.list_networks("00000000-0000-4000-8000-000000000001"),
-        lambda r: isinstance(r, BusinessSessionsListNetworksResponse),
-        lambda r: isinstance(r, BusinessSessionsListNetworksResponse),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
+        lambda r: isinstance(r, EntityNetworkMembershipList),
     )

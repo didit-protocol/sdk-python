@@ -11,3 +11,6 @@ __all__ = ["BusinessesUpdateStatusParams"]
 class BusinessesUpdateStatusParams(TypedDict, total=False):
     status: Required[Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str]
     """New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist."""
+
+    reason: str | None
+    """Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it."""

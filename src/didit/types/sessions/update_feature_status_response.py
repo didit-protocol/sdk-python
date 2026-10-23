@@ -2,16 +2,22 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.feature_status_override import FeatureStatusOverride
 
 __all__ = ["SessionsUpdateFeatureStatusResponse"]
 
 
 class SessionsUpdateFeatureStatusResponse(BaseModel):
-    session_id: str | None = None
+    session_id: str
 
-    node_id: str | None = None
+    node_id: str | None
+    """The updated step's workflow node, or `null` for a step without a node (the `default` path in a non-graph workflow)."""
 
-    feature_type: str | None = None
+    feature_type: str
     """Model name of the updated feature (e.g. `KYC`, `Face`, `FaceMatch`, `AML`, `POA`)."""
 
-    new_status: str | None = None
+    new_status: str
+    """The check's stored status: the requested one once the override applied, the unchanged one while the override waits for the flow to finish."""
+
+    override: FeatureStatusOverride
+    """One override of a check (feature) status made with `PATCH /v3/session/{sessionId}/features/{nodeId}/update-status/`: what it changes, whether it applied or still waits for the person to finish the flow, who asked and why."""

@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Literal, Sequence
+from typing import Literal, Mapping, Sequence
 
 from typing_extensions import Required, TypedDict
+
+from didit.types.components.session_sign_document import SessionSignDocument
 
 __all__ = [
     "SessionsCreateParams",
     "SessionsCreateParamsContactDetails",
     "SessionsCreateParamsExpectedDetails",
+    "SessionsCreateParamsSign",
 ]
 
 
@@ -136,6 +139,15 @@ class SessionsCreateParamsExpectedDetails(TypedDict, total=False):
     """Expected registration number of the business in the company registry. For example, `00445790`. Pre-fills the registration-number field of the registry search in Business Verification (KYB) workflows; when `company_name` is also provided, the registry lookup combines both identifiers. Ignored for KYC workflows."""
 
 
+class SessionsCreateParamsSign(TypedDict, total=False):
+    """Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents)."""
+
+    documents: Sequence[SessionSignDocument]
+
+    field_values: Mapping[str, str | bool]
+    """Values keyed by the `<key>` of each `api.<key>` pre-fill source: strings of 1 to 500 characters for `text` and `data` fields, booleans for a `checkbox`. `400` with `field_value_unknown` for a key no field uses, `field_value_missing` for a required field without its value, and `field_value_invalid` for a value that fails its field's validation."""
+
+
 class SessionsCreateParams(TypedDict, total=False):
     workflow_id: Required[str]
     """Stable identifier of the workflow that defines which verification steps the session will run. Workflows are created and managed in the [Workflows](/console/workflows) page of the Console. The `workflow_id` also implicitly selects whether the session is KYC or KYB."""
@@ -144,7 +156,7 @@ class SessionsCreateParams(TypedDict, total=False):
     """A unique identifier for the user being verified, such as a UUID, email, or internal user ID. This field is used for: (1) **User grouping** - sessions with the same vendor_data are linked to the same user profile in the Users tab. (2) **Cross-session duplicate detection** - when checking for duplicated faces, documents, phone numbers, emails, IP addresses, or device fingerprints, sessions with the same vendor_data are treated as the same user and excluded from matches. Without vendor_data, every session is treated as a unique user and all potential duplicates are surfaced. We strongly recommend always providing a vendor_data to reduce noise in duplicate detection."""
 
     callback: str
-    """URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used."""
+    """URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted."""
 
     callback_method: Literal["initiator", "completer", "both"] | str
     """Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`."""
@@ -224,3 +236,6 @@ class SessionsCreateParams(TypedDict, total=False):
 
     sandbox_scenario: str
     """Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged."""
+
+    sign: SessionsCreateParamsSign
+    """Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents)."""

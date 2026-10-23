@@ -23,6 +23,8 @@ class CaseEvent(BaseModel):
             "LINK_ADDED",
             "LINK_REMOVED",
             "NOTE_ADDED",
+            "NOTE_PINNED",
+            "NOTE_UNPINNED",
             "PRIORITY_CHANGED",
             "DUE_DATE_CHANGED",
             "TAG_ADDED",
@@ -37,6 +39,11 @@ class CaseEvent(BaseModel):
             "APPROVAL_REJECTED",
             "ENTITY_ACTION",
             "APPROVAL_INVALIDATED",
+            "CUSTOMER_REQUEST",
+            "STAGE_CHANGED",
+            "TEAM_CHANGED",
+            "CHECKER_ASSIGNED",
+            "CHECKER_UNASSIGNED",
         ]
         | str
         | None

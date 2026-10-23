@@ -11,7 +11,7 @@ __all__ = ["UsersCreateParams"]
 
 class UsersCreateParams(TypedDict, total=False):
     vendor_data: Required[str]
-    """Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among non-deleted users for the application; matched exactly as sent."""
+    """Your unique identifier for this user (free-form string, NOT a UUID). Must be unique among the application's users; matched exactly as sent."""
 
     full_name: str | None
     """Full legal name of the user."""
@@ -36,3 +36,27 @@ class UsersCreateParams(TypedDict, total=False):
 
     issuing_states: Sequence[str]
     """Pre-recorded issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`."""
+
+    first_name: str
+    """Given name. When `full_name` is not sent, Didit joins `first_name` and `last_name` with a space into `full_name`. Not returned as a separate field."""
+
+    last_name: str
+    """Family name. Joined with `first_name` into `full_name` when `full_name` is not sent. Not returned as a separate field."""
+
+    email: str
+    """Contact email, stored in `metadata.contact.email` (it replaces an `email` you send inside `metadata.contact`). Required when `send_verification_link` is `true`: the link is sent to this address. If `metadata.contact` is not a JSON object, the call answers `400` on this field."""
+
+    phone_number: str
+    """Contact phone number, stored in `metadata.contact.phone_number`. If `metadata.contact` is not a JSON object, the call answers `400` on this field."""
+
+    country: str
+    """Country as an ISO 3166 code, alpha-2 or alpha-3 (`ES` or `ESP`). Stored uppercased in `metadata.address.country`. If `metadata.address` is not a JSON object, the call answers `400` on this field."""
+
+    send_verification_link: bool
+    """When `true`, Didit creates a verification session for the person on `workflow_id` and emails them the link at `email`. Requires `email` and `workflow_id`. A scoped API key also needs `sessions` write."""
+
+    workflow_id: str
+    """The workflow of the verification session. Required when `send_verification_link` is `true`. It must verify a person: a Business Verification (KYB) workflow is refused. Ignored otherwise."""
+
+    language: str
+    """Language of the verification email, as a [supported language](/integration/supported-languages) code. English when omitted. Ignored when `send_verification_link` is not `true`."""

@@ -5,41 +5,50 @@ from typing import Mapping
 
 from typing_extensions import Required, TypedDict
 
+from didit.types.components.travel_rule_utxo import TravelRuleUtxo
+
 __all__ = ["TravelRuleRegisterInboundParams", "TravelRuleRegisterInboundParamsOriginatingVasp"]
 
 
 class TravelRuleRegisterInboundParamsOriginatingVasp(TypedDict, total=False):
-    """Optional description of the sending VASP."""
+    """Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry."""
 
     name: str
 
     lei: str
+    """Optional. A valid 20-character ISO 17442 LEI, or empty."""
 
     travel_address: str
-    """Travel address that lets Didit reach the sender on the TRP rail."""
+    """The sender's travel address, recorded on this transfer."""
 
 
 class TravelRuleRegisterInboundParams(TypedDict, total=False):
     chain: Required[str]
-    """Chain the deposit settled on, e.g. "ethereum"."""
+    """Chain the deposit settled on, for example `ETH`. Stored lowercase and compared case-insensitively with your wallet address book entries, so use the same chain token there."""
 
     txid: Required[str]
     """On-chain transaction hash. Deduped together with wallet_address."""
 
     wallet_address: Required[str]
-    """The destination wallet you received the deposit on."""
+    """The destination wallet you received the deposit on. An XRP X-address is split into its classic address and tag."""
 
     amount: Required[str]
-    """Deposit amount as a decimal string."""
+    """Deposit amount as a decimal string, zero or greater, with up to 18 decimal places."""
 
     currency: Required[str]
     """Deposit asset, e.g. "USDC"."""
 
     originator_data: Mapping[str, object]
-    """IVMS-101 originator payload from the sending VASP, if known."""
+    """Originator details from the sending VASP, if known, as a flat object such as `{"name": "..."}`. Didit reads name (or full_name), first_name, last_name and vendor_data from it."""
 
     beneficiary_data: Mapping[str, object]
-    """IVMS-101 beneficiary payload (your customer)."""
+    """Beneficiary details (your customer), as a flat object such as `{"name": "..."}`. Didit matches name against the holder_name of the matched address book entry, and sets wallet_address and chain from the request."""
 
     originating_vasp: TravelRuleRegisterInboundParamsOriginatingVasp
-    """Optional description of the sending VASP."""
+    """Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry."""
+
+    memo: str
+    """Optional. The deposit's destination tag or memo on a memo network: on a shared deposit address it is what tells your customers apart, and the address-book entry for that memo is matched. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`."""
+
+    utxo: TravelRuleUtxo
+    """Optional, UTXO chains only. The deposit transaction's inputs and outputs: the sender's wallet is the declared `originator_data.wallet_address`, else the largest input."""

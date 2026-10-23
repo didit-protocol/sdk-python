@@ -17,35 +17,55 @@ from didit._response import (
     to_raw_response_wrapper,
     to_streamed_response_wrapper,
 )
-from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.sessions.batch_delete_response import (
-    SessionsBatchDeleteResponse,
-    SessionsBatchDeleteResponse202,
-)
+from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
+from didit.types.components.aml_screening_run import AMLScreeningRun
+from didit.types.components.business_session_list_item import BusinessSessionListItem
+from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
+from didit.types.components.feature_status_override import FeatureStatusOverride
+from didit.types.components.kyb_key_people_party import KYBKeyPeopleParty
+from didit.types.components.sandbox_simulate_response import SandboxSimulateResponse
+from didit.types.components.session_decision import SessionDecision
+from didit.types.components.session_deletion_job import SessionDeletionJob
+from didit.types.components.session_event import SessionEvent
+from didit.types.components.user_session_list_item import UserSessionListItem
+from didit.types.sessions.add_images_response import SessionsAddImagesResponse
+from didit.types.sessions.batch_delete_response import SessionsBatchDeleteResponse
 from didit.types.sessions.bulk_update_aml_hit_status_params import (
     SessionsBulkUpdateAmlHitStatusParamsHitUpdates,
+)
+from didit.types.sessions.bulk_update_aml_hit_status_response import (
+    SessionsBulkUpdateAmlHitStatusResponse,
 )
 from didit.types.sessions.create_params import (
     SessionsCreateParamsContactDetails,
     SessionsCreateParamsExpectedDetails,
+    SessionsCreateParamsSign,
 )
 from didit.types.sessions.create_response import SessionsCreateResponse
 from didit.types.sessions.delete_response import SessionsDeleteResponse
-from didit.types.sessions.list_networks_response import SessionsListNetworksResponse
-from didit.types.sessions.list_response import (
-    SessionsListResponse,
-    SessionsListResponseResultsKybSessionRowSessionKindBusiness,
-    SessionsListResponseResultsKycSessionRowSessionKindUser,
+from didit.types.sessions.list_aml_screening_history_response import (
+    SessionsListAmlScreeningHistoryResponse,
+)
+from didit.types.sessions.list_events_response import SessionsListEventsResponse
+from didit.types.sessions.list_feature_overrides_response import (
+    SessionsListFeatureOverridesResponse,
+)
+from didit.types.sessions.list_response import SessionsListResponse
+from didit.types.sessions.preview_decision_email_response import (
+    SessionsPreviewDecisionEmailResponse,
 )
 from didit.types.sessions.preview_resubmission_params import (
     SessionsPreviewResubmissionParamsNodesToResubmit,
 )
 from didit.types.sessions.preview_resubmission_response import SessionsPreviewResubmissionResponse
-from didit.types.sessions.retrieve_decision_response import SessionsRetrieveDecisionResponse
-from didit.types.sessions.retrieve_deletion_job_response import SessionsRetrieveDeletionJobResponse
 from didit.types.sessions.share_response import SessionsShareResponse
+from didit.types.sessions.update_aml_hit_status_response import SessionsUpdateAmlHitStatusResponse
+from didit.types.sessions.update_aml_status_response import SessionsUpdateAmlStatusResponse
 from didit.types.sessions.update_data_params import SessionsUpdateDataParamsParsedAddress
 from didit.types.sessions.update_data_response import SessionsUpdateDataResponse
+from didit.types.sessions.update_document_ai_data_response import (
+    SessionsUpdateDocumentAiDataResponse,
+)
 from didit.types.sessions.update_feature_status_response import SessionsUpdateFeatureStatusResponse
 from didit.types.sessions.update_kyb_company_data_response import (
     SessionsUpdateKybCompanyDataResponse,
@@ -73,6 +93,22 @@ if TYPE_CHECKING:
         SessionsReviewsWithRawResponse,
         SessionsReviewsWithStreamingResponse,
     )
+    from didit.resources.sessions.signatures import (
+        AsyncSessionsSignatures,
+        AsyncSessionsSignaturesWithRawResponse,
+        AsyncSessionsSignaturesWithStreamingResponse,
+        SessionsSignatures,
+        SessionsSignaturesWithRawResponse,
+        SessionsSignaturesWithStreamingResponse,
+    )
+    from didit.resources.sessions.webhooks import (
+        AsyncSessionsWebhooks,
+        AsyncSessionsWebhooksWithRawResponse,
+        AsyncSessionsWebhooksWithStreamingResponse,
+        SessionsWebhooks,
+        SessionsWebhooksWithRawResponse,
+        SessionsWebhooksWithStreamingResponse,
+    )
 
 __all__ = [
     "Sessions",
@@ -87,9 +123,9 @@ __all__ = [
 class Sessions(SyncAPIResource):
     """The ``sessions`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``bulk_update_aml_hit_status``, ``create``, ``delete``, ``generate_pdf``, ``import_shared``, ``list``, ``list_networks``, ``preview_resubmission``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``update_aml_hit_status``, ``update_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
+    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``delete``, ``export_aml_screening_history``, ``generate_pdf``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
 
-    Nested resources: ``imports``, ``reviews``.
+    Nested resources: ``imports``, ``reviews``, ``signatures``, ``webhooks``.
     """
 
     @cached_property
@@ -103,6 +139,18 @@ class Sessions(SyncAPIResource):
         from didit.resources.sessions.reviews import SessionsReviews
 
         return SessionsReviews(self._client)
+
+    @cached_property
+    def signatures(self) -> SessionsSignatures:
+        from didit.resources.sessions.signatures import SessionsSignatures
+
+        return SessionsSignatures(self._client)
+
+    @cached_property
+    def webhooks(self) -> SessionsWebhooks:
+        from didit.resources.sessions.webhooks import SessionsWebhooks
+
+        return SessionsWebhooks(self._client)
 
     @cached_property
     def with_raw_response(self) -> SessionsWithRawResponse:
@@ -184,6 +232,7 @@ class Sessions(SyncAPIResource):
         expected_details: SessionsCreateParamsExpectedDetails | NotGiven = NOT_GIVEN,
         portrait_image: str | NotGiven = NOT_GIVEN,
         sandbox_scenario: str | NotGiven = NOT_GIVEN,
+        sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -204,7 +253,7 @@ class Sessions(SyncAPIResource):
         Args:
           workflow_id: Stable identifier of the workflow that defines which verification steps the session will run. Workflows are created and managed in the [Workflows](/console/workflows) page of the Console. The `workflow_id` also implicitly selects whether the session is KYC or KYB.
           vendor_data: A unique identifier for the user being verified, such as a UUID, email, or internal user ID. This field is used for: (1) **User grouping** - sessions with the same vendor_data are linked to the same user profile in the Users tab. (2) **Cross-session duplicate detection** - when checking for duplicated faces, documents, phone numbers, emails, IP addresses, or device fingerprints, sessions with the same vendor_data are treated as the same user and excluded from matches. Without vendor_data, every session is treated as a unique user and all potential duplicates are surfaced. We strongly recommend always providing a vendor_data to reduce noise in duplicate detection.
-          callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used.
+          callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
@@ -212,6 +261,7 @@ class Sessions(SyncAPIResource):
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
+          sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -235,6 +285,7 @@ class Sessions(SyncAPIResource):
                     "expected_details": expected_details,
                     "portrait_image": portrait_image,
                     "sandbox_scenario": sandbox_scenario,
+                    "sign": sign,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -254,12 +305,12 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsRetrieveDecisionResponse:
+    ) -> SessionDecision:
         """Retrieve the full decision for a verification session.
 
         Retrieve the complete decision report for a verification session - the rolled-up session `status` plus one report per verification feature the workflow executed. This is the canonical read endpoint for both User Verification (KYC) and Business Verification (KYB) sessions: the same path serves both, and the top-level `session_kind` discriminator tells you which shape you received (`"user"` or `"business"`).
 
-        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data.
+        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. Electronic Signature results are in `signatures`, which is present only when the workflow has an Electronic Signature step.
 
         **When to call.** The recommended pattern is event-driven: wait for the `status.updated` webhook that fires when the session reaches a decision (`Approved`, `Declined`, `In Review`), then call this endpoint once to fetch the full report. Polling also works - the endpoint can be called at any point in the session lifecycle and returns the data produced so far - but webhook-then-fetch is cheaper and faster. Media URLs in the response (document images, videos, PDFs) are short-lived presigned links: fetch them promptly or re-request the decision to get fresh ones, and do not persist them as long-term references.
 
@@ -280,11 +331,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsRetrieveDecisionResponse",
+            "SessionDecision",
             self._client.request(
                 "get",
                 "/v3/session/{sessionId}/decision/",
-                cast_to=SessionsRetrieveDecisionResponse,
+                cast_to=SessionDecision,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"include": include},
@@ -317,7 +368,7 @@ class Sessions(SyncAPIResource):
 
         **What is deleted:**
         - The session and every verification attempt it holds, including results that a resubmission replaced: the decision, extracted data, all related feature records (ID verification, face, liveness, face match, AML, registry checks, IP analysis, and so on), its reviews and its activity log.
-        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Previously issued media URLs (`https://<media-host>/...`) stop resolving.
+        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Electronic Signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
         - The session's face data. Its face embedding is deleted too, unless you choose to keep an image-free template (see **Face biometric data**).
         - Webhook deliveries still queued for the session, and their retries. Webhooks already delivered are not affected.
         - For a Business Verification (KYB) session: the verifications it created for its key people (KYC) and its corporate owners (KYB), recursively, reported as `deleted_child_verifications`. A verification it only links to, such as an existing approved KYC it reused, is not deleted.
@@ -459,13 +510,13 @@ class Sessions(SyncAPIResource):
 
         Manually override the final decision of a KYC or KYB verification session. Set `new_status` to `Approved` or `Declined` to record a manual decision, or to `Resubmitted` to clear specific verification steps and let the user redo them through the same verification URL. The endpoint accepts both user (KYC) and business (KYB) session IDs.
 
-        Call it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. The new status must differ from the current one, and your API key's organization needs the `write:sessions` permission. The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.
+        Call it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. Your API key needs the `write:sessions` permission (a scoped API key needs write access to decisions). The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.
 
-        For `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected - list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. Captured data for the selected steps is deleted, the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly - resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.
+        For `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected: list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. The selected steps' previous results move to the resubmission's history (returned by Get Decision with `include=resubmissions`), the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly: resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.
 
-        Every successful call fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry - with actor attribution and your `comment` - to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`.
+        Every call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.
 
-        The operation is intentionally not repeatable with the same value: re-sending the current status returns `400` (`The new status is the same as the current status.`), so accidental double-submissions are harmless. Authentication and permission failures both return `403` - this API never responds `401`.
+        Repeating `Approved` or `Declined` on a session that already has that status changes nothing and returns `200`: no webhook, no activity entry and no email. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
 
         ``PATCH /v3/session/{sessionId}/update-status/``
 
@@ -477,7 +528,7 @@ class Sessions(SyncAPIResource):
           send_email: Whether to email the user about the change. Requires `email_address`. For `Approved`/`Declined` the user receives a status notice; for `Resubmitted` the email includes the verification link and the per-step resubmission reasons.
           email_address: Recipient for the notification email. **Required when `send_email` is `true`** - omitting it returns `400`.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
-          email_preview_token: Optional signed receipt from Preview Resubmission Email. When supplied with send_email=true and new_status=Resubmitted, the recipient, language, checks, current session state, sender and message must still match the preview. A changed or expired receipt returns 409 before changing the session or sending email. Existing integrations may omit this field.
+          email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -550,10 +601,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SyncPage[
-        SessionsListResponseResultsKycSessionRowSessionKindUser
-        | SessionsListResponseResultsKybSessionRowSessionKindBusiness
-    ]:
+    ) -> SyncPage[UserSessionListItem | BusinessSessionListItem]:
         """List verification sessions (KYC and/or KYB) with filters and pagination.
 
         Returns a paginated list of verification sessions for the application identified by your API key, newest first (descending `session_number`).
@@ -608,13 +656,12 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SyncPage[SessionsListResponseResultsKycSessionRowSessionKindUser | SessionsListResponseResultsKybSessionRowSessionKindBusiness]",
+            "SyncPage[UserSessionListItem | BusinessSessionListItem]",
             self._client.request_page(
                 "get",
                 "/v3/sessions/",
                 cast_to=SessionsListResponse,
-                item_type=SessionsListResponseResultsKycSessionRowSessionKindUser
-                | SessionsListResponseResultsKybSessionRowSessionKindBusiness,
+                item_type=UserSessionListItem | BusinessSessionListItem,
                 auth="api_key",
                 query={
                     "session_kind": session_kind,
@@ -700,7 +747,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionDecision:
         """Redeem a share token to clone a verification session into your application.
 
         Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Not idempotent - a token redeems once per receiver.
@@ -718,11 +765,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionDecision",
             self._client.request(
                 "post",
                 "/v3/session/import-shared/",
-                cast_to=object,
+                cast_to=SessionDecision,
                 auth="api_key",
                 body={
                     "share_token": share_token,
@@ -749,11 +796,30 @@ class Sessions(SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         instruction_id: str | NotGiven = NOT_GIVEN,
+        filter_status: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_vendor_data: str | NotGiven = NOT_GIVEN,
+        filter_search: str | NotGiven = NOT_GIVEN,
+        filter_workflow_id: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        filter_country: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_document_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_document_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_region: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_didit_internal_id: str | NotGiven = NOT_GIVEN,
+        filter_session_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_api_service: str | NotGiven = NOT_GIVEN,
+        filter_screened_full_name: str | NotGiven = NOT_GIVEN,
+        filter_warning: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_status_initialized_as_in_review: bool | NotGiven = NOT_GIVEN,
+        filter_is_kyc_to_be_reviewed: bool | NotGiven = NOT_GIVEN,
+        filter_euuid: str | NotGiven = NOT_GIVEN,
+        filter_organization_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsBatchDeleteResponse | SessionsBatchDeleteResponse202:
+    ) -> SessionsBatchDeleteResponse | SessionDeletionJob:
         """Bulk delete KYC sessions by session_number.
 
         Bulk delete User Verification (KYC) sessions by their numeric `session_number`, or every KYC session in your application with `delete_all: true`.
@@ -767,6 +833,8 @@ class Sessions(SyncAPIResource):
         Each deleted session gets exactly the same treatment as the single-session delete endpoint: the session, every verification attempt it holds, its decision and extracted data, its related feature records (ID verification, face, liveness, face match, and so on) and all of its stored files are deleted, it disappears from every read endpoint, and previously issued media URLs stop resolving. Webhook deliveries still queued for a deleted session, and their retries, are dropped; webhooks already delivered are not affected. Blocklist entries are **not** removed, credits already consumed are **not** refunded, and the parent User entities are **not** deleted (use `POST /v3/users/delete/` for those); no webhook is emitted for the deletion. Deletion is permanent and irreversible.
 
         **Selection semantics:**
+        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `document_name`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
+        - An unknown `filter_*` key, or a filter value that cannot be read, rejects the whole request with `400` before anything is deleted, so a mistyped filter never widens the deletion to every session.
         - Entries in `session_numbers` that do not match a live KYC session in your application (unknown numbers, already-deleted sessions, or sessions owned by another application) are **silently skipped**: they do not appear in `results` and are not counted in a job's `total`.
         - Validation failures (a non-numeric entry, an empty list, neither `session_numbers` nor `delete_all` provided, or a template retention the application cannot honour) reject the **whole request** with `400` and delete nothing.
         - Sessions are deleted in groups. If a group cannot be deleted (for example because a storage service is unavailable), every session in that group is reported as `face_retention_outcome: failed_retryable` and stays in place; the other groups are unaffected. Repeat the request for those sessions. A job retries such a group by itself.
@@ -790,23 +858,42 @@ class Sessions(SyncAPIResource):
 
         Args:
           session_numbers: Numeric `session_number` values of the KYC sessions to delete, as digit-only strings (JSON numbers are also accepted and coerced). Required unless `delete_all` is `true`; an empty list returns `400`. Any non-digit entry rejects the whole request with `400` (unless `delete_all` is `true`, in which case validation is skipped and the entries are ignored). Numbers that do not match a live session in your application are silently skipped.
-          delete_all: When `true`, every remaining KYC session in the calling application is deleted and `session_numbers` is ignored. More than 20 matching sessions run as a deletion job (`202`) that covers only the sessions created before the request. Defaults to `false`. Irreversible; there is no confirmation step.
+          delete_all: When `true`, every remaining KYC session in the calling application is deleted and `session_numbers` is ignored, unless you narrow the selection with `filter_*` keys. More than 20 matching sessions run as a deletion job (`202`) that covers only the sessions created before the request. Defaults to `false`. Irreversible; there is no confirmation step.
           retain_face_embeddings: Override the application's `face_retention_policy` for this deletion. `true` keeps one image-free face biometric template anchored to the session's User after the session is deleted; `false` deletes the face embedding with the session; omit or `null` to follow the application policy. Ignored for KYB sessions and for sessions without a face embedding.
           face_retention_days: Finite retention duration, in days, for a retained template. Required when a template is retained unless the application already sets `face_retention_days`. The template's `expires_at` is the earliest of this duration, the application's general data-retention window, and `face_retention_deadline`.
           face_retention_deadline: Optional hard expiry for a retained template. Must be in the future.
           deletion_instruction: The class of instruction you are giving. `operational_session_delete` deletes the session and retains a template only when the policy or `retain_face_embeddings` says so. `privacy_erasure` purges every retained biometric template anchored to the session's User before deleting the session, cannot be overridden by the application policy, and cannot be combined with `retain_face_embeddings: true` (`400`).
           instruction_id: Your durable reference for this deletion instruction (for example an erasure-ticket id). Recorded on the audit trail and on any retained template. Generated by Didit when omitted.
+          filter_status: Narrows a `delete_all` to the sessions that match the `status` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_vendor_data: Narrows a `delete_all` to the sessions that match the `vendor_data` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_search: Narrows a `delete_all` to the sessions that match the `search` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_workflow_id: Narrows a `delete_all` to the sessions that match the `workflow_id` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_date_from: Narrows a `delete_all` to the sessions that match the `date_from` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_date_to: Narrows a `delete_all` to the sessions that match the `date_to` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_country: Narrows a `delete_all` to the sessions that match the `country` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_document_type: Narrows a `delete_all` to the sessions that match the `document_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_document_name: Narrows a `delete_all` to the sessions that match the `document_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_region: Narrows a `delete_all` to the sessions that match the `region` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_didit_internal_id: Narrows a `delete_all` to the sessions that match the `didit_internal_id` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_session_type: Narrows a `delete_all` to the sessions that match the `session_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_api_service: Narrows a `delete_all` to the sessions that match the `api_service` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_screened_full_name: Narrows a `delete_all` to the sessions that match the `screened_full_name` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_warning: Narrows a `delete_all` to the sessions that match the `warning` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_status_initialized_as_in_review: Narrows a `delete_all` to the sessions that match the `status_initialized_as_in_review` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_is_kyc_to_be_reviewed: Narrows a `delete_all` to the sessions that match the `is_kyc_to_be_reviewed` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_euuid: Narrows a `delete_all` to the sessions that match the `euuid` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_organization_name: Narrows a `delete_all` to the sessions that match the `organization_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. With an API key it can only match your own organization's name, so it selects all of your sessions or none. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsBatchDeleteResponse | SessionsBatchDeleteResponse202",
+            "SessionsBatchDeleteResponse | SessionDeletionJob",
             self._client.request(
                 "post",
                 "/v3/sessions/delete/",
-                cast_to={200: SessionsBatchDeleteResponse, 202: SessionsBatchDeleteResponse202},
+                cast_to={200: SessionsBatchDeleteResponse, 202: SessionDeletionJob},
                 auth="api_key",
                 body={
                     "session_numbers": session_numbers,
@@ -816,6 +903,25 @@ class Sessions(SyncAPIResource):
                     "face_retention_deadline": face_retention_deadline,
                     "deletion_instruction": deletion_instruction,
                     "instruction_id": instruction_id,
+                    "filter_status": filter_status,
+                    "filter_vendor_data": filter_vendor_data,
+                    "filter_search": filter_search,
+                    "filter_workflow_id": filter_workflow_id,
+                    "filter_date_from": filter_date_from,
+                    "filter_date_to": filter_date_to,
+                    "filter_country": filter_country,
+                    "filter_document_type": filter_document_type,
+                    "filter_document_name": filter_document_name,
+                    "filter_region": filter_region,
+                    "filter_didit_internal_id": filter_didit_internal_id,
+                    "filter_session_type": filter_session_type,
+                    "filter_api_service": filter_api_service,
+                    "filter_screened_full_name": filter_screened_full_name,
+                    "filter_warning": filter_warning,
+                    "filter_status_initialized_as_in_review": filter_status_initialized_as_in_review,
+                    "filter_is_kyc_to_be_reviewed": filter_is_kyc_to_be_reviewed,
+                    "filter_euuid": filter_euuid,
+                    "filter_organization_name": filter_organization_name,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -832,7 +938,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsRetrieveDeletionJobResponse:
+    ) -> SessionDeletionJob:
         """Get a bulk session deletion job.
 
         Progress of a bulk session deletion that `POST /v3/sessions/delete/` answered with `202` (more than 20 matching sessions, selected by `session_numbers` or with `delete_all`). Poll every few seconds while `status` is `PENDING` or `PROCESSING`; stop when it is `COMPLETED` or `FAILED`.
@@ -851,11 +957,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsRetrieveDeletionJobResponse",
+            "SessionDeletionJob",
             self._client.request(
                 "get",
                 "/v3/sessions/delete/{job_id}/",
-                cast_to=SessionsRetrieveDeletionJobResponse,
+                cast_to=SessionDeletionJob,
                 path_params={"job_id": job_id},
                 auth="api_key",
                 extra_headers=extra_headers,
@@ -980,6 +1086,38 @@ class Sessions(SyncAPIResource):
         *,
         new_status: Literal["Approved", "Declined", "In Review"] | str,
         comment: str | NotGiven = NOT_GIVEN,
+        feature_type: Literal[
+            "ID_VERIFICATION",
+            "OCR",
+            "OCR_BACK",
+            "NFC",
+            "LIVENESS",
+            "FACE",
+            "AGE_ESTIMATION",
+            "AGE_VERIFICATION",
+            "FACE_SEARCH",
+            "FACE_MATCH",
+            "IP_ANALYSIS",
+            "AML",
+            "PHONE",
+            "PHONE_VERIFICATION",
+            "EMAIL",
+            "EMAIL_VERIFICATION",
+            "POA",
+            "PROOF_OF_ADDRESS",
+            "DATABASE_VALIDATION",
+            "DATA_VALIDATION",
+            "QUESTIONNAIRE",
+            "DOCUMENT_AI",
+            "KYB_REGISTRY",
+            "KYB_DOCUMENTS",
+            "KYB_KEY_PEOPLE",
+            "BANK_VERIFICATION",
+            "GEOLOCATION",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        defer_until_flow_finishes: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -987,13 +1125,19 @@ class Sessions(SyncAPIResource):
     ) -> SessionsUpdateFeatureStatusResponse:
         """Update an individual feature (step) status.
 
-        Set the status of a single verification feature (step) within a session **without changing the overall session decision**. Target the feature by its workflow graph `nodeId` (use `default` for non-graph workflows where the step has no node).
+        Set the status of a single verification feature (step) within a session. Target the feature by its workflow graph `nodeId`. On non-graph workflows, whose steps have no node, use `default` and also pass `feature_type` to say which step you mean.
 
-        Works for both User Verification (KYC) and Business Verification (KYB) sessions and every step type - ID/OCR, Liveness, Face Match, NFC, AML, Proof of Address, Phone, Email, Database Validation, Questionnaire, and the KYB registry / documents / key-people checks.
+        Works for both User Verification (KYC) and Business Verification (KYB) sessions and every step type: ID/OCR, Liveness, Face Match, NFC, AML, Proof of Address, Phone, Email, Database Validation, Questionnaire, and the KYB registry / documents / key-people checks. This endpoint is **not** available for standalone API sessions (`session_type = API`).
 
-        `new_status` must be one of `Approved`, `Declined`, or `In Review`, and must differ from the feature's current status. A successful call fires a `data.updated` webhook and appends an activity entry (with actor attribution) to the session's review trail. This endpoint is **not** available for standalone API sessions (`session_type = API`).
+        `new_status` must be one of `Approved`, `Declined`, or `In Review`, and must differ from the feature's current status.
 
-        Authenticate with your API key (`x-api-key`) or a user authorization header - either must carry the `write:sessions` privilege.
+        **When the override applies.** Without `defer_until_flow_finishes` (or with `false`) the override applies at once, as it always did; when the person is still in the flow it is recorded as `forced`. With `defer_until_flow_finishes: true` while the person is still in the flow (the session is `Not Started`, `In Progress` or `Resubmitted` and has not finished), the override is stored as `pending_until_flow_finishes` and applies when the flow finishes, after the flow reaches its own decision. On a session whose flow already ended it applies at once either way. A waiting override is cancelled instead when the person redoes its step before finishing, when a newer override on the same check replaces it, when the session leaves the flow unfinished (abandoned, expired, or decided mid-flow), or when you cancel it with `POST /v3/session/{sessionId}/features/overrides/{overrideId}/cancel/`. List a session's overrides with `GET /v3/session/{sessionId}/features/overrides/`.
+
+        **Effect on the session.** A session that already has a decision keeps it: only the check changes. When the session has no decision yet and its workflow is waiting on exactly this step, applying the override completes the step: the workflow moves on, later steps run, and a status node can set the session decision and fire `status.updated`.
+
+        **Webhooks and activity.** A `data.updated` webhook fires when the override applies (at once, or when the flow finishes), never while it waits or when it is cancelled. Every override is recorded in the session's activity as `FEATURE_OVERRIDE_PENDING`, `FEATURE_OVERRIDE_APPLIED` or `FEATURE_OVERRIDE_CANCELLED`, with who made it; the request's entry carries your `comment`.
+
+        Authenticate with your API key (`x-api-key`) or a user authorization header carrying the `write:sessions` privilege; a scoped API key needs write access to decisions.
 
         ``PATCH /v3/session/{sessionId}/features/{nodeId}/update-status/``
 
@@ -1002,6 +1146,8 @@ class Sessions(SyncAPIResource):
           node_id: Workflow graph node ID of the feature to update (for example `feature_ocr_1`). Use the literal value `default` for non-graph (single-step) workflows where the feature has no node ID.
           new_status: Target status for this feature. Must differ from the current value.
           comment: Optional free-text note recorded on the session's review trail for this feature change.
+          feature_type: Which kind of step to target. Needed on non-graph workflows (`nodeId` = `default`), where every step shares no node; optional otherwise. An unknown value returns `400`.
+          defer_until_flow_finishes: While the person is still in the flow, store the override as `pending_until_flow_finishes` and apply it when the flow finishes, instead of at once. Omitted or `false`, the override applies at once. On a session whose flow already ended it applies at once either way.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1015,7 +1161,12 @@ class Sessions(SyncAPIResource):
                 cast_to=SessionsUpdateFeatureStatusResponse,
                 path_params={"sessionId": session_id, "nodeId": node_id},
                 auth="api_key",
-                body={"new_status": new_status, "comment": comment},
+                body={
+                    "new_status": new_status,
+                    "comment": comment,
+                    "feature_type": feature_type,
+                    "defer_until_flow_finishes": defer_until_flow_finishes,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1036,7 +1187,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionsUpdateAmlHitStatusResponse:
         """Update an AML hit review status.
 
         Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision).
@@ -1061,11 +1212,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionsUpdateAmlHitStatusResponse",
             self._client.request(
                 "patch",
                 "/v3/session/{sessionId}/update-aml-hit-status/",
-                cast_to=object,
+                cast_to=SessionsUpdateAmlHitStatusResponse,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"node_id": node_id_query},
@@ -1088,7 +1239,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionsBulkUpdateAmlHitStatusResponse:
         """Bulk update AML hit review statuses.
 
         Update the review status of **multiple AML hits** in one call. Provide `hit_updates`, a list of `{ hit_id, review_status }` pairs. `review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`.
@@ -1110,11 +1261,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionsBulkUpdateAmlHitStatusResponse",
             self._client.request(
                 "patch",
                 "/v3/session/{sessionId}/bulk-update-aml-hit-status/",
-                cast_to=object,
+                cast_to=SessionsBulkUpdateAmlHitStatusResponse,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"node_id": node_id_query},
@@ -1412,7 +1563,7 @@ class Sessions(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a session.
 
         List the networks the session's vendor user belongs to. Resolves through the session's vendor_data-linked user.
@@ -1427,11 +1578,11 @@ class Sessions(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/sessions/{session_id}/networks/",
-                cast_to=SessionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"session_id": session_id},
                 scope="application",
                 auth="api_key",
@@ -1446,9 +1597,9 @@ class Sessions(SyncAPIResource):
         self,
         session_id: str,
         *,
-        email_address: str,
         nodes_to_resubmit: Sequence[SessionsPreviewResubmissionParamsNodesToResubmit]
         | NotGiven = NOT_GIVEN,
+        email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -1457,18 +1608,20 @@ class Sessions(SyncAPIResource):
     ) -> SessionsPreviewResubmissionResponse:
         """Preview a resubmission email.
 
-        Render the email that would accompany a KYC or KYB resubmission without changing the session, resetting checks, extending its expiry, running checks or sending mail. Requires write:sessions and an application-scoped session in Approved, Declined, In Review, Kyc Expired or Abandoned status. The server validates the selected workflow steps and renders its fixed translated template with the applicable verified white-label sender and branding. The request cannot set a subject, message body or action URL.
+        Render the email that would accompany a KYC or KYB resubmission without changing the session, resetting checks, extending its expiry, running checks or sending mail. Requires the `write:sessions` privilege (a scoped API key needs write access to decisions) and a session in `Approved`, `Declined`, `In Review`, `Kyc Expired` or `Abandoned` status. The server validates the selected workflow steps and renders its fixed translated template with the applicable verified white-label sender and branding. The request cannot set a subject, message body or action URL.
 
-        The response includes the recipient, sender, subject, HTML, resolved steps and a signed preview_token. requires_user_action describes whether the selected steps include an interactive check. Email delivery remains conditional: if automatic checks finalize the verification during the subsequent resubmission, no action-request email is sent.
+        `email_address` is optional. Without it, the email goes to the person's own address: the one they verified in an email verification step of the flow, else the one given in `contact_details` when the session was created. An address you pass wins (`recipient_source: request`). When no address is known and you pass none, `recipient` and `preview_token` are empty strings and no email can be sent.
 
-        This preview does not reserve session state or authorize delivery. After reviewing it, call Update Session Status with new_status=Resubmitted, the same selection, recipient and language, and email_preview_token set to the returned preview_token. The receipt expires after 15 minutes. When a receipt is supplied, changed inputs, message content, sender or session state return 409 before any mutation or send. Existing integrations may omit the receipt. Regenerate the preview after a conflict. Treat the response as sensitive verification content; responses use Cache-Control: no-store. Render HTML in a sandboxed frame, never directly in your application DOM.
+        The response includes the recipient and where it comes from, the sender, subject, HTML, language, resolved steps, whether confirming sends the email (`will_be_sent`, `not_sent_reason`) and a signed `preview_token`. `requires_user_action` is `false` when every selected step runs without the person: the resubmission then finishes on its own and no email goes out (`not_sent_reason: no_user_action`).
+
+        This preview does not reserve session state or authorize delivery. After reviewing it, call [Update Session Status](/sessions-api/update-status) with `new_status: Resubmitted`, the same `nodes_to_resubmit` and `email_language` you previewed, `send_email: true`, `email_address` set to `recipient` and `email_preview_token` set to `preview_token`. The receipt expires after 15 minutes. When a receipt is supplied, changed inputs, message content, sender or session state return `409` before any mutation or send. Existing integrations may omit the receipt. Regenerate the preview after a conflict. Treat the response as sensitive verification content; responses use `Cache-Control: no-store`. Render HTML in a sandboxed frame, never directly in your application DOM.
 
         ``POST /v3/session/{sessionId}/resubmission-preview/``
 
         Args:
           session_id: UUID of the verification session to update. Accepts both user (KYC) and business (KYB) session IDs - the service resolves the ID across both session types.
-          email_address: Recipient shown in the preview. No email is sent.
           nodes_to_resubmit: Steps to preview, using the same validation, selection and workflow ordering as a resubmission. Omit to auto-select recorded attempts needing resubmission.
+          email_address: Optional. Send the email to this address instead of the person's own. Without it, the recipient is the address the person verified in the flow, else the one given in `contact_details`. No email is sent by this call.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1484,10 +1637,517 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={
-                    "email_address": email_address,
                     "nodes_to_resubmit": nodes_to_resubmit,
+                    "email_address": email_address,
                     "email_language": email_language,
                 },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def update_document_ai_data(
+        self,
+        session_id: str,
+        document_uuid: str,
+        *,
+        extracted_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        status: Literal["Approved", "Declined", "In Review", "Not Finished"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateDocumentAiDataResponse:
+        """Update a Document AI document.
+
+        Correct the fields Document AI extracted from one uploaded document, set its review status, or both, on a KYC or KYB session. `extracted_data` must be a JSON object and is merged key by key: a key you send replaces the stored value (a key sent as `null` is stored as `null`) and keys you leave out keep their values. The document status feeds the Document AI result of its workflow node in the session decision; the session status itself is not recomputed. Every successful call, including one that changes nothing, sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) with trigger `manual_review`. A scoped API key needs `decisions: write`; see [Document AI](https://docs.didit.me/core-technology/document-ai/overview).
+
+        ``PATCH /v3/document-ai/{sessionId}/documents/{documentUuid}/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          document_uuid: UUID of the Document AI document (`document_ai_documents[].items[].uuid` in `GET /v3/session/{sessionId}/decision/`). It must belong to the session in the path.
+          extracted_data: Field keys (the keys you configured for the document) and their corrected values. Must be a JSON object; merged key by key into the stored data. Leave it out rather than sending `null`, which returns `400`.
+          status: New review status of the document.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateDocumentAiDataResponse",
+            self._client.request(
+                "patch",
+                "/v3/document-ai/{sessionId}/documents/{documentUuid}/",
+                cast_to=SessionsUpdateDocumentAiDataResponse,
+                path_params={"sessionId": session_id, "documentUuid": document_uuid},
+                auth="api_key",
+                body={"extracted_data": extracted_data, "status": status},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def regenerate_kyb_party(
+        self,
+        session_id: str,
+        party_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> KYBKeyPeopleParty:
+        """Regenerate a Key People party's KYC session.
+
+        Give a Key People party of a Business Verification (KYB) session a new individual KYC session after its previous one was deleted, so the Key People check can finish again; send no request body. It works only when the party's KYC session was deleted (`kyc_session_deleted: true`): a party whose KYC session still exists (in any status), a party that never had one, or a company party returns `409`. Didit creates a new hosted KYC session with the workflow the deleted one ran (its latest published version) or, when that is no longer known, the workflow your Key People settings assign to the party's role, emails the link to the party when an email is on file, clears `is_skipped`, and recomputes the Key People check and the business session status. It then sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) for the business session with trigger `console_key_people_regenerate`; to exempt the party instead, use `PATCH /v3/session/{sessionId}/kyb/parties/{partyUuid}/`. A scoped API key needs `decisions: write`, and without `sessions: write` it receives `kyc_session_url` as `null`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/``
+
+        Args:
+          session_id: UUID of the parent Business Verification (KYB) session.
+          party_uuid: UUID of the Key People party (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "KYBKeyPeopleParty",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/",
+                cast_to=KYBKeyPeopleParty,
+                path_params={"sessionId": session_id, "partyUuid": party_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_events(
+        self,
+        session_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        ordering: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[SessionEvent]:
+        """List session events.
+
+        Read the event timeline of one verification session, newest first by `sent_at`: the screens the user saw, buttons and uploads, failed attempts, status and feature-step changes, and the workflow routing trace. Works for User Verification (KYC) and Business Verification (KYB) session IDs. Events are stored asynchronously, so a new event can take a few seconds to appear. Results are paginated with `limit` and `offset`; follow `next` until it is `null`. A scoped API key needs `sessions: read` and `decisions: read`, and without `media: read` it receives `file_url` as `null`. The routing events are described in [Retrieve session](https://docs.didit.me/sessions-api/retrieve-session).
+
+        ``GET /v3/session/{sessionId}/events/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          limit: Maximum number of events per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
+          offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
+          ordering: Optional sort override. The default order is `-sent_at`. Pass a result field name (for example `sent_at`, `created_at`, `event_type`, `feature_step` or `step`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[SessionEvent]",
+            self._client.request_page(
+                "get",
+                "/v3/session/{sessionId}/events/",
+                cast_to=SessionsListEventsResponse,
+                item_type=SessionEvent,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset, "ordering": ordering},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_aml_screening_history(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        ordering: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[AMLScreeningRun]:
+        """List AML screening history.
+
+        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
+
+        ``GET /v3/session/{sessionId}/aml-screening-history/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          limit: Maximum number of screening runs per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
+          offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
+          ordering: Optional sort override. The default order is `-completed_at`. Pass a result field name (for example `completed_at`, `started_at`, `outcome` or `score`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[AMLScreeningRun]",
+            self._client.request_page(
+                "get",
+                "/v3/session/{sessionId}/aml-screening-history/",
+                cast_to=SessionsListAmlScreeningHistoryResponse,
+                item_type=AMLScreeningRun,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id, "limit": limit, "offset": offset, "ordering": ordering},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def export_aml_screening_history(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Export AML screening history as CSV.
+
+        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
+
+        ``GET /v3/session/{sessionId}/aml-screening-history/export/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            self._client.request(
+                "get",
+                "/v3/session/{sessionId}/aml-screening-history/export/",
+                cast_to=bytes,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                accept="text/csv, application/json",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def add_images(
+        self,
+        session_id: str,
+        *,
+        file: FileTypes,
+        model_type: Literal["kyc", "poa"] | str,
+        file_password: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsAddImagesResponse:
+        """Add an image to a session.
+
+        Attach one extra image or PDF to the ID verification (`model_type=kyc`) or Proof of Address (`model_type=poa`) result of a finished User Verification (KYC) session, for example evidence collected outside the flow. The session must be `Approved`, `Declined`, `In Review` or `Kyc Expired` and carry the result named by `model_type`; Business Verification (KYB) sessions are not supported. Each call appends one file (to the most recent result when the step ran more than once), keeps the existing files and records a `FILE_ADDED` entry in the session activity log; the upload sends no webhook and does not change the session status. The file is compressed on upload and is returned in `extra_files` of the session decision. This endpoint is limited to 10 requests per minute per API key. A scoped API key needs `sessions: write`, and without `media: read` it receives the `extra_files` links as `null`.
+
+        ``PATCH /v3/session/{sessionId}/add-images/``
+
+        Args:
+          session_id: UUID of the User Verification (KYC) session to add the file to (the `session_id` returned by `POST /v3/session/`). A Business Verification (KYB) session ID returns `404`.
+          file: The image or PDF. Allowed extensions: `jpg`, `jpeg`, `png`, `webp`, `tiff`, `pdf`. At most 15 MB as uploaded; the file is then compressed and rejected with `400` if it is still larger than 2 MB (2,097,152 bytes). Empty files are rejected.
+          model_type: `kyc` adds the file to the ID verification result, `poa` to the Proof of Address result.
+          file_password: Password of an encrypted PDF. Without it, or with a wrong one, an encrypted PDF returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsAddImagesResponse",
+            self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/add-images/",
+                cast_to=SessionsAddImagesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={"file": file, "model_type": model_type, "file_password": file_password},
+                multipart=True,
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def update_aml_status(
+        self,
+        session_id: str,
+        *,
+        status: Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"]
+        | str,
+        node_id: str | NotGiven = NOT_GIVEN,
+        node_id_query: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateAmlStatusResponse:
+        """Update an AML check status.
+
+        Set the status of a session's AML screening check as a whole (the `status` of an `aml_screenings[]` entry in the session decision), for example `Approved` after your team cleared every hit. Works for KYC and KYB session IDs; pass `node_id` (query parameter or body field) when the session ran more than one AML step, otherwise the most recent AML check is updated. When the status actually changes, an `AML_STATUS_UPDATED` activity entry is recorded and a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) is sent; sending the current status returns `200` and changes nothing. The session status is not recomputed: use `PATCH /v3/session/{sessionId}/update-status/` for the session decision and `PATCH /v3/session/{sessionId}/update-aml-hit-status/` for single hits. A scoped API key needs `decisions: write`.
+
+        ``PATCH /v3/session/{sessionId}/update-aml-status/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          status: New status of the AML check.
+          node_id: Workflow graph node ID of the AML check, as an alternative to the query parameter.
+          node_id_query: Workflow graph node ID of the AML check to update. Needed only when the session ran more than one AML step. Takes precedence over `node_id` in the body.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateAmlStatusResponse",
+            self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/update-aml-status/",
+                cast_to=SessionsUpdateAmlStatusResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id_query},
+                body={"status": status, "node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def simulate(
+        self,
+        session_id: str,
+        *,
+        new_status: Literal["Approved", "Declined", "In Review", "Expired", "Abandoned"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        comment: str | NotGiven = NOT_GIVEN,
+        scenario: str | NotGiven = NOT_GIVEN,
+        risk: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        send_webhooks: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SandboxSimulateResponse:
+        """Simulate a sandbox session's status.
+
+        Force a terminal status on a sandbox session after the fact, from your backend, without running the flow. Sandbox applications only: a live session returns `404`. Works for User Verification (KYC) and Business Verification (KYB) sessions.
+
+        Set `new_status`, or let `scenario` or `risk` supply it. `risk` (or the first risk the scenario's magic values carry) adds that warning to the session. The change is recorded in the session's activity.
+
+        `send_webhooks` (default `true`) sends exactly the webhooks a real status change sends. With `false` the status still changes and the console still updates live, but no webhook is logged or sent, the missed-webhook recovery never re-sends that decision, and the next status change sends webhooks as usual. The response echoes the value applied.
+
+        Requires the `write:sessions` privilege; a scoped API key needs write access to sessions. An unknown `session_id` returns `404` and another application's session returns `403`, both before the body is read; a live session returns `404` only after the body is validated. To simulate from the hosted flow with the session's own token, use `POST /v3/session/{sessionId}/sandbox/simulate/`. See [Sandbox & Test Data](/integration/sandbox-testing) for the scenario catalog.
+
+        ``POST /v3/session/{sessionId}/simulate/``
+
+        Args:
+          session_id: UUID of the sandbox verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          new_status: The status to set. When you leave it out, it defaults to the default status of the risk case (`risk`, or the first risk the scenario's magic values carry), else to the scenario's default status.
+          comment: Note added to the activity entry the status change records.
+          scenario: A scenario slug from the catalog (`GET /v1/sandbox/scenarios/`). It supplies the default status and, without `risk`, the warning its magic values carry. An unknown slug returns `400`.
+          risk: A risk case from the catalog. Its warning is added to the session, with a log type that follows `new_status`. An unknown value returns `400`.
+          node_id: Workflow node the risk warning is attached to. Defaults to the session's current node.
+          send_webhooks: `true` sends exactly the webhooks a real status change sends to the sandbox application's destinations: `status.updated`, plus the `user.status.updated` / `user.data.updated` (or `business.status.updated` / `business.data.updated`) events the change causes, for destinations subscribed to them. `false` changes the status without logging or sending any webhook: the missed-webhook recovery never re-sends that decision, the console still updates live, and the next status change of the session sends webhooks as usual.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SandboxSimulateResponse",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/simulate/",
+                cast_to=SandboxSimulateResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={
+                    "new_status": new_status,
+                    "comment": comment,
+                    "scenario": scenario,
+                    "risk": risk,
+                    "node_id": node_id,
+                    "send_webhooks": send_webhooks,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_feature_overrides(
+        self,
+        session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListFeatureOverridesResponse:
+        """List a session's check overrides.
+
+        Every override of an individual feature (step) status on a User Verification (KYC) or Business Verification (KYB) session, newest first and not paginated: applied ones, ones waiting for the person to finish the flow (`pending_until_flow_finishes`) and cancelled ones, each with who asked, their reason, and whether it applied while the person was still in the flow (`forced`).
+
+        `person_in_flow` tells you whether a new override with `defer_until_flow_finishes: true` would wait. `flow_finished_at` is when the person last finished the flow; it is `null` while they are still in it (a resubmission included) and when the session closed before they finished.
+
+        Requires the `read:sessions` privilege; a scoped API key needs read access to decisions.
+
+        ``GET /v3/session/{sessionId}/features/overrides/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListFeatureOverridesResponse",
+            self._client.request(
+                "get",
+                "/v3/session/{sessionId}/features/overrides/",
+                cast_to=SessionsListFeatureOverridesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def cancel_feature_override(
+        self,
+        session_id: str,
+        override_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> FeatureStatusOverride:
+        """Cancel a check override that waits for the flow to finish.
+
+        Cancel an override of a feature (step) status that is still `pending_until_flow_finishes`, so it never applies. The check keeps its status, the cancellation is recorded in the session's activity as `FEATURE_OVERRIDE_CANCELLED`, and no webhook is sent. The response is the override with `state: cancelled` and `cancel_reason: cancelled_by_reviewer`.
+
+        An override that already applied or was cancelled returns `409` with the code `feature_override_not_pending`. Find override IDs with `GET /v3/session/{sessionId}/features/overrides/` or in the `override` returned by the feature status update.
+
+        Requires the `write:sessions` privilege; a scoped API key needs write access to decisions.
+
+        ``POST /v3/session/{sessionId}/features/overrides/{overrideId}/cancel/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          override_id: The `id` of the override to cancel.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "FeatureStatusOverride",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/features/overrides/{overrideId}/cancel/",
+                cast_to=FeatureStatusOverride,
+                path_params={"sessionId": session_id, "overrideId": override_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def preview_decision_email(
+        self,
+        session_id: str,
+        *,
+        new_status: Literal["Approved", "Declined"] | str,
+        email_language: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsPreviewDecisionEmailResponse:
+        """Preview a session's decision email.
+
+        Render the email the person receives when you set a session to `Approved` or `Declined` with `send_email: true`, without changing the session or sending anything. The response shows the subject and HTML exactly as they are sent, the recipient, the sender, the language, and whether confirming the change sends the email at all (`will_be_sent`, `not_sent_reason`).
+
+        The recipient is the person's own address: the one they verified in an email verification step of the flow, else the one given in `contact_details` when the session was created. The sender is your application's verified sender domain when white label applies (`sender_kind: customer`), else Didit's sender (`sender_kind: didit`).
+
+        To send exactly what you previewed, call [Update Session Status](/sessions-api/update-status) with the same `new_status`, `send_email: true`, `email_address` set to `recipient`, `email_language` set to `language` and `email_preview_token` set to `preview_token`. The receipt expires after 15 minutes. When the recipient, language, session status, sender or email changed since the preview, the update returns `409` before anything changes; preview again and confirm with the new receipt.
+
+        Works for User Verification (KYC) and Business Verification (KYB) sessions in `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned` or `Resubmitted` status. The status check runs before body validation. Requires the `write:sessions` privilege; a scoped API key needs write access to decisions. Responses use `Cache-Control: no-store`: treat them as sensitive verification content.
+
+        ``POST /v3/session/{sessionId}/decision-email-preview/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          new_status: The decision whose email you want to preview.
+          email_language: Language of the email, the same default as Update Session Status. A language that is not offered falls back to English; `language` in the response says which one is used.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsPreviewDecisionEmailResponse",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/decision-email-preview/",
+                cast_to=SessionsPreviewDecisionEmailResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={"new_status": new_status, "email_language": email_language},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1499,9 +2159,9 @@ class Sessions(SyncAPIResource):
 class AsyncSessions(AsyncAPIResource):
     """The ``sessions`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``bulk_update_aml_hit_status``, ``create``, ``delete``, ``generate_pdf``, ``import_shared``, ``list``, ``list_networks``, ``preview_resubmission``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``update_aml_hit_status``, ``update_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
+    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``delete``, ``export_aml_screening_history``, ``generate_pdf``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
 
-    Nested resources: ``imports``, ``reviews``.
+    Nested resources: ``imports``, ``reviews``, ``signatures``, ``webhooks``.
     """
 
     @cached_property
@@ -1515,6 +2175,18 @@ class AsyncSessions(AsyncAPIResource):
         from didit.resources.sessions.reviews import AsyncSessionsReviews
 
         return AsyncSessionsReviews(self._client)
+
+    @cached_property
+    def signatures(self) -> AsyncSessionsSignatures:
+        from didit.resources.sessions.signatures import AsyncSessionsSignatures
+
+        return AsyncSessionsSignatures(self._client)
+
+    @cached_property
+    def webhooks(self) -> AsyncSessionsWebhooks:
+        from didit.resources.sessions.webhooks import AsyncSessionsWebhooks
+
+        return AsyncSessionsWebhooks(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncSessionsWithRawResponse:
@@ -1596,6 +2268,7 @@ class AsyncSessions(AsyncAPIResource):
         expected_details: SessionsCreateParamsExpectedDetails | NotGiven = NOT_GIVEN,
         portrait_image: str | NotGiven = NOT_GIVEN,
         sandbox_scenario: str | NotGiven = NOT_GIVEN,
+        sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1616,7 +2289,7 @@ class AsyncSessions(AsyncAPIResource):
         Args:
           workflow_id: Stable identifier of the workflow that defines which verification steps the session will run. Workflows are created and managed in the [Workflows](/console/workflows) page of the Console. The `workflow_id` also implicitly selects whether the session is KYC or KYB.
           vendor_data: A unique identifier for the user being verified, such as a UUID, email, or internal user ID. This field is used for: (1) **User grouping** - sessions with the same vendor_data are linked to the same user profile in the Users tab. (2) **Cross-session duplicate detection** - when checking for duplicated faces, documents, phone numbers, emails, IP addresses, or device fingerprints, sessions with the same vendor_data are treated as the same user and excluded from matches. Without vendor_data, every session is treated as a unique user and all potential duplicates are surfaced. We strongly recommend always providing a vendor_data to reduce noise in duplicate detection.
-          callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used.
+          callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
@@ -1624,6 +2297,7 @@ class AsyncSessions(AsyncAPIResource):
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
+          sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1647,6 +2321,7 @@ class AsyncSessions(AsyncAPIResource):
                     "expected_details": expected_details,
                     "portrait_image": portrait_image,
                     "sandbox_scenario": sandbox_scenario,
+                    "sign": sign,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1666,12 +2341,12 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsRetrieveDecisionResponse:
+    ) -> SessionDecision:
         """Retrieve the full decision for a verification session.
 
         Retrieve the complete decision report for a verification session - the rolled-up session `status` plus one report per verification feature the workflow executed. This is the canonical read endpoint for both User Verification (KYC) and Business Verification (KYB) sessions: the same path serves both, and the top-level `session_kind` discriminator tells you which shape you received (`"user"` or `"business"`).
 
-        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data.
+        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. Electronic Signature results are in `signatures`, which is present only when the workflow has an Electronic Signature step.
 
         **When to call.** The recommended pattern is event-driven: wait for the `status.updated` webhook that fires when the session reaches a decision (`Approved`, `Declined`, `In Review`), then call this endpoint once to fetch the full report. Polling also works - the endpoint can be called at any point in the session lifecycle and returns the data produced so far - but webhook-then-fetch is cheaper and faster. Media URLs in the response (document images, videos, PDFs) are short-lived presigned links: fetch them promptly or re-request the decision to get fresh ones, and do not persist them as long-term references.
 
@@ -1692,11 +2367,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsRetrieveDecisionResponse",
+            "SessionDecision",
             await self._client.request(
                 "get",
                 "/v3/session/{sessionId}/decision/",
-                cast_to=SessionsRetrieveDecisionResponse,
+                cast_to=SessionDecision,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"include": include},
@@ -1729,7 +2404,7 @@ class AsyncSessions(AsyncAPIResource):
 
         **What is deleted:**
         - The session and every verification attempt it holds, including results that a resubmission replaced: the decision, extracted data, all related feature records (ID verification, face, liveness, face match, AML, registry checks, IP analysis, and so on), its reviews and its activity log.
-        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Previously issued media URLs (`https://<media-host>/...`) stop resolving.
+        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Electronic Signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
         - The session's face data. Its face embedding is deleted too, unless you choose to keep an image-free template (see **Face biometric data**).
         - Webhook deliveries still queued for the session, and their retries. Webhooks already delivered are not affected.
         - For a Business Verification (KYB) session: the verifications it created for its key people (KYC) and its corporate owners (KYB), recursively, reported as `deleted_child_verifications`. A verification it only links to, such as an existing approved KYC it reused, is not deleted.
@@ -1871,13 +2546,13 @@ class AsyncSessions(AsyncAPIResource):
 
         Manually override the final decision of a KYC or KYB verification session. Set `new_status` to `Approved` or `Declined` to record a manual decision, or to `Resubmitted` to clear specific verification steps and let the user redo them through the same verification URL. The endpoint accepts both user (KYC) and business (KYB) session IDs.
 
-        Call it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. The new status must differ from the current one, and your API key's organization needs the `write:sessions` permission. The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.
+        Call it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. Your API key needs the `write:sessions` permission (a scoped API key needs write access to decisions). The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.
 
-        For `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected - list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. Captured data for the selected steps is deleted, the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly - resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.
+        For `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected: list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. The selected steps' previous results move to the resubmission's history (returned by Get Decision with `include=resubmissions`), the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly: resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.
 
-        Every successful call fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry - with actor attribution and your `comment` - to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`.
+        Every call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.
 
-        The operation is intentionally not repeatable with the same value: re-sending the current status returns `400` (`The new status is the same as the current status.`), so accidental double-submissions are harmless. Authentication and permission failures both return `403` - this API never responds `401`.
+        Repeating `Approved` or `Declined` on a session that already has that status changes nothing and returns `200`: no webhook, no activity entry and no email. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
 
         ``PATCH /v3/session/{sessionId}/update-status/``
 
@@ -1889,7 +2564,7 @@ class AsyncSessions(AsyncAPIResource):
           send_email: Whether to email the user about the change. Requires `email_address`. For `Approved`/`Declined` the user receives a status notice; for `Resubmitted` the email includes the verification link and the per-step resubmission reasons.
           email_address: Recipient for the notification email. **Required when `send_email` is `true`** - omitting it returns `400`.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
-          email_preview_token: Optional signed receipt from Preview Resubmission Email. When supplied with send_email=true and new_status=Resubmitted, the recipient, language, checks, current session state, sender and message must still match the preview. A changed or expired receipt returns 409 before changing the session or sending email. Existing integrations may omit this field.
+          email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1962,10 +2637,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> AsyncPaginator[
-        SessionsListResponseResultsKycSessionRowSessionKindUser
-        | SessionsListResponseResultsKybSessionRowSessionKindBusiness
-    ]:
+    ) -> AsyncPaginator[UserSessionListItem | BusinessSessionListItem]:
         """List verification sessions (KYC and/or KYB) with filters and pagination.
 
         Returns a paginated list of verification sessions for the application identified by your API key, newest first (descending `session_number`).
@@ -2020,13 +2692,12 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "AsyncPaginator[SessionsListResponseResultsKycSessionRowSessionKindUser | SessionsListResponseResultsKybSessionRowSessionKindBusiness]",
+            "AsyncPaginator[UserSessionListItem | BusinessSessionListItem]",
             self._client.request_page(
                 "get",
                 "/v3/sessions/",
                 cast_to=SessionsListResponse,
-                item_type=SessionsListResponseResultsKycSessionRowSessionKindUser
-                | SessionsListResponseResultsKybSessionRowSessionKindBusiness,
+                item_type=UserSessionListItem | BusinessSessionListItem,
                 auth="api_key",
                 query={
                     "session_kind": session_kind,
@@ -2112,7 +2783,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionDecision:
         """Redeem a share token to clone a verification session into your application.
 
         Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Not idempotent - a token redeems once per receiver.
@@ -2130,11 +2801,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionDecision",
             await self._client.request(
                 "post",
                 "/v3/session/import-shared/",
-                cast_to=object,
+                cast_to=SessionDecision,
                 auth="api_key",
                 body={
                     "share_token": share_token,
@@ -2161,11 +2832,30 @@ class AsyncSessions(AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         instruction_id: str | NotGiven = NOT_GIVEN,
+        filter_status: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_vendor_data: str | NotGiven = NOT_GIVEN,
+        filter_search: str | NotGiven = NOT_GIVEN,
+        filter_workflow_id: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
+        filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        filter_country: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_document_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_document_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_region: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_didit_internal_id: str | NotGiven = NOT_GIVEN,
+        filter_session_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_api_service: str | NotGiven = NOT_GIVEN,
+        filter_screened_full_name: str | NotGiven = NOT_GIVEN,
+        filter_warning: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        filter_status_initialized_as_in_review: bool | NotGiven = NOT_GIVEN,
+        filter_is_kyc_to_be_reviewed: bool | NotGiven = NOT_GIVEN,
+        filter_euuid: str | NotGiven = NOT_GIVEN,
+        filter_organization_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsBatchDeleteResponse | SessionsBatchDeleteResponse202:
+    ) -> SessionsBatchDeleteResponse | SessionDeletionJob:
         """Bulk delete KYC sessions by session_number.
 
         Bulk delete User Verification (KYC) sessions by their numeric `session_number`, or every KYC session in your application with `delete_all: true`.
@@ -2179,6 +2869,8 @@ class AsyncSessions(AsyncAPIResource):
         Each deleted session gets exactly the same treatment as the single-session delete endpoint: the session, every verification attempt it holds, its decision and extracted data, its related feature records (ID verification, face, liveness, face match, and so on) and all of its stored files are deleted, it disappears from every read endpoint, and previously issued media URLs stop resolving. Webhook deliveries still queued for a deleted session, and their retries, are dropped; webhooks already delivered are not affected. Blocklist entries are **not** removed, credits already consumed are **not** refunded, and the parent User entities are **not** deleted (use `POST /v3/users/delete/` for those); no webhook is emitted for the deletion. Deletion is permanent and irreversible.
 
         **Selection semantics:**
+        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `document_name`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
+        - An unknown `filter_*` key, or a filter value that cannot be read, rejects the whole request with `400` before anything is deleted, so a mistyped filter never widens the deletion to every session.
         - Entries in `session_numbers` that do not match a live KYC session in your application (unknown numbers, already-deleted sessions, or sessions owned by another application) are **silently skipped**: they do not appear in `results` and are not counted in a job's `total`.
         - Validation failures (a non-numeric entry, an empty list, neither `session_numbers` nor `delete_all` provided, or a template retention the application cannot honour) reject the **whole request** with `400` and delete nothing.
         - Sessions are deleted in groups. If a group cannot be deleted (for example because a storage service is unavailable), every session in that group is reported as `face_retention_outcome: failed_retryable` and stays in place; the other groups are unaffected. Repeat the request for those sessions. A job retries such a group by itself.
@@ -2202,23 +2894,42 @@ class AsyncSessions(AsyncAPIResource):
 
         Args:
           session_numbers: Numeric `session_number` values of the KYC sessions to delete, as digit-only strings (JSON numbers are also accepted and coerced). Required unless `delete_all` is `true`; an empty list returns `400`. Any non-digit entry rejects the whole request with `400` (unless `delete_all` is `true`, in which case validation is skipped and the entries are ignored). Numbers that do not match a live session in your application are silently skipped.
-          delete_all: When `true`, every remaining KYC session in the calling application is deleted and `session_numbers` is ignored. More than 20 matching sessions run as a deletion job (`202`) that covers only the sessions created before the request. Defaults to `false`. Irreversible; there is no confirmation step.
+          delete_all: When `true`, every remaining KYC session in the calling application is deleted and `session_numbers` is ignored, unless you narrow the selection with `filter_*` keys. More than 20 matching sessions run as a deletion job (`202`) that covers only the sessions created before the request. Defaults to `false`. Irreversible; there is no confirmation step.
           retain_face_embeddings: Override the application's `face_retention_policy` for this deletion. `true` keeps one image-free face biometric template anchored to the session's User after the session is deleted; `false` deletes the face embedding with the session; omit or `null` to follow the application policy. Ignored for KYB sessions and for sessions without a face embedding.
           face_retention_days: Finite retention duration, in days, for a retained template. Required when a template is retained unless the application already sets `face_retention_days`. The template's `expires_at` is the earliest of this duration, the application's general data-retention window, and `face_retention_deadline`.
           face_retention_deadline: Optional hard expiry for a retained template. Must be in the future.
           deletion_instruction: The class of instruction you are giving. `operational_session_delete` deletes the session and retains a template only when the policy or `retain_face_embeddings` says so. `privacy_erasure` purges every retained biometric template anchored to the session's User before deleting the session, cannot be overridden by the application policy, and cannot be combined with `retain_face_embeddings: true` (`400`).
           instruction_id: Your durable reference for this deletion instruction (for example an erasure-ticket id). Recorded on the audit trail and on any retained template. Generated by Didit when omitted.
+          filter_status: Narrows a `delete_all` to the sessions that match the `status` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_vendor_data: Narrows a `delete_all` to the sessions that match the `vendor_data` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_search: Narrows a `delete_all` to the sessions that match the `search` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_workflow_id: Narrows a `delete_all` to the sessions that match the `workflow_id` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_date_from: Narrows a `delete_all` to the sessions that match the `date_from` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_date_to: Narrows a `delete_all` to the sessions that match the `date_to` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_country: Narrows a `delete_all` to the sessions that match the `country` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_document_type: Narrows a `delete_all` to the sessions that match the `document_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_document_name: Narrows a `delete_all` to the sessions that match the `document_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_region: Narrows a `delete_all` to the sessions that match the `region` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_didit_internal_id: Narrows a `delete_all` to the sessions that match the `didit_internal_id` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_session_type: Narrows a `delete_all` to the sessions that match the `session_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_api_service: Narrows a `delete_all` to the sessions that match the `api_service` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_screened_full_name: Narrows a `delete_all` to the sessions that match the `screened_full_name` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated text, so several values are not matched as alternatives. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_warning: Narrows a `delete_all` to the sessions that match the `warning` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_status_initialized_as_in_review: Narrows a `delete_all` to the sessions that match the `status_initialized_as_in_review` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_is_kyc_to_be_reviewed: Narrows a `delete_all` to the sessions that match the `is_kyc_to_be_reviewed` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_euuid: Narrows a `delete_all` to the sessions that match the `euuid` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          filter_organization_name: Narrows a `delete_all` to the sessions that match the `organization_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. With an API key it can only match your own organization's name, so it selects all of your sessions or none. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsBatchDeleteResponse | SessionsBatchDeleteResponse202",
+            "SessionsBatchDeleteResponse | SessionDeletionJob",
             await self._client.request(
                 "post",
                 "/v3/sessions/delete/",
-                cast_to={200: SessionsBatchDeleteResponse, 202: SessionsBatchDeleteResponse202},
+                cast_to={200: SessionsBatchDeleteResponse, 202: SessionDeletionJob},
                 auth="api_key",
                 body={
                     "session_numbers": session_numbers,
@@ -2228,6 +2939,25 @@ class AsyncSessions(AsyncAPIResource):
                     "face_retention_deadline": face_retention_deadline,
                     "deletion_instruction": deletion_instruction,
                     "instruction_id": instruction_id,
+                    "filter_status": filter_status,
+                    "filter_vendor_data": filter_vendor_data,
+                    "filter_search": filter_search,
+                    "filter_workflow_id": filter_workflow_id,
+                    "filter_date_from": filter_date_from,
+                    "filter_date_to": filter_date_to,
+                    "filter_country": filter_country,
+                    "filter_document_type": filter_document_type,
+                    "filter_document_name": filter_document_name,
+                    "filter_region": filter_region,
+                    "filter_didit_internal_id": filter_didit_internal_id,
+                    "filter_session_type": filter_session_type,
+                    "filter_api_service": filter_api_service,
+                    "filter_screened_full_name": filter_screened_full_name,
+                    "filter_warning": filter_warning,
+                    "filter_status_initialized_as_in_review": filter_status_initialized_as_in_review,
+                    "filter_is_kyc_to_be_reviewed": filter_is_kyc_to_be_reviewed,
+                    "filter_euuid": filter_euuid,
+                    "filter_organization_name": filter_organization_name,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -2244,7 +2974,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsRetrieveDeletionJobResponse:
+    ) -> SessionDeletionJob:
         """Get a bulk session deletion job.
 
         Progress of a bulk session deletion that `POST /v3/sessions/delete/` answered with `202` (more than 20 matching sessions, selected by `session_numbers` or with `delete_all`). Poll every few seconds while `status` is `PENDING` or `PROCESSING`; stop when it is `COMPLETED` or `FAILED`.
@@ -2263,11 +2993,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsRetrieveDeletionJobResponse",
+            "SessionDeletionJob",
             await self._client.request(
                 "get",
                 "/v3/sessions/delete/{job_id}/",
-                cast_to=SessionsRetrieveDeletionJobResponse,
+                cast_to=SessionDeletionJob,
                 path_params={"job_id": job_id},
                 auth="api_key",
                 extra_headers=extra_headers,
@@ -2392,6 +3122,38 @@ class AsyncSessions(AsyncAPIResource):
         *,
         new_status: Literal["Approved", "Declined", "In Review"] | str,
         comment: str | NotGiven = NOT_GIVEN,
+        feature_type: Literal[
+            "ID_VERIFICATION",
+            "OCR",
+            "OCR_BACK",
+            "NFC",
+            "LIVENESS",
+            "FACE",
+            "AGE_ESTIMATION",
+            "AGE_VERIFICATION",
+            "FACE_SEARCH",
+            "FACE_MATCH",
+            "IP_ANALYSIS",
+            "AML",
+            "PHONE",
+            "PHONE_VERIFICATION",
+            "EMAIL",
+            "EMAIL_VERIFICATION",
+            "POA",
+            "PROOF_OF_ADDRESS",
+            "DATABASE_VALIDATION",
+            "DATA_VALIDATION",
+            "QUESTIONNAIRE",
+            "DOCUMENT_AI",
+            "KYB_REGISTRY",
+            "KYB_DOCUMENTS",
+            "KYB_KEY_PEOPLE",
+            "BANK_VERIFICATION",
+            "GEOLOCATION",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        defer_until_flow_finishes: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2399,13 +3161,19 @@ class AsyncSessions(AsyncAPIResource):
     ) -> SessionsUpdateFeatureStatusResponse:
         """Update an individual feature (step) status.
 
-        Set the status of a single verification feature (step) within a session **without changing the overall session decision**. Target the feature by its workflow graph `nodeId` (use `default` for non-graph workflows where the step has no node).
+        Set the status of a single verification feature (step) within a session. Target the feature by its workflow graph `nodeId`. On non-graph workflows, whose steps have no node, use `default` and also pass `feature_type` to say which step you mean.
 
-        Works for both User Verification (KYC) and Business Verification (KYB) sessions and every step type - ID/OCR, Liveness, Face Match, NFC, AML, Proof of Address, Phone, Email, Database Validation, Questionnaire, and the KYB registry / documents / key-people checks.
+        Works for both User Verification (KYC) and Business Verification (KYB) sessions and every step type: ID/OCR, Liveness, Face Match, NFC, AML, Proof of Address, Phone, Email, Database Validation, Questionnaire, and the KYB registry / documents / key-people checks. This endpoint is **not** available for standalone API sessions (`session_type = API`).
 
-        `new_status` must be one of `Approved`, `Declined`, or `In Review`, and must differ from the feature's current status. A successful call fires a `data.updated` webhook and appends an activity entry (with actor attribution) to the session's review trail. This endpoint is **not** available for standalone API sessions (`session_type = API`).
+        `new_status` must be one of `Approved`, `Declined`, or `In Review`, and must differ from the feature's current status.
 
-        Authenticate with your API key (`x-api-key`) or a user authorization header - either must carry the `write:sessions` privilege.
+        **When the override applies.** Without `defer_until_flow_finishes` (or with `false`) the override applies at once, as it always did; when the person is still in the flow it is recorded as `forced`. With `defer_until_flow_finishes: true` while the person is still in the flow (the session is `Not Started`, `In Progress` or `Resubmitted` and has not finished), the override is stored as `pending_until_flow_finishes` and applies when the flow finishes, after the flow reaches its own decision. On a session whose flow already ended it applies at once either way. A waiting override is cancelled instead when the person redoes its step before finishing, when a newer override on the same check replaces it, when the session leaves the flow unfinished (abandoned, expired, or decided mid-flow), or when you cancel it with `POST /v3/session/{sessionId}/features/overrides/{overrideId}/cancel/`. List a session's overrides with `GET /v3/session/{sessionId}/features/overrides/`.
+
+        **Effect on the session.** A session that already has a decision keeps it: only the check changes. When the session has no decision yet and its workflow is waiting on exactly this step, applying the override completes the step: the workflow moves on, later steps run, and a status node can set the session decision and fire `status.updated`.
+
+        **Webhooks and activity.** A `data.updated` webhook fires when the override applies (at once, or when the flow finishes), never while it waits or when it is cancelled. Every override is recorded in the session's activity as `FEATURE_OVERRIDE_PENDING`, `FEATURE_OVERRIDE_APPLIED` or `FEATURE_OVERRIDE_CANCELLED`, with who made it; the request's entry carries your `comment`.
+
+        Authenticate with your API key (`x-api-key`) or a user authorization header carrying the `write:sessions` privilege; a scoped API key needs write access to decisions.
 
         ``PATCH /v3/session/{sessionId}/features/{nodeId}/update-status/``
 
@@ -2414,6 +3182,8 @@ class AsyncSessions(AsyncAPIResource):
           node_id: Workflow graph node ID of the feature to update (for example `feature_ocr_1`). Use the literal value `default` for non-graph (single-step) workflows where the feature has no node ID.
           new_status: Target status for this feature. Must differ from the current value.
           comment: Optional free-text note recorded on the session's review trail for this feature change.
+          feature_type: Which kind of step to target. Needed on non-graph workflows (`nodeId` = `default`), where every step shares no node; optional otherwise. An unknown value returns `400`.
+          defer_until_flow_finishes: While the person is still in the flow, store the override as `pending_until_flow_finishes` and apply it when the flow finishes, instead of at once. Omitted or `false`, the override applies at once. On a session whose flow already ended it applies at once either way.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2427,7 +3197,12 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=SessionsUpdateFeatureStatusResponse,
                 path_params={"sessionId": session_id, "nodeId": node_id},
                 auth="api_key",
-                body={"new_status": new_status, "comment": comment},
+                body={
+                    "new_status": new_status,
+                    "comment": comment,
+                    "feature_type": feature_type,
+                    "defer_until_flow_finishes": defer_until_flow_finishes,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2448,7 +3223,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionsUpdateAmlHitStatusResponse:
         """Update an AML hit review status.
 
         Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision).
@@ -2473,11 +3248,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionsUpdateAmlHitStatusResponse",
             await self._client.request(
                 "patch",
                 "/v3/session/{sessionId}/update-aml-hit-status/",
-                cast_to=object,
+                cast_to=SessionsUpdateAmlHitStatusResponse,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"node_id": node_id_query},
@@ -2500,7 +3275,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> object:
+    ) -> SessionsBulkUpdateAmlHitStatusResponse:
         """Bulk update AML hit review statuses.
 
         Update the review status of **multiple AML hits** in one call. Provide `hit_updates`, a list of `{ hit_id, review_status }` pairs. `review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`.
@@ -2522,11 +3297,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "object",
+            "SessionsBulkUpdateAmlHitStatusResponse",
             await self._client.request(
                 "patch",
                 "/v3/session/{sessionId}/bulk-update-aml-hit-status/",
-                cast_to=object,
+                cast_to=SessionsBulkUpdateAmlHitStatusResponse,
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 query={"node_id": node_id_query},
@@ -2824,7 +3599,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> SessionsListNetworksResponse:
+    ) -> EntityNetworkMembershipList:
         """List networks for a session.
 
         List the networks the session's vendor user belongs to. Resolves through the session's vendor_data-linked user.
@@ -2839,11 +3614,11 @@ class AsyncSessions(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "SessionsListNetworksResponse",
+            "EntityNetworkMembershipList",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/sessions/{session_id}/networks/",
-                cast_to=SessionsListNetworksResponse,
+                cast_to=EntityNetworkMembershipList,
                 path_params={"session_id": session_id},
                 scope="application",
                 auth="api_key",
@@ -2858,9 +3633,9 @@ class AsyncSessions(AsyncAPIResource):
         self,
         session_id: str,
         *,
-        email_address: str,
         nodes_to_resubmit: Sequence[SessionsPreviewResubmissionParamsNodesToResubmit]
         | NotGiven = NOT_GIVEN,
+        email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -2869,18 +3644,20 @@ class AsyncSessions(AsyncAPIResource):
     ) -> SessionsPreviewResubmissionResponse:
         """Preview a resubmission email.
 
-        Render the email that would accompany a KYC or KYB resubmission without changing the session, resetting checks, extending its expiry, running checks or sending mail. Requires write:sessions and an application-scoped session in Approved, Declined, In Review, Kyc Expired or Abandoned status. The server validates the selected workflow steps and renders its fixed translated template with the applicable verified white-label sender and branding. The request cannot set a subject, message body or action URL.
+        Render the email that would accompany a KYC or KYB resubmission without changing the session, resetting checks, extending its expiry, running checks or sending mail. Requires the `write:sessions` privilege (a scoped API key needs write access to decisions) and a session in `Approved`, `Declined`, `In Review`, `Kyc Expired` or `Abandoned` status. The server validates the selected workflow steps and renders its fixed translated template with the applicable verified white-label sender and branding. The request cannot set a subject, message body or action URL.
 
-        The response includes the recipient, sender, subject, HTML, resolved steps and a signed preview_token. requires_user_action describes whether the selected steps include an interactive check. Email delivery remains conditional: if automatic checks finalize the verification during the subsequent resubmission, no action-request email is sent.
+        `email_address` is optional. Without it, the email goes to the person's own address: the one they verified in an email verification step of the flow, else the one given in `contact_details` when the session was created. An address you pass wins (`recipient_source: request`). When no address is known and you pass none, `recipient` and `preview_token` are empty strings and no email can be sent.
 
-        This preview does not reserve session state or authorize delivery. After reviewing it, call Update Session Status with new_status=Resubmitted, the same selection, recipient and language, and email_preview_token set to the returned preview_token. The receipt expires after 15 minutes. When a receipt is supplied, changed inputs, message content, sender or session state return 409 before any mutation or send. Existing integrations may omit the receipt. Regenerate the preview after a conflict. Treat the response as sensitive verification content; responses use Cache-Control: no-store. Render HTML in a sandboxed frame, never directly in your application DOM.
+        The response includes the recipient and where it comes from, the sender, subject, HTML, language, resolved steps, whether confirming sends the email (`will_be_sent`, `not_sent_reason`) and a signed `preview_token`. `requires_user_action` is `false` when every selected step runs without the person: the resubmission then finishes on its own and no email goes out (`not_sent_reason: no_user_action`).
+
+        This preview does not reserve session state or authorize delivery. After reviewing it, call [Update Session Status](/sessions-api/update-status) with `new_status: Resubmitted`, the same `nodes_to_resubmit` and `email_language` you previewed, `send_email: true`, `email_address` set to `recipient` and `email_preview_token` set to `preview_token`. The receipt expires after 15 minutes. When a receipt is supplied, changed inputs, message content, sender or session state return `409` before any mutation or send. Existing integrations may omit the receipt. Regenerate the preview after a conflict. Treat the response as sensitive verification content; responses use `Cache-Control: no-store`. Render HTML in a sandboxed frame, never directly in your application DOM.
 
         ``POST /v3/session/{sessionId}/resubmission-preview/``
 
         Args:
           session_id: UUID of the verification session to update. Accepts both user (KYC) and business (KYB) session IDs - the service resolves the ID across both session types.
-          email_address: Recipient shown in the preview. No email is sent.
           nodes_to_resubmit: Steps to preview, using the same validation, selection and workflow ordering as a resubmission. Omit to auto-select recorded attempts needing resubmission.
+          email_address: Optional. Send the email to this address instead of the person's own. Without it, the recipient is the address the person verified in the flow, else the one given in `contact_details`. No email is sent by this call.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -2896,10 +3673,517 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={
-                    "email_address": email_address,
                     "nodes_to_resubmit": nodes_to_resubmit,
+                    "email_address": email_address,
                     "email_language": email_language,
                 },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def update_document_ai_data(
+        self,
+        session_id: str,
+        document_uuid: str,
+        *,
+        extracted_data: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        status: Literal["Approved", "Declined", "In Review", "Not Finished"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateDocumentAiDataResponse:
+        """Update a Document AI document.
+
+        Correct the fields Document AI extracted from one uploaded document, set its review status, or both, on a KYC or KYB session. `extracted_data` must be a JSON object and is merged key by key: a key you send replaces the stored value (a key sent as `null` is stored as `null`) and keys you leave out keep their values. The document status feeds the Document AI result of its workflow node in the session decision; the session status itself is not recomputed. Every successful call, including one that changes nothing, sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) with trigger `manual_review`. A scoped API key needs `decisions: write`; see [Document AI](https://docs.didit.me/core-technology/document-ai/overview).
+
+        ``PATCH /v3/document-ai/{sessionId}/documents/{documentUuid}/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          document_uuid: UUID of the Document AI document (`document_ai_documents[].items[].uuid` in `GET /v3/session/{sessionId}/decision/`). It must belong to the session in the path.
+          extracted_data: Field keys (the keys you configured for the document) and their corrected values. Must be a JSON object; merged key by key into the stored data. Leave it out rather than sending `null`, which returns `400`.
+          status: New review status of the document.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateDocumentAiDataResponse",
+            await self._client.request(
+                "patch",
+                "/v3/document-ai/{sessionId}/documents/{documentUuid}/",
+                cast_to=SessionsUpdateDocumentAiDataResponse,
+                path_params={"sessionId": session_id, "documentUuid": document_uuid},
+                auth="api_key",
+                body={"extracted_data": extracted_data, "status": status},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def regenerate_kyb_party(
+        self,
+        session_id: str,
+        party_uuid: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> KYBKeyPeopleParty:
+        """Regenerate a Key People party's KYC session.
+
+        Give a Key People party of a Business Verification (KYB) session a new individual KYC session after its previous one was deleted, so the Key People check can finish again; send no request body. It works only when the party's KYC session was deleted (`kyc_session_deleted: true`): a party whose KYC session still exists (in any status), a party that never had one, or a company party returns `409`. Didit creates a new hosted KYC session with the workflow the deleted one ran (its latest published version) or, when that is no longer known, the workflow your Key People settings assign to the party's role, emails the link to the party when an email is on file, clears `is_skipped`, and recomputes the Key People check and the business session status. It then sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) for the business session with trigger `console_key_people_regenerate`; to exempt the party instead, use `PATCH /v3/session/{sessionId}/kyb/parties/{partyUuid}/`. A scoped API key needs `decisions: write`, and without `sessions: write` it receives `kyc_session_url` as `null`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/``
+
+        Args:
+          session_id: UUID of the parent Business Verification (KYB) session.
+          party_uuid: UUID of the Key People party (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "KYBKeyPeopleParty",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/",
+                cast_to=KYBKeyPeopleParty,
+                path_params={"sessionId": session_id, "partyUuid": party_uuid},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_events(
+        self,
+        session_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        ordering: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[SessionEvent]:
+        """List session events.
+
+        Read the event timeline of one verification session, newest first by `sent_at`: the screens the user saw, buttons and uploads, failed attempts, status and feature-step changes, and the workflow routing trace. Works for User Verification (KYC) and Business Verification (KYB) session IDs. Events are stored asynchronously, so a new event can take a few seconds to appear. Results are paginated with `limit` and `offset`; follow `next` until it is `null`. A scoped API key needs `sessions: read` and `decisions: read`, and without `media: read` it receives `file_url` as `null`. The routing events are described in [Retrieve session](https://docs.didit.me/sessions-api/retrieve-session).
+
+        ``GET /v3/session/{sessionId}/events/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          limit: Maximum number of events per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
+          offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
+          ordering: Optional sort override. The default order is `-sent_at`. Pass a result field name (for example `sent_at`, `created_at`, `event_type`, `feature_step` or `step`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[SessionEvent]",
+            self._client.request_page(
+                "get",
+                "/v3/session/{sessionId}/events/",
+                cast_to=SessionsListEventsResponse,
+                item_type=SessionEvent,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset, "ordering": ordering},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_aml_screening_history(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        ordering: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[AMLScreeningRun]:
+        """List AML screening history.
+
+        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
+
+        ``GET /v3/session/{sessionId}/aml-screening-history/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          limit: Maximum number of screening runs per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
+          offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
+          ordering: Optional sort override. The default order is `-completed_at`. Pass a result field name (for example `completed_at`, `started_at`, `outcome` or `score`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[AMLScreeningRun]",
+            self._client.request_page(
+                "get",
+                "/v3/session/{sessionId}/aml-screening-history/",
+                cast_to=SessionsListAmlScreeningHistoryResponse,
+                item_type=AMLScreeningRun,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id, "limit": limit, "offset": offset, "ordering": ordering},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def export_aml_screening_history(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Export AML screening history as CSV.
+
+        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
+
+        ``GET /v3/session/{sessionId}/aml-screening-history/export/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            await self._client.request(
+                "get",
+                "/v3/session/{sessionId}/aml-screening-history/export/",
+                cast_to=bytes,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                accept="text/csv, application/json",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def add_images(
+        self,
+        session_id: str,
+        *,
+        file: FileTypes,
+        model_type: Literal["kyc", "poa"] | str,
+        file_password: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsAddImagesResponse:
+        """Add an image to a session.
+
+        Attach one extra image or PDF to the ID verification (`model_type=kyc`) or Proof of Address (`model_type=poa`) result of a finished User Verification (KYC) session, for example evidence collected outside the flow. The session must be `Approved`, `Declined`, `In Review` or `Kyc Expired` and carry the result named by `model_type`; Business Verification (KYB) sessions are not supported. Each call appends one file (to the most recent result when the step ran more than once), keeps the existing files and records a `FILE_ADDED` entry in the session activity log; the upload sends no webhook and does not change the session status. The file is compressed on upload and is returned in `extra_files` of the session decision. This endpoint is limited to 10 requests per minute per API key. A scoped API key needs `sessions: write`, and without `media: read` it receives the `extra_files` links as `null`.
+
+        ``PATCH /v3/session/{sessionId}/add-images/``
+
+        Args:
+          session_id: UUID of the User Verification (KYC) session to add the file to (the `session_id` returned by `POST /v3/session/`). A Business Verification (KYB) session ID returns `404`.
+          file: The image or PDF. Allowed extensions: `jpg`, `jpeg`, `png`, `webp`, `tiff`, `pdf`. At most 15 MB as uploaded; the file is then compressed and rejected with `400` if it is still larger than 2 MB (2,097,152 bytes). Empty files are rejected.
+          model_type: `kyc` adds the file to the ID verification result, `poa` to the Proof of Address result.
+          file_password: Password of an encrypted PDF. Without it, or with a wrong one, an encrypted PDF returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsAddImagesResponse",
+            await self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/add-images/",
+                cast_to=SessionsAddImagesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={"file": file, "model_type": model_type, "file_password": file_password},
+                multipart=True,
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def update_aml_status(
+        self,
+        session_id: str,
+        *,
+        status: Literal["Not Finished", "Approved", "Declined", "In Review", "Resub Requested"]
+        | str,
+        node_id: str | NotGiven = NOT_GIVEN,
+        node_id_query: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateAmlStatusResponse:
+        """Update an AML check status.
+
+        Set the status of a session's AML screening check as a whole (the `status` of an `aml_screenings[]` entry in the session decision), for example `Approved` after your team cleared every hit. Works for KYC and KYB session IDs; pass `node_id` (query parameter or body field) when the session ran more than one AML step, otherwise the most recent AML check is updated. When the status actually changes, an `AML_STATUS_UPDATED` activity entry is recorded and a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) is sent; sending the current status returns `200` and changes nothing. The session status is not recomputed: use `PATCH /v3/session/{sessionId}/update-status/` for the session decision and `PATCH /v3/session/{sessionId}/update-aml-hit-status/` for single hits. A scoped API key needs `decisions: write`.
+
+        ``PATCH /v3/session/{sessionId}/update-aml-status/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
+          status: New status of the AML check.
+          node_id: Workflow graph node ID of the AML check, as an alternative to the query parameter.
+          node_id_query: Workflow graph node ID of the AML check to update. Needed only when the session ran more than one AML step. Takes precedence over `node_id` in the body.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateAmlStatusResponse",
+            await self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/update-aml-status/",
+                cast_to=SessionsUpdateAmlStatusResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id_query},
+                body={"status": status, "node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def simulate(
+        self,
+        session_id: str,
+        *,
+        new_status: Literal["Approved", "Declined", "In Review", "Expired", "Abandoned"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        comment: str | NotGiven = NOT_GIVEN,
+        scenario: str | NotGiven = NOT_GIVEN,
+        risk: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        send_webhooks: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SandboxSimulateResponse:
+        """Simulate a sandbox session's status.
+
+        Force a terminal status on a sandbox session after the fact, from your backend, without running the flow. Sandbox applications only: a live session returns `404`. Works for User Verification (KYC) and Business Verification (KYB) sessions.
+
+        Set `new_status`, or let `scenario` or `risk` supply it. `risk` (or the first risk the scenario's magic values carry) adds that warning to the session. The change is recorded in the session's activity.
+
+        `send_webhooks` (default `true`) sends exactly the webhooks a real status change sends. With `false` the status still changes and the console still updates live, but no webhook is logged or sent, the missed-webhook recovery never re-sends that decision, and the next status change sends webhooks as usual. The response echoes the value applied.
+
+        Requires the `write:sessions` privilege; a scoped API key needs write access to sessions. An unknown `session_id` returns `404` and another application's session returns `403`, both before the body is read; a live session returns `404` only after the body is validated. To simulate from the hosted flow with the session's own token, use `POST /v3/session/{sessionId}/sandbox/simulate/`. See [Sandbox & Test Data](/integration/sandbox-testing) for the scenario catalog.
+
+        ``POST /v3/session/{sessionId}/simulate/``
+
+        Args:
+          session_id: UUID of the sandbox verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          new_status: The status to set. When you leave it out, it defaults to the default status of the risk case (`risk`, or the first risk the scenario's magic values carry), else to the scenario's default status.
+          comment: Note added to the activity entry the status change records.
+          scenario: A scenario slug from the catalog (`GET /v1/sandbox/scenarios/`). It supplies the default status and, without `risk`, the warning its magic values carry. An unknown slug returns `400`.
+          risk: A risk case from the catalog. Its warning is added to the session, with a log type that follows `new_status`. An unknown value returns `400`.
+          node_id: Workflow node the risk warning is attached to. Defaults to the session's current node.
+          send_webhooks: `true` sends exactly the webhooks a real status change sends to the sandbox application's destinations: `status.updated`, plus the `user.status.updated` / `user.data.updated` (or `business.status.updated` / `business.data.updated`) events the change causes, for destinations subscribed to them. `false` changes the status without logging or sending any webhook: the missed-webhook recovery never re-sends that decision, the console still updates live, and the next status change of the session sends webhooks as usual.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SandboxSimulateResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/simulate/",
+                cast_to=SandboxSimulateResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={
+                    "new_status": new_status,
+                    "comment": comment,
+                    "scenario": scenario,
+                    "risk": risk,
+                    "node_id": node_id,
+                    "send_webhooks": send_webhooks,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_feature_overrides(
+        self,
+        session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListFeatureOverridesResponse:
+        """List a session's check overrides.
+
+        Every override of an individual feature (step) status on a User Verification (KYC) or Business Verification (KYB) session, newest first and not paginated: applied ones, ones waiting for the person to finish the flow (`pending_until_flow_finishes`) and cancelled ones, each with who asked, their reason, and whether it applied while the person was still in the flow (`forced`).
+
+        `person_in_flow` tells you whether a new override with `defer_until_flow_finishes: true` would wait. `flow_finished_at` is when the person last finished the flow; it is `null` while they are still in it (a resubmission included) and when the session closed before they finished.
+
+        Requires the `read:sessions` privilege; a scoped API key needs read access to decisions.
+
+        ``GET /v3/session/{sessionId}/features/overrides/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListFeatureOverridesResponse",
+            await self._client.request(
+                "get",
+                "/v3/session/{sessionId}/features/overrides/",
+                cast_to=SessionsListFeatureOverridesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def cancel_feature_override(
+        self,
+        session_id: str,
+        override_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> FeatureStatusOverride:
+        """Cancel a check override that waits for the flow to finish.
+
+        Cancel an override of a feature (step) status that is still `pending_until_flow_finishes`, so it never applies. The check keeps its status, the cancellation is recorded in the session's activity as `FEATURE_OVERRIDE_CANCELLED`, and no webhook is sent. The response is the override with `state: cancelled` and `cancel_reason: cancelled_by_reviewer`.
+
+        An override that already applied or was cancelled returns `409` with the code `feature_override_not_pending`. Find override IDs with `GET /v3/session/{sessionId}/features/overrides/` or in the `override` returned by the feature status update.
+
+        Requires the `write:sessions` privilege; a scoped API key needs write access to decisions.
+
+        ``POST /v3/session/{sessionId}/features/overrides/{overrideId}/cancel/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          override_id: The `id` of the override to cancel.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "FeatureStatusOverride",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/features/overrides/{overrideId}/cancel/",
+                cast_to=FeatureStatusOverride,
+                path_params={"sessionId": session_id, "overrideId": override_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def preview_decision_email(
+        self,
+        session_id: str,
+        *,
+        new_status: Literal["Approved", "Declined"] | str,
+        email_language: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsPreviewDecisionEmailResponse:
+        """Preview a session's decision email.
+
+        Render the email the person receives when you set a session to `Approved` or `Declined` with `send_email: true`, without changing the session or sending anything. The response shows the subject and HTML exactly as they are sent, the recipient, the sender, the language, and whether confirming the change sends the email at all (`will_be_sent`, `not_sent_reason`).
+
+        The recipient is the person's own address: the one they verified in an email verification step of the flow, else the one given in `contact_details` when the session was created. The sender is your application's verified sender domain when white label applies (`sender_kind: customer`), else Didit's sender (`sender_kind: didit`).
+
+        To send exactly what you previewed, call [Update Session Status](/sessions-api/update-status) with the same `new_status`, `send_email: true`, `email_address` set to `recipient`, `email_language` set to `language` and `email_preview_token` set to `preview_token`. The receipt expires after 15 minutes. When the recipient, language, session status, sender or email changed since the preview, the update returns `409` before anything changes; preview again and confirm with the new receipt.
+
+        Works for User Verification (KYC) and Business Verification (KYB) sessions in `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned` or `Resubmitted` status. The status check runs before body validation. Requires the `write:sessions` privilege; a scoped API key needs write access to decisions. Responses use `Cache-Control: no-store`: treat them as sensitive verification content.
+
+        ``POST /v3/session/{sessionId}/decision-email-preview/``
+
+        Args:
+          session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
+          new_status: The decision whose email you want to preview.
+          email_language: Language of the email, the same default as Update Session Status. A language that is not offered falls back to English; `language` in the response says which one is used.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsPreviewDecisionEmailResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/decision-email-preview/",
+                cast_to=SessionsPreviewDecisionEmailResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                body={"new_status": new_status, "email_language": email_language},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2932,6 +4216,21 @@ class SessionsWithRawResponse:
         self.update_kyb_party = to_raw_response_wrapper(resource.update_kyb_party)
         self.list_networks = to_raw_response_wrapper(resource.list_networks)
         self.preview_resubmission = to_raw_response_wrapper(resource.preview_resubmission)
+        self.update_document_ai_data = to_raw_response_wrapper(resource.update_document_ai_data)
+        self.regenerate_kyb_party = to_raw_response_wrapper(resource.regenerate_kyb_party)
+        self.list_events = to_raw_response_wrapper(resource.list_events)
+        self.list_aml_screening_history = to_raw_response_wrapper(
+            resource.list_aml_screening_history
+        )
+        self.export_aml_screening_history = to_raw_response_wrapper(
+            resource.export_aml_screening_history
+        )
+        self.add_images = to_raw_response_wrapper(resource.add_images)
+        self.update_aml_status = to_raw_response_wrapper(resource.update_aml_status)
+        self.simulate = to_raw_response_wrapper(resource.simulate)
+        self.list_feature_overrides = to_raw_response_wrapper(resource.list_feature_overrides)
+        self.cancel_feature_override = to_raw_response_wrapper(resource.cancel_feature_override)
+        self.preview_decision_email = to_raw_response_wrapper(resource.preview_decision_email)
 
     @cached_property
     def imports(self) -> SessionsImportsWithRawResponse:
@@ -2944,6 +4243,18 @@ class SessionsWithRawResponse:
         from didit.resources.sessions.reviews import SessionsReviewsWithRawResponse
 
         return SessionsReviewsWithRawResponse(self._resource.reviews)
+
+    @cached_property
+    def signatures(self) -> SessionsSignaturesWithRawResponse:
+        from didit.resources.sessions.signatures import SessionsSignaturesWithRawResponse
+
+        return SessionsSignaturesWithRawResponse(self._resource.signatures)
+
+    @cached_property
+    def webhooks(self) -> SessionsWebhooksWithRawResponse:
+        from didit.resources.sessions.webhooks import SessionsWebhooksWithRawResponse
+
+        return SessionsWebhooksWithRawResponse(self._resource.webhooks)
 
 
 class AsyncSessionsWithRawResponse:
@@ -2972,6 +4283,25 @@ class AsyncSessionsWithRawResponse:
         self.update_kyb_party = async_to_raw_response_wrapper(resource.update_kyb_party)
         self.list_networks = async_to_raw_response_wrapper(resource.list_networks)
         self.preview_resubmission = async_to_raw_response_wrapper(resource.preview_resubmission)
+        self.update_document_ai_data = async_to_raw_response_wrapper(
+            resource.update_document_ai_data
+        )
+        self.regenerate_kyb_party = async_to_raw_response_wrapper(resource.regenerate_kyb_party)
+        self.list_events = async_to_raw_response_wrapper(resource.list_events)
+        self.list_aml_screening_history = async_to_raw_response_wrapper(
+            resource.list_aml_screening_history
+        )
+        self.export_aml_screening_history = async_to_raw_response_wrapper(
+            resource.export_aml_screening_history
+        )
+        self.add_images = async_to_raw_response_wrapper(resource.add_images)
+        self.update_aml_status = async_to_raw_response_wrapper(resource.update_aml_status)
+        self.simulate = async_to_raw_response_wrapper(resource.simulate)
+        self.list_feature_overrides = async_to_raw_response_wrapper(resource.list_feature_overrides)
+        self.cancel_feature_override = async_to_raw_response_wrapper(
+            resource.cancel_feature_override
+        )
+        self.preview_decision_email = async_to_raw_response_wrapper(resource.preview_decision_email)
 
     @cached_property
     def imports(self) -> AsyncSessionsImportsWithRawResponse:
@@ -2984,6 +4314,18 @@ class AsyncSessionsWithRawResponse:
         from didit.resources.sessions.reviews import AsyncSessionsReviewsWithRawResponse
 
         return AsyncSessionsReviewsWithRawResponse(self._resource.reviews)
+
+    @cached_property
+    def signatures(self) -> AsyncSessionsSignaturesWithRawResponse:
+        from didit.resources.sessions.signatures import AsyncSessionsSignaturesWithRawResponse
+
+        return AsyncSessionsSignaturesWithRawResponse(self._resource.signatures)
+
+    @cached_property
+    def webhooks(self) -> AsyncSessionsWebhooksWithRawResponse:
+        from didit.resources.sessions.webhooks import AsyncSessionsWebhooksWithRawResponse
+
+        return AsyncSessionsWebhooksWithRawResponse(self._resource.webhooks)
 
 
 class SessionsWithStreamingResponse:
@@ -3012,6 +4354,25 @@ class SessionsWithStreamingResponse:
         self.update_kyb_party = to_streamed_response_wrapper(resource.update_kyb_party)
         self.list_networks = to_streamed_response_wrapper(resource.list_networks)
         self.preview_resubmission = to_streamed_response_wrapper(resource.preview_resubmission)
+        self.update_document_ai_data = to_streamed_response_wrapper(
+            resource.update_document_ai_data
+        )
+        self.regenerate_kyb_party = to_streamed_response_wrapper(resource.regenerate_kyb_party)
+        self.list_events = to_streamed_response_wrapper(resource.list_events)
+        self.list_aml_screening_history = to_streamed_response_wrapper(
+            resource.list_aml_screening_history
+        )
+        self.export_aml_screening_history = to_streamed_response_wrapper(
+            resource.export_aml_screening_history
+        )
+        self.add_images = to_streamed_response_wrapper(resource.add_images)
+        self.update_aml_status = to_streamed_response_wrapper(resource.update_aml_status)
+        self.simulate = to_streamed_response_wrapper(resource.simulate)
+        self.list_feature_overrides = to_streamed_response_wrapper(resource.list_feature_overrides)
+        self.cancel_feature_override = to_streamed_response_wrapper(
+            resource.cancel_feature_override
+        )
+        self.preview_decision_email = to_streamed_response_wrapper(resource.preview_decision_email)
 
     @cached_property
     def imports(self) -> SessionsImportsWithStreamingResponse:
@@ -3024,6 +4385,18 @@ class SessionsWithStreamingResponse:
         from didit.resources.sessions.reviews import SessionsReviewsWithStreamingResponse
 
         return SessionsReviewsWithStreamingResponse(self._resource.reviews)
+
+    @cached_property
+    def signatures(self) -> SessionsSignaturesWithStreamingResponse:
+        from didit.resources.sessions.signatures import SessionsSignaturesWithStreamingResponse
+
+        return SessionsSignaturesWithStreamingResponse(self._resource.signatures)
+
+    @cached_property
+    def webhooks(self) -> SessionsWebhooksWithStreamingResponse:
+        from didit.resources.sessions.webhooks import SessionsWebhooksWithStreamingResponse
+
+        return SessionsWebhooksWithStreamingResponse(self._resource.webhooks)
 
 
 class AsyncSessionsWithStreamingResponse:
@@ -3060,6 +4433,31 @@ class AsyncSessionsWithStreamingResponse:
         self.preview_resubmission = async_to_streamed_response_wrapper(
             resource.preview_resubmission
         )
+        self.update_document_ai_data = async_to_streamed_response_wrapper(
+            resource.update_document_ai_data
+        )
+        self.regenerate_kyb_party = async_to_streamed_response_wrapper(
+            resource.regenerate_kyb_party
+        )
+        self.list_events = async_to_streamed_response_wrapper(resource.list_events)
+        self.list_aml_screening_history = async_to_streamed_response_wrapper(
+            resource.list_aml_screening_history
+        )
+        self.export_aml_screening_history = async_to_streamed_response_wrapper(
+            resource.export_aml_screening_history
+        )
+        self.add_images = async_to_streamed_response_wrapper(resource.add_images)
+        self.update_aml_status = async_to_streamed_response_wrapper(resource.update_aml_status)
+        self.simulate = async_to_streamed_response_wrapper(resource.simulate)
+        self.list_feature_overrides = async_to_streamed_response_wrapper(
+            resource.list_feature_overrides
+        )
+        self.cancel_feature_override = async_to_streamed_response_wrapper(
+            resource.cancel_feature_override
+        )
+        self.preview_decision_email = async_to_streamed_response_wrapper(
+            resource.preview_decision_email
+        )
 
     @cached_property
     def imports(self) -> AsyncSessionsImportsWithStreamingResponse:
@@ -3072,3 +4470,15 @@ class AsyncSessionsWithStreamingResponse:
         from didit.resources.sessions.reviews import AsyncSessionsReviewsWithStreamingResponse
 
         return AsyncSessionsReviewsWithStreamingResponse(self._resource.reviews)
+
+    @cached_property
+    def signatures(self) -> AsyncSessionsSignaturesWithStreamingResponse:
+        from didit.resources.sessions.signatures import AsyncSessionsSignaturesWithStreamingResponse
+
+        return AsyncSessionsSignaturesWithStreamingResponse(self._resource.signatures)
+
+    @cached_property
+    def webhooks(self) -> AsyncSessionsWebhooksWithStreamingResponse:
+        from didit.resources.sessions.webhooks import AsyncSessionsWebhooksWithStreamingResponse
+
+        return AsyncSessionsWebhooksWithStreamingResponse(self._resource.webhooks)

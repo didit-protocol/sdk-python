@@ -19,14 +19,13 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from didit.types.cases.bulk_assign_response import CasesBulkAssignResponse
-from didit.types.cases.bulk_update_status_response import CasesBulkUpdateStatusResponse
 from didit.types.cases.create_params import CasesCreateParamsSubject
 from didit.types.cases.list_events_response import CasesListEventsResponse
 from didit.types.cases.list_response import CasesListResponse
 from didit.types.cases.list_reviewers_response import CasesListReviewersResponse
 from didit.types.cases.print_response import CasesPrintResponse
 from didit.types.cases.retrieve_statistics_response import CasesRetrieveStatisticsResponse
+from didit.types.components.aml_screening import AMLScreening
 from didit.types.components.case_action_action_enum import CaseActionActionEnum
 from didit.types.components.case_action_case_action_receipt import CaseActionCaseActionReceipt
 from didit.types.components.case_action_case_action_receipt_page import (
@@ -35,6 +34,7 @@ from didit.types.components.case_action_case_action_receipt_page import (
 from didit.types.components.case_action_case_entity_action_result import (
     CaseActionCaseEntityActionResult,
 )
+from didit.types.components.case_bulk_update_result import CaseBulkUpdateResult
 from didit.types.components.case_detail import CaseDetail
 from didit.types.components.case_duplicate_case_duplicate_page import CaseDuplicateCaseDuplicatePage
 from didit.types.components.case_duplicate_case_fraud_source_context_request import (
@@ -430,6 +430,7 @@ class Cases(SyncAPIResource):
         priority: Literal["LOW", "MEDIUM", "HIGH"] | str | NotGiven = NOT_GIVEN,
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
+        team: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -437,16 +438,17 @@ class Cases(SyncAPIResource):
     ) -> CaseDetail:
         """Update case.
 
-        Update the case's title, priority, due date, or tags. Logs PRIORITY_CHANGED/DUE_DATE_CHANGED/TAG_ADDED/TAG_REMOVED events as applicable.
+        Update the case's title, priority, due date, tags, or owning review team. Send only the fields you want to change; fields you omit keep their value. `tags` replaces the whole tag list. `team` takes the uuid of an active review team of this application (list them with `GET .../cases/teams/`), or null to clear the team. Requires a full-access API key, or `write:cases` for a console member: a key with restricted access gets 403. Logs PRIORITY_CHANGED, DUE_DATE_CHANGED, TAG_ADDED, TAG_REMOVED and TEAM_CHANGED events as applicable; a title change is saved without a timeline event. Returns the updated case.
 
         ``PATCH /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/``
 
         Args:
           case_uuid: Case UUID.
-          title
+          title: New case title.
           priority
-          due_at
-          tags
+          due_at: New deadline. Send null to clear it.
+          tags: The complete tag list. It replaces the current tags.
+          team: UUID of the review team that owns the case. It must be an active team of this application. Send null to clear the team.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -461,7 +463,13 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
-                body={"title": title, "priority": priority, "due_at": due_at, "tags": tags},
+                body={
+                    "title": title,
+                    "priority": priority,
+                    "due_at": due_at,
+                    "tags": tags,
+                    "team": team,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -522,8 +530,16 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
-        resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str,
+        resolution: Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str,
         note: str | None | NotGiven = NOT_GIVEN,
+        checker: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -531,7 +547,7 @@ class Cases(SyncAPIResource):
     ) -> CaseDetail:
         """Resolve case.
 
-        Resolve the case as false_positive or valid_threat. Blocked with 400 if the blueprint's checklist is not optional and items remain incomplete, or if the blueprint requires a resolution note and none is given. When the case's blueprint has a four_eyes_checker_blueprint configured, the resolution is staged (case.pending_resolution) and the case moves to the checker blueprint instead of resolving immediately; a different user must call approve or reject-approval.
+        Resolve the case with one of five resolutions: FALSE_POSITIVE (no concern found), VALID_THREAT (concern confirmed), INCONCLUSIVE, REQUIREMENTS_NOT_MET or REQUIREMENTS_SATISFIED. Blocked with 400 if the blueprint's checklist is not optional and items remain incomplete, or if the blueprint requires a resolution note and none is given. When the case's blueprint has a four-eyes checker step (four_eyes_checker_blueprint), the resolution is staged (case.pending_resolution) and the case moves to the checker blueprint instead of resolving immediately; a different officer must call approve or reject-approval. Submit a four-eyes resolution as a console member: a resolution an API key submits has no recorded maker, so approve and reject-approval return 403 for every caller. On a four-eyes blueprint you can name the member who must approve with `checker`: then only that member can approve or reject the resolution, and the response's `checker` names them. Without `checker`, the resolution waits on the checker blueprint's queue. Sending `checker` for a blueprint without a checker step returns 400.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/resolve/``
 
@@ -539,6 +555,7 @@ class Cases(SyncAPIResource):
           case_uuid: Case UUID.
           resolution
           note: Required when the blueprint sets require_resolution_note.
+          checker: Four-eyes blueprints only. The user uuid of the member who must approve this resolution (the same id as `assigned_to.uuid` on a case, or `members[].user_id` on a review team). The member must have case access to this application and cannot be the officer who submits the resolution. Omit it or send null to leave the resolution to the checker queue.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -553,7 +570,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
-                body={"resolution": resolution, "note": note},
+                body={"resolution": resolution, "note": note, "checker": checker},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -727,7 +744,7 @@ class Cases(SyncAPIResource):
     ) -> CaseDetail:
         """Approve staged resolution (4-eyes).
 
-        Apply a resolution staged by resolve on a maker blueprint. The caller must be a different user than the one who submitted it, otherwise 403.
+        Apply a resolution staged by resolve on a four-eyes blueprint. The caller must be a different officer than the one who submitted it, otherwise 403. When the resolution names a checker (the case's `checker`), only that member can approve it: any other caller, including an API key, gets 403.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/approve/``
 
@@ -766,7 +783,7 @@ class Cases(SyncAPIResource):
     ) -> CaseDetail:
         """Reject staged resolution (4-eyes).
 
-        Reject a resolution staged by resolve and return the case to its maker blueprint. The caller must be a different user than the one who submitted it, otherwise 403.
+        Reject a resolution staged by resolve and return the case to its maker blueprint. The caller must be a different officer than the one who submitted it, otherwise 403. When the resolution names a checker (the case's `checker`), only that member can reject it: any other caller, including an API key, gets 403.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/reject-approval/``
 
@@ -941,7 +958,7 @@ class Cases(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> builtins.list[builtins.dict[str, object]]:
+    ) -> builtins.list[AMLScreening]:
         """List case AML hits.
 
         List AML screening hits for the case's subject. Same shape as the hits returned by POST /v3/aml/.
@@ -956,11 +973,11 @@ class Cases(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "builtins.list[builtins.dict[str, object]]",
+            "builtins.list[AMLScreening]",
             self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/aml/",
-                cast_to=builtins.list[builtins.dict[str, object]],
+                cast_to=builtins.list[AMLScreening],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
@@ -1036,13 +1053,21 @@ class Cases(SyncAPIResource):
         *,
         case_uuids: Sequence[str],
         status: Literal["OPEN", "AWAITING_USER", "RESOLVED"] | str,
-        resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str | NotGiven = NOT_GIVEN,
+        resolution: Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBulkUpdateStatusResponse:
+    ) -> CaseBulkUpdateResult:
         """Bulk update case status.
 
         Apply the same status transition to several cases in one call: OPEN reopens, AWAITING_USER requests info, RESOLVED resolves (resolution required). Each case is evaluated independently; gate failures (incomplete checklist, missing required note) are reported per case without aborting the batch.
@@ -1060,11 +1085,11 @@ class Cases(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBulkUpdateStatusResponse",
+            "CaseBulkUpdateResult",
             self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/bulk/status/",
-                cast_to=CasesBulkUpdateStatusResponse,
+                cast_to=CaseBulkUpdateResult,
                 scope="application",
                 auth="api_key",
                 body={
@@ -1091,7 +1116,7 @@ class Cases(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBulkAssignResponse:
+    ) -> CaseBulkUpdateResult:
         """Bulk assign cases.
 
         Assign (or unassign, with assignee_user_id: null) several cases at once. All cases must share the same blueprint; mismatches are reported per case without aborting the batch.
@@ -1109,11 +1134,11 @@ class Cases(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBulkAssignResponse",
+            "CaseBulkUpdateResult",
             self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/bulk/assign/",
-                cast_to=CasesBulkAssignResponse,
+                cast_to=CaseBulkUpdateResult,
                 scope="application",
                 auth="api_key",
                 body={
@@ -1587,6 +1612,7 @@ class AsyncCases(AsyncAPIResource):
         priority: Literal["LOW", "MEDIUM", "HIGH"] | str | NotGiven = NOT_GIVEN,
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
+        team: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1594,16 +1620,17 @@ class AsyncCases(AsyncAPIResource):
     ) -> CaseDetail:
         """Update case.
 
-        Update the case's title, priority, due date, or tags. Logs PRIORITY_CHANGED/DUE_DATE_CHANGED/TAG_ADDED/TAG_REMOVED events as applicable.
+        Update the case's title, priority, due date, tags, or owning review team. Send only the fields you want to change; fields you omit keep their value. `tags` replaces the whole tag list. `team` takes the uuid of an active review team of this application (list them with `GET .../cases/teams/`), or null to clear the team. Requires a full-access API key, or `write:cases` for a console member: a key with restricted access gets 403. Logs PRIORITY_CHANGED, DUE_DATE_CHANGED, TAG_ADDED, TAG_REMOVED and TEAM_CHANGED events as applicable; a title change is saved without a timeline event. Returns the updated case.
 
         ``PATCH /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/``
 
         Args:
           case_uuid: Case UUID.
-          title
+          title: New case title.
           priority
-          due_at
-          tags
+          due_at: New deadline. Send null to clear it.
+          tags: The complete tag list. It replaces the current tags.
+          team: UUID of the review team that owns the case. It must be an active team of this application. Send null to clear the team.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1618,7 +1645,13 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
-                body={"title": title, "priority": priority, "due_at": due_at, "tags": tags},
+                body={
+                    "title": title,
+                    "priority": priority,
+                    "due_at": due_at,
+                    "tags": tags,
+                    "team": team,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1679,8 +1712,16 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
-        resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str,
+        resolution: Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str,
         note: str | None | NotGiven = NOT_GIVEN,
+        checker: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1688,7 +1729,7 @@ class AsyncCases(AsyncAPIResource):
     ) -> CaseDetail:
         """Resolve case.
 
-        Resolve the case as false_positive or valid_threat. Blocked with 400 if the blueprint's checklist is not optional and items remain incomplete, or if the blueprint requires a resolution note and none is given. When the case's blueprint has a four_eyes_checker_blueprint configured, the resolution is staged (case.pending_resolution) and the case moves to the checker blueprint instead of resolving immediately; a different user must call approve or reject-approval.
+        Resolve the case with one of five resolutions: FALSE_POSITIVE (no concern found), VALID_THREAT (concern confirmed), INCONCLUSIVE, REQUIREMENTS_NOT_MET or REQUIREMENTS_SATISFIED. Blocked with 400 if the blueprint's checklist is not optional and items remain incomplete, or if the blueprint requires a resolution note and none is given. When the case's blueprint has a four-eyes checker step (four_eyes_checker_blueprint), the resolution is staged (case.pending_resolution) and the case moves to the checker blueprint instead of resolving immediately; a different officer must call approve or reject-approval. Submit a four-eyes resolution as a console member: a resolution an API key submits has no recorded maker, so approve and reject-approval return 403 for every caller. On a four-eyes blueprint you can name the member who must approve with `checker`: then only that member can approve or reject the resolution, and the response's `checker` names them. Without `checker`, the resolution waits on the checker blueprint's queue. Sending `checker` for a blueprint without a checker step returns 400.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/resolve/``
 
@@ -1696,6 +1737,7 @@ class AsyncCases(AsyncAPIResource):
           case_uuid: Case UUID.
           resolution
           note: Required when the blueprint sets require_resolution_note.
+          checker: Four-eyes blueprints only. The user uuid of the member who must approve this resolution (the same id as `assigned_to.uuid` on a case, or `members[].user_id` on a review team). The member must have case access to this application and cannot be the officer who submits the resolution. Omit it or send null to leave the resolution to the checker queue.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1710,7 +1752,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
-                body={"resolution": resolution, "note": note},
+                body={"resolution": resolution, "note": note, "checker": checker},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1884,7 +1926,7 @@ class AsyncCases(AsyncAPIResource):
     ) -> CaseDetail:
         """Approve staged resolution (4-eyes).
 
-        Apply a resolution staged by resolve on a maker blueprint. The caller must be a different user than the one who submitted it, otherwise 403.
+        Apply a resolution staged by resolve on a four-eyes blueprint. The caller must be a different officer than the one who submitted it, otherwise 403. When the resolution names a checker (the case's `checker`), only that member can approve it: any other caller, including an API key, gets 403.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/approve/``
 
@@ -1923,7 +1965,7 @@ class AsyncCases(AsyncAPIResource):
     ) -> CaseDetail:
         """Reject staged resolution (4-eyes).
 
-        Reject a resolution staged by resolve and return the case to its maker blueprint. The caller must be a different user than the one who submitted it, otherwise 403.
+        Reject a resolution staged by resolve and return the case to its maker blueprint. The caller must be a different officer than the one who submitted it, otherwise 403. When the resolution names a checker (the case's `checker`), only that member can reject it: any other caller, including an API key, gets 403.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/reject-approval/``
 
@@ -2098,7 +2140,7 @@ class AsyncCases(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> builtins.list[builtins.dict[str, object]]:
+    ) -> builtins.list[AMLScreening]:
         """List case AML hits.
 
         List AML screening hits for the case's subject. Same shape as the hits returned by POST /v3/aml/.
@@ -2113,11 +2155,11 @@ class AsyncCases(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "builtins.list[builtins.dict[str, object]]",
+            "builtins.list[AMLScreening]",
             await self._client.request(
                 "get",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/aml/",
-                cast_to=builtins.list[builtins.dict[str, object]],
+                cast_to=builtins.list[AMLScreening],
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
@@ -2193,13 +2235,21 @@ class AsyncCases(AsyncAPIResource):
         *,
         case_uuids: Sequence[str],
         status: Literal["OPEN", "AWAITING_USER", "RESOLVED"] | str,
-        resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str | NotGiven = NOT_GIVEN,
+        resolution: Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBulkUpdateStatusResponse:
+    ) -> CaseBulkUpdateResult:
         """Bulk update case status.
 
         Apply the same status transition to several cases in one call: OPEN reopens, AWAITING_USER requests info, RESOLVED resolves (resolution required). Each case is evaluated independently; gate failures (incomplete checklist, missing required note) are reported per case without aborting the batch.
@@ -2217,11 +2267,11 @@ class AsyncCases(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBulkUpdateStatusResponse",
+            "CaseBulkUpdateResult",
             await self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/bulk/status/",
-                cast_to=CasesBulkUpdateStatusResponse,
+                cast_to=CaseBulkUpdateResult,
                 scope="application",
                 auth="api_key",
                 body={
@@ -2248,7 +2298,7 @@ class AsyncCases(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> CasesBulkAssignResponse:
+    ) -> CaseBulkUpdateResult:
         """Bulk assign cases.
 
         Assign (or unassign, with assignee_user_id: null) several cases at once. All cases must share the same blueprint; mismatches are reported per case without aborting the batch.
@@ -2266,11 +2316,11 @@ class AsyncCases(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "CasesBulkAssignResponse",
+            "CaseBulkUpdateResult",
             await self._client.request(
                 "post",
                 "/v3/organization/{organization_id}/application/{application_id}/cases/bulk/assign/",
-                cast_to=CasesBulkAssignResponse,
+                cast_to=CaseBulkUpdateResult,
                 scope="application",
                 auth="api_key",
                 body={

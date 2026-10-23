@@ -9,7 +9,7 @@ __all__ = ["AccountApplicationsUpdateParams"]
 
 
 class AccountApplicationsUpdateParams(TypedDict, total=False):
-    """PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated."""
+    """PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated. `products` is read-only: a `products` key in the body is ignored."""
 
     name: str
     """Application display name."""

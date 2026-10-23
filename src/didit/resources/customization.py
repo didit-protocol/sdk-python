@@ -106,9 +106,11 @@ class Customization(SyncAPIResource):
         callback_seconds: int | NotGiven = NOT_GIVEN,
         delete_logo_square: bool | NotGiven = NOT_GIVEN,
         delete_logo_rectangular: bool | NotGiven = NOT_GIVEN,
+        delete_logo_rectangular_dark: bool | NotGiven = NOT_GIVEN,
         delete_favicon: bool | NotGiven = NOT_GIVEN,
         image_square: FileTypes | NotGiven = NOT_GIVEN,
         image_rectangular: FileTypes | NotGiven = NOT_GIVEN,
+        image_rectangular_dark: FileTypes | NotGiven = NOT_GIVEN,
         image_favicon: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -147,9 +149,11 @@ class Customization(SyncAPIResource):
           callback_seconds: Delay (seconds) before redirecting to the callback URL.
           delete_logo_square: When `true`, removes the current square logo.
           delete_logo_rectangular: When `true`, removes the current rectangular logo.
+          delete_logo_rectangular_dark: When `true`, removes the current dark-mode logo, and `logo_rectangular_dark` then reads `null`. If the same multipart request also uploads `image_rectangular_dark`, the upload wins.
           delete_favicon: When `true`, removes the current favicon.
-          image_square: Square logo (1:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`.
-          image_rectangular: Rectangular logo (2:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`.
+          image_square: Square logo (1:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
+          image_rectangular: Rectangular logo (2:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
+          image_rectangular_dark: Rectangular logo for dark mode (2:1 aspect ratio), shown on a dark background. PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**. Returned as `logo_rectangular_dark`.
           image_favicon: Favicon image. Max **500 KB**.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -189,15 +193,18 @@ class Customization(SyncAPIResource):
                     "callback_seconds": callback_seconds,
                     "delete_logo_square": delete_logo_square,
                     "delete_logo_rectangular": delete_logo_rectangular,
+                    "delete_logo_rectangular_dark": delete_logo_rectangular_dark,
                     "delete_favicon": delete_favicon,
                     "image_square": image_square,
                     "image_rectangular": image_rectangular,
+                    "image_rectangular_dark": image_rectangular_dark,
                     "image_favicon": image_favicon,
                 },
                 multipart="auto",
                 file_fields=(
                     "image_favicon",
                     "image_rectangular",
+                    "image_rectangular_dark",
                     "image_square",
                 ),
                 extra_headers=extra_headers,
@@ -286,9 +293,11 @@ class AsyncCustomization(AsyncAPIResource):
         callback_seconds: int | NotGiven = NOT_GIVEN,
         delete_logo_square: bool | NotGiven = NOT_GIVEN,
         delete_logo_rectangular: bool | NotGiven = NOT_GIVEN,
+        delete_logo_rectangular_dark: bool | NotGiven = NOT_GIVEN,
         delete_favicon: bool | NotGiven = NOT_GIVEN,
         image_square: FileTypes | NotGiven = NOT_GIVEN,
         image_rectangular: FileTypes | NotGiven = NOT_GIVEN,
+        image_rectangular_dark: FileTypes | NotGiven = NOT_GIVEN,
         image_favicon: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -327,9 +336,11 @@ class AsyncCustomization(AsyncAPIResource):
           callback_seconds: Delay (seconds) before redirecting to the callback URL.
           delete_logo_square: When `true`, removes the current square logo.
           delete_logo_rectangular: When `true`, removes the current rectangular logo.
+          delete_logo_rectangular_dark: When `true`, removes the current dark-mode logo, and `logo_rectangular_dark` then reads `null`. If the same multipart request also uploads `image_rectangular_dark`, the upload wins.
           delete_favicon: When `true`, removes the current favicon.
-          image_square: Square logo (1:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`.
-          image_rectangular: Rectangular logo (2:1 aspect ratio). Max **1 MB**. Allowed: `png`, `jpg`, `jpeg`, `webp`.
+          image_square: Square logo (1:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
+          image_rectangular: Rectangular logo (2:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
+          image_rectangular_dark: Rectangular logo for dark mode (2:1 aspect ratio), shown on a dark background. PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**. Returned as `logo_rectangular_dark`.
           image_favicon: Favicon image. Max **500 KB**.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -369,15 +380,18 @@ class AsyncCustomization(AsyncAPIResource):
                     "callback_seconds": callback_seconds,
                     "delete_logo_square": delete_logo_square,
                     "delete_logo_rectangular": delete_logo_rectangular,
+                    "delete_logo_rectangular_dark": delete_logo_rectangular_dark,
                     "delete_favicon": delete_favicon,
                     "image_square": image_square,
                     "image_rectangular": image_rectangular,
+                    "image_rectangular_dark": image_rectangular_dark,
                     "image_favicon": image_favicon,
                 },
                 multipart="auto",
                 file_fields=(
                     "image_favicon",
                     "image_rectangular",
+                    "image_rectangular_dark",
                     "image_square",
                 ),
                 extra_headers=extra_headers,

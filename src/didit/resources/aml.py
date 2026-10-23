@@ -17,6 +17,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.aml.retrieve_dataset_freshness_response import AmlRetrieveDatasetFreshnessResponse
 from didit.types.aml.screen_response import AmlScreenResponse
 
 __all__ = [
@@ -32,7 +33,7 @@ __all__ = [
 class Aml(SyncAPIResource):
     """The ``aml`` resource of the Didit API.
 
-    Methods: ``screen``.
+    Methods: ``retrieve_dataset_freshness``, ``screen``.
     """
 
     @cached_property
@@ -149,11 +150,49 @@ class Aml(SyncAPIResource):
             ),
         )
 
+    def retrieve_dataset_freshness(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AmlRetrieveDatasetFreshnessResponse:
+        """Get AML dataset freshness.
+
+        Report how current the datasets behind AML screening are, per source family (`sanctions`, `pep`, `warnings`, `adverse_media`), as audit evidence for [ongoing AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening#proving-that-monitoring-ran). The answer is platform-wide: no session in the path, no customer data in the body, the same answer for every application.
+
+        Always `200` for an accepted key. Check `availability` first: when it is not `available`, `dataset_freshness` is `null`. Dates are never estimated: a family whose datasets reported no date is absent from `sources`, and a family where only some datasets reported one has `oldest_updated_at: null`. Readings are taken while ongoing monitoring runs, not on each call; `captured_at` says when.
+
+        A scoped API key needs `sessions: read`; a key limited to some workflows or to approved sessions cannot call this endpoint. Nothing is billed.
+
+        ``GET /v3/aml/dataset-freshness/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AmlRetrieveDatasetFreshnessResponse",
+            self._client.request(
+                "get",
+                "/v3/aml/dataset-freshness/",
+                cast_to=AmlRetrieveDatasetFreshnessResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncAml(AsyncAPIResource):
     """The ``aml`` resource of the Didit API.
 
-    Methods: ``screen``.
+    Methods: ``retrieve_dataset_freshness``, ``screen``.
     """
 
     @cached_property
@@ -270,26 +309,76 @@ class AsyncAml(AsyncAPIResource):
             ),
         )
 
+    async def retrieve_dataset_freshness(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AmlRetrieveDatasetFreshnessResponse:
+        """Get AML dataset freshness.
+
+        Report how current the datasets behind AML screening are, per source family (`sanctions`, `pep`, `warnings`, `adverse_media`), as audit evidence for [ongoing AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening#proving-that-monitoring-ran). The answer is platform-wide: no session in the path, no customer data in the body, the same answer for every application.
+
+        Always `200` for an accepted key. Check `availability` first: when it is not `available`, `dataset_freshness` is `null`. Dates are never estimated: a family whose datasets reported no date is absent from `sources`, and a family where only some datasets reported one has `oldest_updated_at: null`. Readings are taken while ongoing monitoring runs, not on each call; `captured_at` says when.
+
+        A scoped API key needs `sessions: read`; a key limited to some workflows or to approved sessions cannot call this endpoint. Nothing is billed.
+
+        ``GET /v3/aml/dataset-freshness/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AmlRetrieveDatasetFreshnessResponse",
+            await self._client.request(
+                "get",
+                "/v3/aml/dataset-freshness/",
+                cast_to=AmlRetrieveDatasetFreshnessResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AmlWithRawResponse:
     def __init__(self, resource: Aml) -> None:
         self._resource = resource
         self.screen = to_raw_response_wrapper(resource.screen)
+        self.retrieve_dataset_freshness = to_raw_response_wrapper(
+            resource.retrieve_dataset_freshness
+        )
 
 
 class AsyncAmlWithRawResponse:
     def __init__(self, resource: AsyncAml) -> None:
         self._resource = resource
         self.screen = async_to_raw_response_wrapper(resource.screen)
+        self.retrieve_dataset_freshness = async_to_raw_response_wrapper(
+            resource.retrieve_dataset_freshness
+        )
 
 
 class AmlWithStreamingResponse:
     def __init__(self, resource: Aml) -> None:
         self._resource = resource
         self.screen = to_streamed_response_wrapper(resource.screen)
+        self.retrieve_dataset_freshness = to_streamed_response_wrapper(
+            resource.retrieve_dataset_freshness
+        )
 
 
 class AsyncAmlWithStreamingResponse:
     def __init__(self, resource: AsyncAml) -> None:
         self._resource = resource
         self.screen = async_to_streamed_response_wrapper(resource.screen)
+        self.retrieve_dataset_freshness = async_to_streamed_response_wrapper(
+            resource.retrieve_dataset_freshness
+        )

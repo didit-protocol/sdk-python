@@ -5,28 +5,266 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_counterparty_decision import TravelRuleCounterpartyDecision
+from didit.types.components.travel_rule_counterparty_questionnaire import (
+    TravelRuleCounterpartyQuestionnaire,
+)
+from didit.types.components.travel_rule_counterparty_screening import (
+    TravelRuleCounterpartyScreening,
+)
 
-__all__ = ["VaspDirectoryEntry"]
+__all__ = [
+    "VaspDirectoryEntry",
+    "VaspDirectoryEntryAliases",
+    "VaspDirectoryEntryContacts",
+    "VaspDirectoryEntryDdScoreBreakdownValue",
+    "VaspDirectoryEntryEntities",
+    "VaspDirectoryEntryEssentialChecks",
+    "VaspDirectoryEntryEssentialChecksChecks",
+    "VaspDirectoryEntryNetworks",
+    "VaspDirectoryEntryResponsiveness",
+    "VaspDirectoryEntryRoutes",
+    "VaspDirectoryEntryUmbrella",
+]
 
 
-class VaspDirectoryEntry(BaseModel):
+class VaspDirectoryEntryAliases(BaseModel):
+    name: str | None = None
+
+    kind: (
+        Literal[
+            "trading_name", "other_legal_name", "network_name", "attribution", "merged", "staff"
+        ]
+        | str
+        | None
+    ) = None
+    """trading_name, other_legal_name (from the global LEI register), network_name (the name on a Travel Rule network), attribution (the entity name blockchain analytics gives the VASP's wallets), merged (the name of a duplicate entry merged into this one) or staff."""
+
+
+class VaspDirectoryEntryContacts(BaseModel):
+    """A compliance contact the EMAIL rail can write to."""
+
+    id: str | None = None
+
+    email: str | None = None
+
+    name: str | None = None
+
+    source: Literal["staff", "application", "learned"] | str | None = None
+    """staff: curated by Didit; application: added by your application; learned: an address that answered a Travel Rule request through its response link."""
+
+    scope: Literal["platform", "application"] | str | None = None
+    """platform contacts are used for every Didit customer's transfers; application contacts are private to your application, which sees only its own."""
+
+    verified_at: _dt.datetime | None = None
+    """When someone at this address answered a request. Null when it has not yet."""
+
+
+class VaspDirectoryEntryDdScoreBreakdownValue(BaseModel):
+    points: float | None = None
+    """Points the component contributes, rounded to one decimal."""
+
+    max: int | None = None
+    """The component's weight: the points it contributes at best."""
+
+    reason: str | None = None
+    """Machine-readable code of the component's verdict."""
+
+    detail: str | None = None
+    """One-line English explanation."""
+
+
+class VaspDirectoryEntryEntities(BaseModel):
+    """A regulated entity of a brand: the legal entity that receives a transfer."""
+
+    id: str | None = None
+
     name: str | None = None
 
     lei: str | None = None
 
     jurisdiction: str | None = None
 
+    reachable: bool | None = None
+    """Whether your application has an available route to it."""
+
+
+class VaspDirectoryEntryEssentialChecksChecks(BaseModel):
+    id: Literal["registration", "licence", "domain", "lei"] | str | None = None
+
+    status: Literal["pass", "fail", "unknown"] | str | None = None
+    """unknown when no source on record can decide the check."""
+
+    reason: str | None = None
+    """Machine-readable code of the verdict."""
+
+    detail: str | None = None
+    """One-line English explanation."""
+
+
+class VaspDirectoryEntryEssentialChecks(BaseModel):
+    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry, and always empty for a Didit network member."""
+
+    level: Literal["essential"] | str | None = None
+
+    checked_at: _dt.datetime | None = None
+
+    checks: list[VaspDirectoryEntryEssentialChecksChecks] | None = None
+
+    passed: int | None = None
+
+    failed: int | None = None
+
+    unknown: int | None = None
+
+    total: int | None = None
+
+
+class VaspDirectoryEntryNetworks(BaseModel):
+    """A current listing of this VASP in a Travel Rule network's member directory. A TRISA listing says who the VASP is on TRISA; Didit has no TRISA rail, so it is never a route."""
+
+    network: Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA", "TRISA"] | str | None = None
+
+    code: str | None = None
+    """The VASP's identifier on that network."""
+
+    listed_name: str | None = None
+    """The name the network lists the VASP under."""
+
+    country: str | None = None
+    """The country the network lists, when it gives one."""
+
+    verified_at: _dt.datetime | None = None
+    """When Didit staff verified the listing. Null for listings read from a public directory."""
+
+    last_seen_at: _dt.datetime | None = None
+    """When the source last showed the listing. A listing the source has not shown for three weeks is removed."""
+
+    source: Literal["trisa_directory", "staff"] | str | None = None
+    """Where the listing comes from: the public TRISA directory, or Didit staff."""
+
+
+class VaspDirectoryEntryResponsiveness(BaseModel):
+    """Whether the VASP answers Travel Rule requests: the share of the requests Didit customers started towards it in the last 90 days that it answered. Only requests sent over a network or protocol rail, or by email to a shared address (the entry's compliance address or a platform contact), count; a request sent to an address a customer typed, or to a customer's private contact, never does. An expired request is unanswered; a completed exchange, a decline or a data mismatch is an answer; a cancelled request or an unreachable rail is neither. Always UNKNOWN with zero counts for a Didit network member."""
+
+    status: Literal["RESPONSIVE", "UNRESPONSIVE", "UNKNOWN"] | str | None = None
+    """UNKNOWN with fewer than 5 decided requests in the window; UNRESPONSIVE when less than 10 percent of them were answered; RESPONSIVE otherwise."""
+
+    answered: int | None = None
+    """Decided requests in the window that the VASP answered."""
+
+    total: int | None = None
+    """Decided requests in the window: answered plus expired."""
+
+    computed_at: _dt.datetime | None = None
+
+
+class VaspDirectoryEntryRoutes(BaseModel):
+    """One way your application can deliver Travel Rule data to this VASP, in the order dispatch tries them. A network route needs a membership on that network: your own (connected in the Marketplace) or Didit's once Didit holds one. Without it the route is listed as unavailable with the reason, never as a way to reach the VASP."""
+
+    rail: (
+        Literal["INTERNAL", "TRP", "GTR", "TRUST", "VERIFYVASP", "SYGNA", "EMAIL"] | str | None
+    ) = None
+
+    status: Literal["available", "unavailable"] | str | None = None
+
+    reason: (
+        Literal["", "no_membership", "network_switched_off", "sandbox_application"] | str | None
+    ) = None
+    """Why an unavailable route cannot be used: no_membership (neither you nor Didit holds a membership on that network), network_switched_off (you turned that network off in your settings) or sandbox_application (a sandbox application sends only to the Didit Test VASP, so no route is available to it). Empty when the route is available."""
+
+    via: (
+        Literal["", "own_membership", "didit_membership", "directory", "contact", "didit_network"]
+        | str
+        | None
+    ) = None
+    """How an available route is reached: own_membership or didit_membership for a network rail, directory for a TRP endpoint the directory verified, contact for the EMAIL rail, didit_network for a Didit network member. Empty when the route is unavailable."""
+
+
+class VaspDirectoryEntryUmbrella(BaseModel):
+    """The brand this entry is a regulated entity of. Null when it is not part of one."""
+
+    id: str | None = None
+
+    name: str | None = None
+
+
+class VaspDirectoryEntry(BaseModel):
+    """A VASP of the directory or a member of the Didit network, with the routes your application has to it. A customer is a member of the Didit network only while its application is live, its Travel Rule is on, its profile is discoverable, has a legal name and a confirmed compliance email, and Didit has not marked the application as a test, demo or internal one. Each row also carries the shared due-diligence assessment (dd_score, risk_level, responsiveness, essential_checks) and your application's own decision, entity screening and questionnaires, which no other customer sees."""
+
+    id: str | None = None
+    """The entry's id, for GET /v3/travel-rule/vasps/{vasp_id}/."""
+
+    kind: Literal["directory", "didit"] | str | None = None
+    """directory for an entry of the shared directory; didit for a member of the Didit network."""
+
+    name: str | None = None
+
+    lei: str | None = None
+
+    jurisdiction: str | None = None
+    """ISO 3166 country code, as the source gives it."""
+
+    domains: list[str] | None = None
+    """The VASP's web domains. Always empty for Didit network members."""
+
+    reachable: bool | None = None
+    """Whether your application has an available route to this VASP, or to one of its entities for a brand. Always true for a Didit network member, except on a sandbox application, where every row is false."""
+
+    aliases: list[VaspDirectoryEntryAliases] | None = None
+    """Other names the VASP is found by."""
+
+    networks: list[VaspDirectoryEntryNetworks] | None = None
+
+    routes: list[VaspDirectoryEntryRoutes] | None = None
+
+    umbrella: VaspDirectoryEntryUmbrella | None = None
+    """The brand this entry is a regulated entity of. Null when it is not part of one."""
+
+    entities: list[VaspDirectoryEntryEntities] | None = None
+    """For a brand, the regulated entities that receive its transfers. A transfer naming the brand goes to the reachable entity in the jurisdiction it states (beneficiary_data.counterparty_vasp_jurisdiction), else to the entity blockchain analytics attribution linked to the destination wallet, else to the only reachable entity when no jurisdiction is stated. Two entities that fit equally are never guessed between."""
+
+    contacts: list[VaspDirectoryEntryContacts] | None = None
+    """The platform's contacts for this VASP and your application's own."""
+
     dd_status: Literal["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "REJECTED"] | str | None = None
+    """Didit's verification status of the entry, scored by the verification component of dd_score. Always COMPLETED for a Didit network member."""
 
     dd_score: int | None = None
+    """The shared due-diligence score of a directory entry, 0 to 100, where higher is safer (see dd_score_semantic): the sum of the points in dd_score_breakdown. Null for a Didit network member, which is not scored. An entry not assessed yet (dd_assessed_at null) shows 0 with an empty risk_level, so read risk_level rather than the raw score."""
 
-    reachable_rails: list[Literal["INTERNAL", "TRP", "GTR", "EMAIL"] | str] | None = None
+    reachable_rails: (
+        list[Literal["INTERNAL", "TRP", "GTR", "TRUST", "VERIFYVASP", "SYGNA", "EMAIL"] | str]
+        | None
+    ) = None
+    """Rails recorded on the entry. Read routes for what your application can use today."""
 
     is_didit_customer: bool | None = None
-    """true for discoverable Didit applications (dd_status is always COMPLETED, dd_score always 0 for these); false for internal counterparty-registry rows, which carry a real due-diligence status and score."""
+    """true for a member of the Didit network (dd_status is always COMPLETED, dd_score null and risk_level empty for these) and for a directory entry linked to a Didit customer."""
 
-    dd_score_breakdown: dict[str, int] | None = None
-    """Per-component contributions to dd_score (licensing/registry, sanctions/PEP, jurisdiction risk, on-chain analytics risk), all derived from checks Didit runs in-house. Empty for Didit-customer rows."""
+    dd_score_breakdown: dict[str, VaspDirectoryEntryDdScoreBreakdownValue] | None = None
+    """One object per component of dd_score. Components, their weight (max) and their reason codes: jurisdiction, 25 (jurisdiction_not_high_risk, jurisdiction_high_risk, jurisdiction_unknown); verification, 15 (dd_status_completed, dd_status_in_progress, dd_status_not_started, dd_status_rejected); protocol, 15 (native_rail, email_only, no_rail); lei, 10 (lei_valid, lei_missing); history, 10 (history, no_history); essentials, 15 (essential_checks, no_essential_checks); responsiveness, 10 (responsive, unresponsive, responsiveness_unknown). Empty for a Didit network member."""
 
     dd_assessed_at: _dt.datetime | None = None
-    """When the due-diligence assessment last ran. Null for Didit-customer rows."""
+    """When dd_score, risk_level and responsiveness were last computed: after an exchange with the entry completes, finishes, expires, mismatches or is declined, when Didit refreshes or curates the entry, and in the weekly directory refresh. Null for a Didit network member."""
+
+    dd_score_semantic: Literal["higher_is_safer"] | str | None = None
+    """Which way dd_score points: always higher_is_safer."""
+
+    risk_level: Literal["LOW", "MEDIUM", "HIGH", ""] | str | None = None
+    """The band dd_score falls in: LOW (70 or more), MEDIUM (40 to 69) or HIGH (below 40). Empty for a Didit network member and for an entry not assessed yet. Filter on it with risk. Your own flagged screening never changes this shared value: it makes counterparty_risk_level HIGH in your rules instead."""
+
+    responsiveness: VaspDirectoryEntryResponsiveness | None = None
+    """Whether the VASP answers Travel Rule requests: the share of the requests Didit customers started towards it in the last 90 days that it answered. Only requests sent over a network or protocol rail, or by email to a shared address (the entry's compliance address or a platform contact), count; a request sent to an address a customer typed, or to a customer's private contact, never does. An expired request is unanswered; a completed exchange, a decline or a data mismatch is an answer; a cancelled request or an unreachable rail is neither. Always UNKNOWN with zero counts for a Didit network member."""
+
+    essential_checks: VaspDirectoryEntryEssentialChecks | None = None
+    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry, and always empty for a Didit network member."""
+
+    decision: TravelRuleCounterpartyDecision | None = None
+    """Your application's decision on this VASP, or for an entity with no decision of its own its brand's (inherited_from names the brand). Null when there is none. Private to your application."""
+
+    entity_screening: TravelRuleCounterpartyScreening | None = None
+    """Your application's latest sanctions and adverse-media screening of this VASP. Null when you never screened it. Private to your application."""
+
+    questionnaires: list[TravelRuleCounterpartyQuestionnaire] | None = None
+    """Your application's due-diligence questionnaires with this VASP, newest first. Private to your application."""

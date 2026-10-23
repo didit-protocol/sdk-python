@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import cast
+from typing import Sequence, cast
 
 import httpx
 
@@ -19,6 +19,11 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.wallet_address_entry import WalletAddressEntry
 from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
+from didit.types.components.wallet_address_import_report import WalletAddressImportReport
+from didit.types.components.wallet_address_import_row import WalletAddressImportRow
+from didit.types.travel_rule.wallet_addresses.bulk_import_params import (
+    TravelRuleWalletAddressesBulkImportParamsVariant1,
+)
 from didit.types.travel_rule.wallet_addresses.list_response import (
     TravelRuleWalletAddressesListResponse,
 )
@@ -36,7 +41,7 @@ __all__ = [
 class TravelRuleWalletAddresses(SyncAPIResource):
     """The ``travel_rule.wallet_addresses`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``update``.
+    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``update``.
     """
 
     @cached_property
@@ -99,6 +104,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         entity_type: str | NotGiven = NOT_GIVEN,
         self_declared: bool | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
+        memo: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -111,13 +117,14 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         ``POST /v3/travel-rule/wallet-addresses/``
 
         Args:
-          address
-          chain
+          address: The wallet address. An XRP X-address is stored as its classic address and its tag, so it matches transfers that name either form.
+          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain.
           holder_vendor_data
           holder_name
           entity_type
-          self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof.
-          travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing.
+          self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof. Returns 400 when `allow_self_declaration` is off in your Travel Rule settings.
+          travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing for the assets TRP carries (BTC, ETH, and USDC on a named network). An invalid travel address returns 400.
+          memo: Optional. The destination tag or memo that is part of the wallet. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -138,6 +145,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
                     "entity_type": entity_type,
                     "self_declared": self_declared,
                     "travel_address": travel_address,
+                    "memo": memo,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -157,7 +165,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
     ) -> None:
         """Delete a wallet address.
 
-        Deletes the entry. It stops matching new transfers immediately and the address is freed up for re-registration.
+        Deletes the entry together with its ownership proofs and the screenshots they stored. It stops matching new transfers immediately and the address is freed up for re-registration. Transfers that already used the wallet keep their own record of it and read the same. Deletion is irreversible.
 
         ``DELETE /v3/travel-rule/wallet-addresses/{entry_uuid}/``
 
@@ -234,11 +242,50 @@ class TravelRuleWalletAddresses(SyncAPIResource):
             ),
         )
 
+    def bulk_import(
+        self,
+        *,
+        body: TravelRuleWalletAddressesBulkImportParamsVariant1 | Sequence[WalletAddressImportRow],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WalletAddressImportReport:
+        """Import wallet addresses in bulk.
+
+        Add up to 10,000 wallets to your Travel Rule address book in one call, as JSON or as a CSV file. A wallet can be sent by its address, by the SHA-256 of its lowercased address (`address_hash`) to keep the address private, or both. The import is idempotent: a wallet already in the book is reported as `existing` and left untouched, so the same file can be sent again. Each row is validated on its own, so one bad row never fails the others. A wallet imported by its hash only matches transfers to that address and can be proven with the wallet-ownership widget like any other entry.
+
+        ``POST /v3/travel-rule/wallet-addresses/import/``
+
+        Args:
+          body
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WalletAddressImportReport",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/wallet-addresses/import/",
+                cast_to=WalletAddressImportReport,
+                auth="api_key",
+                body=body,
+                multipart="auto",
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
     """The ``travel_rule.wallet_addresses`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``update``.
+    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``update``.
     """
 
     @cached_property
@@ -301,6 +348,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         entity_type: str | NotGiven = NOT_GIVEN,
         self_declared: bool | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
+        memo: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -313,13 +361,14 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         ``POST /v3/travel-rule/wallet-addresses/``
 
         Args:
-          address
-          chain
+          address: The wallet address. An XRP X-address is stored as its classic address and its tag, so it matches transfers that name either form.
+          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain.
           holder_vendor_data
           holder_name
           entity_type
-          self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof.
-          travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing.
+          self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof. Returns 400 when `allow_self_declaration` is off in your Travel Rule settings.
+          travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing for the assets TRP carries (BTC, ETH, and USDC on a named network). An invalid travel address returns 400.
+          memo: Optional. The destination tag or memo that is part of the wallet. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -340,6 +389,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
                     "entity_type": entity_type,
                     "self_declared": self_declared,
                     "travel_address": travel_address,
+                    "memo": memo,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -359,7 +409,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
     ) -> None:
         """Delete a wallet address.
 
-        Deletes the entry. It stops matching new transfers immediately and the address is freed up for re-registration.
+        Deletes the entry together with its ownership proofs and the screenshots they stored. It stops matching new transfers immediately and the address is freed up for re-registration. Transfers that already used the wallet keep their own record of it and read the same. Deletion is irreversible.
 
         ``DELETE /v3/travel-rule/wallet-addresses/{entry_uuid}/``
 
@@ -436,6 +486,45 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
             ),
         )
 
+    async def bulk_import(
+        self,
+        *,
+        body: TravelRuleWalletAddressesBulkImportParamsVariant1 | Sequence[WalletAddressImportRow],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WalletAddressImportReport:
+        """Import wallet addresses in bulk.
+
+        Add up to 10,000 wallets to your Travel Rule address book in one call, as JSON or as a CSV file. A wallet can be sent by its address, by the SHA-256 of its lowercased address (`address_hash`) to keep the address private, or both. The import is idempotent: a wallet already in the book is reported as `existing` and left untouched, so the same file can be sent again. Each row is validated on its own, so one bad row never fails the others. A wallet imported by its hash only matches transfers to that address and can be proven with the wallet-ownership widget like any other entry.
+
+        ``POST /v3/travel-rule/wallet-addresses/import/``
+
+        Args:
+          body
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WalletAddressImportReport",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/wallet-addresses/import/",
+                cast_to=WalletAddressImportReport,
+                auth="api_key",
+                body=body,
+                multipart="auto",
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TravelRuleWalletAddressesWithRawResponse:
     def __init__(self, resource: TravelRuleWalletAddresses) -> None:
@@ -444,6 +533,7 @@ class TravelRuleWalletAddressesWithRawResponse:
         self.create = to_raw_response_wrapper(resource.create)
         self.delete = to_raw_response_wrapper(resource.delete)
         self.update = to_raw_response_wrapper(resource.update)
+        self.bulk_import = to_raw_response_wrapper(resource.bulk_import)
 
 
 class AsyncTravelRuleWalletAddressesWithRawResponse:
@@ -453,6 +543,7 @@ class AsyncTravelRuleWalletAddressesWithRawResponse:
         self.create = async_to_raw_response_wrapper(resource.create)
         self.delete = async_to_raw_response_wrapper(resource.delete)
         self.update = async_to_raw_response_wrapper(resource.update)
+        self.bulk_import = async_to_raw_response_wrapper(resource.bulk_import)
 
 
 class TravelRuleWalletAddressesWithStreamingResponse:
@@ -462,6 +553,7 @@ class TravelRuleWalletAddressesWithStreamingResponse:
         self.create = to_streamed_response_wrapper(resource.create)
         self.delete = to_streamed_response_wrapper(resource.delete)
         self.update = to_streamed_response_wrapper(resource.update)
+        self.bulk_import = to_streamed_response_wrapper(resource.bulk_import)
 
 
 class AsyncTravelRuleWalletAddressesWithStreamingResponse:
@@ -471,3 +563,4 @@ class AsyncTravelRuleWalletAddressesWithStreamingResponse:
         self.create = async_to_streamed_response_wrapper(resource.create)
         self.delete = async_to_streamed_response_wrapper(resource.delete)
         self.update = async_to_streamed_response_wrapper(resource.update)
+        self.bulk_import = async_to_streamed_response_wrapper(resource.bulk_import)

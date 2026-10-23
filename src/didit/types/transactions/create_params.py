@@ -6,6 +6,8 @@ from typing import Literal, Mapping, Sequence
 
 from typing_extensions import Required, TypedDict
 
+from didit.types.components.travel_rule_utxo import TravelRuleUtxo
+
 __all__ = [
     "TransactionsCreateParams",
     "TransactionsCreateParamsCounterparty",
@@ -88,7 +90,10 @@ class TransactionsCreateParamsCounterpartyPaymentMethod(TypedDict, total=False):
     """Type of payment method: `bank_card`, `bank_account`, `crypto_wallet`, `ewallet`, `unhosted_wallet`, `other`. Use `unhosted_wallet` to declare a self-hosted wallet for the Travel Rule."""
 
     account_id: str
-    """Account identifier (e.g. IBAN or wallet address)."""
+    """Account identifier (e.g. IBAN or wallet address). On a crypto transfer on bitcoin or Lightning it may be a Lightning payment request (BOLT11 invoice, BOLT12 offer, LNURL) or a Lightning Address: Didit stores the payee it names as the account ("" when it names none) and what the request says on the Travel Rule transfer's `chain_details.lightning`. At most 255 characters once stored. On a crypto transfer on bitcoin or Lightning it may be a Lightning payment request (BOLT11 invoice, BOLT12 offer, LNURL) or a Lightning Address: Didit stores the payee it names as the account ("" when it names none) and what the request says on the Travel Rule transfer's `chain_details.lightning`. At most 255 characters once stored."""
+
+    memo: str
+    """The destination tag or memo that is part of the wallet on a memo network (XRP, XLM, EOS, ATOM, HBAR). On one shared exchange address each memo is its own payment method. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`."""
 
     issuing_country: str
 
@@ -221,7 +226,10 @@ class TransactionsCreateParamsSubjectPaymentMethod(TypedDict, total=False):
     """Type of payment method: `bank_card`, `bank_account`, `crypto_wallet`, `ewallet`, `unhosted_wallet`, `other`."""
 
     account_id: str
-    """Account identifier (e.g. IBAN, wallet address). For crypto screening, this should contain the wallet address for this participant. Inbound transaction-hash screening requires the service/customer deposit address on the subject. Outbound screening uses the destination wallet on the counterparty."""
+    """Account identifier (e.g. IBAN, wallet address). For crypto screening, this should contain the wallet address for this participant. Inbound transaction-hash screening requires the service/customer deposit address on the subject. Outbound screening uses the destination wallet on the counterparty. On a crypto transfer on bitcoin or Lightning it may be a Lightning payment request (BOLT11 invoice, BOLT12 offer, LNURL) or a Lightning Address: Didit stores the payee it names as the account ("" when it names none) and what the request says on the Travel Rule transfer's `chain_details.lightning`. At most 255 characters once stored. On a crypto transfer on bitcoin or Lightning it may be a Lightning payment request (BOLT11 invoice, BOLT12 offer, LNURL) or a Lightning Address: Didit stores the payee it names as the account ("" when it names none) and what the request says on the Travel Rule transfer's `chain_details.lightning`. At most 255 characters once stored."""
+
+    memo: str
+    """The destination tag or memo that is part of the wallet on a memo network (XRP, XLM, EOS, ATOM, HBAR). On one shared exchange address each memo is its own payment method. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`."""
 
     issuing_country: str
     """ISO 3166-1 alpha-3 country code of the issuer."""
@@ -265,7 +273,7 @@ class TransactionsCreateParamsTransactionDetailsCryptoParams(TypedDict, total=Fa
     """Crypto network selection, separate from currency (the asset symbol). Recording a custom token symbol does not guarantee transaction-hash coverage for its contract."""
 
     crypto_chain: str
-    """Actual network used for screening. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism) and ARB (Arbitrum One). Always specify this for multi-network tokens. Connected-provider coverage varies; LIGHTNING requires a supported connected provider."""
+    """Actual network used for screening. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism) and ARB (Arbitrum One). Always specify this for multi-network tokens. When it is missing for USDT, USDC or ETH sent with a 0x transaction hash, Didit looks the hash up on Ethereum, BNB Chain, Polygon, Base, Arbitrum and Optimism and screens it on the network where it is found; if no network has it, the transaction is not screened and custom_values.aml_screening_status is FAILED with the reason in custom_values.aml_screening_error. When it is missing for USDT or USDC screened by wallet (no transaction hash), a Tron address is screened on Tron, a Solana address on Solana, and a 0x address on the first of those six networks where it has sent a transaction or holds the token, or on Ethereum when it is active on none of them. Connected-provider coverage varies; LIGHTNING requires a supported connected provider."""
 
 
 class TransactionsCreateParamsTransactionDetails(TypedDict, total=False):
@@ -303,9 +311,10 @@ class TransactionsCreateParamsTransactionDetails(TypedDict, total=False):
 
 
 class TransactionsCreateParamsTravelRuleDetails(TypedDict, total=False):
-    """Travel Rule compliance metadata."""
+    """Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name." """
 
     status: Required[str]
+    """Required whenever you send travel_rule_details. One of the Travel Rule transfer statuses (for example AWAITING_COUNTERPARTY, COMPLETED, NOT_APPLICABLE); lowercase and camelCase spellings and the legacy values UNKNOWN, COMPLIANT, PENDING_ACTION, PENDING_COUNTERPARTY, FAILED and EXEMPT are also accepted and mapped. Any other value returns 400."""
 
     protocol: str
 
@@ -314,10 +323,24 @@ class TransactionsCreateParamsTravelRuleDetails(TypedDict, total=False):
     obligations_count: int
 
     originator_data: Mapping[str, object]
+    """Originator party, as flat fields or one IVMS 101 person. For your user with an approved KYC verification, Didit replaces the fields the verification holds with the verified values (see `metadata.originator_provenance`). It must be an object: anything else is a `400`. On a memo network a `memo` key names the originator wallet's memo or tag."""
 
     beneficiary_data: Mapping[str, object]
+    """Beneficiary party, as flat fields or one IVMS 101 person. An empty `wallet_address` is filled from `counterparty.payment_method.account_id`. It must be an object: anything else is a `400`. On a memo network `memo` names the beneficiary wallet's memo or tag; `wallet_address` and `memo` win over the counterparty's payment method."""
 
     metadata: Mapping[str, object]
+
+    utxo: TravelRuleUtxo
+    """Optional, UTXO chains only (BTC, LTC, BCH, DOGE). The transaction's inputs and outputs, from which Didit infers the originator wallet and the beneficiary output when you do not declare them."""
+
+    originator: Mapping[str, object]
+    """An IVMS 101 originator block: `originatorPersons` (one `naturalPerson` or `legalPerson`; a legal person makes the party a company) and `accountNumber` (wallet addresses). Used for `originator_data` when that object is empty. A malformed block answers 400 keyed by its path, for example `originator.originatorPersons`."""
+
+    beneficiary: Mapping[str, object]
+    """An IVMS 101 beneficiary block: `beneficiaryPersons` (one `naturalPerson` or `legalPerson`; a legal person makes the party a company) and `accountNumber` (wallet addresses). Used for `beneficiary_data` when that object is empty. A malformed block answers 400 keyed by its path, for example `beneficiary.beneficiaryPersons`."""
+
+    ivms101: Mapping[str, object]
+    """The `originator` and `beneficiary` blocks wrapped in one IVMS 101 object (`IVMS101` is accepted too). Top-level blocks win over the wrapper's."""
 
 
 class TransactionsCreateParams(TypedDict, total=False):
@@ -359,7 +382,7 @@ class TransactionsCreateParams(TypedDict, total=False):
     """Arbitrary key-value pairs attached to the transaction. Each key can be referenced in rule conditions with the field path `custom_values.<key>`."""
 
     travel_rule_details: TransactionsCreateParamsTravelRuleDetails
-    """Travel Rule compliance metadata."""
+    """Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name." """
 
     network_snapshot: TransactionsCreateParamsNetworkSnapshot
     """Pre-computed network graph snapshot."""

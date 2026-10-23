@@ -49,13 +49,37 @@ class SessionsPreviewResubmissionResponseNodesToResubmit(BaseModel):
 
 class SessionsPreviewResubmissionResponse(BaseModel):
     recipient: str
+    """The address the email goes to. An empty string when no address is known for the person: then no email can be sent and `preview_token` is empty too. Pass it as `email_address` when you confirm."""
+
+    recipient_source: Literal["email_verification", "contact_details", "request", ""] | str
+    """Where `recipient` comes from. `request`: the `email_address` you passed. `email_verification`: the address the person verified in an email verification step of the flow. `contact_details`: the address given in `contact_details` when the session was created. An empty string when there is no address."""
 
     sender: str
+    """The `From` header the email goes out with."""
+
+    sender_name: str
+    """The display name part of `sender`."""
+
+    sender_email: str
+    """The address part of `sender`."""
+
+    sender_kind: Literal["customer", "didit"] | str
+    """`customer`: the email goes out from your application's verified sender domain (white label). `didit`: it goes out from Didit's own sender."""
 
     subject: str
+    """The subject line exactly as it is sent."""
 
     html: str
-    """Rendered email. Inline image attachments use data URLs for preview."""
+    """The email's HTML exactly as it is sent, with its logo embedded as a data URL. Render it in a sandboxed frame, never directly in your application DOM."""
+
+    language: str
+    """The language the email is written in. English (`en`) when the `email_language` you asked for is not offered."""
+
+    will_be_sent: bool
+    """Whether confirming the change with `send_email: true` sends this email. `false` when `not_sent_reason` is set."""
+
+    not_sent_reason: Literal["no_user_action", "no_recipient", "sandbox"] | str | None
+    """Why confirming would send no email, or `null` when it will be sent. `no_user_action`: every selected step runs without the person, so the resubmission finishes on its own and no email goes out. `no_recipient`: no address is known for the person and you passed none. `sandbox`: a sandbox session whose recipient has not opted into sandbox email delivery, so the send is only simulated."""
 
     nodes_to_resubmit: list[SessionsPreviewResubmissionResponseNodesToResubmit]
 
@@ -63,4 +87,4 @@ class SessionsPreviewResubmissionResponse(BaseModel):
     """Whether at least one selected check requires user interaction. This does not predict the final workflow outcome."""
 
     preview_token: str
-    """Signed confirmation receipt, valid for 15 minutes. Pass it as email_preview_token when confirming the same message."""
+    """Signed receipt for this exact email, valid for 15 minutes. Pass it as `email_preview_token` to [Update Session Status](/sessions-api/update-status). An empty string when there is no recipient."""

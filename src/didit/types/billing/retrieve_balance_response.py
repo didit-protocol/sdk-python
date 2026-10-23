@@ -11,7 +11,7 @@ class BillingRetrieveBalanceResponse(BaseModel):
     """Current pre-paid credit balance in USD, as a fixed-point decimal string. Decreases as verifications are billed and increases when a top-up settles."""
 
     auto_refill_enabled: bool
-    """When `true`, Didit will automatically charge the saved Stripe payment method to add credits once the balance crosses `auto_refill_threshold`. Configured from Console → Billing."""
+    """When `true`, Didit will automatically charge the saved payment method to add credits once the balance crosses `auto_refill_threshold`. Configured from Console → Billing."""
 
     auto_refill_amount: str | None = None
     """USD amount that will be charged on each auto-refill. `null` when auto-refill is disabled or unset."""

@@ -7,11 +7,13 @@ from typing import Literal
 from didit._models import BaseModel
 from didit.types.components.case_assignee import CaseAssignee
 from didit.types.components.case_blueprint_detail import CaseBlueprintDetail
+from didit.types.components.case_checker import CaseChecker
 from didit.types.components.case_checklist_item import CaseChecklistItem
 from didit.types.components.case_event import CaseEvent
 from didit.types.components.case_link import CaseLink
 from didit.types.components.case_note import CaseNote
 from didit.types.components.case_subject import CaseSubject
+from didit.types.components.case_team_summary import CaseTeamSummary
 
 __all__ = ["CaseDetail", "CaseDetailPendingResolution"]
 
@@ -19,13 +21,27 @@ __all__ = ["CaseDetail", "CaseDetailPendingResolution"]
 class CaseDetailPendingResolution(BaseModel):
     """Set only while a 4-eyes resolution is staged on the checker blueprint, awaiting approve or reject-approval."""
 
-    resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str | None = None
+    resolution: (
+        Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+        | None
+    ) = None
 
     resolution_notes: str | None = None
 
     maker_email: str | None = None
+    """Email of the officer who submitted the resolution. Null when an API key submitted it: that resolution has no recorded maker, so approve and reject-approval return 403 for every caller."""
 
     maker_name: str | None = None
+
+    maker_user_id: str | None = None
+    """Member user uuid of the officer who submitted the resolution. Null when an API key submitted it. That member cannot be named as `checker`."""
 
     maker_blueprint_id: str | None = None
 
@@ -41,7 +57,17 @@ class CaseDetail(BaseModel):
 
     status: Literal["OPEN", "AWAITING_USER", "RESOLVED"] | str | None = None
 
-    resolution: Literal["FALSE_POSITIVE", "VALID_THREAT"] | str | None = None
+    resolution: (
+        Literal[
+            "FALSE_POSITIVE",
+            "VALID_THREAT",
+            "INCONCLUSIVE",
+            "REQUIREMENTS_NOT_MET",
+            "REQUIREMENTS_SATISFIED",
+        ]
+        | str
+        | None
+    ) = None
 
     resolution_notes: str | None = None
 
@@ -60,6 +86,9 @@ class CaseDetail(BaseModel):
 
     assigned_at: _dt.datetime | None = None
 
+    team: CaseTeamSummary | None = None
+    """The review team that owns the case, or null when no team owns it. Routing sets it when a routing rule places the case with one of its teams. Change or clear it with `PATCH .../cases/{case_uuid}/` (`team`)."""
+
     due_at: _dt.datetime | None = None
 
     resolved_at: _dt.datetime | None = None
@@ -68,6 +97,9 @@ class CaseDetail(BaseModel):
 
     pending_resolution: CaseDetailPendingResolution | None = None
     """Set only while a 4-eyes resolution is staged on the checker blueprint, awaiting approve or reject-approval."""
+
+    checker: CaseChecker | None = None
+    """The member named to approve or reject the pending resolution. Set only while a four-eyes resolution waits on a named checker. Null when nothing is pending, while the pending resolution waits on the checker queue, and once the resolution is approved, rejected, or returned for a new review because the evidence changed."""
 
     metadata: dict[str, object] | None = None
 

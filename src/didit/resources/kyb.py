@@ -56,7 +56,8 @@ class Kyb(SyncAPIResource):
         country_code: str,
         name: str | NotGiven = NOT_GIVEN,
         registration_number: str | NotGiven = NOT_GIVEN,
-        search_type: Literal["contains", "start_with", "fuzzy"] | str | NotGiven = NOT_GIVEN,
+        tier: Literal["basic", "shareholders", "ubo"] | str | NotGiven = NOT_GIVEN,
+        search_type: Literal["contains"] | str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         webhook_url: str | NotGiven = NOT_GIVEN,
@@ -73,6 +74,10 @@ class Kyb(SyncAPIResource):
 
         **`kyb_response_id` is ephemeral.** It is a per-search handle, not a stable company id. Select promptly after searching and re-search to get a fresh handle instead of storing it.
 
+        **`tier` picks the provider chain.** `tier` names the registry tier the search runs on: `basic` (the default, the Lite chain), `shareholders` or `ubo`. The search uses the provider chain that serves that tier, and it is not always the same chain the Lite search reads, so an empty Lite search is not proof that the registry does not hold the company - search again at the tier you need. A country that does not offer the tier you name is searched at the highest tier it offers up to that one. Retrieve the candidate from the endpoint that sells that tier: `POST /v3/kyb/select/` (Lite), `POST /v3/kyb/shareholders/` or `POST /v3/kyb/ubo/`.
+
+        **Authentication.** `POST /v3/kyb/search/` (and `/v2/`) takes your application's API key in the `x-api-key` header. The hosted `POST /v1/kyb/search/` is the session-authenticated route a hosted verification flow calls: it answers `403` to an API key and takes no `tier` - the workflow's KYB registry configuration picks the chain.
+
         **Two modes.**
         - *Synchronous (default):* the API polls the registry until the search resolves and returns the final candidate list (`search_resolved: true`).
         - *Asynchronous:* pass `webhook_url` and the API returns immediately - usually with `search_status: "pending"` and an empty candidate list - then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` - note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` - and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
@@ -87,7 +92,8 @@ class Kyb(SyncAPIResource):
           country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision - a bare `US` is rejected. Case-insensitive; normalized to upper case.
           name: Company name to search for. Either `name` or `registration_number` is required.
           registration_number: Registry registration number to search for. Either `name` or `registration_number` is required.
-          search_type: Name-matching strategy applied by the registry search.
+          tier: Registry tier whose provider chain this search runs on. `basic` (default) searches the country's Lite chain; `shareholders` and `ubo` search that tier's ownership chain, which can be a different source, so an empty Lite search does not prove the registry lacks the company. A country that does not offer the named tier is searched at the highest tier it offers up to that one. Retrieve the candidate from the endpoint that sells the tier you searched: `POST /v3/kyb/select/` (Lite), `POST /v3/kyb/shareholders/` or `POST /v3/kyb/ubo/`.
+          search_type: Name-matching strategy applied by the registry search. `contains` is the only accepted value: no registry source behind the search offers a prefix or fuzzy mode, so `start_with` and `fuzzy` are rejected with `400` (`not a valid choice`).
           vendor_data: Your identifier for this lookup; echoed back and included in the webhook callback.
           metadata: Free-form JSON; echoed back and included in the webhook callback.
           webhook_url: Switches the search to asynchronous mode: the API returns immediately and POSTs an unsigned `kyb.registry_search.resolved` callback to this URL when the candidate list is ready.
@@ -107,6 +113,7 @@ class Kyb(SyncAPIResource):
                     "country_code": country_code,
                     "name": name,
                     "registration_number": registration_number,
+                    "tier": tier,
                     "search_type": search_type,
                     "vendor_data": vendor_data,
                     "metadata": metadata,
@@ -308,7 +315,8 @@ class AsyncKyb(AsyncAPIResource):
         country_code: str,
         name: str | NotGiven = NOT_GIVEN,
         registration_number: str | NotGiven = NOT_GIVEN,
-        search_type: Literal["contains", "start_with", "fuzzy"] | str | NotGiven = NOT_GIVEN,
+        tier: Literal["basic", "shareholders", "ubo"] | str | NotGiven = NOT_GIVEN,
+        search_type: Literal["contains"] | str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         webhook_url: str | NotGiven = NOT_GIVEN,
@@ -325,6 +333,10 @@ class AsyncKyb(AsyncAPIResource):
 
         **`kyb_response_id` is ephemeral.** It is a per-search handle, not a stable company id. Select promptly after searching and re-search to get a fresh handle instead of storing it.
 
+        **`tier` picks the provider chain.** `tier` names the registry tier the search runs on: `basic` (the default, the Lite chain), `shareholders` or `ubo`. The search uses the provider chain that serves that tier, and it is not always the same chain the Lite search reads, so an empty Lite search is not proof that the registry does not hold the company - search again at the tier you need. A country that does not offer the tier you name is searched at the highest tier it offers up to that one. Retrieve the candidate from the endpoint that sells that tier: `POST /v3/kyb/select/` (Lite), `POST /v3/kyb/shareholders/` or `POST /v3/kyb/ubo/`.
+
+        **Authentication.** `POST /v3/kyb/search/` (and `/v2/`) takes your application's API key in the `x-api-key` header. The hosted `POST /v1/kyb/search/` is the session-authenticated route a hosted verification flow calls: it answers `403` to an API key and takes no `tier` - the workflow's KYB registry configuration picks the chain.
+
         **Two modes.**
         - *Synchronous (default):* the API polls the registry until the search resolves and returns the final candidate list (`search_resolved: true`).
         - *Asynchronous:* pass `webhook_url` and the API returns immediately - usually with `search_status: "pending"` and an empty candidate list - then POSTs a `kyb.registry_search.resolved` callback to your URL when the registry finishes. The callback body is `{"event_id", "event_type": "kyb.registry_search.resolved", "request_id", "vendor_data", "metadata", "search_status", "search_resolved", "kyb_registry", "timestamp", "created_at"}` - note `timestamp` and `created_at` in the callback are epoch integers, unlike this endpoint's ISO `created_at` - and is sent **unsigned** (header `X-Didit-Unsigned-Callback: true`, no `X-Signature`).
@@ -339,7 +351,8 @@ class AsyncKyb(AsyncAPIResource):
           country_code: ISO 3166-1 alpha-2 code of the country whose company registry to search. For example, `GB`. Where company registries operate at state or province level, append the ISO 3166-2 subdivision code as `XX-YY`: `US-CA` searches the California registry. United States searches always require the subdivision - a bare `US` is rejected. Case-insensitive; normalized to upper case.
           name: Company name to search for. Either `name` or `registration_number` is required.
           registration_number: Registry registration number to search for. Either `name` or `registration_number` is required.
-          search_type: Name-matching strategy applied by the registry search.
+          tier: Registry tier whose provider chain this search runs on. `basic` (default) searches the country's Lite chain; `shareholders` and `ubo` search that tier's ownership chain, which can be a different source, so an empty Lite search does not prove the registry lacks the company. A country that does not offer the named tier is searched at the highest tier it offers up to that one. Retrieve the candidate from the endpoint that sells the tier you searched: `POST /v3/kyb/select/` (Lite), `POST /v3/kyb/shareholders/` or `POST /v3/kyb/ubo/`.
+          search_type: Name-matching strategy applied by the registry search. `contains` is the only accepted value: no registry source behind the search offers a prefix or fuzzy mode, so `start_with` and `fuzzy` are rejected with `400` (`not a valid choice`).
           vendor_data: Your identifier for this lookup; echoed back and included in the webhook callback.
           metadata: Free-form JSON; echoed back and included in the webhook callback.
           webhook_url: Switches the search to asynchronous mode: the API returns immediately and POSTs an unsigned `kyb.registry_search.resolved` callback to this URL when the candidate list is ready.
@@ -359,6 +372,7 @@ class AsyncKyb(AsyncAPIResource):
                     "country_code": country_code,
                     "name": name,
                     "registration_number": registration_number,
+                    "tier": tier,
                     "search_type": search_type,
                     "vendor_data": vendor_data,
                     "metadata": metadata,
