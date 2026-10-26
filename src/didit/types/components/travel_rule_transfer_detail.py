@@ -98,7 +98,7 @@ class TravelRuleTransferDetail(BaseModel):
         | str
         | None
     ) = None
-    """The rail the transfer was routed over, or null when no rail was selected (for example below the threshold, a self-hosted counterparty wallet, an after-deposit registration, or no reachable counterparty). INTERNAL means both sides are Didit applications; EMAIL means the counterparty was reached by an emailed pickup link. TEST_VASP means the Didit Test VASP answered a sandbox application's transfer. Over GTR, VERIFYVASP and SYGNA, Didit reads the counterparty's answer from the network's response or by polling it every 5 minutes. TRUST only sends, so a TRUST transfer stays AWAITING_COUNTERPARTY until it expires. A network rail is used only when you have connected your own membership for that network. It is chosen after the transaction create returns, so it is null in that response."""
+    """The rail the transfer was routed over, or null when no rail was selected (for example below the threshold, a self-hosted counterparty wallet, an after-deposit registration, or no reachable counterparty). INTERNAL means both sides are Didit applications; EMAIL means the counterparty was reached by an emailed pickup link. TEST_VASP means the Didit Test VASP answered the sandbox transfer. Over GTR, VERIFYVASP and SYGNA, Didit reads the counterparty's answer from the network's response or by polling it every 5 minutes. TRUST only sends, so a TRUST transfer stays AWAITING_COUNTERPARTY until it expires. A network rail is used only when you have connected your own membership for that network. It is chosen after the transaction create returns, so it is null in that response."""
 
     protocol: str | None = None
 

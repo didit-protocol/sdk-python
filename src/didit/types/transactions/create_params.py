@@ -326,7 +326,7 @@ class TransactionsCreateParamsTravelRuleDetails(TypedDict, total=False):
     """Originator party, as flat fields or one IVMS 101 person. For your user with an approved KYC verification, Didit replaces the fields the verification holds with the verified values (see `metadata.originator_provenance`). It must be an object: anything else is a `400`. On a memo network a `memo` key names the originator wallet's memo or tag."""
 
     beneficiary_data: Mapping[str, object]
-    """Beneficiary party, as flat fields or one IVMS 101 person. An empty `wallet_address` is filled from `counterparty.payment_method.account_id`. It must be an object: anything else is a `400`. On a memo network `memo` names the beneficiary wallet's memo or tag; `wallet_address` and `memo` win over the counterparty's payment method."""
+    """Beneficiary party, as flat fields or one IVMS 101 person. It must be an object: anything else is a `400`. To route the transfer, Didit reads `wallet_address` (an empty one is filled from `counterparty.payment_method.account_id`), `chain` (filled from `transaction_details.crypto_params.crypto_chain` or the `currency` when that names a supported chain), `name` (falling back to `counterparty.full_name`), `travel_address`, `counterparty_vasp_name`, `counterparty_vasp_lei` and `counterparty_vasp_email`. On a memo network `memo` names the beneficiary wallet's memo or tag; `wallet_address` and `memo` win over the counterparty's payment method."""
 
     metadata: Mapping[str, object]
 
