@@ -23847,7 +23847,7 @@
                       },
                       "beneficiary_data": {
                         "type": "object",
-                        "description": "Beneficiary party, as flat fields or one IVMS 101 person. An empty `wallet_address` is filled from `counterparty.payment_method.account_id`. It must be an object: anything else is a `400`. On a memo network `memo` names the beneficiary wallet's memo or tag; `wallet_address` and `memo` win over the counterparty's payment method."
+                        "description": "Beneficiary party, as flat fields or one IVMS 101 person. It must be an object: anything else is a `400`. To route the transfer, Didit reads `wallet_address` (an empty one is filled from `counterparty.payment_method.account_id`), `chain` (filled from `transaction_details.crypto_params.crypto_chain` or the `currency` when that names a supported chain), `name` (falling back to `counterparty.full_name`), `travel_address`, `counterparty_vasp_name`, `counterparty_vasp_lei` and `counterparty_vasp_email`. On a memo network `memo` names the beneficiary wallet's memo or tag; `wallet_address` and `memo` win over the counterparty's payment method."
                       },
                       "metadata": {
                         "type": "object"
@@ -63212,7 +63212,7 @@
     "/v3/session/{sessionId}/kyb/parties/{partyUuid}/regenerate/": {
       "post": {
         "summary": "Regenerate a Key People party's KYC session",
-        "description": "Give a Key People party of a Business Verification (KYB) session a new individual KYC session after its previous one was deleted, so the Key People check can finish again; send no request body. It works only when the party's KYC session was deleted (`kyc_session_deleted: true`): a party whose KYC session still exists (in any status), a party that never had one, or a company party returns `409`. Didit creates a new hosted KYC session with the workflow the deleted one ran (its latest published version) or, when that is no longer known, the workflow your Key People settings assign to the party's role, emails the link to the party when an email is on file, clears `is_skipped`, and recomputes the Key People check and the business session status. It then sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) for the business session with trigger `console_key_people_regenerate`; to exempt the party instead, use `PATCH /v3/session/{sessionId}/kyb/parties/{partyUuid}/`. A scoped API key needs `decisions: write`, and without `sessions: write` it receives `kyc_session_url` as `null`.",
+        "description": "Give a Key People party of a Business Verification (KYB) session a new individual KYC session after its previous one was deleted or expired before the person started it, so the Key People check can finish again; send no request body. It works when the party's KYC session was deleted (`kyc_session_deleted: true`) or expired before the person started it (`Expired`, never started). A session still in progress or one that ended in any other status (`Approved`, `Declined`, `In Review`, `Abandoned`, ...) returns `409` unless it was deleted. A party that never had one or a company party always returns `409`. Didit creates a new hosted KYC session with the workflow the party was verified with (its latest published version) or, when that is no longer known, the workflow your Key People settings assign to the party's role, so its link lasts that KYC workflow's session expiration time; it emails the link to the party when an email is on file, clears `is_skipped`, and recomputes the Key People check and the business session status. It then sends a `data.updated` [webhook](https://docs.didit.me/integration/webhooks) for the business session with trigger `console_key_people_regenerate`; to exempt the party instead, use `PATCH /v3/session/{sessionId}/kyb/parties/{partyUuid}/`. A scoped API key needs `decisions: write`, and without `sessions: write` it receives `kyc_session_url` as `null`. Deleted sessions qualify even if the person had already started or finished verification. Imported sessions do not qualify through expiry; they must have been deleted.",
         "operationId": "post_v3_session_kyb_party_regenerate",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -63266,7 +63266,7 @@
         ],
         "responses": {
           "200": {
-            "description": "New KYC session created. Returns the updated party with its new child session.",
+            "description": "New KYC session created. Returns the updated party with its new child session, which expires after its KYC workflow's session expiration time.",
             "content": {
               "application/json": {
                 "schema": {
@@ -63436,7 +63436,7 @@
             }
           },
           "409": {
-            "description": "The party's KYC session was not deleted (it still exists, the party never had one, or the party is a company), so there is nothing to replace. Branch on `code`.",
+            "description": "The party has no eligible KYC session to replace. Unless deleted, a session still in progress or one that ended in another status (`Approved`, `Declined`, `In Review`, `Abandoned`, ...) cannot be regenerated. A party that never had one or a company party also returns `409`. An eligible session was deleted or expired before the person started it. Deleted sessions qualify even if the person had already started or finished verification. Imported sessions do not qualify through expiry; they must have been deleted. Branch on `code`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -63460,7 +63460,7 @@
                   }
                 },
                 "example": {
-                  "detail": "This party's KYC session has not been deleted, so it cannot be regenerated.",
+                  "detail": "This party's KYC session is still live (it has neither been deleted nor expired without starting), so it cannot be regenerated.",
                   "code": "kyb_party_kyc_session_not_deleted"
                 }
               }
@@ -76432,7 +76432,7 @@
               "TEST_VASP",
               null
             ],
-            "description": "The rail the transfer was routed over, or null when no rail was selected (for example below the threshold, a self-hosted counterparty wallet, an after-deposit registration, or no reachable counterparty). INTERNAL means both sides are Didit applications; EMAIL means the counterparty was reached by an emailed pickup link. TEST_VASP means the Didit Test VASP answered a sandbox application's transfer. Over GTR, VERIFYVASP and SYGNA, Didit reads the counterparty's answer from the network's response or by polling it every 5 minutes. TRUST only sends, so a TRUST transfer stays AWAITING_COUNTERPARTY until it expires. A network rail is used only when you have connected your own membership for that network. It is chosen after the transaction create returns, so it is null in that response."
+            "description": "The rail the transfer was routed over, or null when no rail was selected (for example below the threshold, a self-hosted counterparty wallet, an after-deposit registration, or no reachable counterparty). INTERNAL means both sides are Didit applications; EMAIL means the counterparty was reached by an emailed pickup link. TEST_VASP means the Didit Test VASP answered the sandbox transfer. Over GTR, VERIFYVASP and SYGNA, Didit reads the counterparty's answer from the network's response or by polling it every 5 minutes. TRUST only sends, so a TRUST transfer stays AWAITING_COUNTERPARTY until it expires. A network rail is used only when you have connected your own membership for that network. It is chosen after the transaction create returns, so it is null in that response."
           },
           "protocol": {
             "type": "string",
@@ -96264,7 +96264,7 @@
         ]
       },
       "TravelRuleStatusUpdatedEvent": {
-        "description": "A Travel Rule exchange changed status. Sent on every transition up to and including `FINISHED`, `CANCELLED` or `EXPIRED`, never after. Sent for live applications only. There is no top-level `status`.",
+        "description": "A Travel Rule exchange changed status. Sent on every transition up to and including `FINISHED`, `CANCELLED` or `EXPIRED`, never after. Sent for live applications and, for Travel Rule exchanges, for sandbox applications too (`environment: sandbox`). There is no top-level `status`.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -96318,9 +96318,18 @@
                   "TRUST",
                   "VERIFYVASP",
                   "SYGNA",
-                  "EMAIL"
+                  "EMAIL",
+                  "TEST_VASP"
                 ],
-                "description": "Network the exchange runs on, or an empty string when none could be resolved."
+                "description": "Network the exchange runs on, or an empty string when none could be resolved. `TEST_VASP` is a sandbox transfer the Didit Test VASP answered."
+              },
+              "test_vasp": {
+                "type": "boolean",
+                "description": "Present and `true` only on a sandbox transfer the Didit Test VASP answered."
+              },
+              "test_vasp_scenario": {
+                "type": "string",
+                "description": "Present only with `test_vasp`: the sandbox scenario that decided the outcome, or an empty string."
               },
               "direction": {
                 "type": "string",
@@ -105202,7 +105211,7 @@
     "travel_rule.status.updated": {
       "post": {
         "summary": "Travel Rule status changed",
-        "description": "A Travel Rule exchange changed status. Sent on every transition up to and including `FINISHED`, `CANCELLED` or `EXPIRED`, never after. Sent for live applications only. There is no top-level `status`.",
+        "description": "A Travel Rule exchange changed status. Sent on every transition up to and including `FINISHED`, `CANCELLED` or `EXPIRED`, never after. Sent for live applications and, for Travel Rule exchanges, for sandbox applications too (`environment: sandbox`). There is no top-level `status`.",
         "tags": [
           "Webhook"
         ],
