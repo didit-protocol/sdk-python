@@ -501,8 +501,27 @@ if TYPE_CHECKING:
     from didit.types.components.bank_account_check_person_holder import (
         BankAccountCheckPersonHolder as BankAccountCheckPersonHolder,
     )
+    from didit.types.components.bank_account_check_pricing import (
+        BankAccountCheckPricing as BankAccountCheckPricing,
+    )
     from didit.types.components.bank_account_check_response import (
         BankAccountCheckResponse as BankAccountCheckResponse,
+    )
+    from didit.types.components.bank_sign_in_pricing import BankSignInPricing as BankSignInPricing
+    from didit.types.components.bank_sign_in_pricing import (
+        BankSignInPricingAddOns as BankSignInPricingAddOns,
+    )
+    from didit.types.components.bank_statement_upload_pricing import (
+        BankStatementUploadPricing as BankStatementUploadPricing,
+    )
+    from didit.types.components.bank_verification_pricing import (
+        BankVerificationPricing as BankVerificationPricing,
+    )
+    from didit.types.components.bank_verification_pricing_country import (
+        BankVerificationPricingCountry as BankVerificationPricingCountry,
+    )
+    from didit.types.components.bank_verification_pricing_methods import (
+        BankVerificationPricingMethods as BankVerificationPricingMethods,
     )
     from didit.types.components.bank_verification_result import (
         BankVerificationResult as BankVerificationResult,
@@ -515,6 +534,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.bank_verification_result import (
         BankVerificationResultConnection as BankVerificationResultConnection,
+    )
+    from didit.types.components.bank_verification_result import (
+        BankVerificationResultContinuation as BankVerificationResultContinuation,
     )
     from didit.types.components.bank_verification_result import (
         BankVerificationResultFinancialData as BankVerificationResultFinancialData,
@@ -968,6 +990,20 @@ if TYPE_CHECKING:
     from didit.types.components.fraud_result_enum import FraudResultEnum as FraudResultEnum
     from didit.types.components.fraud_status_enum import FraudStatusEnum as FraudStatusEnum
     from didit.types.components.fraud_type_enum import FraudTypeEnum as FraudTypeEnum
+    from didit.types.components.import_job_summary import ImportJobSummary as ImportJobSummary
+    from didit.types.components.import_job_summary import (
+        ImportJobSummaryFaceTemplates as ImportJobSummaryFaceTemplates,
+    )
+    from didit.types.components.import_job_summary import (
+        ImportJobSummaryProgress as ImportJobSummaryProgress,
+    )
+    from didit.types.components.import_job_summary import (
+        ImportJobSummaryStartedBy as ImportJobSummaryStartedBy,
+    )
+    from didit.types.components.import_provider import ImportProvider as ImportProvider
+    from didit.types.components.import_provider import (
+        ImportProviderCredentialFields as ImportProviderCredentialFields,
+    )
     from didit.types.components.investigator_batch_accept_response import (
         InvestigatorBatchAcceptResponse as InvestigatorBatchAcceptResponse,
     )
@@ -2658,11 +2694,41 @@ if TYPE_CHECKING:
     from didit.types.sessions.import_shared_params import (
         SessionsImportSharedParams as SessionsImportSharedParams,
     )
+    from didit.types.sessions.imports.check_provider_params import (
+        SessionsImportsCheckProviderParams as SessionsImportsCheckProviderParams,
+    )
+    from didit.types.sessions.imports.check_provider_params import (
+        SessionsImportsCheckProviderParamsOptions as SessionsImportsCheckProviderParamsOptions,
+    )
+    from didit.types.sessions.imports.check_provider_response import (
+        SessionsImportsCheckProviderResponse as SessionsImportsCheckProviderResponse,
+    )
     from didit.types.sessions.imports.create_params import (
         SessionsImportsCreateParams as SessionsImportsCreateParams,
     )
+    from didit.types.sessions.imports.create_params import (
+        SessionsImportsCreateParamsOptions as SessionsImportsCreateParamsOptions,
+    )
+    from didit.types.sessions.imports.list_active_jobs_response import (
+        SessionsImportsListActiveJobsResponse as SessionsImportsListActiveJobsResponse,
+    )
     from didit.types.sessions.imports.list_errors_response import (
         SessionsImportsListErrorsResponse as SessionsImportsListErrorsResponse,
+    )
+    from didit.types.sessions.imports.list_jobs_response import (
+        SessionsImportsListJobsResponse as SessionsImportsListJobsResponse,
+    )
+    from didit.types.sessions.imports.list_jobs_response import (
+        SessionsImportsListJobsResponseCounts as SessionsImportsListJobsResponseCounts,
+    )
+    from didit.types.sessions.imports.list_providers_response import (
+        SessionsImportsListProvidersResponse as SessionsImportsListProvidersResponse,
+    )
+    from didit.types.sessions.imports.retry_params import (
+        SessionsImportsRetryParams as SessionsImportsRetryParams,
+    )
+    from didit.types.sessions.imports.start_params import (
+        SessionsImportsStartParams as SessionsImportsStartParams,
     )
     from didit.types.sessions.list_aml_screening_history_response import (
         SessionsListAmlScreeningHistoryResponse as SessionsListAmlScreeningHistoryResponse,
@@ -3145,11 +3211,19 @@ _MODULES: dict[str, str] = {
     "BankAccountCheckParams": "bank.account_check_params",
     "BankAccountCheckParamsAccount": "bank.account_check_params",
     "BankAccountCheckPersonHolder": "components.bank_account_check_person_holder",
+    "BankAccountCheckPricing": "components.bank_account_check_pricing",
     "BankAccountCheckResponse": "components.bank_account_check_response",
+    "BankSignInPricing": "components.bank_sign_in_pricing",
+    "BankSignInPricingAddOns": "components.bank_sign_in_pricing",
+    "BankStatementUploadPricing": "components.bank_statement_upload_pricing",
+    "BankVerificationPricing": "components.bank_verification_pricing",
+    "BankVerificationPricingCountry": "components.bank_verification_pricing_country",
+    "BankVerificationPricingMethods": "components.bank_verification_pricing_methods",
     "BankVerificationResult": "components.bank_verification_result",
     "BankVerificationResultAccount": "components.bank_verification_result",
     "BankVerificationResultBilling": "components.bank_verification_result",
     "BankVerificationResultConnection": "components.bank_verification_result",
+    "BankVerificationResultContinuation": "components.bank_verification_result",
     "BankVerificationResultFinancialData": "components.bank_verification_result",
     "BankVerificationResultOwnership": "components.bank_verification_result",
     "BankVerificationResultRoute": "components.bank_verification_result",
@@ -3476,6 +3550,12 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartSmartIdParams": "id_wallets.start_smart_id_params",
     "IdWalletsStartUaePassParams": "id_wallets.start_uae_pass_params",
     "IdWalletsStartVippsParams": "id_wallets.start_vipps_params",
+    "ImportJobSummary": "components.import_job_summary",
+    "ImportJobSummaryFaceTemplates": "components.import_job_summary",
+    "ImportJobSummaryProgress": "components.import_job_summary",
+    "ImportJobSummaryStartedBy": "components.import_job_summary",
+    "ImportProvider": "components.import_provider",
+    "ImportProviderCredentialFields": "components.import_provider",
     "InvestigatorAcceptRunParams": "investigator.accept_run_params",
     "InvestigatorBatchAcceptResponse": "components.investigator_batch_accept_response",
     "InvestigatorBatchAcceptResponseResults": "components.investigator_batch_accept_response",
@@ -3842,8 +3922,18 @@ _MODULES: dict[str, str] = {
     "SessionsDeleteParams": "sessions.delete_params",
     "SessionsDeleteResponse": "sessions.delete_response",
     "SessionsImportSharedParams": "sessions.import_shared_params",
+    "SessionsImportsCheckProviderParams": "sessions.imports.check_provider_params",
+    "SessionsImportsCheckProviderParamsOptions": "sessions.imports.check_provider_params",
+    "SessionsImportsCheckProviderResponse": "sessions.imports.check_provider_response",
     "SessionsImportsCreateParams": "sessions.imports.create_params",
+    "SessionsImportsCreateParamsOptions": "sessions.imports.create_params",
+    "SessionsImportsListActiveJobsResponse": "sessions.imports.list_active_jobs_response",
     "SessionsImportsListErrorsResponse": "sessions.imports.list_errors_response",
+    "SessionsImportsListJobsResponse": "sessions.imports.list_jobs_response",
+    "SessionsImportsListJobsResponseCounts": "sessions.imports.list_jobs_response",
+    "SessionsImportsListProvidersResponse": "sessions.imports.list_providers_response",
+    "SessionsImportsRetryParams": "sessions.imports.retry_params",
+    "SessionsImportsStartParams": "sessions.imports.start_params",
     "SessionsListAmlScreeningHistoryResponse": "sessions.list_aml_screening_history_response",
     "SessionsListEventsResponse": "sessions.list_events_response",
     "SessionsListFeatureOverridesResponse": "sessions.list_feature_overrides_response",
@@ -4259,11 +4349,19 @@ __all__ = [
     "BankAccountCheckParams",
     "BankAccountCheckParamsAccount",
     "BankAccountCheckPersonHolder",
+    "BankAccountCheckPricing",
     "BankAccountCheckResponse",
+    "BankSignInPricing",
+    "BankSignInPricingAddOns",
+    "BankStatementUploadPricing",
+    "BankVerificationPricing",
+    "BankVerificationPricingCountry",
+    "BankVerificationPricingMethods",
     "BankVerificationResult",
     "BankVerificationResultAccount",
     "BankVerificationResultBilling",
     "BankVerificationResultConnection",
+    "BankVerificationResultContinuation",
     "BankVerificationResultFinancialData",
     "BankVerificationResultOwnership",
     "BankVerificationResultRoute",
@@ -4590,6 +4688,12 @@ __all__ = [
     "IdWalletsStartSmartIdParams",
     "IdWalletsStartUaePassParams",
     "IdWalletsStartVippsParams",
+    "ImportJobSummary",
+    "ImportJobSummaryFaceTemplates",
+    "ImportJobSummaryProgress",
+    "ImportJobSummaryStartedBy",
+    "ImportProvider",
+    "ImportProviderCredentialFields",
     "InvestigatorAcceptRunParams",
     "InvestigatorBatchAcceptResponse",
     "InvestigatorBatchAcceptResponseResults",
@@ -4956,8 +5060,18 @@ __all__ = [
     "SessionsDeleteParams",
     "SessionsDeleteResponse",
     "SessionsImportSharedParams",
+    "SessionsImportsCheckProviderParams",
+    "SessionsImportsCheckProviderParamsOptions",
+    "SessionsImportsCheckProviderResponse",
     "SessionsImportsCreateParams",
+    "SessionsImportsCreateParamsOptions",
+    "SessionsImportsListActiveJobsResponse",
     "SessionsImportsListErrorsResponse",
+    "SessionsImportsListJobsResponse",
+    "SessionsImportsListJobsResponseCounts",
+    "SessionsImportsListProvidersResponse",
+    "SessionsImportsRetryParams",
+    "SessionsImportsStartParams",
     "SessionsListAmlScreeningHistoryResponse",
     "SessionsListEventsResponse",
     "SessionsListFeatureOverridesResponse",

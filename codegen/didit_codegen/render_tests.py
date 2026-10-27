@@ -214,6 +214,7 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
 
 
 _SECRET_KEY = re.compile(r"token|secret|api_?key|password|private_?key|credential", re.IGNORECASE)
+_TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})")
 _JWT = re.compile(r"^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$")
 
 
@@ -227,7 +228,12 @@ def scrub(value: Json, key: str | None = None) -> Json:
     if isinstance(value, str):
         if _JWT.match(value):
             return "sample-token"
-        if key is not None and _SECRET_KEY.search(key) and value:
+        if (
+            key is not None
+            and _SECRET_KEY.search(key)
+            and value
+            and not _TIMESTAMP.fullmatch(value)
+        ):
             return "sample-" + ("token" if "token" in key.lower() else "secret")
     return value
 

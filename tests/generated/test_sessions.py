@@ -25,6 +25,16 @@ from didit.types.sessions.bulk_update_aml_hit_status_response import (
 )
 from didit.types.sessions.create_response import SessionsCreateResponse
 from didit.types.sessions.delete_response import SessionsDeleteResponse
+from didit.types.sessions.imports.check_provider_response import (
+    SessionsImportsCheckProviderResponse,
+)
+from didit.types.sessions.imports.list_active_jobs_response import (
+    SessionsImportsListActiveJobsResponse,
+)
+from didit.types.sessions.imports.list_jobs_response import SessionsImportsListJobsResponse
+from didit.types.sessions.imports.list_providers_response import (
+    SessionsImportsListProvidersResponse,
+)
 from didit.types.sessions.list_feature_overrides_response import (
     SessionsListFeatureOverridesResponse,
 )
@@ -3157,6 +3167,87 @@ def test_sessions_update_status() -> None:
     )
 
 
+def test_sessions_imports_cancel() -> None:
+    """``POST /v3/session/imports/{importId}/cancel/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/cancel/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "status": "PENDING",
+                "import_type": "user_verification",
+                "source_format": "csv",
+                "source_filename": "sample",
+                "total_rows": 1,
+                "processed_rows": 1,
+                "checkpoint_row": 1,
+                "created_count": 1,
+                "updated_count": 1,
+                "skipped_count": 1,
+                "failed_count": 1,
+                "total_media_bytes": 1,
+                "last_error": "sample",
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+                "started_at": "2026-01-01T00:00:00Z",
+                "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
+            },
+            strict_type=SessionImportJob,
+        ),
+        lambda c: c.sessions.imports.cancel("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.sessions.imports.cancel("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_check_provider() -> None:
+    """``POST /v3/session/imports/providers/check/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/providers/check/",
+            api="verification",
+            auth="api_key",
+            json_body={"provider": "sumsub", "credentials": {"key": "sample"}},
+            status=200,
+            response_json={"ok": True, "provider": "sample", "credential_hint": "sample-secret"},
+            strict_type=SessionsImportsCheckProviderResponse,
+        ),
+        lambda c: c.sessions.imports.check_provider(
+            provider="sumsub", credentials={"key": "sample"}
+        ),
+        lambda c: c.sessions.imports.check_provider(
+            provider="sumsub", credentials={"key": "sample"}
+        ),
+        lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
+        lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
+    )
+
+
 def test_sessions_imports_create() -> None:
     """``POST /v3/session/imports/``"""
     check_operation(
@@ -3207,6 +3298,64 @@ def test_sessions_imports_create() -> None:
     )
 
 
+def test_sessions_imports_list_active_jobs() -> None:
+    """``GET /v3/import-jobs/active/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/import-jobs/active/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "kind": "sessions",
+                        "source": "file",
+                        "provider": "sample",
+                        "provider_name": "sample",
+                        "filename": "sample",
+                        "state": "ready",
+                        "status": "sample",
+                        "is_dry_run": True,
+                        "credential_hint": "sample-secret",
+                        "resumes_at": "2026-01-01T00:00:00Z",
+                        "last_error": "sample",
+                        "started_by": {"name": "sample", "email": "sample"},
+                        "progress": {
+                            "total": 1,
+                            "processed": 1,
+                            "imported": 1,
+                            "updated": 1,
+                            "already_in_didit": 1,
+                            "failed": 1,
+                            "not_finished": 1,
+                            "same_person": 1,
+                        },
+                        "face_templates": {
+                            "enabled": True,
+                            "built": 1,
+                            "duplicates": 1,
+                            "blocklisted": 1,
+                        },
+                        "eta_seconds": 1,
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "started_at": "2026-01-01T00:00:00Z",
+                        "completed_at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+                "running": 1,
+            },
+            strict_type=SessionsImportsListActiveJobsResponse,
+        ),
+        lambda c: c.sessions.imports.list_active_jobs(),
+        lambda c: c.sessions.imports.list_active_jobs(),
+        lambda r: isinstance(r, SessionsImportsListActiveJobsResponse),
+        lambda r: isinstance(r, SessionsImportsListActiveJobsResponse),
+    )
+
+
 def test_sessions_imports_list_errors() -> None:
     """``GET /v3/session/imports/{importId}/errors/``"""
     check_operation(
@@ -3252,6 +3401,216 @@ def test_sessions_imports_list_errors() -> None:
     )
 
 
+def test_sessions_imports_list_jobs() -> None:
+    """``GET /v3/import-jobs/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/import-jobs/",
+            api="verification",
+            auth="api_key",
+            query={"scope": ["all"], "limit": ["1"]},
+            status=200,
+            response_json={
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "kind": "sessions",
+                        "source": "file",
+                        "provider": "sample",
+                        "provider_name": "sample",
+                        "filename": "sample",
+                        "state": "ready",
+                        "status": "sample",
+                        "is_dry_run": True,
+                        "credential_hint": "sample-secret",
+                        "resumes_at": "2026-01-01T00:00:00Z",
+                        "last_error": "sample",
+                        "started_by": {"name": "sample", "email": "sample"},
+                        "progress": {
+                            "total": 1,
+                            "processed": 1,
+                            "imported": 1,
+                            "updated": 1,
+                            "already_in_didit": 1,
+                            "failed": 1,
+                            "not_finished": 1,
+                            "same_person": 1,
+                        },
+                        "face_templates": {
+                            "enabled": True,
+                            "built": 1,
+                            "duplicates": 1,
+                            "blocklisted": 1,
+                        },
+                        "eta_seconds": 1,
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "started_at": "2026-01-01T00:00:00Z",
+                        "completed_at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+                "counts": {"all": 1, "running_and_waiting": 1, "needs_attention": 1, "done": 1},
+            },
+            strict_type=SessionsImportsListJobsResponse,
+        ),
+        lambda c: c.sessions.imports.list_jobs(scope="all", limit=1),
+        lambda c: c.sessions.imports.list_jobs(scope="all", limit=1),
+        lambda r: isinstance(r, SessionsImportsListJobsResponse),
+        lambda r: isinstance(r, SessionsImportsListJobsResponse),
+    )
+
+
+def test_sessions_imports_list_providers() -> None:
+    """``GET /v3/session/imports/providers/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/imports/providers/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "providers": [
+                    {
+                        "key": "sumsub",
+                        "name": "sample",
+                        "mode": "api_list",
+                        "record_noun": "sample",
+                        "credential_fields": [
+                            {"name": "sample", "label": "sample", "secret": True}
+                        ],
+                        "regions": ["sample"],
+                        "required_permissions": ["sample"],
+                        "docs_url": "sample",
+                        "status_mapping": {"key": "Approved"},
+                    }
+                ],
+                "mapping_targets": ["sample"],
+                "skipped_statuses": ["sample"],
+            },
+            strict_type=SessionsImportsListProvidersResponse,
+        ),
+        lambda c: c.sessions.imports.list_providers(),
+        lambda c: c.sessions.imports.list_providers(),
+        lambda r: isinstance(r, SessionsImportsListProvidersResponse),
+        lambda r: isinstance(r, SessionsImportsListProvidersResponse),
+    )
+
+
+def test_sessions_imports_pause() -> None:
+    """``POST /v3/session/imports/{importId}/pause/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/pause/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "status": "PENDING",
+                "import_type": "user_verification",
+                "source_format": "csv",
+                "source_filename": "sample",
+                "total_rows": 1,
+                "processed_rows": 1,
+                "checkpoint_row": 1,
+                "created_count": 1,
+                "updated_count": 1,
+                "skipped_count": 1,
+                "failed_count": 1,
+                "total_media_bytes": 1,
+                "last_error": "sample",
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+                "started_at": "2026-01-01T00:00:00Z",
+                "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
+            },
+            strict_type=SessionImportJob,
+        ),
+        lambda c: c.sessions.imports.pause("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.sessions.imports.pause("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_resume() -> None:
+    """``POST /v3/session/imports/{importId}/resume/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/resume/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "status": "PENDING",
+                "import_type": "user_verification",
+                "source_format": "csv",
+                "source_filename": "sample",
+                "total_rows": 1,
+                "processed_rows": 1,
+                "checkpoint_row": 1,
+                "created_count": 1,
+                "updated_count": 1,
+                "skipped_count": 1,
+                "failed_count": 1,
+                "total_media_bytes": 1,
+                "last_error": "sample",
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+                "started_at": "2026-01-01T00:00:00Z",
+                "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
+            },
+            strict_type=SessionImportJob,
+        ),
+        lambda c: c.sessions.imports.resume("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.sessions.imports.resume("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
 def test_sessions_imports_retrieve() -> None:
     """``GET /v3/session/imports/{importId}/``"""
     check_operation(
@@ -3280,6 +3639,25 @@ def test_sessions_imports_retrieve() -> None:
                 "updated_at": "2026-01-01T00:00:00Z",
                 "started_at": "2026-01-01T00:00:00Z",
                 "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -3307,6 +3685,131 @@ def test_sessions_imports_retrieve_template() -> None:
         lambda c: c.sessions.imports.retrieve_template(import_type="user_verification"),
         lambda r: r == BINARY_BODY,
         lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_imports_retry() -> None:
+    """``POST /v3/session/imports/{importId}/retry/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/retry/",
+            api="verification",
+            auth="api_key",
+            multipart_fields=["credentials"],
+            multipart_files=[],
+            status=201,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "status": "PENDING",
+                "import_type": "user_verification",
+                "source_format": "csv",
+                "source_filename": "sample",
+                "total_rows": 1,
+                "processed_rows": 1,
+                "checkpoint_row": 1,
+                "created_count": 1,
+                "updated_count": 1,
+                "skipped_count": 1,
+                "failed_count": 1,
+                "total_media_bytes": 1,
+                "last_error": "sample",
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+                "started_at": "2026-01-01T00:00:00Z",
+                "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
+            },
+            strict_type=SessionImportJob,
+        ),
+        lambda c: c.sessions.imports.retry(
+            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+        ),
+        lambda c: c.sessions.imports.retry(
+            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+        ),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_start() -> None:
+    """``POST /v3/session/imports/{importId}/start/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/start/",
+            api="verification",
+            auth="api_key",
+            json_body={"status_mapping": {"key": "Approved"}},
+            status=200,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "status": "PENDING",
+                "import_type": "user_verification",
+                "source_format": "csv",
+                "source_filename": "sample",
+                "total_rows": 1,
+                "processed_rows": 1,
+                "checkpoint_row": 1,
+                "created_count": 1,
+                "updated_count": 1,
+                "skipped_count": 1,
+                "failed_count": 1,
+                "total_media_bytes": 1,
+                "last_error": "sample",
+                "created_at": "2026-01-01T00:00:00Z",
+                "updated_at": "2026-01-01T00:00:00Z",
+                "started_at": "2026-01-01T00:00:00Z",
+                "completed_at": "2026-01-01T00:00:00Z",
+                "state": "ready",
+                "source": "file",
+                "provider": "sample",
+                "provider_options": {},
+                "credential_hint": "sample-secret",
+                "credentials_expires_at": "2026-01-01T00:00:00Z",
+                "resumes_at": "2026-01-01T00:00:00Z",
+                "status_mapping": {"key": "sample"},
+                "is_dry_run": True,
+                "dry_run_summary": {},
+                "face_templates_enabled": True,
+                "lawful_basis_confirmed_at": "2026-01-01T00:00:00Z",
+                "not_finished_count": 1,
+                "same_person_count": 1,
+                "face_templates_count": 1,
+                "face_duplicates_count": 1,
+                "face_blocklist_hits_count": 1,
+                "created_by_name": "sample",
+                "created_by_email": "sample",
+            },
+            strict_type=SessionImportJob,
+        ),
+        lambda c: c.sessions.imports.start(
+            "00000000-0000-4000-8000-000000000001", status_mapping={"key": "Approved"}
+        ),
+        lambda c: c.sessions.imports.start(
+            "00000000-0000-4000-8000-000000000001", status_mapping={"key": "Approved"}
+        ),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
     )
 
 

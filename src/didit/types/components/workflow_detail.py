@@ -97,3 +97,15 @@ class WorkflowDetail(BaseModel):
     created_at: _dt.datetime | None = None
 
     updated_at: _dt.datetime | None = None
+
+    is_bank_verification_enabled: bool | None = None
+    """Whether a simple KYC or KYB workflow runs Bank verification. It runs after the contact steps and before database validation, AML and IP analysis. Set in the console."""
+
+    bank_verification_config: dict[str, object] | None = None
+    """Bank verification settings of a simple workflow, with the same keys a `BANK_VERIFICATION` node takes (for example `bank_countries` and `bank_method_order`). Every key is optional and an absent key keeps its default, so `{}` means all defaults. See [Bank verification settings](/management-api/workflows/feature-configs#bank-verification)."""
+
+    is_geolocation_enabled: bool | None = None
+    """Whether a simple KYC workflow runs Location verification. It runs after the contact steps and before Bank verification. Never on KYB workflows. Set in the console."""
+
+    geolocation_config: dict[str, object] | None = None
+    """Location verification settings of a simple workflow, with the same keys a `GEOLOCATION` node takes (for example `is_geolocation_geofencing_enabled` and `geolocation_max_attempts`). Every key is optional and an absent key keeps its default, so `{}` means all defaults."""

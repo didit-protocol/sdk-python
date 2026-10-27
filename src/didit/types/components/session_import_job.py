@@ -13,7 +13,10 @@ class SessionImportJob(BaseModel):
     uuid: str
     """Import job id. Use this value to poll progress and fetch row errors."""
 
-    status: Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED", "PAUSED", "CANCELLED"] | str
+    status: (
+        Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED", "PAUSED", "CANCELLED", "READY"]
+        | str
+    )
 
     import_type: (
         Literal["user_verification", "business_verification", "status_rules", "transactions"] | str
@@ -48,3 +51,52 @@ class SessionImportJob(BaseModel):
     started_at: _dt.datetime | None = None
 
     completed_at: _dt.datetime | None = None
+
+    state: (
+        Literal[
+            "ready", "queued", "running", "paused", "completed", "errors", "failed", "cancelled"
+        ]
+        | str
+        | None
+    ) = None
+    """The job's state as the console shows it; `errors` is a completed job with rejected rows."""
+
+    source: Literal["file", "api", "provider"] | str | None = None
+
+    provider: str | None = None
+    """Migration source; empty for a file or API import."""
+
+    provider_options: dict[str, object] | None = None
+
+    credential_hint: str | None = None
+    """The first characters of the key the migration holds. The key itself is never returned."""
+
+    credentials_expires_at: _dt.datetime | None = None
+
+    resumes_at: _dt.datetime | None = None
+    """When a job paused by the provider's rate limit resumes by itself."""
+
+    status_mapping: dict[str, str] | None = None
+
+    is_dry_run: bool | None = None
+
+    dry_run_summary: dict[str, object] | None = None
+    """What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses`."""
+
+    face_templates_enabled: bool | None = None
+
+    lawful_basis_confirmed_at: _dt.datetime | None = None
+
+    not_finished_count: int | None = None
+
+    same_person_count: int | None = None
+
+    face_templates_count: int | None = None
+
+    face_duplicates_count: int | None = None
+
+    face_blocklist_hits_count: int | None = None
+
+    created_by_name: str | None = None
+
+    created_by_email: str | None = None
