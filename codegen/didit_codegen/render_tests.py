@@ -214,9 +214,7 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
 
 
 _SECRET_KEY = re.compile(r"token|secret|api_?key|password|private_?key|credential", re.IGNORECASE)
-_TIMESTAMP = re.compile(
-    r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"
-)
+_TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})")
 _JWT = re.compile(r"^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$")
 
 

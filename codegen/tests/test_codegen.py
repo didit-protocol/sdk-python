@@ -631,10 +631,14 @@ def test_scrub_keeps_timestamps_and_replaces_secrets() -> None:
             "credentials_expires_at": "2026-10-27T10:00:00Z",
             "api_key": "abc",
             "password": "2026-10-27-secret",
+            "token_date": "2026-10-27",
+            "api_key_at": "2026-10-27T10:00",
         }
     )
     assert got == {
         "credentials_expires_at": "2026-10-27T10:00:00Z",
         "api_key": "sample-secret",
         "password": "sample-secret",
+        "token_date": "sample-token",
+        "api_key_at": "sample-secret",
     }
