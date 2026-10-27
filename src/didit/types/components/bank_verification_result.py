@@ -11,6 +11,7 @@ __all__ = [
     "BankVerificationResultAccount",
     "BankVerificationResultBilling",
     "BankVerificationResultConnection",
+    "BankVerificationResultContinuation",
     "BankVerificationResultFinancialData",
     "BankVerificationResultOwnership",
     "BankVerificationResultRoute",
@@ -58,7 +59,7 @@ class BankVerificationResultBilling(BaseModel):
     """The marketplace platform fee charged, for `byok`."""
 
     usage_type: str | None = None
-    """The usage line the charge was booked on."""
+    """The usage line the charge was booked on: `bank_verification` for a bank sign-in or an account check, `bank_statement_upload` for a statement upload with no charged bank attempt before it, and `bank_byok_fee` for the marketplace fee on your own provider. `null` when nothing was billed."""
 
 
 class BankVerificationResultConnection(BaseModel):
@@ -105,6 +106,32 @@ class BankVerificationResultConnection(BaseModel):
 
     reason_code: str | None = None
     """Why the connection is not simply `connected`, for example `USER_CANCELLED`, `INSTITUTION_DOWN`, `ACCOUNT_NOT_FOUND`, `REFERENCE_IDENTITY_MISSING` or `VERIFICATION_COMPLETED`."""
+
+
+class BankVerificationResultContinuation(BaseModel):
+    """How the person continued without a bank. `null` when they did not. When the workflow narrows the data it returns, `reason` is still returned and every other key is `null`."""
+
+    reason: (
+        Literal["no_route", "institution_unsupported", "attempts_exhausted", "person_choice"]
+        | str
+        | None
+    ) = None
+    """Why, as Didit worked it out when the person continued: `no_route` (no bank sign-in or account check serves their country), `institution_unsupported` (the bank they picked cannot be used on this step), `attempts_exhausted` (every attempt was already spent and none was in progress), or `person_choice` (a way to verify was there and they chose to continue, also when their bank could not be reached right now). `no_route` and `institution_unsupported` follow `bank_unsupported_action`, `attempts_exhausted` follows `bank_attempts_exhausted_action`, and `person_choice` follows `bank_skipped_action`, unless an evaluated attempt already decided the step."""
+
+    country: str | None = None
+    """The country the person was verifying in, ISO 3166-1 alpha-3. `null` when they continued before picking one."""
+
+    offered: list[Literal["statement", "microdeposits"] | str] | None = None
+    """The other ways to verify that country offered the person when they continued, in the order it offered them: `statement` (a statement upload), then `microdeposits`. Empty when it offered none."""
+
+    institution_id: str | None = None
+    """For `institution_unsupported`, the ID of the bank the person could not use: the bank they picked, or the bank their last attempt ended on. Didit takes it from its own list of banks, never from the person's device, so a bank that list does not have is `null`. `null` for every other reason."""
+
+    institution_name: str | None = None
+    """For `institution_unsupported`, the name of that bank, from the same list as `institution_id`. `null` when that list does not have the bank, and for every other reason."""
+
+    continued_at: _dt.datetime | None = None
+    """When the person continued."""
 
 
 class BankVerificationResultFinancialData(BaseModel):
@@ -208,7 +235,7 @@ class BankVerificationResultRoute(BaseModel):
 
 
 class BankVerificationResult(BaseModel):
-    """One Bank Verification step's result, for User and Business Verification. `method` says how the account was verified. See [Bank verification methods](/core-technology/bank-verification/verification-methods)."""
+    """One Bank Verification step's result, for User and Business Verification. `method` says how the account was verified, and `none` that the person continued without a bank before any attempt was evaluated. `continued_without_bank` says the person continued without a bank, also after an evaluated attempt. See [Bank verification methods](/core-technology/bank-verification/verification-methods) and [When the person cannot verify their bank](/core-technology/bank-verification/fallbacks)."""
 
     schema_version: int | None = None
     """Version of this result shape. `1` today."""
@@ -227,10 +254,10 @@ class BankVerificationResult(BaseModel):
     original_status: str | None = None
     """The first verdict the step reached, before any later change such as a manual review."""
 
-    method: Literal["open_banking", "account_lookup", "microdeposits", "statement"] | str | None = (
-        None
-    )
-    """How the account was verified: `open_banking` (bank sign-in: the person signed in at their bank), `account_lookup` (account check: the person typed the account details and the bank confirmed the name), `microdeposits` or `statement` (a statement upload). `null` until an account is evaluated. Workflow rules read the same value as `bank.method`."""
+    method: (
+        Literal["open_banking", "account_lookup", "microdeposits", "statement", "none"] | str | None
+    ) = None
+    """How the account was verified: `open_banking` (bank sign-in: the person signed in at their bank), `account_lookup` (account check: the person typed the account details and the bank confirmed the name), `microdeposits` or `statement` (a statement upload). `none` when the person continued without a bank before any attempt was evaluated, so no account was verified. After an evaluated attempt, it stays the method of that attempt. `null` until an account is evaluated, and when the workflow narrows the data it returns. Workflow rules read the same value as `bank.method`."""
 
     provider: str | None = None
     """The key of the route that ran the connection. Read `method`, not this key, to tell how the account was verified."""
@@ -265,7 +292,13 @@ class BankVerificationResult(BaseModel):
     """Whether the step ended without a match after the person left at their bank."""
 
     not_covered: bool | None = None
-    """Whether the person's bank or country could not be reached on this step."""
+    """Whether the person's bank or country could not be reached on this step. Also `true` when the person continued without a bank because no method could verify their country or bank."""
+
+    continued_without_bank: bool | None = None
+    """Whether the person left the step with **Continue without your bank**. `continuation` then says why. `method` is `none` when no attempt was evaluated before they continued. After an evaluated attempt, such as a holder that does not match, `method` stays the method of that attempt and its verdict and reason codes stand. Returned even when the workflow narrows the data it returns."""
+
+    continuation: BankVerificationResultContinuation | None = None
+    """How the person continued without a bank. `null` when they did not. When the workflow narrows the data it returns, `reason` is still returned and every other key is `null`."""
 
     evidence_purged_at: _dt.datetime | None = None
     """When the bank evidence was deleted under `bank_evidence_retention_days`. `null` otherwise."""
@@ -274,7 +307,7 @@ class BankVerificationResult(BaseModel):
     """Informational codes, for example `holder_declared`. A warning never changes the status on its own."""
 
     reason_codes: list[str] | None = None
-    """Why the verdict came out the way it did, for example `OWNER_NAME_PARTIAL`. Several may apply."""
+    """Why the verdict came out the way it did, for example `OWNER_NAME_PARTIAL`. Several may apply. `NOT_COVERED`: the person continued without a bank because no method could verify their country or bank. `SKIPPED`: the person chose to continue without a bank while a way to verify was there. Neither is added when an evaluated attempt already decided the step."""
 
     created_at: _dt.datetime | None = None
 

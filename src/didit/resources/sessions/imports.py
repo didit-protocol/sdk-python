@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Literal, cast
+from typing import Literal, Mapping, Sequence, cast
 
 import httpx
 
@@ -19,7 +19,21 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
 from didit.types.components.session_import_error import SessionImportError
 from didit.types.components.session_import_job import SessionImportJob
+from didit.types.sessions.imports.check_provider_params import (
+    SessionsImportsCheckProviderParamsOptions,
+)
+from didit.types.sessions.imports.check_provider_response import (
+    SessionsImportsCheckProviderResponse,
+)
+from didit.types.sessions.imports.create_params import SessionsImportsCreateParamsOptions
+from didit.types.sessions.imports.list_active_jobs_response import (
+    SessionsImportsListActiveJobsResponse,
+)
 from didit.types.sessions.imports.list_errors_response import SessionsImportsListErrorsResponse
+from didit.types.sessions.imports.list_jobs_response import SessionsImportsListJobsResponse
+from didit.types.sessions.imports.list_providers_response import (
+    SessionsImportsListProvidersResponse,
+)
 
 __all__ = [
     "SessionsImports",
@@ -34,7 +48,7 @@ __all__ = [
 class SessionsImports(SyncAPIResource):
     """The ``sessions.imports`` resource of the Didit API.
 
-    Methods: ``create``, ``list_errors``, ``retrieve``, ``retrieve_template``.
+    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``resume``, ``retrieve``, ``retrieve_template``, ``retry``, ``start``.
     """
 
     @cached_property
@@ -58,6 +72,37 @@ class SessionsImports(SyncAPIResource):
         workflow_id: str | NotGiven = NOT_GIVEN,
         source_format: Literal["csv", "ndjson"] | str | NotGiven = NOT_GIVEN,
         source_file_url: str | NotGiven = NOT_GIVEN,
+        source: Literal["file", "provider"] | str | NotGiven = NOT_GIVEN,
+        provider: Literal[
+            "sumsub",
+            "jumio",
+            "veriff",
+            "onfido",
+            "persona",
+            "metamap",
+            "socure",
+            "idnow",
+            "shufti",
+            "idenfy",
+            "ondato",
+            "trulioo",
+            "au10tix",
+            "complycube",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        options: SessionsImportsCreateParamsOptions | NotGiven = NOT_GIVEN,
+        status_mapping: Mapping[
+            str,
+            Literal["Approved", "Declined", "In Review", "Expired", "Not Finished", "Abandoned"]
+            | str,
+        ]
+        | NotGiven = NOT_GIVEN,
+        dry_run: bool | NotGiven = NOT_GIVEN,
+        face_templates: bool | NotGiven = NOT_GIVEN,
+        lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -66,7 +111,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionImportJob:
         """Create a verification import job.
 
-        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Use this to migrate from providers such as Sumsub, MetaMap, Veriff, Onfido, Persona, Trulioo, Jumio, Incode, iDenfy, or any other provider after transforming the export into Didit's canonical CSV/NDJSON format. Imports are disabled by default and must be enabled per organization by Didit.
+        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit. Imports are disabled by default and must be enabled per organization by Didit.
 
         ``POST /v3/session/imports/``
 
@@ -75,6 +120,14 @@ class SessionsImports(SyncAPIResource):
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
           source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
+          source: `provider` makes this a migration from another identity verification provider. Omit for a file import.
+          provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          options
+          status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
+          dry_run: Count what the migration would import (by status, already in Didit, same person, not finished) and write nothing. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`.
+          face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
+          lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -93,6 +146,14 @@ class SessionsImports(SyncAPIResource):
                     "workflow_id": workflow_id,
                     "source_format": source_format,
                     "source_file_url": source_file_url,
+                    "source": source,
+                    "provider": provider,
+                    "credentials": credentials,
+                    "options": options,
+                    "status_mapping": status_mapping,
+                    "dry_run": dry_run,
+                    "face_templates": face_templates,
+                    "lawful_basis_confirmed": lawful_basis_confirmed,
                     "file": file,
                 },
                 multipart="auto",
@@ -226,11 +287,391 @@ class SessionsImports(SyncAPIResource):
             ),
         )
 
+    def list_providers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListProvidersResponse:
+        """List migration providers.
+
+        The 15 providers you can migrate verifications from: what each needs to connect, whether its API can list records, the permissions its key needs and its default status mapping.
+
+        ``GET /v3/session/imports/providers/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListProvidersResponse",
+            self._client.request(
+                "get",
+                "/v3/session/imports/providers/",
+                cast_to=SessionsImportsListProvidersResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def check_provider(
+        self,
+        *,
+        provider: Literal[
+            "sumsub",
+            "jumio",
+            "veriff",
+            "onfido",
+            "persona",
+            "metamap",
+            "socure",
+            "idnow",
+            "shufti",
+            "idenfy",
+            "ondato",
+            "trulioo",
+            "au10tix",
+            "complycube",
+            "other",
+        ]
+        | str,
+        credentials: Mapping[str, str],
+        options: SessionsImportsCheckProviderParamsOptions | NotGiven = NOT_GIVEN,
+        record_ids: Sequence[str] | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsCheckProviderResponse:
+        """Check a provider key.
+
+        Read the provider with your key before creating a migration. Nothing is stored.
+
+        ``POST /v3/session/imports/providers/check/``
+
+        Args:
+          provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          options
+          record_ids: For `api_ids` providers: the first record ID of your export.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsCheckProviderResponse",
+            self._client.request(
+                "post",
+                "/v3/session/imports/providers/check/",
+                cast_to=SessionsImportsCheckProviderResponse,
+                auth="api_key",
+                body={
+                    "provider": provider,
+                    "credentials": credentials,
+                    "options": options,
+                    "record_ids": record_ids,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def start(
+        self,
+        import_id: str,
+        *,
+        status_mapping: Mapping[
+            str,
+            Literal["Approved", "Declined", "In Review", "Expired", "Not Finished", "Abandoned"]
+            | str,
+        ]
+        | NotGiven = NOT_GIVEN,
+        face_templates: bool | NotGiven = NOT_GIVEN,
+        lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Start a dry run.
+
+        Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.
+
+        ``POST /v3/session/imports/{importId}/start/``
+
+        Args:
+          import_id
+          status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
+          face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
+          lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/start/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={
+                    "status_mapping": status_mapping,
+                    "face_templates": face_templates,
+                    "lawful_basis_confirmed": lawful_basis_confirmed,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def pause(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Pause an import job.
+
+        Pause a queued or running import.
+
+        ``POST /v3/session/imports/{importId}/pause/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/pause/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def resume(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Resume an import job.
+
+        Resume an import you paused. A job paused by the provider's rate limit resumes by itself.
+
+        ``POST /v3/session/imports/{importId}/resume/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/resume/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def cancel(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Cancel an import job.
+
+        Cancel an import. What was imported stays; the uploaded file and the key are erased.
+
+        ``POST /v3/session/imports/{importId}/cancel/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/cancel/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retry(
+        self,
+        import_id: str,
+        *,
+        credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        file: FileTypes | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Retry a migration.
+
+        Run a migration that ended again as a new job, with a new key (the old one was erased). It keeps the provider, workflow, region, status mapping and face templates choice; everything already in Didit is skipped.
+
+        ``POST /v3/session/imports/{importId}/retry/``
+
+        Args:
+          import_id
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          file: The record IDs or export file again, for `api_ids` and `export_file` providers.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/retry/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={"credentials": credentials, "file": file},
+                multipart=True,
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_jobs(
+        self,
+        *,
+        scope: Literal["all", "sessions", "users", "businesses"] | str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListJobsResponse:
+        """List import jobs.
+
+        Every import of the application in one shape: verification imports and migrations, people and businesses.
+
+        ``GET /v3/import-jobs/``
+
+        Args:
+          scope
+          limit
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListJobsResponse",
+            self._client.request(
+                "get",
+                "/v3/import-jobs/",
+                cast_to=SessionsImportsListJobsResponse,
+                auth="api_key",
+                query={"scope": scope, "limit": limit},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_active_jobs(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListActiveJobsResponse:
+        """List active import jobs.
+
+        What is running or waiting, plus what just ended, for a progress indicator.
+
+        ``GET /v3/import-jobs/active/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListActiveJobsResponse",
+            self._client.request(
+                "get",
+                "/v3/import-jobs/active/",
+                cast_to=SessionsImportsListActiveJobsResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncSessionsImports(AsyncAPIResource):
     """The ``sessions.imports`` resource of the Didit API.
 
-    Methods: ``create``, ``list_errors``, ``retrieve``, ``retrieve_template``.
+    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``resume``, ``retrieve``, ``retrieve_template``, ``retry``, ``start``.
     """
 
     @cached_property
@@ -254,6 +695,37 @@ class AsyncSessionsImports(AsyncAPIResource):
         workflow_id: str | NotGiven = NOT_GIVEN,
         source_format: Literal["csv", "ndjson"] | str | NotGiven = NOT_GIVEN,
         source_file_url: str | NotGiven = NOT_GIVEN,
+        source: Literal["file", "provider"] | str | NotGiven = NOT_GIVEN,
+        provider: Literal[
+            "sumsub",
+            "jumio",
+            "veriff",
+            "onfido",
+            "persona",
+            "metamap",
+            "socure",
+            "idnow",
+            "shufti",
+            "idenfy",
+            "ondato",
+            "trulioo",
+            "au10tix",
+            "complycube",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        options: SessionsImportsCreateParamsOptions | NotGiven = NOT_GIVEN,
+        status_mapping: Mapping[
+            str,
+            Literal["Approved", "Declined", "In Review", "Expired", "Not Finished", "Abandoned"]
+            | str,
+        ]
+        | NotGiven = NOT_GIVEN,
+        dry_run: bool | NotGiven = NOT_GIVEN,
+        face_templates: bool | NotGiven = NOT_GIVEN,
+        lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -262,7 +734,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionImportJob:
         """Create a verification import job.
 
-        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Use this to migrate from providers such as Sumsub, MetaMap, Veriff, Onfido, Persona, Trulioo, Jumio, Incode, iDenfy, or any other provider after transforming the export into Didit's canonical CSV/NDJSON format. Imports are disabled by default and must be enabled per organization by Didit.
+        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit. Imports are disabled by default and must be enabled per organization by Didit.
 
         ``POST /v3/session/imports/``
 
@@ -271,6 +743,14 @@ class AsyncSessionsImports(AsyncAPIResource):
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
           source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
+          source: `provider` makes this a migration from another identity verification provider. Omit for a file import.
+          provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          options
+          status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
+          dry_run: Count what the migration would import (by status, already in Didit, same person, not finished) and write nothing. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`.
+          face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
+          lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -289,6 +769,14 @@ class AsyncSessionsImports(AsyncAPIResource):
                     "workflow_id": workflow_id,
                     "source_format": source_format,
                     "source_file_url": source_file_url,
+                    "source": source,
+                    "provider": provider,
+                    "credentials": credentials,
+                    "options": options,
+                    "status_mapping": status_mapping,
+                    "dry_run": dry_run,
+                    "face_templates": face_templates,
+                    "lawful_basis_confirmed": lawful_basis_confirmed,
                     "file": file,
                 },
                 multipart="auto",
@@ -422,6 +910,386 @@ class AsyncSessionsImports(AsyncAPIResource):
             ),
         )
 
+    async def list_providers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListProvidersResponse:
+        """List migration providers.
+
+        The 15 providers you can migrate verifications from: what each needs to connect, whether its API can list records, the permissions its key needs and its default status mapping.
+
+        ``GET /v3/session/imports/providers/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListProvidersResponse",
+            await self._client.request(
+                "get",
+                "/v3/session/imports/providers/",
+                cast_to=SessionsImportsListProvidersResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def check_provider(
+        self,
+        *,
+        provider: Literal[
+            "sumsub",
+            "jumio",
+            "veriff",
+            "onfido",
+            "persona",
+            "metamap",
+            "socure",
+            "idnow",
+            "shufti",
+            "idenfy",
+            "ondato",
+            "trulioo",
+            "au10tix",
+            "complycube",
+            "other",
+        ]
+        | str,
+        credentials: Mapping[str, str],
+        options: SessionsImportsCheckProviderParamsOptions | NotGiven = NOT_GIVEN,
+        record_ids: Sequence[str] | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsCheckProviderResponse:
+        """Check a provider key.
+
+        Read the provider with your key before creating a migration. Nothing is stored.
+
+        ``POST /v3/session/imports/providers/check/``
+
+        Args:
+          provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          options
+          record_ids: For `api_ids` providers: the first record ID of your export.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsCheckProviderResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/providers/check/",
+                cast_to=SessionsImportsCheckProviderResponse,
+                auth="api_key",
+                body={
+                    "provider": provider,
+                    "credentials": credentials,
+                    "options": options,
+                    "record_ids": record_ids,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def start(
+        self,
+        import_id: str,
+        *,
+        status_mapping: Mapping[
+            str,
+            Literal["Approved", "Declined", "In Review", "Expired", "Not Finished", "Abandoned"]
+            | str,
+        ]
+        | NotGiven = NOT_GIVEN,
+        face_templates: bool | NotGiven = NOT_GIVEN,
+        lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Start a dry run.
+
+        Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.
+
+        ``POST /v3/session/imports/{importId}/start/``
+
+        Args:
+          import_id
+          status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
+          face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
+          lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/start/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={
+                    "status_mapping": status_mapping,
+                    "face_templates": face_templates,
+                    "lawful_basis_confirmed": lawful_basis_confirmed,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def pause(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Pause an import job.
+
+        Pause a queued or running import.
+
+        ``POST /v3/session/imports/{importId}/pause/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/pause/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def resume(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Resume an import job.
+
+        Resume an import you paused. A job paused by the provider's rate limit resumes by itself.
+
+        ``POST /v3/session/imports/{importId}/resume/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/resume/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def cancel(
+        self,
+        import_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Cancel an import job.
+
+        Cancel an import. What was imported stays; the uploaded file and the key are erased.
+
+        ``POST /v3/session/imports/{importId}/cancel/``
+
+        Args:
+          import_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/cancel/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retry(
+        self,
+        import_id: str,
+        *,
+        credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        file: FileTypes | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Retry a migration.
+
+        Run a migration that ended again as a new job, with a new key (the old one was erased). It keeps the provider, workflow, region, status mapping and face templates choice; everything already in Didit is skipped.
+
+        ``POST /v3/session/imports/{importId}/retry/``
+
+        Args:
+          import_id
+          credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
+          file: The record IDs or export file again, for `api_ids` and `export_file` providers.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/retry/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={"credentials": credentials, "file": file},
+                multipart=True,
+                file_fields=("file",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_jobs(
+        self,
+        *,
+        scope: Literal["all", "sessions", "users", "businesses"] | str | NotGiven = NOT_GIVEN,
+        limit: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListJobsResponse:
+        """List import jobs.
+
+        Every import of the application in one shape: verification imports and migrations, people and businesses.
+
+        ``GET /v3/import-jobs/``
+
+        Args:
+          scope
+          limit
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListJobsResponse",
+            await self._client.request(
+                "get",
+                "/v3/import-jobs/",
+                cast_to=SessionsImportsListJobsResponse,
+                auth="api_key",
+                query={"scope": scope, "limit": limit},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_active_jobs(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsImportsListActiveJobsResponse:
+        """List active import jobs.
+
+        What is running or waiting, plus what just ended, for a progress indicator.
+
+        ``GET /v3/import-jobs/active/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsImportsListActiveJobsResponse",
+            await self._client.request(
+                "get",
+                "/v3/import-jobs/active/",
+                cast_to=SessionsImportsListActiveJobsResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class SessionsImportsWithRawResponse:
     def __init__(self, resource: SessionsImports) -> None:
@@ -430,6 +1298,15 @@ class SessionsImportsWithRawResponse:
         self.retrieve_template = to_raw_response_wrapper(resource.retrieve_template)
         self.retrieve = to_raw_response_wrapper(resource.retrieve)
         self.list_errors = to_raw_response_wrapper(resource.list_errors)
+        self.list_providers = to_raw_response_wrapper(resource.list_providers)
+        self.check_provider = to_raw_response_wrapper(resource.check_provider)
+        self.start = to_raw_response_wrapper(resource.start)
+        self.pause = to_raw_response_wrapper(resource.pause)
+        self.resume = to_raw_response_wrapper(resource.resume)
+        self.cancel = to_raw_response_wrapper(resource.cancel)
+        self.retry = to_raw_response_wrapper(resource.retry)
+        self.list_jobs = to_raw_response_wrapper(resource.list_jobs)
+        self.list_active_jobs = to_raw_response_wrapper(resource.list_active_jobs)
 
 
 class AsyncSessionsImportsWithRawResponse:
@@ -439,6 +1316,15 @@ class AsyncSessionsImportsWithRawResponse:
         self.retrieve_template = async_to_raw_response_wrapper(resource.retrieve_template)
         self.retrieve = async_to_raw_response_wrapper(resource.retrieve)
         self.list_errors = async_to_raw_response_wrapper(resource.list_errors)
+        self.list_providers = async_to_raw_response_wrapper(resource.list_providers)
+        self.check_provider = async_to_raw_response_wrapper(resource.check_provider)
+        self.start = async_to_raw_response_wrapper(resource.start)
+        self.pause = async_to_raw_response_wrapper(resource.pause)
+        self.resume = async_to_raw_response_wrapper(resource.resume)
+        self.cancel = async_to_raw_response_wrapper(resource.cancel)
+        self.retry = async_to_raw_response_wrapper(resource.retry)
+        self.list_jobs = async_to_raw_response_wrapper(resource.list_jobs)
+        self.list_active_jobs = async_to_raw_response_wrapper(resource.list_active_jobs)
 
 
 class SessionsImportsWithStreamingResponse:
@@ -448,6 +1334,15 @@ class SessionsImportsWithStreamingResponse:
         self.retrieve_template = to_streamed_response_wrapper(resource.retrieve_template)
         self.retrieve = to_streamed_response_wrapper(resource.retrieve)
         self.list_errors = to_streamed_response_wrapper(resource.list_errors)
+        self.list_providers = to_streamed_response_wrapper(resource.list_providers)
+        self.check_provider = to_streamed_response_wrapper(resource.check_provider)
+        self.start = to_streamed_response_wrapper(resource.start)
+        self.pause = to_streamed_response_wrapper(resource.pause)
+        self.resume = to_streamed_response_wrapper(resource.resume)
+        self.cancel = to_streamed_response_wrapper(resource.cancel)
+        self.retry = to_streamed_response_wrapper(resource.retry)
+        self.list_jobs = to_streamed_response_wrapper(resource.list_jobs)
+        self.list_active_jobs = to_streamed_response_wrapper(resource.list_active_jobs)
 
 
 class AsyncSessionsImportsWithStreamingResponse:
@@ -457,3 +1352,12 @@ class AsyncSessionsImportsWithStreamingResponse:
         self.retrieve_template = async_to_streamed_response_wrapper(resource.retrieve_template)
         self.retrieve = async_to_streamed_response_wrapper(resource.retrieve)
         self.list_errors = async_to_streamed_response_wrapper(resource.list_errors)
+        self.list_providers = async_to_streamed_response_wrapper(resource.list_providers)
+        self.check_provider = async_to_streamed_response_wrapper(resource.check_provider)
+        self.start = async_to_streamed_response_wrapper(resource.start)
+        self.pause = async_to_streamed_response_wrapper(resource.pause)
+        self.resume = async_to_streamed_response_wrapper(resource.resume)
+        self.cancel = async_to_streamed_response_wrapper(resource.cancel)
+        self.retry = async_to_streamed_response_wrapper(resource.retry)
+        self.list_jobs = async_to_streamed_response_wrapper(resource.list_jobs)
+        self.list_active_jobs = async_to_streamed_response_wrapper(resource.list_active_jobs)

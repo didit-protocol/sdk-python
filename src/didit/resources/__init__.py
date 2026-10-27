@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from didit.resources.networks import AsyncNetworks, Networks
     from didit.resources.passive_liveness import AsyncPassiveLiveness, PassiveLiveness
     from didit.resources.phone import AsyncPhone, Phone
+    from didit.resources.pricing import AsyncPricing, Pricing
     from didit.resources.proof_of_address import AsyncProofOfAddress, ProofOfAddress
     from didit.resources.questionnaires import AsyncQuestionnaires, Questionnaires
     from didit.resources.regulatory_reports import AsyncRegulatoryReports, RegulatoryReports
@@ -229,6 +230,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.phone import Phone
 
         return Phone(self)
+
+    @cached_property
+    def pricing(self) -> Pricing:
+        from didit.resources.pricing import Pricing
+
+        return Pricing(self)
 
     @cached_property
     def proof_of_address(self) -> ProofOfAddress:
@@ -473,6 +480,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.phone import AsyncPhone
 
         return AsyncPhone(self)
+
+    @cached_property
+    def pricing(self) -> AsyncPricing:
+        from didit.resources.pricing import AsyncPricing
+
+        return AsyncPricing(self)
 
     @cached_property
     def proof_of_address(self) -> AsyncProofOfAddress:

@@ -1509,7 +1509,7 @@
     "/v3/session/imports/": {
       "post": {
         "summary": "Create a verification import job",
-        "description": "Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Use this to migrate from providers such as Sumsub, MetaMap, Veriff, Onfido, Persona, Trulioo, Jumio, Incode, iDenfy, or any other provider after transforming the export into Didit's canonical CSV/NDJSON format. Imports are disabled by default and must be enabled per organization by Didit.",
+        "description": "Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit. Imports are disabled by default and must be enabled per organization by Didit.",
         "operationId": "post_v3_session_imports_create",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -1560,6 +1560,81 @@
                     "type": "string",
                     "format": "uri",
                     "description": "Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`."
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "provider"
+                    ],
+                    "description": "`provider` makes this a migration from another identity verification provider. Omit for a file import."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "sumsub",
+                      "jumio",
+                      "veriff",
+                      "onfido",
+                      "persona",
+                      "metamap",
+                      "socure",
+                      "idnow",
+                      "shufti",
+                      "idenfy",
+                      "ondato",
+                      "trulioo",
+                      "au10tix",
+                      "complycube",
+                      "other"
+                    ],
+                    "description": "Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart."
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "region": {
+                        "type": "string",
+                        "description": "The provider region, one of its `regions` (Onfido: `eu`, `us`, `ca`)."
+                      }
+                    }
+                  },
+                  "status_mapping": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "Approved",
+                        "Declined",
+                        "In Review",
+                        "Expired",
+                        "Not Finished",
+                        "Abandoned"
+                      ]
+                    },
+                    "description": "Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported."
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Count what the migration would import (by status, already in Didit, same person, not finished) and write nothing. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`."
+                  },
+                  "face_templates": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`."
+                  },
+                  "lawful_basis_confirmed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Confirms you have a lawful basis to share these selfies with Didit as processor."
                   }
                 }
               }
@@ -1599,6 +1674,81 @@
                     "type": "string",
                     "format": "uri",
                     "description": "Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`."
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "provider"
+                    ],
+                    "description": "`provider` makes this a migration from another identity verification provider. Omit for a file import."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "sumsub",
+                      "jumio",
+                      "veriff",
+                      "onfido",
+                      "persona",
+                      "metamap",
+                      "socure",
+                      "idnow",
+                      "shufti",
+                      "idenfy",
+                      "ondato",
+                      "trulioo",
+                      "au10tix",
+                      "complycube",
+                      "other"
+                    ],
+                    "description": "Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart."
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "region": {
+                        "type": "string",
+                        "description": "The provider region, one of its `regions` (Onfido: `eu`, `us`, `ca`)."
+                      }
+                    }
+                  },
+                  "status_mapping": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "Approved",
+                        "Declined",
+                        "In Review",
+                        "Expired",
+                        "Not Finished",
+                        "Abandoned"
+                      ]
+                    },
+                    "description": "Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported."
+                  },
+                  "dry_run": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Count what the migration would import (by status, already in Didit, same person, not finished) and write nothing. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`."
+                  },
+                  "face_templates": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`."
+                  },
+                  "lawful_basis_confirmed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Confirms you have a lawful basis to share these selfies with Didit as processor."
                   }
                 }
               },
@@ -1650,7 +1800,7 @@
             }
           },
           "400": {
-            "description": "Invalid workflow, file type, file size, source URL, or selector combination.",
+            "description": "Invalid workflow, file type, file size, source URL, or selector combination. A migration whose key the provider refuses answers `code` (`invalid_credentials`, `missing_permission`, `wrong_region`, `provider_unavailable`, `rate_limited`, `ids_required`, `record_not_found`), `missing_permissions` and `suggested_region`.",
             "content": {
               "application/json": {
                 "examples": {
@@ -68276,6 +68426,107 @@
         }
       }
     },
+    "/v3/organization/bank-verification-pricing/": {
+      "get": {
+        "summary": "Get bank verification prices (public, unauthenticated)",
+        "description": "Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.\n\nPublic: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.\n\nA method is `available` only where Didit serves it in production today, and its `price_usd` is `null` everywhere else, so the feed never shows a price you cannot buy. `available: false` covers a country with no approved price, a method the country does not support, and a route that is not switched on yet.\n\nThese are list prices before your plan discount. Your plan discount applies to the whole bank price, and a negotiated or contract price replaces the list price for your organization.",
+        "operationId": "get_v3_bank_verification_pricing",
+        "tags": [
+          "Pricing"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -fsS https://verification.didit.me/v3/organization/bank-verification-pricing/"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresp = requests.get('https://verification.didit.me/v3/organization/bank-verification-pricing/', timeout=10)\nresp.raise_for_status()\nfeed = resp.json()\nfor iso3, country in feed['countries'].items():\n    sign_in = country['methods']['open_banking']\n    if sign_in['available']:\n        print(iso3, country['name'], sign_in['price_usd'])"
+          },
+          {
+            "lang": "javascript",
+            "label": "JavaScript",
+            "source": "const feed = await fetch('https://verification.didit.me/v3/organization/bank-verification-pricing/').then((r) => r.json());\nconst gbr = feed.countries.GBR.methods;\nconsole.log(gbr.open_banking.available ? gbr.open_banking.price_usd : 'Not available');\nconsole.log(gbr.account_lookup.available ? gbr.account_lookup.price_usd : 'Not available');"
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "pricing",
+          "method": "bank_verification",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "Bank Verification list prices by country.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankVerificationPricing"
+                },
+                "examples": {
+                  "Two countries": {
+                    "summary": "One country with both methods, one with neither",
+                    "value": {
+                      "currency": "USD",
+                      "statement_upload": {
+                        "price_usd": "0.0000",
+                        "included_after_charged_bank_attempt": true,
+                        "standalone_available": false
+                      },
+                      "own_provider_fee_usd": "0.0200",
+                      "countries": {
+                        "GBR": {
+                          "name": "United Kingdom",
+                          "methods": {
+                            "open_banking": {
+                              "available": true,
+                              "market": "UK and EEA",
+                              "price_usd": "0.7900",
+                              "add_ons": {
+                                "balance": "0.3500",
+                                "transactions": "1.3000"
+                              }
+                            },
+                            "account_lookup": {
+                              "available": true,
+                              "price_usd": "0.4000"
+                            }
+                          }
+                        },
+                        "CAN": {
+                          "name": "Canada",
+                          "methods": {
+                            "open_banking": {
+                              "available": false,
+                              "market": null,
+                              "price_usd": null,
+                              "add_ons": {}
+                            },
+                            "account_lookup": {
+                              "available": false,
+                              "price_usd": null
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified: the `ETag` you sent in `If-None-Match` still matches. No body."
+          }
+        }
+      }
+    },
     "/v3/session/{sessionId}/simulate/": {
       "post": {
         "summary": "Simulate a sandbox session's status",
@@ -72665,6 +72916,717 @@
           }
         }
       }
+    },
+    "/v3/session/imports/providers/": {
+      "get": {
+        "summary": "List migration providers",
+        "description": "The 15 providers you can migrate verifications from: what each needs to connect, whether its API can list records, the permissions its key needs and its default status mapping.",
+        "operationId": "get_v3_session_imports_providers_list",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "list_providers",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "description": "Migration providers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportProvider"
+                      }
+                    },
+                    "mapping_targets": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "skipped_statuses": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/providers/check/": {
+      "post": {
+        "summary": "Check a provider key",
+        "description": "Read the provider with your key before creating a migration. Nothing is stored.",
+        "operationId": "post_v3_session_imports_providers_check",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "check_provider",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "sumsub",
+                      "jumio",
+                      "veriff",
+                      "onfido",
+                      "persona",
+                      "metamap",
+                      "socure",
+                      "idnow",
+                      "shufti",
+                      "idenfy",
+                      "ondato",
+                      "trulioo",
+                      "au10tix",
+                      "complycube",
+                      "other"
+                    ],
+                    "description": "Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart."
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "region": {
+                        "type": "string",
+                        "description": "The provider region, one of its `regions` (Onfido: `eu`, `us`, `ca`)."
+                      }
+                    }
+                  },
+                  "record_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "For `api_ids` providers: the first record ID of your export."
+                  }
+                },
+                "required": [
+                  "provider",
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The key can read records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "credential_hint": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The provider refused the key: `code`, `detail`, `missing_permissions`, `suggested_region`."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/start/": {
+      "post": {
+        "summary": "Start a dry run",
+        "description": "Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.",
+        "operationId": "post_v3_session_imports_start",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "start",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status_mapping": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "Approved",
+                        "Declined",
+                        "In Review",
+                        "Expired",
+                        "Not Finished",
+                        "Abandoned"
+                      ]
+                    },
+                    "description": "Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported."
+                  },
+                  "face_templates": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`."
+                  },
+                  "lawful_basis_confirmed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Confirms you have a lawful basis to share these selfies with Didit as processor."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The job is not in a state this action applies to."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/pause/": {
+      "post": {
+        "summary": "Pause an import job",
+        "description": "Pause a queued or running import.",
+        "operationId": "post_v3_session_imports_pause",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "pause",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The job is not in a state this action applies to."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/resume/": {
+      "post": {
+        "summary": "Resume an import job",
+        "description": "Resume an import you paused. A job paused by the provider's rate limit resumes by itself.",
+        "operationId": "post_v3_session_imports_resume",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "resume",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The job is not in a state this action applies to."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/cancel/": {
+      "post": {
+        "summary": "Cancel an import job",
+        "description": "Cancel an import. What was imported stays; the uploaded file and the key are erased.",
+        "operationId": "post_v3_session_imports_cancel",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "cancel",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The job is not in a state this action applies to."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/retry/": {
+      "post": {
+        "summary": "Retry a migration",
+        "description": "Run a migration that ended again as a new job, with a new key (the old one was erased). It keeps the provider, workflow, region, status mapping and face templates choice; everything already in Didit is skipped.",
+        "operationId": "post_v3_session_imports_retry",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "retry",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart."
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The record IDs or export file again, for `api_ids` and `export_file` providers."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a migration, not ended, or the provider refused the key."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/import-jobs/": {
+      "get": {
+        "summary": "List import jobs",
+        "description": "Every import of the application in one shape: verification imports and migrations, people and businesses.",
+        "operationId": "get_v3_import_jobs_list",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "list_jobs",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "sessions",
+                "users",
+                "businesses"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import jobs, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportJobSummary"
+                      }
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "all": {
+                          "type": "integer"
+                        },
+                        "running_and_waiting": {
+                          "type": "integer"
+                        },
+                        "needs_attention": {
+                          "type": "integer"
+                        },
+                        "done": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/import-jobs/active/": {
+      "get": {
+        "summary": "List active import jobs",
+        "description": "What is running or waiting, plus what just ended, for a progress indicator.",
+        "operationId": "get_v3_import_jobs_active",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "list_active_jobs",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "description": "Active import jobs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportJobSummary"
+                      }
+                    },
+                    "running": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -72774,7 +73736,8 @@
               "COMPLETED",
               "FAILED",
               "PAUSED",
-              "CANCELLED"
+              "CANCELLED",
+              "READY"
             ]
           },
           "import_type": {
@@ -72848,6 +73811,99 @@
           "completed_at": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "queued",
+              "running",
+              "paused",
+              "completed",
+              "errors",
+              "failed",
+              "cancelled"
+            ],
+            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "file",
+              "api",
+              "provider"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "description": "Migration source; empty for a file or API import."
+          },
+          "provider_options": {
+            "type": "object"
+          },
+          "credential_hint": {
+            "type": "string",
+            "description": "The first characters of the key the migration holds. The key itself is never returned."
+          },
+          "credentials_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resumes_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When a job paused by the provider's rate limit resumes by itself."
+          },
+          "status_mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "is_dry_run": {
+            "type": "boolean"
+          },
+          "dry_run_summary": {
+            "type": "object",
+            "description": "What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses`."
+          },
+          "face_templates_enabled": {
+            "type": "boolean"
+          },
+          "lawful_basis_confirmed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "not_finished_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "same_person_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "face_templates_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "face_duplicates_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "face_blocklist_hits_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_by_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_by_email": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -92295,7 +93351,7 @@
           "bank_verifications": {
             "type": "array",
             "nullable": true,
-            "description": "Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `microdeposits` or `statement` fallback. See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
+            "description": "Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `statement` or `microdeposits` fallback, and `none` when the person continued without a bank before any attempt was evaluated (`continued_without_bank`). See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
             "items": {
               "$ref": "#/components/schemas/BankVerificationResult"
             }
@@ -94735,6 +95791,26 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "is_bank_verification_enabled": {
+            "type": "boolean",
+            "description": "Whether a simple KYC or KYB workflow runs Bank verification. It runs after the contact steps and before database validation, AML and IP analysis. Set in the console."
+          },
+          "bank_verification_config": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Bank verification settings of a simple workflow, with the same keys a `BANK_VERIFICATION` node takes (for example `bank_countries` and `bank_method_order`). Every key is optional and an absent key keeps its default, so `{}` means all defaults. See [Bank verification settings](/management-api/workflows/feature-configs#bank-verification).",
+            "example": {}
+          },
+          "is_geolocation_enabled": {
+            "type": "boolean",
+            "description": "Whether a simple KYC workflow runs Location verification. It runs after the contact steps and before Bank verification. Never on KYB workflows. Set in the console."
+          },
+          "geolocation_config": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Location verification settings of a simple workflow, with the same keys a `GEOLOCATION` node takes (for example `is_geolocation_geofencing_enabled` and `geolocation_max_attempts`). Every key is optional and an absent key keeps its default, so `{}` means all defaults.",
+            "example": {}
           }
         },
         "additionalProperties": true
@@ -104141,7 +105217,7 @@
       },
       "BankVerificationResult": {
         "type": "object",
-        "description": "One Bank Verification step's result, for User and Business Verification. `method` says how the account was verified. See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
+        "description": "One Bank Verification step's result, for User and Business Verification. `method` says how the account was verified, and `none` that the person continued without a bank before any attempt was evaluated. `continued_without_bank` says the person continued without a bank, also after an evaluated attempt. See [Bank verification methods](/core-technology/bank-verification/verification-methods) and [When the person cannot verify their bank](/core-technology/bank-verification/fallbacks).",
         "properties": {
           "schema_version": {
             "type": "integer",
@@ -104179,9 +105255,10 @@
               "open_banking",
               "account_lookup",
               "microdeposits",
-              "statement"
+              "statement",
+              "none"
             ],
-            "description": "How the account was verified: `open_banking` (bank sign-in: the person signed in at their bank), `account_lookup` (account check: the person typed the account details and the bank confirmed the name), `microdeposits` or `statement` (a statement upload). `null` until an account is evaluated. Workflow rules read the same value as `bank.method`."
+            "description": "How the account was verified: `open_banking` (bank sign-in: the person signed in at their bank), `account_lookup` (account check: the person typed the account details and the bank confirmed the name), `microdeposits` or `statement` (a statement upload). `none` when the person continued without a bank before any attempt was evaluated, so no account was verified. After an evaluated attempt, it stays the method of that attempt. `null` until an account is evaluated, and when the workflow narrows the data it returns. Workflow rules read the same value as `bank.method`."
           },
           "provider": {
             "type": "string",
@@ -104552,7 +105629,7 @@
               "usage_type": {
                 "type": "string",
                 "nullable": true,
-                "description": "The usage line the charge was booked on."
+                "description": "The usage line the charge was booked on: `bank_verification` for a bank sign-in or an account check, `bank_statement_upload` for a statement upload with no charged bank attempt before it, and `bank_byok_fee` for the marketplace fee on your own provider. `null` when nothing was billed."
               }
             }
           },
@@ -104574,7 +105651,61 @@
           "not_covered": {
             "type": "boolean",
             "nullable": true,
-            "description": "Whether the person's bank or country could not be reached on this step."
+            "description": "Whether the person's bank or country could not be reached on this step. Also `true` when the person continued without a bank because no method could verify their country or bank."
+          },
+          "continued_without_bank": {
+            "type": "boolean",
+            "description": "Whether the person left the step with **Continue without your bank**. `continuation` then says why. `method` is `none` when no attempt was evaluated before they continued. After an evaluated attempt, such as a holder that does not match, `method` stays the method of that attempt and its verdict and reason codes stand. Returned even when the workflow narrows the data it returns."
+          },
+          "continuation": {
+            "type": "object",
+            "nullable": true,
+            "description": "How the person continued without a bank. `null` when they did not. When the workflow narrows the data it returns, `reason` is still returned and every other key is `null`.",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "no_route",
+                  "institution_unsupported",
+                  "attempts_exhausted",
+                  "person_choice"
+                ],
+                "description": "Why, as Didit worked it out when the person continued: `no_route` (no bank sign-in or account check serves their country), `institution_unsupported` (the bank they picked cannot be used on this step), `attempts_exhausted` (every attempt was already spent and none was in progress), or `person_choice` (a way to verify was there and they chose to continue, also when their bank could not be reached right now). `no_route` and `institution_unsupported` follow `bank_unsupported_action`, `attempts_exhausted` follows `bank_attempts_exhausted_action`, and `person_choice` follows `bank_skipped_action`, unless an evaluated attempt already decided the step."
+              },
+              "country": {
+                "type": "string",
+                "nullable": true,
+                "description": "The country the person was verifying in, ISO 3166-1 alpha-3. `null` when they continued before picking one."
+              },
+              "offered": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "statement",
+                    "microdeposits"
+                  ]
+                },
+                "nullable": true,
+                "description": "The other ways to verify that country offered the person when they continued, in the order it offered them: `statement` (a statement upload), then `microdeposits`. Empty when it offered none."
+              },
+              "institution_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "For `institution_unsupported`, the ID of the bank the person could not use: the bank they picked, or the bank their last attempt ended on. Didit takes it from its own list of banks, never from the person's device, so a bank that list does not have is `null`. `null` for every other reason."
+              },
+              "institution_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "For `institution_unsupported`, the name of that bank, from the same list as `institution_id`. `null` when that list does not have the bank, and for every other reason."
+              },
+              "continued_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the person continued."
+              }
+            }
           },
           "evidence_purged_at": {
             "type": "string",
@@ -104594,7 +105725,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Why the verdict came out the way it did, for example `OWNER_NAME_PARTIAL`. Several may apply."
+            "description": "Why the verdict came out the way it did, for example `OWNER_NAME_PARTIAL`. Several may apply. `NOT_COVERED`: the person continued without a bank because no method could verify their country or bank. `SKIPPED`: the person chose to continue without a bank while a way to verify was there. Neither is added when an evaluated attempt already decided the step."
           },
           "created_at": {
             "type": "string",
@@ -104632,6 +105763,416 @@
             "type": "string",
             "maxLength": 255,
             "description": "The name of the company that should hold the account. Checks a business account."
+          }
+        }
+      },
+      "BankVerificationPricing": {
+        "type": "object",
+        "description": "Public Bank Verification list prices: the statement upload, the own provider key fee and each country's methods.",
+        "required": [
+          "currency",
+          "statement_upload",
+          "own_provider_fee_usd",
+          "countries"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD"
+            ],
+            "description": "Currency of every price in the response.",
+            "example": "USD"
+          },
+          "statement_upload": {
+            "$ref": "#/components/schemas/BankStatementUploadPricing"
+          },
+          "own_provider_fee_usd": {
+            "type": "string",
+            "description": "Fee for each billable ownership check on a route that uses your own provider contract instead of Didit's, charged whatever the result. A cancelled, timed out or abandoned connection is not billed. Decimal string with 4 decimals, in USD.",
+            "example": "0.0200"
+          },
+          "countries": {
+            "type": "object",
+            "description": "Every country, keyed by ISO 3166-1 alpha-3 code.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BankVerificationPricingCountry"
+            }
+          }
+        }
+      },
+      "BankStatementUploadPricing": {
+        "type": "object",
+        "description": "How the bank statement upload is priced.",
+        "required": [
+          "price_usd",
+          "included_after_charged_bank_attempt",
+          "standalone_available"
+        ],
+        "properties": {
+          "price_usd": {
+            "type": "string",
+            "description": "Price of a statement upload after a charged bank attempt. Decimal string with 4 decimals, in USD.",
+            "example": "0.0000"
+          },
+          "included_after_charged_bank_attempt": {
+            "type": "boolean",
+            "description": "`true` when the upload is included at no extra charge after a charged bank attempt in the same session.",
+            "example": true
+          },
+          "standalone_available": {
+            "type": "boolean",
+            "description": "`true` when a statement upload can run on its own, with no bank attempt first. `false` in production; sandbox sessions can test it without billing.",
+            "example": false
+          }
+        }
+      },
+      "BankVerificationPricingCountry": {
+        "type": "object",
+        "description": "One country's Bank Verification methods and their list prices.",
+        "required": [
+          "name",
+          "methods"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Country name in English.",
+            "example": "United Kingdom"
+          },
+          "methods": {
+            "$ref": "#/components/schemas/BankVerificationPricingMethods"
+          }
+        }
+      },
+      "BankVerificationPricingMethods": {
+        "type": "object",
+        "description": "The two Bank Verification methods in a country.",
+        "required": [
+          "open_banking",
+          "account_lookup"
+        ],
+        "properties": {
+          "open_banking": {
+            "$ref": "#/components/schemas/BankSignInPricing"
+          },
+          "account_lookup": {
+            "$ref": "#/components/schemas/BankAccountCheckPricing"
+          }
+        }
+      },
+      "BankSignInPricing": {
+        "type": "object",
+        "description": "Bank sign-in: the person signs in to their bank. Priced by market, the same for every bank in it.",
+        "required": [
+          "available",
+          "market",
+          "price_usd",
+          "add_ons"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "`true` only where Didit serves bank sign-in in this country in production.",
+            "example": true
+          },
+          "market": {
+            "type": "string",
+            "nullable": true,
+            "description": "The market whose price applies. `null` when not available.",
+            "example": "UK and EEA"
+          },
+          "price_usd": {
+            "type": "string",
+            "nullable": true,
+            "description": "List price of one bank sign-in. `null` when not available. Decimal string with 4 decimals, in USD.",
+            "example": "0.7900"
+          },
+          "add_ons": {
+            "type": "object",
+            "description": "Add-ons priced in this country, each a decimal string with 4 decimals in USD, added to the bank sign-in price. Only the add-ons the country offers are listed; empty when bank sign-in is not available.",
+            "properties": {
+              "balance": {
+                "type": "string",
+                "description": "Account balance add-on.",
+                "example": "0.3500"
+              },
+              "transactions": {
+                "type": "string",
+                "description": "Transactions add-on.",
+                "example": "1.3000"
+              }
+            }
+          }
+        }
+      },
+      "BankAccountCheckPricing": {
+        "type": "object",
+        "description": "Account check: the person types their account number and Didit checks it with the bank. Priced per country.",
+        "required": [
+          "available",
+          "price_usd"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "`true` only where Didit serves the account check in this country in production.",
+            "example": true
+          },
+          "price_usd": {
+            "type": "string",
+            "nullable": true,
+            "description": "List price of one account check the bank answers. `null` when not available. Decimal string with 4 decimals, in USD.",
+            "example": "0.4000"
+          }
+        }
+      },
+      "ImportProvider": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "sumsub",
+              "jumio",
+              "veriff",
+              "onfido",
+              "persona",
+              "metamap",
+              "socure",
+              "idnow",
+              "shufti",
+              "idenfy",
+              "ondato",
+              "trulioo",
+              "au10tix",
+              "complycube",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "api_list",
+              "api_ids",
+              "export_file"
+            ],
+            "description": "`api_list`: Didit lists records with the key. `api_ids`: upload the record IDs from an export. `export_file`: upload an export in Didit's format."
+          },
+          "record_noun": {
+            "type": "string"
+          },
+          "credential_fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "secret": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required_permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "docs_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "status_mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "Approved",
+                "Declined",
+                "In Review",
+                "Expired",
+                "Not Finished",
+                "Abandoned"
+              ]
+            }
+          }
+        }
+      },
+      "ImportJobSummary": {
+        "type": "object",
+        "description": "One import job of any kind, in the shape the console's Import jobs drawer reads.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sessions",
+              "businesses",
+              "users",
+              "status_rules",
+              "transactions"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "file",
+              "api",
+              "provider"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "filename": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "queued",
+              "running",
+              "paused",
+              "completed",
+              "errors",
+              "failed",
+              "cancelled"
+            ],
+            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows."
+          },
+          "status": {
+            "type": "string"
+          },
+          "is_dry_run": {
+            "type": "boolean"
+          },
+          "credential_hint": {
+            "type": "string",
+            "nullable": true
+          },
+          "resumes_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_error": {
+            "type": "string",
+            "nullable": true
+          },
+          "started_by": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "nullable": true
+              },
+              "email": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "processed": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "imported": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "updated": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "already_in_didit": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "failed": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "not_finished": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "same_person": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          "face_templates": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "built": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "duplicates": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "blocklisted": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          "eta_seconds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       }
