@@ -621,3 +621,10 @@ def test_cli_main_from_dir(
     assert spec_sync.main(["--from-dir", str(openapi), "--summary", str(summary)]) == 0
     assert "changed=false" in output.read_text("utf-8")
     assert summary.read_text("utf-8") == "No upstream change.\n"
+
+
+def test_scrub_keeps_timestamps_and_replaces_secrets() -> None:
+    from didit_codegen.render_tests import scrub
+
+    got = scrub({"credentials_expires_at": "2026-10-27T10:00:00Z", "api_key": "abc"})
+    assert got == {"credentials_expires_at": "2026-10-27T10:00:00Z", "api_key": "sample-secret"}
