@@ -71,7 +71,7 @@ client.cases.list()  # application scoped, see Configuration
 client.account.login(email="you@example.com", password="...")
 ```
 
-The resource tree covers sessions (with imports and reviews), the standalone APIs (`id_verification`, `face_match`, `face_search`, `passive_liveness`, `age_estimation`, `proof_of_address`, `document_ai`, `aml`, `database_validation`, `phone`, `email`, `ip`, `kyb`), `id_wallets`, `fraud_checks`, `users`, `businesses`, `transactions`, `wallet_screening`, `travel_rule`, `workflows`, `questionnaires`, `webhooks.destinations`, `billing`, `biometric_templates`, `customization`, `cases`, `regulatory_reports`, `report_templates`, `networks` and `account`. The API reference at [docs.didit.me](https://docs.didit.me) documents every endpoint; each SDK method's docstring names the endpoint it calls.
+The resource tree covers sessions (with imports and reviews), the standalone APIs (`id_verification`, `face_match`, `face_search`, `passive_liveness`, `age_estimation`, `proof_of_address`, `document_ai`, `aml`, `database_validation`, `phone`, `email`, `ip`, `kyb`), `id_wallets`, `fraud_checks`, `users`, `businesses`, `transactions`, `wallet_screening`, `travel_rule`, `workflows`, `questionnaires`, `webhooks.destinations`, `billing`, `pricing`, `biometric_templates`, `customization`, `cases`, `regulatory_reports`, `report_templates`, `networks` and `account`. The API reference at [docs.didit.me](https://docs.didit.me) documents every endpoint; each SDK method's docstring names the endpoint it calls.
 
 Request and response types live in `didit.types`, named after the method (`SessionsCreateResponse`, `SessionsCreateParams`) or after the API schema (`TransactionDetail`). Responses are [pydantic](https://docs.pydantic.dev) models:
 
