@@ -626,5 +626,15 @@ def test_cli_main_from_dir(
 def test_scrub_keeps_timestamps_and_replaces_secrets() -> None:
     from didit_codegen.render_tests import scrub
 
-    got = scrub({"credentials_expires_at": "2026-10-27T10:00:00Z", "api_key": "abc"})
-    assert got == {"credentials_expires_at": "2026-10-27T10:00:00Z", "api_key": "sample-secret"}
+    got = scrub(
+        {
+            "credentials_expires_at": "2026-10-27T10:00:00Z",
+            "api_key": "abc",
+            "password": "2026-10-27-secret",
+        }
+    )
+    assert got == {
+        "credentials_expires_at": "2026-10-27T10:00:00Z",
+        "api_key": "sample-secret",
+        "password": "sample-secret",
+    }
