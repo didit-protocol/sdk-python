@@ -33,9 +33,8 @@ The Maven group `me.didit` is the one `sdk-android` already publishes under.
 
 PyPI `didit` belongs to an unrelated project from 2013.
 PyPI `didit-sdk` is a community package by Agustin Saiz (MIT, unofficial, sessions only).
-Didit is asking him to transfer the `didit-sdk` project to Didit, so the official SDK ships under that name.
-Until the transfer is confirmed, keep `didit-sdk` as the distribution name in `pyproject.toml` and do not publish.
-The fallback name, if the transfer does not happen, is `didit-python`.
+He transferred the `didit-sdk` project to Didit, and the official SDK published 1.0.0 under that name on 2026-10-29.
+As agreed with him, his releases 0.1.0 to 0.4.0 stay published, his PyPI user stays on the project, and the 1.0.0 release notes credit the initial community versions.
 
 ## 3. Source of truth: the OpenAPI contract
 
@@ -247,9 +246,10 @@ Ruby: `net/http` from the standard library, `jwt` only for Authentication.
 
 - Semantic versioning; a breaking change to the public SDK surface is a major version.
 - Releases are cut by release-please from conventional commits; `CHANGELOG.md` is generated and never edited by hand.
-- Release workflows publish with trusted publishing or provenance where the registry supports it (PyPI and RubyGems trusted publishing, npm provenance, Maven Central via the Central Portal with signed artifacts, NuGet with a scoped key and the `Didit` prefix reserved, Packagist auto-update from tags, Go module tags).
-- Nothing is published before Alex approves the first release, and not before the 2026-11-01 release; until then versions stay `0.x` pre-release in the repository.
-- The repository stays private until that first release.
+- Release workflows publish with trusted publishing where the registry supports it (PyPI, npm with provenance, RubyGems and NuGet), Maven Central through the Central Portal with signed artifacts (token and signing key in the `maven-central` environment), Packagist through its GitHub hook, and Go module tags announced to proxy.golang.org.
+- 1.0.0 shipped on 2026-10-29 with Alex's approval, and the repositories are public.
+- Every release after that publishes straight from the repository: merging the release-please pull request is the approval, and the workflow creates the vX.Y.Z tag and publishes.
+- A release created with `GITHUB_TOKEN` does not trigger other workflows, so a repository that publishes from a separate `release.yml` has release-please start it with `workflow_dispatch` for the new tag. No personal access token is stored.
 
 ## 14. Documentation and positioning
 
