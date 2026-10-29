@@ -10,6 +10,7 @@ from didit._base_client import AsyncAPIClient, SyncAPIClient
 
 if TYPE_CHECKING:
     from didit.resources.account import Account, AsyncAccount
+    from didit.resources.address_validation import AddressValidation, AsyncAddressValidation
     from didit.resources.age_estimation import AgeEstimation, AsyncAgeEstimation
     from didit.resources.aml import Aml, AsyncAml
     from didit.resources.aml_monitoring import AmlMonitoring, AsyncAmlMonitoring
@@ -62,6 +63,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.account import Account
 
         return Account(self)
+
+    @cached_property
+    def address_validation(self) -> AddressValidation:
+        from didit.resources.address_validation import AddressValidation
+
+        return AddressValidation(self)
 
     @cached_property
     def age_estimation(self) -> AgeEstimation:
@@ -312,6 +319,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.account import AsyncAccount
 
         return AsyncAccount(self)
+
+    @cached_property
+    def address_validation(self) -> AsyncAddressValidation:
+        from didit.resources.address_validation import AsyncAddressValidation
+
+        return AsyncAddressValidation(self)
 
     @cached_property
     def age_estimation(self) -> AsyncAgeEstimation:

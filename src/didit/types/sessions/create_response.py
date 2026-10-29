@@ -27,6 +27,9 @@ class SessionsCreateResponse(BaseModel):
     metadata: object
     """Arbitrary JSON payload you stored with the session at creation time. Echoed back verbatim - whatever JSON value you sent (object, string, number, array) is returned as-is, though a JSON object is recommended. Not shown to the end user. Always present in responses; `null` when not provided at creation time."""
 
+    tags: list[str] | None = None
+    """The tags on the session, by name."""
+
     status: (
         Literal[
             "Not Started",

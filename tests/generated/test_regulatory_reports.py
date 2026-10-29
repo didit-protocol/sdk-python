@@ -90,10 +90,15 @@ def test_regulatory_reports_delete() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/regulatory-reports/5ec00000-0000-4000-8000-000000000007/",
             api="verification",
             auth="api_key",
+            json_body={"confirm_delete": True},
             status=204,
         ),
-        lambda c: c.regulatory_reports.delete("5ec00000-0000-4000-8000-000000000007"),
-        lambda c: c.regulatory_reports.delete("5ec00000-0000-4000-8000-000000000007"),
+        lambda c: c.regulatory_reports.delete(
+            "5ec00000-0000-4000-8000-000000000007", confirm_delete=True
+        ),
+        lambda c: c.regulatory_reports.delete(
+            "5ec00000-0000-4000-8000-000000000007", confirm_delete=True
+        ),
         lambda r: r is None,
         lambda r: r is None,
     )

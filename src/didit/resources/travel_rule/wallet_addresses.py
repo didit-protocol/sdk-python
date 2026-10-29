@@ -118,7 +118,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
 
         Args:
           address: The wallet address. An XRP X-address is stored as its classic address and its tag, so it matches transfers that name either form.
-          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain.
+          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain. Known chains are stored under one canonical identifier whatever spelling you send: "ethereum", "Ethereum" and "ERC20" are all stored as ETH, "BNB Smart Chain" and "BEP20" as BNB, "tron" as TRX. An unknown chain name is kept as given.
           holder_vendor_data
           holder_name
           entity_type
@@ -362,7 +362,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
 
         Args:
           address: The wallet address. An XRP X-address is stored as its classic address and its tag, so it matches transfers that name either form.
-          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain.
+          chain: Chain token for the address, for example `ETH` or `BTC`. When Didit routes or registers a transfer, it matches address book entries on the wallet address and, when the transfer carries a chain, on this value too, ignoring case. A transfer's chain is `beneficiary_data.chain`, filled from the transaction's crypto chain or currency symbol (for example `ETH`) when you do not send it, or the `chain` of an after-deposit registration, so use the same token everywhere. An entry with an empty chain matches any chain. Known chains are stored under one canonical identifier whatever spelling you send: "ethereum", "Ethereum" and "ERC20" are all stored as ETH, "BNB Smart Chain" and "BEP20" as BNB, "tron" as TRX. An unknown chain name is kept as given.
           holder_vendor_data
           holder_name
           entity_type

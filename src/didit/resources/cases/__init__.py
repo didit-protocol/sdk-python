@@ -395,7 +395,9 @@ class Cases(SyncAPIResource):
     ) -> None:
         """Delete case.
 
-        Delete a case. There is no undelete endpoint.
+        Delete a case permanently. Its draft regulatory reports are deleted with it. Linked verifications, people, companies and transactions are not deleted. There is no undelete endpoint.
+
+        If the case has a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``DELETE /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/``
 
@@ -1577,7 +1579,9 @@ class AsyncCases(AsyncAPIResource):
     ) -> None:
         """Delete case.
 
-        Delete a case. There is no undelete endpoint.
+        Delete a case permanently. Its draft regulatory reports are deleted with it. Linked verifications, people, companies and transactions are not deleted. There is no undelete endpoint.
+
+        If the case has a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``DELETE /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/``
 

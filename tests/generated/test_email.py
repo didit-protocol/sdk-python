@@ -102,7 +102,7 @@ def test_email_check_code() -> None:
                             "type": "EMAIL_VERIFICATION_MESSAGE_SENT",
                             "timestamp": "2026-06-12T01:23:39.580554+00:00",
                             "details": {"status": "Success", "reason": None},
-                            "fee": 0.03,
+                            "fee": 0.02,
                         },
                         {
                             "type": "VALID_CODE_ENTERED",

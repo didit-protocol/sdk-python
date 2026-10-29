@@ -25,7 +25,7 @@
     "/programmatic/register/": {
       "post": {
         "summary": "Register Account",
-        "description": "Step 1 of programmatic onboarding. Creates a pending account and emails a 6-char code (10 min TTL). Rate limit: 5/IP/hour.",
+        "description": "Step 1 of programmatic onboarding. Creates a pending account and emails a 6-char code (10 min TTL). The address is checked before any account is created: one that cannot receive the code returns 400 `email_undeliverable`. Rate limits: 5/IP/hour, plus a shared hourly budget per network (/24 for IPv4, /64 for IPv6).",
         "operationId": "programmatic_register",
         "x-didit-sdk": {
           "resource": "account",
@@ -82,11 +82,18 @@
             }
           },
           "400": {
-            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level errors and `{\"detail\": \"...\"}` for business-rule errors (e.g. duplicate email). Password-strength rules currently respond with a bare array `[\"...\"]`, one rule at a time -- known server-side inconsistency; treat it as `{\"password\": [\"...\"]}` until fixed.",
+            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level errors and `{\"detail\": \"...\"}` for business-rule errors (e.g. duplicate email). Password-strength rules currently respond with a bare array `[\"...\"]`, one rule at a time -- known server-side inconsistency; treat it as `{\"password\": [\"...\"]}` until fixed. When the address cannot receive the code (disposable, reserved or test domain, no mail server, a likely typo, or a previously bounced address), the body is `EmailUndeliverableError` with `code: \"email_undeliverable\"`; no account is created or changed.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/EmailUndeliverableError"
+                    }
+                  ]
                 },
                 "examples": {
                   "MissingFields": {
@@ -145,13 +152,30 @@
                     "value": {
                       "detail": "An account with this email already exists."
                     }
+                  },
+                  "EmailUndeliverable": {
+                    "summary": "Address cannot receive email (disposable domain)",
+                    "value": {
+                      "detail": "This email can't receive messages. Please use a different email address.",
+                      "code": "email_undeliverable",
+                      "reason": "disposable_domain"
+                    }
+                  },
+                  "EmailLikelyTypo": {
+                    "summary": "Likely typo in the domain",
+                    "value": {
+                      "detail": "This email can't receive messages. Please use a different email address.",
+                      "code": "email_undeliverable",
+                      "reason": "possible_typo",
+                      "suggestion": "gmail.com"
+                    }
                   }
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limited. More than 5 registration attempts from the same IP in the last hour. Also returned, with a `Retry-After: 5` header, when the service is momentarily checking as many passwords or codes as it can at once; retry after the indicated number of seconds.",
+            "description": "Rate limited. More than 5 registration attempts from the same IP in the last hour, or the hourly budget for the caller's network (/24 for IPv4, /64 for IPv6, shared by registration and code resends) is used up. Both carry `Retry-After: 3600`. Also returned, with a `Retry-After: 5` header, when the service is momentarily checking as many passwords or codes as it can at once; retry after the indicated number of seconds.",
             "content": {
               "application/json": {
                 "schema": {
@@ -466,6 +490,27 @@
                         "organization_slug": "acme-corp",
                         "sso_url": "/sso/acme-corp"
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The account was recovered and must set up a new sign-in method before it can log in. A link to do that was emailed to the account's address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                },
+                "examples": {
+                  "RecoverySetupRequired": {
+                    "summary": "Recovered account with no sign-in method yet",
+                    "value": {
+                      "recovery_setup_required": true,
+                      "setup_link_sent": true,
+                      "message": "You recovered your account. Open the link we emailed you to set up a new sign-in method.",
+                      "code": "recovery_setup_required"
                     }
                   }
                 }
@@ -835,11 +880,18 @@
             }
           },
           "403": {
-            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.`",
+            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` For 72 hours after you recovered your account the request is refused with `code` `recovery_hold` and `until`, the time the hold ends.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RecoveryHoldError"
+                    }
+                  ]
                 },
                 "examples": {
                   "NotOwnerOrAdmin": {
@@ -858,6 +910,14 @@
                     "summary": "No Authorization header",
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "RecoveryHold": {
+                    "summary": "Account recovered less than 72 hours ago",
+                    "value": {
+                      "detail": "This action is on hold because you recovered your account.",
+                      "code": "recovery_hold",
+                      "until": "2026-11-04T10:15:00+00:00"
                     }
                   }
                 }
@@ -1596,7 +1656,7 @@
         "tags": [
           "Programmatic Auth"
         ],
-        "description": "Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.\n\nRate limits: a per-email cooldown of 60 seconds between resends (HTTP 429 with `Retry-After`), and the same 5-per-IP-per-hour budget as registration.",
+        "description": "Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.\n\nRate limits: a per-email cooldown of 60 seconds between resends (HTTP 429 with `Retry-After`), and the same 5-per-IP-per-hour and per-network hourly budgets as registration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1678,7 +1738,7 @@
             }
           },
           "429": {
-            "description": "Cooldown active (60s between resends) or IP budget exhausted (5/hour, shared with registration). Also returned, with a `Retry-After: 5` header, when the service is momentarily checking as many passwords or codes as it can at once; retry after the indicated number of seconds.",
+            "description": "Cooldown active (60s between resends) or IP or network budget exhausted (5/IP/hour and an hourly per-network budget, both shared with registration). Also returned, with a `Retry-After: 5` header, when the service is momentarily checking as many passwords or codes as it can at once; retry after the indicated number of seconds.",
             "content": {
               "application/json": {
                 "examples": {
@@ -1925,7 +1985,7 @@
           },
           "api_key": {
             "type": "string",
-            "description": "Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged.",
+            "description": "Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged. For 72 hours after you recovered your account, list, retrieve and update return an empty string here instead of the key.",
             "example": "sk_live_example_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
           },
           "website_url": {
@@ -2245,6 +2305,105 @@
           "status",
           "modules"
         ]
+      },
+      "EmailUndeliverableError": {
+        "type": "object",
+        "description": "Returned by `POST /programmatic/register/` when the address cannot receive the verification code. The check runs before any account is created or changed, so nothing is left behind.",
+        "required": [
+          "detail",
+          "code",
+          "reason"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable message.",
+            "example": "This email can't receive messages. Please use a different email address."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "email_undeliverable"
+            ],
+            "description": "Always `email_undeliverable`."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "invalid_address",
+              "reserved_domain",
+              "no_mail_records",
+              "disposable_domain",
+              "possible_typo",
+              "suppressed"
+            ],
+            "description": "Why the address was refused: `invalid_address` (not a valid address), `reserved_domain` (a reserved or test domain such as `example.com`), `no_mail_records` (the domain has no mail server), `disposable_domain` (a throwaway mailbox provider), `possible_typo` (a likely misspelling of a common provider; see `suggestion`), `suppressed` (the address previously bounced or complained)."
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "The likely intended domain, present only when the domain looks like a typo (for example `gmail.com` for `gmial.com`). The API does not accept a confirmation: register again with the corrected address.",
+            "example": "gmail.com"
+          }
+        }
+      },
+      "RecoveryHoldError": {
+        "type": "object",
+        "description": "Returned for 72 hours after the account was recovered (lost sign-in methods were reset). Actions that create organizations, applications or secrets are refused until `until`; read operations keep working.",
+        "required": [
+          "detail",
+          "code",
+          "until"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "This action is on hold because you recovered your account."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "recovery_hold"
+            ],
+            "example": "recovery_hold"
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the hold ends (ISO 8601). Retry the request after this time.",
+            "example": "2026-11-04T10:15:00+00:00"
+          }
+        }
+      },
+      "RecoverySetupRequiredError": {
+        "type": "object",
+        "description": "The account was recovered and has no sign-in method set up yet. No tokens are issued; a one-time link to set up a new method was emailed to the account's address. Open it, set up the method, then log in again.",
+        "required": [
+          "recovery_setup_required",
+          "setup_link_sent",
+          "message",
+          "code"
+        ],
+        "properties": {
+          "recovery_setup_required": {
+            "type": "boolean",
+            "example": true
+          },
+          "setup_link_sent": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "You recovered your account. Open the link we emailed you to set up a new sign-in method."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "recovery_setup_required"
+            ],
+            "example": "recovery_setup_required"
+          }
+        }
       }
     }
   }

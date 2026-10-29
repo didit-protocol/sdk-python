@@ -21,6 +21,10 @@ from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 from didit.types.components.transaction_detail import TransactionDetail
 from didit.types.components.transaction_summary import TransactionSummary
+from didit.types.transactions.batch_delete_params import (
+    TransactionsBatchDeleteParamsAllTransactions,
+    TransactionsBatchDeleteParamsSelectedTransactions,
+)
 from didit.types.transactions.create_params import (
     TransactionsCreateParamsCounterparty,
     TransactionsCreateParamsNetworkSnapshot,
@@ -74,7 +78,7 @@ __all__ = [
 class Transactions(SyncAPIResource):
     """The ``transactions`` resource of the Didit API.
 
-    Methods: ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
+    Methods: ``batch_delete``, ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
 
     Nested resources: ``notes``, ``rules``, ``travel_rule``.
     """
@@ -478,11 +482,54 @@ class Transactions(SyncAPIResource):
             ),
         )
 
+    def batch_delete(
+        self,
+        *,
+        body: TransactionsBatchDeleteParamsSelectedTransactions
+        | TransactionsBatchDeleteParamsAllTransactions,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Batch delete transactions.
+
+        Delete one or more transactions permanently. Select them with `transaction_uuids`, or delete every transaction in the application with `delete_all: true`.
+
+        A deleted transaction goes with the records that are only its own: its parties, tags, notes, payment method links, documents and every stored version of their files, rule runs, alerts, provider results, network snapshot and Travel Rule data. Cases, people and companies stay; their link to the deleted transaction is cleared. Draft regulatory reports stop listing it and are rebuilt without it. Deletion is permanent and irreversible; there is no undo endpoint.
+
+        If any selected transaction is listed in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each transaction and the reports that list it. Delete those reports, then repeat the request.
+
+        ``DELETE /v3/organization/{organization_id}/application/{application_id}/transactions/delete/``
+
+        Args:
+          body
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            self._client.request(
+                "delete",
+                "/v3/organization/{organization_id}/application/{application_id}/transactions/delete/",
+                cast_to=None,
+                scope="application",
+                auth="api_key",
+                body=body,
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTransactions(AsyncAPIResource):
     """The ``transactions`` resource of the Didit API.
 
-    Methods: ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
+    Methods: ``batch_delete``, ``create``, ``create_sdk_token``, ``generate_pdf``, ``list``, ``list_networks``, ``list_party_networks``, ``list_related``, ``retrieve``.
 
     Nested resources: ``notes``, ``rules``, ``travel_rule``.
     """
@@ -886,6 +933,49 @@ class AsyncTransactions(AsyncAPIResource):
             ),
         )
 
+    async def batch_delete(
+        self,
+        *,
+        body: TransactionsBatchDeleteParamsSelectedTransactions
+        | TransactionsBatchDeleteParamsAllTransactions,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Batch delete transactions.
+
+        Delete one or more transactions permanently. Select them with `transaction_uuids`, or delete every transaction in the application with `delete_all: true`.
+
+        A deleted transaction goes with the records that are only its own: its parties, tags, notes, payment method links, documents and every stored version of their files, rule runs, alerts, provider results, network snapshot and Travel Rule data. Cases, people and companies stay; their link to the deleted transaction is cleared. Draft regulatory reports stop listing it and are rebuilt without it. Deletion is permanent and irreversible; there is no undo endpoint.
+
+        If any selected transaction is listed in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each transaction and the reports that list it. Delete those reports, then repeat the request.
+
+        ``DELETE /v3/organization/{organization_id}/application/{application_id}/transactions/delete/``
+
+        Args:
+          body
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            await self._client.request(
+                "delete",
+                "/v3/organization/{organization_id}/application/{application_id}/transactions/delete/",
+                cast_to=None,
+                scope="application",
+                auth="api_key",
+                body=body,
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TransactionsWithRawResponse:
     def __init__(self, resource: Transactions) -> None:
@@ -898,6 +988,7 @@ class TransactionsWithRawResponse:
         self.list_party_networks = to_raw_response_wrapper(resource.list_party_networks)
         self.list_related = to_raw_response_wrapper(resource.list_related)
         self.generate_pdf = to_raw_response_wrapper(resource.generate_pdf)
+        self.batch_delete = to_raw_response_wrapper(resource.batch_delete)
 
     @cached_property
     def notes(self) -> TransactionsNotesWithRawResponse:
@@ -929,6 +1020,7 @@ class AsyncTransactionsWithRawResponse:
         self.list_party_networks = async_to_raw_response_wrapper(resource.list_party_networks)
         self.list_related = async_to_raw_response_wrapper(resource.list_related)
         self.generate_pdf = async_to_raw_response_wrapper(resource.generate_pdf)
+        self.batch_delete = async_to_raw_response_wrapper(resource.batch_delete)
 
     @cached_property
     def notes(self) -> AsyncTransactionsNotesWithRawResponse:
@@ -962,6 +1054,7 @@ class TransactionsWithStreamingResponse:
         self.list_party_networks = to_streamed_response_wrapper(resource.list_party_networks)
         self.list_related = to_streamed_response_wrapper(resource.list_related)
         self.generate_pdf = to_streamed_response_wrapper(resource.generate_pdf)
+        self.batch_delete = to_streamed_response_wrapper(resource.batch_delete)
 
     @cached_property
     def notes(self) -> TransactionsNotesWithStreamingResponse:
@@ -995,6 +1088,7 @@ class AsyncTransactionsWithStreamingResponse:
         self.list_party_networks = async_to_streamed_response_wrapper(resource.list_party_networks)
         self.list_related = async_to_streamed_response_wrapper(resource.list_related)
         self.generate_pdf = async_to_streamed_response_wrapper(resource.generate_pdf)
+        self.batch_delete = async_to_streamed_response_wrapper(resource.batch_delete)
 
     @cached_property
     def notes(self) -> AsyncTransactionsNotesWithStreamingResponse:

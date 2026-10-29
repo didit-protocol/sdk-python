@@ -71,7 +71,7 @@ class FaceSearch(SyncAPIResource):
 
         `status` is `Declined` only when a `FACE_IN_BLOCKLIST` or `POSSIBLE_FACE_IN_BLOCKLIST` warning fires; `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` (`information`) and `MULTIPLE_FACES_DETECTED` (`warning`) never decline. Unlike Passive Liveness, this endpoint does **not** exclude prior sessions with the same `vendor_data` from matching. A passive-liveness analysis also runs internally and is stored with the persisted session, but its result is not part of this response.
 
-        **Billing.** Each `200` response consumes one Face Search API credit (standalone APIs have no free tier). Insufficient balance returns `403` before any image processing.
+        **Billing.** Each `200` response consumes one Face Search API credit (paid from your plan credit or top-up balance). Insufficient balance returns `403` before any image processing.
 
         **Session persistence and face enrollment (`save_api_request`, default `true`).** When `true`, the call is persisted as an API-type session (Business Console, `GET /v3/session/{sessionId}/decision/` via the returned `request_id`, `status.updated` webhook) and the searched face is enrolled into your face search index. Faces enrolled by Face Search calls are excluded from future Face Search results, so repeated searches never match each other. When `false`, the call is one-shot: nothing is stored, the face is not enrolled, and `match_image_url` values are internal storage paths rather than downloadable URLs.
 
@@ -163,7 +163,7 @@ class AsyncFaceSearch(AsyncAPIResource):
 
         `status` is `Declined` only when a `FACE_IN_BLOCKLIST` or `POSSIBLE_FACE_IN_BLOCKLIST` warning fires; `DUPLICATED_FACE` / `POSSIBLE_DUPLICATED_FACE` (`information`) and `MULTIPLE_FACES_DETECTED` (`warning`) never decline. Unlike Passive Liveness, this endpoint does **not** exclude prior sessions with the same `vendor_data` from matching. A passive-liveness analysis also runs internally and is stored with the persisted session, but its result is not part of this response.
 
-        **Billing.** Each `200` response consumes one Face Search API credit (standalone APIs have no free tier). Insufficient balance returns `403` before any image processing.
+        **Billing.** Each `200` response consumes one Face Search API credit (paid from your plan credit or top-up balance). Insufficient balance returns `403` before any image processing.
 
         **Session persistence and face enrollment (`save_api_request`, default `true`).** When `true`, the call is persisted as an API-type session (Business Console, `GET /v3/session/{sessionId}/decision/` via the returned `request_id`, `status.updated` webhook) and the searched face is enrolled into your face search index. Faces enrolled by Face Search calls are excluded from future Face Search results, so repeated searches never match each other. When `false`, the call is one-shot: nothing is stored, the face is not enrolled, and `match_image_url` values are internal storage paths rather than downloadable URLs.
 

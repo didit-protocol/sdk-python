@@ -22,7 +22,7 @@ class Application(BaseModel):
     """Public client identifier, safe to embed in OAuth-style flows."""
 
     api_key: str | None = None
-    """Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged."""
+    """Long-lived secret (also called `client_secret`). Use as the `x-api-key` header for every call to `https://verification.didit.me/v3/...` (sessions, workflows, AML, etc.). Treat as a credential; never expose client-side. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged. For 72 hours after you recovered your account, list, retrieve and update return an empty string here instead of the key."""
 
     website_url: str | None = None
     """Website or app URL associated with this application."""

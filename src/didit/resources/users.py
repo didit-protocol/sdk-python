@@ -270,6 +270,8 @@ class Users(SyncAPIResource):
 
         **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
 
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
+
         ``POST /v3/users/delete/``
 
         Args:
@@ -898,6 +900,8 @@ class AsyncUsers(AsyncAPIResource):
         **Permanently delete** users: the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. This endpoint never narrows `delete_all` with filters. The Console's People filters are refused with a `400` (see the `400` response), so a narrowed intent does not turn into a full wipe. Two exceptions: `filter_has_approved_sessions` and `filter_has_declined_sessions` are not refused and not applied, so with `delete_all: true` they still delete every user; do not send them.
 
         **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
+
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``POST /v3/users/delete/``
 

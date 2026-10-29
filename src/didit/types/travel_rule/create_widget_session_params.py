@@ -11,7 +11,7 @@ class TravelRuleCreateWidgetSessionParams(TypedDict, total=False):
     """The wallet address to verify. Optional; when empty, the address must be supplied when a proof is started."""
 
     chain: str
-    """Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain."""
+    """Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain. The address book entry the proof verifies stores it under its canonical identifier (ETH, BTC, SOL, TRX)."""
 
     holder_name: str
     """Name of the wallet holder, used for the beneficiary name match."""

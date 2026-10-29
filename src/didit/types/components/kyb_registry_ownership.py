@@ -17,8 +17,8 @@ class KYBRegistryOwnershipUnresolved(BaseModel):
 class KYBRegistryOwnership(BaseModel):
     """The outcome of the ownership (Shareholders / UBO) tier, in the same shape for every country and registry source."""
 
-    status: Literal["not_requested", "pending", "delivered", "unavailable"] | str | None
-    """`delivered` when the registry published ownership; `unavailable` when it did not (see `unavailable_reason`); `pending` while the registry is still fetching it; `not_requested` for the Basic tier."""
+    status: Literal["not_requested", "pending", "delivered", "not_held", "unavailable"] | str | None
+    """`delivered` when the registry published ownership; `not_held` when the ownership registry answered and does not list the company at all (see `unavailable_reason`); `unavailable` when it did not serve the ownership data for any other reason (see `unavailable_reason`); `pending` while the registry is still fetching it; `not_requested` for the Basic tier."""
 
     tier_requested: Literal["basic", "shareholders", "ubo"] | str | None
     """The tier the workflow ordered."""

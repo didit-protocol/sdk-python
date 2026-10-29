@@ -58,6 +58,14 @@ if TYPE_CHECKING:
         TravelRuleCounterpartyContactsWithRawResponse,
         TravelRuleCounterpartyContactsWithStreamingResponse,
     )
+    from didit.resources.travel_rule.networks import (
+        AsyncTravelRuleNetworks,
+        AsyncTravelRuleNetworksWithRawResponse,
+        AsyncTravelRuleNetworksWithStreamingResponse,
+        TravelRuleNetworks,
+        TravelRuleNetworksWithRawResponse,
+        TravelRuleNetworksWithStreamingResponse,
+    )
     from didit.resources.travel_rule.transfers import (
         AsyncTravelRuleTransfers,
         AsyncTravelRuleTransfersWithRawResponse,
@@ -73,6 +81,14 @@ if TYPE_CHECKING:
         TravelRuleWalletAddresses,
         TravelRuleWalletAddressesWithRawResponse,
         TravelRuleWalletAddressesWithStreamingResponse,
+    )
+    from didit.resources.travel_rule.wallet_proofs import (
+        AsyncTravelRuleWalletProofs,
+        AsyncTravelRuleWalletProofsWithRawResponse,
+        AsyncTravelRuleWalletProofsWithStreamingResponse,
+        TravelRuleWalletProofs,
+        TravelRuleWalletProofsWithRawResponse,
+        TravelRuleWalletProofsWithStreamingResponse,
     )
     from didit.resources.travel_rule.workspace import (
         AsyncTravelRuleWorkspaceResource,
@@ -98,7 +114,7 @@ class TravelRule(SyncAPIResource):
 
     Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``counterparty_contacts``, ``transfers``, ``wallet_addresses``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -106,6 +122,12 @@ class TravelRule(SyncAPIResource):
         from didit.resources.travel_rule.counterparty_contacts import TravelRuleCounterpartyContacts
 
         return TravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def networks(self) -> TravelRuleNetworks:
+        from didit.resources.travel_rule.networks import TravelRuleNetworks
+
+        return TravelRuleNetworks(self._client)
 
     @cached_property
     def transfers(self) -> TravelRuleTransfers:
@@ -118,6 +140,12 @@ class TravelRule(SyncAPIResource):
         from didit.resources.travel_rule.wallet_addresses import TravelRuleWalletAddresses
 
         return TravelRuleWalletAddresses(self._client)
+
+    @cached_property
+    def wallet_proofs(self) -> TravelRuleWalletProofs:
+        from didit.resources.travel_rule.wallet_proofs import TravelRuleWalletProofs
+
+        return TravelRuleWalletProofs(self._client)
 
     @cached_property
     def workspace(self) -> TravelRuleWorkspaceResource:
@@ -780,7 +808,7 @@ class TravelRule(SyncAPIResource):
 
         Args:
           wallet_address: The wallet address to verify. Optional; when empty, the address must be supplied when a proof is started.
-          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain.
+          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain. The address book entry the proof verifies stores it under its canonical identifier (ETH, BTC, SOL, TRX).
           holder_name: Name of the wallet holder, used for the beneficiary name match.
           vendor_data: Your internal identifier for the holder, carried onto the created address-book entry.
           transaction_id: Optional. Didit transaction UUID of a Travel Rule transfer to advance when the proof verifies.
@@ -822,7 +850,7 @@ class AsyncTravelRule(AsyncAPIResource):
 
     Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``counterparty_contacts``, ``transfers``, ``wallet_addresses``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -832,6 +860,12 @@ class AsyncTravelRule(AsyncAPIResource):
         )
 
         return AsyncTravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def networks(self) -> AsyncTravelRuleNetworks:
+        from didit.resources.travel_rule.networks import AsyncTravelRuleNetworks
+
+        return AsyncTravelRuleNetworks(self._client)
 
     @cached_property
     def transfers(self) -> AsyncTravelRuleTransfers:
@@ -844,6 +878,12 @@ class AsyncTravelRule(AsyncAPIResource):
         from didit.resources.travel_rule.wallet_addresses import AsyncTravelRuleWalletAddresses
 
         return AsyncTravelRuleWalletAddresses(self._client)
+
+    @cached_property
+    def wallet_proofs(self) -> AsyncTravelRuleWalletProofs:
+        from didit.resources.travel_rule.wallet_proofs import AsyncTravelRuleWalletProofs
+
+        return AsyncTravelRuleWalletProofs(self._client)
 
     @cached_property
     def workspace(self) -> AsyncTravelRuleWorkspaceResource:
@@ -1506,7 +1546,7 @@ class AsyncTravelRule(AsyncAPIResource):
 
         Args:
           wallet_address: The wallet address to verify. Optional; when empty, the address must be supplied when a proof is started.
-          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain.
+          chain: Chain token for the address, for example `ETH`, `BTC` or `SOL`. Use the same token as in your wallet address book. Message signing and the Satoshi test are offered only for a supported chain. The address book entry the proof verifies stores it under its canonical identifier (ETH, BTC, SOL, TRX).
           holder_name: Name of the wallet holder, used for the beneficiary name match.
           vendor_data: Your internal identifier for the holder, carried onto the created address-book entry.
           transaction_id: Optional. Didit transaction UUID of a Travel Rule transfer to advance when the proof verifies.
@@ -1572,6 +1612,12 @@ class TravelRuleWithRawResponse:
         return TravelRuleCounterpartyContactsWithRawResponse(self._resource.counterparty_contacts)
 
     @cached_property
+    def networks(self) -> TravelRuleNetworksWithRawResponse:
+        from didit.resources.travel_rule.networks import TravelRuleNetworksWithRawResponse
+
+        return TravelRuleNetworksWithRawResponse(self._resource.networks)
+
+    @cached_property
     def transfers(self) -> TravelRuleTransfersWithRawResponse:
         from didit.resources.travel_rule.transfers import TravelRuleTransfersWithRawResponse
 
@@ -1584,6 +1630,12 @@ class TravelRuleWithRawResponse:
         )
 
         return TravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
+
+    @cached_property
+    def wallet_proofs(self) -> TravelRuleWalletProofsWithRawResponse:
+        from didit.resources.travel_rule.wallet_proofs import TravelRuleWalletProofsWithRawResponse
+
+        return TravelRuleWalletProofsWithRawResponse(self._resource.wallet_proofs)
 
     @cached_property
     def workspace(self) -> TravelRuleWorkspaceResourceWithRawResponse:
@@ -1629,6 +1681,12 @@ class AsyncTravelRuleWithRawResponse:
         )
 
     @cached_property
+    def networks(self) -> AsyncTravelRuleNetworksWithRawResponse:
+        from didit.resources.travel_rule.networks import AsyncTravelRuleNetworksWithRawResponse
+
+        return AsyncTravelRuleNetworksWithRawResponse(self._resource.networks)
+
+    @cached_property
     def transfers(self) -> AsyncTravelRuleTransfersWithRawResponse:
         from didit.resources.travel_rule.transfers import AsyncTravelRuleTransfersWithRawResponse
 
@@ -1641,6 +1699,14 @@ class AsyncTravelRuleWithRawResponse:
         )
 
         return AsyncTravelRuleWalletAddressesWithRawResponse(self._resource.wallet_addresses)
+
+    @cached_property
+    def wallet_proofs(self) -> AsyncTravelRuleWalletProofsWithRawResponse:
+        from didit.resources.travel_rule.wallet_proofs import (
+            AsyncTravelRuleWalletProofsWithRawResponse,
+        )
+
+        return AsyncTravelRuleWalletProofsWithRawResponse(self._resource.wallet_proofs)
 
     @cached_property
     def workspace(self) -> AsyncTravelRuleWorkspaceResourceWithRawResponse:
@@ -1688,6 +1754,12 @@ class TravelRuleWithStreamingResponse:
         )
 
     @cached_property
+    def networks(self) -> TravelRuleNetworksWithStreamingResponse:
+        from didit.resources.travel_rule.networks import TravelRuleNetworksWithStreamingResponse
+
+        return TravelRuleNetworksWithStreamingResponse(self._resource.networks)
+
+    @cached_property
     def transfers(self) -> TravelRuleTransfersWithStreamingResponse:
         from didit.resources.travel_rule.transfers import TravelRuleTransfersWithStreamingResponse
 
@@ -1700,6 +1772,14 @@ class TravelRuleWithStreamingResponse:
         )
 
         return TravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
+
+    @cached_property
+    def wallet_proofs(self) -> TravelRuleWalletProofsWithStreamingResponse:
+        from didit.resources.travel_rule.wallet_proofs import (
+            TravelRuleWalletProofsWithStreamingResponse,
+        )
+
+        return TravelRuleWalletProofsWithStreamingResponse(self._resource.wallet_proofs)
 
     @cached_property
     def workspace(self) -> TravelRuleWorkspaceResourceWithStreamingResponse:
@@ -1753,6 +1833,14 @@ class AsyncTravelRuleWithStreamingResponse:
         )
 
     @cached_property
+    def networks(self) -> AsyncTravelRuleNetworksWithStreamingResponse:
+        from didit.resources.travel_rule.networks import (
+            AsyncTravelRuleNetworksWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleNetworksWithStreamingResponse(self._resource.networks)
+
+    @cached_property
     def transfers(self) -> AsyncTravelRuleTransfersWithStreamingResponse:
         from didit.resources.travel_rule.transfers import (
             AsyncTravelRuleTransfersWithStreamingResponse,
@@ -1767,6 +1855,14 @@ class AsyncTravelRuleWithStreamingResponse:
         )
 
         return AsyncTravelRuleWalletAddressesWithStreamingResponse(self._resource.wallet_addresses)
+
+    @cached_property
+    def wallet_proofs(self) -> AsyncTravelRuleWalletProofsWithStreamingResponse:
+        from didit.resources.travel_rule.wallet_proofs import (
+            AsyncTravelRuleWalletProofsWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleWalletProofsWithStreamingResponse(self._resource.wallet_proofs)
 
     @cached_property
     def workspace(self) -> AsyncTravelRuleWorkspaceResourceWithStreamingResponse:

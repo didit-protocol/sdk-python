@@ -10,10 +10,21 @@ from didit.types.components.session_sign_document import SessionSignDocument
 
 __all__ = [
     "SessionsCreateParams",
+    "SessionsCreateParamsBiometricConsent",
     "SessionsCreateParamsContactDetails",
     "SessionsCreateParamsExpectedDetails",
     "SessionsCreateParamsSign",
 ]
+
+
+class SessionsCreateParamsBiometricConsent(TypedDict, total=False):
+    """Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent)."""
+
+    given_at: Required[str | _dt.datetime]
+    """When the person gave explicit biometric consent (ISO 8601). Cannot be in the future."""
+
+    text_version: Required[str]
+    """Version id of the consent text the person accepted, in your own records."""
 
 
 class SessionsCreateParamsContactDetails(TypedDict, total=False):
@@ -164,6 +175,9 @@ class SessionsCreateParams(TypedDict, total=False):
     metadata: object
     """Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context."""
 
+    tags: Sequence[str]
+    """Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them."""
+
     language: (
         Literal[
             "en",
@@ -239,3 +253,9 @@ class SessionsCreateParams(TypedDict, total=False):
 
     sign: SessionsCreateParamsSign
     """Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents)."""
+
+    user_state: str
+    """Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent)."""
+
+    biometric_consent: SessionsCreateParamsBiometricConsent
+    """Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent)."""

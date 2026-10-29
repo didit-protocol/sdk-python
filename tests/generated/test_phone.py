@@ -111,7 +111,7 @@ def test_phone_check_code() -> None:
                                 "channel": "whatsapp",
                                 "actual_channel": "whatsapp",
                             },
-                            "fee": 0.0709,
+                            "fee": 0.0509,
                         },
                         {
                             "type": "PHONE_DELIVERY_DELIVERED",

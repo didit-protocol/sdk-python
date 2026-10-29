@@ -22,6 +22,43 @@ from didit.types.transactions.list_response import TransactionsListResponseResul
 from tests.harness import BINARY_BODY, Expect, check_operation
 
 
+def test_transactions_batch_delete() -> None:
+    """``DELETE /v3/organization/{organization_id}/application/{application_id}/transactions/delete/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/transactions/delete/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "transaction_uuids": [
+                    "abcdef12-3456-7890-abcd-ef1234567890",
+                    "12345678-90ab-cdef-1234-567890abcdef",
+                ]
+            },
+            status=204,
+        ),
+        lambda c: c.transactions.batch_delete(
+            body={
+                "transaction_uuids": [
+                    "abcdef12-3456-7890-abcd-ef1234567890",
+                    "12345678-90ab-cdef-1234-567890abcdef",
+                ]
+            }
+        ),
+        lambda c: c.transactions.batch_delete(
+            body={
+                "transaction_uuids": [
+                    "abcdef12-3456-7890-abcd-ef1234567890",
+                    "12345678-90ab-cdef-1234-567890abcdef",
+                ]
+            }
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
 def test_transactions_create() -> None:
     """``POST /v3/transactions/``"""
     check_operation(
