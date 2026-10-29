@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     from didit.types.account.verify_email_params import (
         AccountVerifyEmailParams as AccountVerifyEmailParams,
     )
+    from didit.types.address_validation.validate_params import (
+        AddressValidationValidateParams as AddressValidationValidateParams,
+    )
     from didit.types.age_estimation.estimate_params import (
         AgeEstimationEstimateParams as AgeEstimationEstimateParams,
     )
@@ -299,6 +302,15 @@ if TYPE_CHECKING:
     )
     from didit.types.cases.transfer_params import CasesTransferParams as CasesTransferParams
     from didit.types.cases.update_params import CasesUpdateParams as CasesUpdateParams
+    from didit.types.components.address_validation_response import (
+        AddressValidationResponse as AddressValidationResponse,
+    )
+    from didit.types.components.address_validation_result import (
+        AddressValidationResult as AddressValidationResult,
+    )
+    from didit.types.components.address_validation_result import (
+        AddressValidationResultAddress as AddressValidationResultAddress,
+    )
     from didit.types.components.aml_dataset_freshness import (
         AMLDatasetFreshness as AMLDatasetFreshness,
     )
@@ -1322,6 +1334,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.session_decision import SessionDecision as SessionDecision
     from didit.types.components.session_decision import (
+        SessionDecisionBiometricConsent as SessionDecisionBiometricConsent,
+    )
+    from didit.types.components.session_decision import (
         SessionDecisionContactDetails as SessionDecisionContactDetails,
     )
     from didit.types.components.session_decision import (
@@ -1980,6 +1995,36 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_name_match import (
         TravelRuleNameMatch as TravelRuleNameMatch,
     )
+    from didit.types.components.travel_rule_network_participant import (
+        TravelRuleNetworkParticipant as TravelRuleNetworkParticipant,
+    )
+    from didit.types.components.travel_rule_network_participant import (
+        TravelRuleNetworkParticipantHistory as TravelRuleNetworkParticipantHistory,
+    )
+    from didit.types.components.travel_rule_network_participant_summary import (
+        TravelRuleNetworkParticipantSummary as TravelRuleNetworkParticipantSummary,
+    )
+    from didit.types.components.travel_rule_network_questionnaire import (
+        TravelRuleNetworkQuestionnaire as TravelRuleNetworkQuestionnaire,
+    )
+    from didit.types.components.travel_rule_network_questionnaire import (
+        TravelRuleNetworkQuestionnaireHistory as TravelRuleNetworkQuestionnaireHistory,
+    )
+    from didit.types.components.travel_rule_network_questionnaire_answers import (
+        TravelRuleNetworkQuestionnaireAnswers as TravelRuleNetworkQuestionnaireAnswers,
+    )
+    from didit.types.components.travel_rule_network_questionnaire_answers import (
+        TravelRuleNetworkQuestionnaireAnswersLicences as TravelRuleNetworkQuestionnaireAnswersLicences,
+    )
+    from didit.types.components.travel_rule_network_state import (
+        TravelRuleNetworkState as TravelRuleNetworkState,
+    )
+    from didit.types.components.travel_rule_networks_overview import (
+        TravelRuleNetworksOverview as TravelRuleNetworksOverview,
+    )
+    from didit.types.components.travel_rule_networks_overview import (
+        TravelRuleNetworksOverviewNetworks as TravelRuleNetworksOverviewNetworks,
+    )
     from didit.types.components.travel_rule_next_action import (
         TravelRuleNextAction as TravelRuleNextAction,
     )
@@ -1991,18 +2036,6 @@ if TYPE_CHECKING:
     )
     from didit.types.components.travel_rule_settings_detail import (
         TravelRuleSettingsDetailNetworks as TravelRuleSettingsDetailNetworks,
-    )
-    from didit.types.components.travel_rule_settings_detail import (
-        TravelRuleSettingsDetailNetworksGtr as TravelRuleSettingsDetailNetworksGtr,
-    )
-    from didit.types.components.travel_rule_settings_detail import (
-        TravelRuleSettingsDetailNetworksSygna as TravelRuleSettingsDetailNetworksSygna,
-    )
-    from didit.types.components.travel_rule_settings_detail import (
-        TravelRuleSettingsDetailNetworksTrust as TravelRuleSettingsDetailNetworksTrust,
-    )
-    from didit.types.components.travel_rule_settings_detail import (
-        TravelRuleSettingsDetailNetworksVerifyvasp as TravelRuleSettingsDetailNetworksVerifyvasp,
     )
     from didit.types.components.travel_rule_test_vasp_inbound_response import (
         TravelRuleTestVaspInboundResponse as TravelRuleTestVaspInboundResponse,
@@ -2028,6 +2061,12 @@ if TYPE_CHECKING:
     )
     from didit.types.components.travel_rule_utxo_entry import (
         TravelRuleUtxoEntryParam as TravelRuleUtxoEntryParam,
+    )
+    from didit.types.components.travel_rule_wallet_proof_failure_reason import (
+        TravelRuleWalletProofFailureReason as TravelRuleWalletProofFailureReason,
+    )
+    from didit.types.components.travel_rule_wallet_proof_review import (
+        TravelRuleWalletProofReview as TravelRuleWalletProofReview,
     )
     from didit.types.components.travel_rule_widget_session_response import (
         TravelRuleWidgetSessionResponse as TravelRuleWidgetSessionResponse,
@@ -2626,6 +2665,9 @@ if TYPE_CHECKING:
     from didit.types.regulatory_reports.create_params import (
         RegulatoryReportsCreateParamsNarrative as RegulatoryReportsCreateParamsNarrative,
     )
+    from didit.types.regulatory_reports.delete_params import (
+        RegulatoryReportsDeleteParams as RegulatoryReportsDeleteParams,
+    )
     from didit.types.regulatory_reports.retrieve_download_url_response import (
         RegulatoryReportsRetrieveDownloadUrlResponse as RegulatoryReportsRetrieveDownloadUrlResponse,
     )
@@ -2675,6 +2717,9 @@ if TYPE_CHECKING:
         SessionsBulkUpdateAmlHitStatusResponse as SessionsBulkUpdateAmlHitStatusResponse,
     )
     from didit.types.sessions.create_params import SessionsCreateParams as SessionsCreateParams
+    from didit.types.sessions.create_params import (
+        SessionsCreateParamsBiometricConsent as SessionsCreateParamsBiometricConsent,
+    )
     from didit.types.sessions.create_params import (
         SessionsCreateParamsContactDetails as SessionsCreateParamsContactDetails,
     )
@@ -2847,6 +2892,12 @@ if TYPE_CHECKING:
     from didit.types.sessions.update_status_response import (
         SessionsUpdateStatusResponse as SessionsUpdateStatusResponse,
     )
+    from didit.types.transactions.batch_delete_params import (
+        TransactionsBatchDeleteParamsAllTransactions as TransactionsBatchDeleteParamsAllTransactions,
+    )
+    from didit.types.transactions.batch_delete_params import (
+        TransactionsBatchDeleteParamsSelectedTransactions as TransactionsBatchDeleteParamsSelectedTransactions,
+    )
     from didit.types.transactions.create_params import (
         TransactionsCreateParams as TransactionsCreateParams,
     )
@@ -2961,6 +3012,12 @@ if TYPE_CHECKING:
     from didit.types.travel_rule.list_vasps_response import (
         TravelRuleListVaspsResponse as TravelRuleListVaspsResponse,
     )
+    from didit.types.travel_rule.networks.update_questionnaire_params import (
+        TravelRuleNetworksUpdateQuestionnaireParams as TravelRuleNetworksUpdateQuestionnaireParams,
+    )
+    from didit.types.travel_rule.networks.update_questionnaire_params import (
+        TravelRuleNetworksUpdateQuestionnaireParamsLicences as TravelRuleNetworksUpdateQuestionnaireParamsLicences,
+    )
     from didit.types.travel_rule.register_inbound_params import (
         TravelRuleRegisterInboundParams as TravelRuleRegisterInboundParams,
     )
@@ -2996,6 +3053,12 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.wallet_addresses.update_params import (
         TravelRuleWalletAddressesUpdateParams as TravelRuleWalletAddressesUpdateParams,
+    )
+    from didit.types.travel_rule.wallet_proofs.decide_params import (
+        TravelRuleWalletProofsDecideParams as TravelRuleWalletProofsDecideParams,
+    )
+    from didit.types.travel_rule.wallet_proofs.list_response import (
+        TravelRuleWalletProofsListResponse as TravelRuleWalletProofsListResponse,
     )
     from didit.types.travel_rule.workspace.claim_params import (
         TravelRuleWorkspaceClaimParams as TravelRuleWorkspaceClaimParams,
@@ -3150,6 +3213,10 @@ _MODULES: dict[str, str] = {
     "AccountResendOtpParams": "account.resend_otp_params",
     "AccountResendOtpResponse": "account.resend_otp_response",
     "AccountVerifyEmailParams": "account.verify_email_params",
+    "AddressValidationResponse": "components.address_validation_response",
+    "AddressValidationResult": "components.address_validation_result",
+    "AddressValidationResultAddress": "components.address_validation_result",
+    "AddressValidationValidateParams": "address_validation.validate_params",
     "AgeEstimationEstimateParams": "age_estimation.estimate_params",
     "AgeEstimationEstimateResponse": "age_estimation.estimate_response",
     "AgeEstimationEstimateResponseAgeEstimation": "age_estimation.estimate_response",
@@ -3759,6 +3826,7 @@ _MODULES: dict[str, str] = {
     "RegulatoryReportList": "components.regulatory_report_list",
     "RegulatoryReportsCreateParams": "regulatory_reports.create_params",
     "RegulatoryReportsCreateParamsNarrative": "regulatory_reports.create_params",
+    "RegulatoryReportsDeleteParams": "regulatory_reports.delete_params",
     "RegulatoryReportsRetrieveDownloadUrlResponse": "regulatory_reports.retrieve_download_url_response",
     "RegulatoryReportsUpdateParams": "regulatory_reports.update_params",
     "RegulatoryReportsUpdateParamsNarrative": "regulatory_reports.update_params",
@@ -3782,6 +3850,7 @@ _MODULES: dict[str, str] = {
     "RoutingPublicationRoutingCondition": "components.routing_publication_routing_condition",
     "SandboxSimulateResponse": "components.sandbox_simulate_response",
     "SessionDecision": "components.session_decision",
+    "SessionDecisionBiometricConsent": "components.session_decision",
     "SessionDecisionContactDetails": "components.session_decision",
     "SessionDecisionDatabaseValidations": "components.session_decision",
     "SessionDecisionDatabaseValidationsErrors": "components.session_decision",
@@ -3915,6 +3984,7 @@ _MODULES: dict[str, str] = {
     "SessionsBulkUpdateAmlHitStatusParamsHitUpdates": "sessions.bulk_update_aml_hit_status_params",
     "SessionsBulkUpdateAmlHitStatusResponse": "sessions.bulk_update_aml_hit_status_response",
     "SessionsCreateParams": "sessions.create_params",
+    "SessionsCreateParamsBiometricConsent": "sessions.create_params",
     "SessionsCreateParamsContactDetails": "sessions.create_params",
     "SessionsCreateParamsExpectedDetails": "sessions.create_params",
     "SessionsCreateParamsSign": "sessions.create_params",
@@ -4048,6 +4118,8 @@ _MODULES: dict[str, str] = {
     "TransactionTravelRuleCounterpartyVaspDdScoreBreakdownValue": "components.transaction_travel_rule",
     "TransactionVerificationSessionAction": "components.transaction_verification_session_action",
     "TransactionWalletOwnershipAction": "components.transaction_wallet_ownership_action",
+    "TransactionsBatchDeleteParamsAllTransactions": "transactions.batch_delete_params",
+    "TransactionsBatchDeleteParamsSelectedTransactions": "transactions.batch_delete_params",
     "TransactionsCreateParams": "transactions.create_params",
     "TransactionsCreateParamsCounterparty": "transactions.create_params",
     "TransactionsCreateParamsCounterpartyDeviceContext": "transactions.create_params",
@@ -4116,6 +4188,18 @@ _MODULES: dict[str, str] = {
     "TravelRuleMessageAttachment": "components.travel_rule_message_attachment",
     "TravelRuleMessageAttachmentFiles": "components.travel_rule_message_attachment",
     "TravelRuleNameMatch": "components.travel_rule_name_match",
+    "TravelRuleNetworkParticipant": "components.travel_rule_network_participant",
+    "TravelRuleNetworkParticipantHistory": "components.travel_rule_network_participant",
+    "TravelRuleNetworkParticipantSummary": "components.travel_rule_network_participant_summary",
+    "TravelRuleNetworkQuestionnaire": "components.travel_rule_network_questionnaire",
+    "TravelRuleNetworkQuestionnaireAnswers": "components.travel_rule_network_questionnaire_answers",
+    "TravelRuleNetworkQuestionnaireAnswersLicences": "components.travel_rule_network_questionnaire_answers",
+    "TravelRuleNetworkQuestionnaireHistory": "components.travel_rule_network_questionnaire",
+    "TravelRuleNetworkState": "components.travel_rule_network_state",
+    "TravelRuleNetworksOverview": "components.travel_rule_networks_overview",
+    "TravelRuleNetworksOverviewNetworks": "components.travel_rule_networks_overview",
+    "TravelRuleNetworksUpdateQuestionnaireParams": "travel_rule.networks.update_questionnaire_params",
+    "TravelRuleNetworksUpdateQuestionnaireParamsLicences": "travel_rule.networks.update_questionnaire_params",
     "TravelRuleNextAction": "components.travel_rule_next_action",
     "TravelRuleRegisterInboundParams": "travel_rule.register_inbound_params",
     "TravelRuleRegisterInboundParamsOriginatingVasp": "travel_rule.register_inbound_params",
@@ -4125,10 +4209,6 @@ _MODULES: dict[str, str] = {
     "TravelRuleSettingsDetail": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailDiditNetwork": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailNetworks": "components.travel_rule_settings_detail",
-    "TravelRuleSettingsDetailNetworksGtr": "components.travel_rule_settings_detail",
-    "TravelRuleSettingsDetailNetworksSygna": "components.travel_rule_settings_detail",
-    "TravelRuleSettingsDetailNetworksTrust": "components.travel_rule_settings_detail",
-    "TravelRuleSettingsDetailNetworksVerifyvasp": "components.travel_rule_settings_detail",
     "TravelRuleTestVaspInboundResponse": "components.travel_rule_test_vasp_inbound_response",
     "TravelRuleTransferDetail": "components.travel_rule_transfer_detail",
     "TravelRuleTransferDetailCounterpartyVasp": "components.travel_rule_transfer_detail",
@@ -4145,6 +4225,10 @@ _MODULES: dict[str, str] = {
     "TravelRuleWalletAddressesCreateParams": "travel_rule.wallet_addresses.create_params",
     "TravelRuleWalletAddressesListResponse": "travel_rule.wallet_addresses.list_response",
     "TravelRuleWalletAddressesUpdateParams": "travel_rule.wallet_addresses.update_params",
+    "TravelRuleWalletProofFailureReason": "components.travel_rule_wallet_proof_failure_reason",
+    "TravelRuleWalletProofReview": "components.travel_rule_wallet_proof_review",
+    "TravelRuleWalletProofsDecideParams": "travel_rule.wallet_proofs.decide_params",
+    "TravelRuleWalletProofsListResponse": "travel_rule.wallet_proofs.list_response",
     "TravelRuleWidgetSessionResponse": "components.travel_rule_widget_session_response",
     "TravelRuleWorkspace": "components.travel_rule_workspace",
     "TravelRuleWorkspaceClaim": "components.travel_rule_workspace",
@@ -4288,6 +4372,10 @@ __all__ = [
     "AccountResendOtpParams",
     "AccountResendOtpResponse",
     "AccountVerifyEmailParams",
+    "AddressValidationResponse",
+    "AddressValidationResult",
+    "AddressValidationResultAddress",
+    "AddressValidationValidateParams",
     "AgeEstimationEstimateParams",
     "AgeEstimationEstimateResponse",
     "AgeEstimationEstimateResponseAgeEstimation",
@@ -4897,6 +4985,7 @@ __all__ = [
     "RegulatoryReportList",
     "RegulatoryReportsCreateParams",
     "RegulatoryReportsCreateParamsNarrative",
+    "RegulatoryReportsDeleteParams",
     "RegulatoryReportsRetrieveDownloadUrlResponse",
     "RegulatoryReportsUpdateParams",
     "RegulatoryReportsUpdateParamsNarrative",
@@ -4920,6 +5009,7 @@ __all__ = [
     "RoutingPublicationRoutingCondition",
     "SandboxSimulateResponse",
     "SessionDecision",
+    "SessionDecisionBiometricConsent",
     "SessionDecisionContactDetails",
     "SessionDecisionDatabaseValidations",
     "SessionDecisionDatabaseValidationsErrors",
@@ -5053,6 +5143,7 @@ __all__ = [
     "SessionsBulkUpdateAmlHitStatusParamsHitUpdates",
     "SessionsBulkUpdateAmlHitStatusResponse",
     "SessionsCreateParams",
+    "SessionsCreateParamsBiometricConsent",
     "SessionsCreateParamsContactDetails",
     "SessionsCreateParamsExpectedDetails",
     "SessionsCreateParamsSign",
@@ -5186,6 +5277,8 @@ __all__ = [
     "TransactionTravelRuleCounterpartyVaspDdScoreBreakdownValue",
     "TransactionVerificationSessionAction",
     "TransactionWalletOwnershipAction",
+    "TransactionsBatchDeleteParamsAllTransactions",
+    "TransactionsBatchDeleteParamsSelectedTransactions",
     "TransactionsCreateParams",
     "TransactionsCreateParamsCounterparty",
     "TransactionsCreateParamsCounterpartyDeviceContext",
@@ -5254,6 +5347,18 @@ __all__ = [
     "TravelRuleMessageAttachment",
     "TravelRuleMessageAttachmentFiles",
     "TravelRuleNameMatch",
+    "TravelRuleNetworkParticipant",
+    "TravelRuleNetworkParticipantHistory",
+    "TravelRuleNetworkParticipantSummary",
+    "TravelRuleNetworkQuestionnaire",
+    "TravelRuleNetworkQuestionnaireAnswers",
+    "TravelRuleNetworkQuestionnaireAnswersLicences",
+    "TravelRuleNetworkQuestionnaireHistory",
+    "TravelRuleNetworkState",
+    "TravelRuleNetworksOverview",
+    "TravelRuleNetworksOverviewNetworks",
+    "TravelRuleNetworksUpdateQuestionnaireParams",
+    "TravelRuleNetworksUpdateQuestionnaireParamsLicences",
     "TravelRuleNextAction",
     "TravelRuleRegisterInboundParams",
     "TravelRuleRegisterInboundParamsOriginatingVasp",
@@ -5263,10 +5368,6 @@ __all__ = [
     "TravelRuleSettingsDetail",
     "TravelRuleSettingsDetailDiditNetwork",
     "TravelRuleSettingsDetailNetworks",
-    "TravelRuleSettingsDetailNetworksGtr",
-    "TravelRuleSettingsDetailNetworksSygna",
-    "TravelRuleSettingsDetailNetworksTrust",
-    "TravelRuleSettingsDetailNetworksVerifyvasp",
     "TravelRuleTestVaspInboundResponse",
     "TravelRuleTransferDetail",
     "TravelRuleTransferDetailCounterpartyVasp",
@@ -5283,6 +5384,10 @@ __all__ = [
     "TravelRuleWalletAddressesCreateParams",
     "TravelRuleWalletAddressesListResponse",
     "TravelRuleWalletAddressesUpdateParams",
+    "TravelRuleWalletProofFailureReason",
+    "TravelRuleWalletProofReview",
+    "TravelRuleWalletProofsDecideParams",
+    "TravelRuleWalletProofsListResponse",
     "TravelRuleWidgetSessionResponse",
     "TravelRuleWorkspace",
     "TravelRuleWorkspaceClaim",

@@ -91,10 +91,10 @@ class NetworkDetailResponse(BaseModel):
     """The organization's cross-organization sharing mode. Only `global` compares networks across organizations; `private` and `off` keep them to the organization's own history."""
 
     cross_org_available: bool | None = None
-    """Whether cross-organization signals apply to this organization. They need both the Identity Enterprise plan and the `global` sharing mode."""
+    """Whether cross-organization signals apply to this organization. They need both the Enterprise plan and the `global` sharing mode."""
 
     cross_org_unavailable_reason: Literal["plan", "sharing_mode"] | str | None = None
-    """Why cross-organization signals do not apply, checked in this order. `plan`: the organization's Identity plan does not include the cross-organization fraud network (it needs Identity Enterprise), whatever the sharing mode. `sharing_mode`: the plan includes it, but the sharing mode is `private` or `off`. Null when `cross_org_available` is `true`."""
+    """Why cross-organization signals do not apply, checked in this order. `plan`: the organization's plan does not include the cross-organization fraud network (it needs the Enterprise plan), whatever the sharing mode. `sharing_mode`: the plan includes it, but the sharing mode is `private` or `off`. Null when `cross_org_available` is `true`."""
 
     tags: list[NetworkTag] | None = None
     """Your application's tags on the network, oldest first. Each application sees only its own tags. `fraud_tags` is separate and unchanged: the tags the network's members carry."""

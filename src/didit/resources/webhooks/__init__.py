@@ -109,6 +109,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         face_retention_days: int | None | NotGiven = NOT_GIVEN,
+        biometric_consent_mode: Literal["auto", "always", "never"] | str | NotGiven = NOT_GIVEN,
         allowed_return_hosts: Sequence[str] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -129,6 +130,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
           data_retention_months: Automatic deletion window in months (a month counts as 30 days), or `null` for no automatic deletion. A change applies to existing sessions too: every user verification session older than the new window is deleted automatically, and that deletion is irreversible.
           face_retention_policy: What happens to a session's face embedding when the session is deleted. `retain_until_user_deleted` needs `face_retention_days` in the same request or already set. A change applies to session deletions from then on; it creates or purges no existing biometric template.
           face_retention_days: Retention period, in days, of biometric templates under `retain_until_user_deleted`.
+          biometric_consent_mode: When the hosted flow and the native SDKs ask the person for explicit biometric consent before a face capture. `auto` (default) asks only where a trigger applies: a declared state, the person's IP, or the identity document's issuer is in Illinois, Texas or Colorado, or the person looks to be in the US without a known state. `always` asks every person whose workflow captures a face. `never` never shows the step, and you collect consent yourself before the selfie. Each change is recorded in the audit log. See [Biometric consent](https://docs.didit.me/getting-started/biometric-consent).
           allowed_return_hosts: Replaces the whole list of Digital ID wallet return hosts. Bare hostnames only, such as `shop.example.com`: no scheme, port, path or wildcard. Values are lowercased and duplicates are dropped. Send `[]` to clear the list.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -150,6 +152,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
                     "data_retention_months": data_retention_months,
                     "face_retention_policy": face_retention_policy,
                     "face_retention_days": face_retention_days,
+                    "biometric_consent_mode": biometric_consent_mode,
                     "allowed_return_hosts": allowed_return_hosts,
                 },
                 extra_headers=extra_headers,
@@ -230,6 +233,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         face_retention_days: int | None | NotGiven = NOT_GIVEN,
+        biometric_consent_mode: Literal["auto", "always", "never"] | str | NotGiven = NOT_GIVEN,
         allowed_return_hosts: Sequence[str] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -250,6 +254,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
           data_retention_months: Automatic deletion window in months (a month counts as 30 days), or `null` for no automatic deletion. A change applies to existing sessions too: every user verification session older than the new window is deleted automatically, and that deletion is irreversible.
           face_retention_policy: What happens to a session's face embedding when the session is deleted. `retain_until_user_deleted` needs `face_retention_days` in the same request or already set. A change applies to session deletions from then on; it creates or purges no existing biometric template.
           face_retention_days: Retention period, in days, of biometric templates under `retain_until_user_deleted`.
+          biometric_consent_mode: When the hosted flow and the native SDKs ask the person for explicit biometric consent before a face capture. `auto` (default) asks only where a trigger applies: a declared state, the person's IP, or the identity document's issuer is in Illinois, Texas or Colorado, or the person looks to be in the US without a known state. `always` asks every person whose workflow captures a face. `never` never shows the step, and you collect consent yourself before the selfie. Each change is recorded in the audit log. See [Biometric consent](https://docs.didit.me/getting-started/biometric-consent).
           allowed_return_hosts: Replaces the whole list of Digital ID wallet return hosts. Bare hostnames only, such as `shop.example.com`: no scheme, port, path or wildcard. Values are lowercased and duplicates are dropped. Send `[]` to clear the list.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -271,6 +276,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
                     "data_retention_months": data_retention_months,
                     "face_retention_policy": face_retention_policy,
                     "face_retention_days": face_retention_days,
+                    "biometric_consent_mode": biometric_consent_mode,
                     "allowed_return_hosts": allowed_return_hosts,
                 },
                 extra_headers=extra_headers,

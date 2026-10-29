@@ -5,6 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.address_validation_result import AddressValidationResult
 from didit.types.components.aml_screening import AMLScreening
 from didit.types.components.bank_verification_result import BankVerificationResult
 from didit.types.components.document_ai_detected_code import DocumentAIDetectedCode
@@ -17,6 +18,7 @@ from didit.types.components.signature_result import SignatureResult
 
 __all__ = [
     "SessionDecision",
+    "SessionDecisionBiometricConsent",
     "SessionDecisionContactDetails",
     "SessionDecisionDatabaseValidations",
     "SessionDecisionDatabaseValidationsErrors",
@@ -135,6 +137,104 @@ __all__ = [
     "SessionDecisionResubmissionsRequestedBy",
     "SessionDecisionReviews",
 ]
+
+
+class SessionDecisionBiometricConsent(BaseModel):
+    """Whether the session required explicit biometric consent before a face capture, why, and the evidence of the answer. User Verification (KYC) sessions only; the same object is in the `decision` of session webhooks. `null` when the session was never evaluated, for example a workflow without a face capture. Fields with no recorded value are `null`. A native SDK below 4.10.0, or one that does not report its version, cannot show the consent step: its face captures run as before, and a session that required consent then reports `status: "pending"` with `reason: "BIOMETRIC_CONSENT_UNSUPPORTED_SDK"`. See [Biometric consent](/getting-started/biometric-consent)."""
+
+    required: bool | None = None
+    """Whether the session must collect explicit biometric consent. Never goes back to `false`."""
+
+    trigger: (
+        Literal[
+            "declared_state",
+            "ip_state",
+            "ip_unknown",
+            "document_issuer",
+            "forced",
+            "customer_collected",
+        ]
+        | str
+        | None
+    ) = None
+    """Why consent is required, or how it was satisfied. `declared_state`: you declared a covered state (`user_state`, or a US address in `expected_details`). `ip_state`: the person's IP is in a covered state (Illinois, Texas, Colorado). `ip_unknown`: the evidence places the person in the US but the state cannot be told (the IP is in the US with no state, or cannot be located while your details or the document place the person in the US). `document_issuer`: the identity document was issued by a covered state. `forced`: the application's mode is Always. `customer_collected`: you sent `biometric_consent` when creating the session. `null` while not required."""
+
+    status: Literal["not_required", "pending", "given", "declined"] | str | None = None
+    """`not_required`; `pending` (required and not given: the person has not answered yet, or `reason` says why it was not collected); `given`; `declined` (a decline was recorded and the session ended as `Declined`; no Didit screen offers a decline today)."""
+
+    given_at: _dt.datetime | None = None
+    """When consent was given. For `customer_collected`, the `given_at` you sent."""
+
+    declined_at: _dt.datetime | None = None
+    """When a decline was recorded."""
+
+    text_version: str | None = None
+    """Version id of the consent text the person answered, or the one you sent."""
+
+    text_hash: str | None = None
+    """SHA-256 (hex) of the exact consent text shown, in the language it was shown in."""
+
+    locale: str | None = None
+    """Language the consent text was shown in."""
+
+    policy_url: str | None = None
+    """The biometric data policy the consent step linked to."""
+
+    step: str | None = None
+    """Workflow step the session was on when the person answered, for example `LIVENESS`."""
+
+    node_id: str | None = None
+    """Workflow graph node the session was on when the person answered."""
+
+    ip_address: str | None = None
+    """IP the answer came from."""
+
+    ip_country_code: str | None = None
+    """ISO 3166-1 alpha-2 country of the answer's IP."""
+
+    ip_state: str | None = None
+    """ISO 3166-2 subdivision of the answer's IP, for example `US-IL`."""
+
+    ip_city: str | None = None
+    """City of the answer's IP."""
+
+    user_agent: str | None = None
+    """User agent of the answer's request."""
+
+    detected_ip_address: str | None = None
+    """The person's IP the requirement was last evaluated from. Can differ from `ip_address` when the person answered on another device."""
+
+    detected_country_code: str | None = None
+    """ISO 3166-1 alpha-2 country of the detected IP."""
+
+    detected_state: str | None = None
+    """ISO 3166-2 subdivision of the detected IP."""
+
+    detected_city: str | None = None
+    """City of the detected IP."""
+
+    declared_state: str | None = None
+    """ISO 3166-2 subdivision you declared: `user_state`, or the state of a US address in `expected_details`."""
+
+    document_state: str | None = None
+    """ISO 3166-2 subdivision that issued the identity document, read at ID capture."""
+
+    jurisdictions: list[str] | None = None
+    """US states (USPS codes, for example `IL`) whose biometric law covers the person. `US` when the evidence places the person in the US but no state is known. Empty when none applies."""
+
+    retention_months: int | None = None
+    """The shortest biometric retention limit, in months, among `jurisdictions`. `null` when none applies."""
+
+    reason: (
+        Literal["BIOMETRIC_CONSENT_UNSUPPORTED_SDK", "BIOMETRIC_CONSENT_DECLINED"] | str | None
+    ) = None
+    """`BIOMETRIC_CONSENT_UNSUPPORTED_SDK`: consent was required and a native SDK below 4.10.0, or one that did not report its version, captured a face without the consent step; `status` stays `pending`, or `given` if the person later agreed in the hosted flow. `BIOMETRIC_CONSENT_DECLINED`: a decline was recorded (it replaces the SDK reason). `null` otherwise, and always `null` when the session did not require consent."""
+
+    decline_reason: Literal["BIOMETRIC_CONSENT_DECLINED"] | str | None = None
+    """`BIOMETRIC_CONSENT_DECLINED` when a recorded decline ended the session, otherwise `null`."""
+
+    face_data_deleted_at: _dt.datetime | None = None
+    """When the decline deleted the session's face images, videos and face templates. `null` unless a decline was recorded."""
 
 
 class SessionDecisionContactDetails(BaseModel):
@@ -1516,6 +1616,9 @@ class SessionDecisionIdVerifications(BaseModel):
 
     document_liveness: SessionDecisionIdVerificationsDocumentLiveness | None = None
     """Document-liveness scores per fraud type, reported whether or not a warning fired, so an approved document can still be audited. `null` when the check did not run."""
+
+    address_validation: AddressValidationResult | None = None
+    """Address Validation of the address printed on this document: whether it exists and its normalised form, as the document read it (a later correction of `address` does not run it again). Present when this ID verification step enabled the Address Validation add-on; `null` otherwise."""
 
 
 class SessionDecisionIpAnalysesIdDocumentLocation(BaseModel):
@@ -3037,6 +3140,9 @@ class SessionDecisionPoaVerifications(BaseModel):
     detected_codes: list[DocumentAIDetectedCode] | None = None
     """QR codes and barcodes detected across every processed page of the document. Empty when none are found. A located but undecodable QR code has `parsed_payload: null`."""
 
+    address_validation: AddressValidationResult | None = None
+    """Address Validation of the address on this proof of address: whether it exists and its normalised form, as the document read it (a later correction of `poa_address` does not run it again). Present when this Proof of Address step enabled the Address Validation add-on and the upload passed the document checks; `null` otherwise."""
+
 
 class SessionDecisionQuestionnaireResponsesSectionsItemsAnswer(BaseModel):
     """Answer provided for the item"""
@@ -3386,7 +3492,7 @@ class SessionDecisionRegistryChecksCompany(BaseModel):
     """The tier the registry delivered and that is billed. Also in `ownership.tier_delivered`."""
 
     registry_ownership_status: str | None = None
-    """`not_requested`, `pending`, `delivered` or `unavailable`. Also in `ownership.status`."""
+    """`not_requested`, `pending`, `delivered`, `not_held` or `unavailable`. Also in `ownership.status`."""
 
 
 class SessionDecisionRegistryChecks(BaseModel):
@@ -3629,6 +3735,9 @@ class SessionDecision(BaseModel):
 
     resubmissions: list[SessionDecisionResubmissions] | None = None
     """Returned only with `include=resubmissions`, for user and business sessions. One entry per resubmission request, oldest first. Each entry carries the results the resubmitted steps returned before the request, so earlier submissions stay readable. Deleting the session deletes every submission."""
+
+    biometric_consent: SessionDecisionBiometricConsent | None = None
+    """Whether the session required explicit biometric consent before a face capture, why, and the evidence of the answer. User Verification (KYC) sessions only; the same object is in the `decision` of session webhooks. `null` when the session was never evaluated, for example a workflow without a face capture. Fields with no recorded value are `null`. A native SDK below 4.10.0, or one that does not report its version, cannot show the consent step: its face captures run as before, and a session that required consent then reports `status: "pending"` with `reason: "BIOMETRIC_CONSENT_UNSUPPORTED_SDK"`. See [Biometric consent](/getting-started/biometric-consent)."""
 
     investigator: InvestigatorBlock | None = None
     """The item's latest Investigator review, or null when it never had one. Carried by the V3 session and business session decision (and so by `status.updated` webhooks)."""

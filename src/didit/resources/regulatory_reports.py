@@ -249,6 +249,7 @@ class RegulatoryReports(SyncAPIResource):
         self,
         report_uuid: str,
         *,
+        confirm_delete: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -256,12 +257,15 @@ class RegulatoryReports(SyncAPIResource):
     ) -> None:
         """Delete report.
 
-        Delete a draft or validated report. Finalized reports cannot be deleted (409).
+        Delete a regulatory report permanently. The report, its copied narrative and reasons, its transaction links, and its generated goAML XML and PDF are erased, including every stored version of those files. The report disappears from lists and download URLs stop working. Other records, including the case, transactions, people and companies, are not deleted. There is no undo.
+
+        A draft or validated report can be deleted without a request body. Deleting a finalized report requires `confirm_delete: true` in the request body. If the report is missing, the request returns `404`; if a finalized report is sent without confirmation, it returns `400` and nothing is deleted.
 
         ``DELETE /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/``
 
         Args:
           report_uuid: Report UUID.
+          confirm_delete: Set to true to confirm that a finalized report and its generated files are deleted permanently.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -276,6 +280,7 @@ class RegulatoryReports(SyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                body={"confirm_delete": confirm_delete},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -701,6 +706,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         self,
         report_uuid: str,
         *,
+        confirm_delete: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -708,12 +714,15 @@ class AsyncRegulatoryReports(AsyncAPIResource):
     ) -> None:
         """Delete report.
 
-        Delete a draft or validated report. Finalized reports cannot be deleted (409).
+        Delete a regulatory report permanently. The report, its copied narrative and reasons, its transaction links, and its generated goAML XML and PDF are erased, including every stored version of those files. The report disappears from lists and download URLs stop working. Other records, including the case, transactions, people and companies, are not deleted. There is no undo.
+
+        A draft or validated report can be deleted without a request body. Deleting a finalized report requires `confirm_delete: true` in the request body. If the report is missing, the request returns `404`; if a finalized report is sent without confirmation, it returns `400` and nothing is deleted.
 
         ``DELETE /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/``
 
         Args:
           report_uuid: Report UUID.
+          confirm_delete: Set to true to confirm that a finalized report and its generated files are deleted permanently.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -728,6 +737,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                body={"confirm_delete": confirm_delete},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

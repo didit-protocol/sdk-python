@@ -92,12 +92,12 @@ class Billing(SyncAPIResource):
     ) -> BillingTopUpResponse:
         """Top up credits.
 
-        Add credits via a hosted checkout session (**$50 minimum**); not available on annual plans. Redirect the customer to the returned `checkout_session_url`.
+        Add credits via a hosted Stripe Checkout session (**\\$50 to \\$10,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.
 
         ``POST /v3/billing/top-up/``
 
         Args:
-          amount_in_dollars: Amount to charge, in USD. **Must be at least 50.** Tax is added automatically at checkout based on the customer's billing address.
+          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 10,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address.
           success_url: URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
           cancel_url: URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -188,12 +188,12 @@ class AsyncBilling(AsyncAPIResource):
     ) -> BillingTopUpResponse:
         """Top up credits.
 
-        Add credits via a hosted checkout session (**$50 minimum**); not available on annual plans. Redirect the customer to the returned `checkout_session_url`.
+        Add credits via a hosted Stripe Checkout session (**\\$50 to \\$10,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.
 
         ``POST /v3/billing/top-up/``
 
         Args:
-          amount_in_dollars: Amount to charge, in USD. **Must be at least 50.** Tax is added automatically at checkout based on the customer's billing address.
+          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 10,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address.
           success_url: URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
           cancel_url: URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.

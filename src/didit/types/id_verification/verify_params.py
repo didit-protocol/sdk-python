@@ -24,7 +24,7 @@ class IdVerificationVerifyParams(TypedDict, total=False):
     """Password to decrypt `back_image` when it is an encrypted PDF."""
 
     perform_document_liveness: bool
-    """Screens both images for presentation fraud: screen replays (`SCREEN_CAPTURE_DETECTED`), printed copies (`PRINTED_COPY_DETECTED`), and portrait manipulation (`PORTRAIT_MANIPULATION_DETECTED`). Any of these auto-declines. Enabled by default; set to `false` to skip fraud screening and reduce latency."""
+    """Screens both images for presentation fraud: screen replays (`SCREEN_CAPTURE_DETECTED`), printed copies (`PRINTED_COPY_DETECTED`), and portrait manipulation (`PORTRAIT_MANIPULATION_DETECTED`). Any of these auto-declines. Enabled by default; set to `false` to skip fraud screening and reduce latency. When enabled and the provider returns no usable score, the response is `In Review` with a `DOCUMENT_LIVENESS_NOT_COMPUTED` warning rather than `Approved`."""
 
     minimum_age: int | None
     """Accepted and validated (1–120) but **currently not applied** by this endpoint - it never produces a `MINIMUM_AGE_NOT_MET` warning from this field. Enforce age rules from the returned `date_of_birth`/`age`, or use a verification-session workflow with age restrictions."""

@@ -89,7 +89,7 @@ class DocumentAi(SyncAPIResource):
 
         **Decision logic.** Each risk maps to a configurable action: `DECLINE` → `status: "Declined"`, `REVIEW` → `status: "In Review"`, `NO_ACTION` → informational only. Defaults mirror the workflow step: unreadable document `REVIEW`, missing required fields `REVIEW`, suspected manipulation `DECLINE`, name mismatch `NO_ACTION`, unsupported file `REVIEW`. A document that cannot be processed at all returns `400`; a readable but problematic document returns `200` with `Declined`/`In Review` - always inspect `document_ai.status` and `document_ai.warnings`, not just the HTTP code.
 
-        **Billing.** Each `200` response consumes one Document AI API credit - **$0.20 per document, no free tier** (standalone APIs never have one). When the organization's balance cannot cover the call, the endpoint returns `403` before any processing. Sandbox API keys return a deterministic mock response and are not charged.
+        **Billing.** Each `200` response consumes one Document AI API credit - **$0.20 per document** at list, paid from your plan credit or top-up balance. When the organization's balance cannot cover the call, the endpoint returns `403` before any processing. Sandbox API keys return a deterministic mock response and are not charged.
 
         **Persistence.** With `save_api_request=true` (default) the call is stored as an API-type session: the document, the extracted values, the field definitions and the name-match snapshot are kept, the session shows up in the Business Console, and `request_id` works with `GET /v3/session/{sessionId}/decision/`.
 
@@ -211,7 +211,7 @@ class AsyncDocumentAi(AsyncAPIResource):
 
         **Decision logic.** Each risk maps to a configurable action: `DECLINE` → `status: "Declined"`, `REVIEW` → `status: "In Review"`, `NO_ACTION` → informational only. Defaults mirror the workflow step: unreadable document `REVIEW`, missing required fields `REVIEW`, suspected manipulation `DECLINE`, name mismatch `NO_ACTION`, unsupported file `REVIEW`. A document that cannot be processed at all returns `400`; a readable but problematic document returns `200` with `Declined`/`In Review` - always inspect `document_ai.status` and `document_ai.warnings`, not just the HTTP code.
 
-        **Billing.** Each `200` response consumes one Document AI API credit - **$0.20 per document, no free tier** (standalone APIs never have one). When the organization's balance cannot cover the call, the endpoint returns `403` before any processing. Sandbox API keys return a deterministic mock response and are not charged.
+        **Billing.** Each `200` response consumes one Document AI API credit - **$0.20 per document** at list, paid from your plan credit or top-up balance. When the organization's balance cannot cover the call, the endpoint returns `403` before any processing. Sandbox API keys return a deterministic mock response and are not charged.
 
         **Persistence.** With `save_api_request=true` (default) the call is stored as an API-type session: the document, the extracted values, the field definitions and the name-match snapshot are kept, the session shows up in the Business Console, and `request_id` works with `GET /v3/session/{sessionId}/decision/`.
 

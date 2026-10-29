@@ -14,7 +14,7 @@ class BillingRetrieveBalanceResponse(BaseModel):
     """When `true`, Didit will automatically charge the saved payment method to add credits once the balance crosses `auto_refill_threshold`. Configured from Console → Billing."""
 
     auto_refill_amount: str | None = None
-    """USD amount that will be charged on each auto-refill. `null` when auto-refill is disabled or unset."""
+    """USD amount that will be charged and added to the balance on each auto-refill, at face value. Set from \\$50 to \\$10,000 in Console → Billing. `null` when auto-refill is disabled or unset."""
 
     auto_refill_threshold: str | None = None
     """Trigger threshold in USD. Auto-refill fires when `balance` falls below this value. `null` when auto-refill is disabled or unset."""

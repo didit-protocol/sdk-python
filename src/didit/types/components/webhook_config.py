@@ -42,6 +42,9 @@ class WebhookConfig(BaseModel):
     face_retention_days: int | None
     """Retention period, in days, of biometric templates under `retain_until_user_deleted`. Required when that policy is set."""
 
+    biometric_consent_mode: Literal["auto", "always", "never"] | str | None = None
+    """When the hosted flow and the native SDKs ask the person for explicit biometric consent before a face capture. `auto` (default) asks only where a trigger applies: a declared state, the person's IP, or the identity document's issuer is in Illinois, Texas or Colorado, or the person looks to be in the US without a known state. `always` asks every person whose workflow captures a face. `never` never shows the step, and you collect consent yourself before the selfie. Each change is recorded in the audit log. See [Biometric consent](https://docs.didit.me/getting-started/biometric-consent)."""
+
     available_events: list[WebhookConfigAvailableEvents]
     """Every event type a destination can subscribe to, with a display label."""
 

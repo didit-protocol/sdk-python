@@ -36,6 +36,7 @@ def test_webhooks_retrieve_config() -> None:
                 "data_retention_months": 24,
                 "face_retention_policy": "delete_with_session",
                 "face_retention_days": None,
+                "biometric_consent_mode": "auto",
                 "available_events": [
                     {"value": "status.updated", "label": "Session status updated"},
                     {"value": "data.updated", "label": "Session data updated"},
@@ -86,6 +87,7 @@ def test_webhooks_update_config() -> None:
             json_body={
                 "face_retention_policy": "retain_until_user_deleted",
                 "face_retention_days": 365,
+                "biometric_consent_mode": "auto",
             },
             status=200,
             response_json={
@@ -96,6 +98,7 @@ def test_webhooks_update_config() -> None:
                 "data_retention_months": 24,
                 "face_retention_policy": "retain_until_user_deleted",
                 "face_retention_days": 365,
+                "biometric_consent_mode": "auto",
                 "available_events": [
                     {"value": "status.updated", "label": "Session status updated"},
                     {"value": "data.updated", "label": "Session data updated"},
@@ -129,10 +132,14 @@ def test_webhooks_update_config() -> None:
             },
         ),
         lambda c: c.webhooks.update_config(
-            face_retention_policy="retain_until_user_deleted", face_retention_days=365
+            face_retention_policy="retain_until_user_deleted",
+            face_retention_days=365,
+            biometric_consent_mode="auto",
         ),
         lambda c: c.webhooks.update_config(
-            face_retention_policy="retain_until_user_deleted", face_retention_days=365
+            face_retention_policy="retain_until_user_deleted",
+            face_retention_days=365,
+            biometric_consent_mode="auto",
         ),
         lambda r: isinstance(r, WebhookConfig),
         lambda r: isinstance(r, WebhookConfig),

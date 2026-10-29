@@ -6,15 +6,12 @@ from typing import Literal
 from didit._models import BaseModel
 from didit.types.components.travel_rule_data_sharing_fields import TravelRuleDataSharingFields
 from didit.types.components.travel_rule_matching_rules import TravelRuleMatchingRules
+from didit.types.components.travel_rule_network_state import TravelRuleNetworkState
 
 __all__ = [
     "TravelRuleSettingsDetail",
     "TravelRuleSettingsDetailDiditNetwork",
     "TravelRuleSettingsDetailNetworks",
-    "TravelRuleSettingsDetailNetworksGtr",
-    "TravelRuleSettingsDetailNetworksSygna",
-    "TravelRuleSettingsDetailNetworksTrust",
-    "TravelRuleSettingsDetailNetworksVerifyvasp",
 ]
 
 
@@ -45,68 +42,20 @@ class TravelRuleSettingsDetailDiditNetwork(BaseModel):
     """Whether the current compliance_email was confirmed through the emailed link."""
 
 
-class TravelRuleSettingsDetailNetworksGtr(BaseModel):
-    rail: Literal["GTR"] | str | None = None
-
-    mode: Literal["own", "didit", "off", "unavailable"] | str | None = None
-    """own: connected customer membership takes precedence; didit: configured platform membership allowed; off: platform routing disabled with no own membership; unavailable: neither membership available."""
-
-    platform_available: bool | None = None
-    """Whether platform membership is configured; not a live health check."""
-
-    connected: bool | None = None
-    """Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."""
-
-
-class TravelRuleSettingsDetailNetworksSygna(BaseModel):
-    rail: Literal["SYGNA"] | str | None = None
-
-    mode: Literal["own", "didit", "off", "unavailable"] | str | None = None
-    """own: connected customer membership takes precedence; didit: configured platform membership allowed; off: platform routing disabled with no own membership; unavailable: neither membership available."""
-
-    platform_available: bool | None = None
-    """Whether platform membership is configured; not a live health check."""
-
-    connected: bool | None = None
-    """Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."""
-
-
-class TravelRuleSettingsDetailNetworksTrust(BaseModel):
-    rail: Literal["TRUST"] | str | None = None
-
-    mode: Literal["own", "didit", "off", "unavailable"] | str | None = None
-    """own: connected customer membership takes precedence; didit: configured platform membership allowed; off: platform routing disabled with no own membership; unavailable: neither membership available."""
-
-    platform_available: bool | None = None
-    """Whether platform membership is configured; not a live health check."""
-
-    connected: bool | None = None
-    """Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."""
-
-
-class TravelRuleSettingsDetailNetworksVerifyvasp(BaseModel):
-    rail: Literal["VERIFYVASP"] | str | None = None
-
-    mode: Literal["own", "didit", "off", "unavailable"] | str | None = None
-    """own: connected customer membership takes precedence; didit: configured platform membership allowed; off: platform routing disabled with no own membership; unavailable: neither membership available."""
-
-    platform_available: bool | None = None
-    """Whether platform membership is configured; not a live health check."""
-
-    connected: bool | None = None
-    """Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."""
-
-
 class TravelRuleSettingsDetailNetworks(BaseModel):
-    """Effective membership configuration for each network. No network, including GTR, is included by default. This is not a live health or delivery check."""
+    """Per network, how this application would send and why it cannot. No network, including GTR, is included by default: a network is reachable through your own connected membership, or through Didit's membership once Didit's membership of that network is live and your own participant on it is active. Not a live health or delivery check."""
 
-    gtr: TravelRuleSettingsDetailNetworksGtr | None = None
+    gtr: TravelRuleNetworkState | None = None
+    """How Travel Rule messages on one network would be sent for this application, and why they cannot be. Configuration status, not a live health or delivery check."""
 
-    trust: TravelRuleSettingsDetailNetworksTrust | None = None
+    trust: TravelRuleNetworkState | None = None
+    """How Travel Rule messages on one network would be sent for this application, and why they cannot be. Configuration status, not a live health or delivery check."""
 
-    verifyvasp: TravelRuleSettingsDetailNetworksVerifyvasp | None = None
+    verifyvasp: TravelRuleNetworkState | None = None
+    """How Travel Rule messages on one network would be sent for this application, and why they cannot be. Configuration status, not a live health or delivery check."""
 
-    sygna: TravelRuleSettingsDetailNetworksSygna | None = None
+    sygna: TravelRuleNetworkState | None = None
+    """How Travel Rule messages on one network would be sent for this application, and why they cannot be. Configuration status, not a live health or delivery check."""
 
 
 class TravelRuleSettingsDetail(BaseModel):
@@ -188,7 +137,7 @@ class TravelRuleSettingsDetail(BaseModel):
     """Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks."""
 
     networks: TravelRuleSettingsDetailNetworks | None = None
-    """Effective membership configuration for each network. No network, including GTR, is included by default. This is not a live health or delivery check."""
+    """Per network, how this application would send and why it cannot. No network, including GTR, is included by default: a network is reachable through your own connected membership, or through Didit's membership once Didit's membership of that network is live and your own participant on it is active. Not a live health or delivery check."""
 
     didit_network: TravelRuleSettingsDetailDiditNetwork | None = None
     """Whether the Didit network lists your VASP profile, so other Didit customers find it in the directory and reach it on the INTERNAL rail, and each condition it still misses."""

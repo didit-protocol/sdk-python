@@ -37,6 +37,7 @@ from didit.types.sessions.bulk_update_aml_hit_status_response import (
     SessionsBulkUpdateAmlHitStatusResponse,
 )
 from didit.types.sessions.create_params import (
+    SessionsCreateParamsBiometricConsent,
     SessionsCreateParamsContactDetails,
     SessionsCreateParamsExpectedDetails,
     SessionsCreateParamsSign,
@@ -170,6 +171,7 @@ class Sessions(SyncAPIResource):
         callback: str | NotGiven = NOT_GIVEN,
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        tags: Sequence[str] | NotGiven = NOT_GIVEN,
         language: Literal[
             "en",
             "ar",
@@ -233,6 +235,8 @@ class Sessions(SyncAPIResource):
         portrait_image: str | NotGiven = NOT_GIVEN,
         sandbox_scenario: str | NotGiven = NOT_GIVEN,
         sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
+        user_state: str | NotGiven = NOT_GIVEN,
+        biometric_consent: SessionsCreateParamsBiometricConsent | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -256,12 +260,15 @@ class Sessions(SyncAPIResource):
           callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
+          tags: Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
           sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
+          user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
+          biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -280,12 +287,15 @@ class Sessions(SyncAPIResource):
                     "callback": callback,
                     "callback_method": callback_method,
                     "metadata": metadata,
+                    "tags": tags,
                     "language": language,
                     "contact_details": contact_details,
                     "expected_details": expected_details,
                     "portrait_image": portrait_image,
                     "sandbox_scenario": sandbox_scenario,
                     "sign": sign,
+                    "user_state": user_state,
+                    "biometric_consent": biometric_consent,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -392,6 +402,8 @@ class Sessions(SyncAPIResource):
         **Rate limit:** shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         To bulk-delete KYC sessions by their numeric `session_number`, use `POST /v3/sessions/delete/` instead.
+
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``DELETE /v3/session/{sessionId}/delete/``
 
@@ -633,7 +645,7 @@ class Sessions(SyncAPIResource):
           offset: Number of rows to skip before the first returned row. Defaults to 0. Prefer following the `next`/`previous` URLs from the response.
           status: Comma-separated list of session statuses to include, e.g. `Approved,In Review`. Values are case-sensitive; see [Verification Statuses](/integration/verification-statuses). Unknown values match nothing.
           vendor_data: Exact-match filter on the `vendor_data` you sent at session creation (your own user/business identifier). For partial matches use `search` instead.
-          search: Smart free-text search. A full UUID matches `session_id`; numeric input matches session-number prefix, document/personal numbers, phone prefix, or `vendor_data`; input containing `@` matches email prefixes; other text matches names (accent-insensitive) and `vendor_data`. Free text containing digits additionally matches document/personal-number search fields and session-number prefixes.
+          search: A complete displayed reference such as `S-0001` (user) or `B-0001` (business) matches only that session number and kind; leading zeros and letter case do not affect matching. Smart free-text search. A full UUID matches `session_id`; numeric input matches session-number prefix, document/personal numbers, phone prefix, or `vendor_data`; input containing `@` matches email prefixes; other text matches names (accent-insensitive) and `vendor_data`. Free text containing digits additionally matches document/personal-number search fields and session-number prefixes.
           workflow_id: Comma-separated workflow UUIDs (find them on the Workflows page in the Console). Malformed UUIDs in the list are ignored; if none are valid the result is empty.
           date_from: Only sessions created on or after this date (UTC), format `YYYY-MM-DD`. Malformed dates return `400`.
           date_to: Only sessions created up to this date (UTC), format `YYYY-MM-DD`. For KYC rows the entire day is included; for KYB rows the comparison is `created_at <= date_to` (midnight), so use the next day's date to include a full day of KYB sessions.
@@ -853,6 +865,8 @@ class Sessions(SyncAPIResource):
         **Rate limit:** shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         This endpoint accepts API keys only. Business Console user Bearer tokens are rejected with `403` (unlike the single-session delete, which accepts both).
+
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``POST /v3/sessions/delete/``
 
@@ -2206,6 +2220,7 @@ class AsyncSessions(AsyncAPIResource):
         callback: str | NotGiven = NOT_GIVEN,
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        tags: Sequence[str] | NotGiven = NOT_GIVEN,
         language: Literal[
             "en",
             "ar",
@@ -2269,6 +2284,8 @@ class AsyncSessions(AsyncAPIResource):
         portrait_image: str | NotGiven = NOT_GIVEN,
         sandbox_scenario: str | NotGiven = NOT_GIVEN,
         sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
+        user_state: str | NotGiven = NOT_GIVEN,
+        biometric_consent: SessionsCreateParamsBiometricConsent | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2292,12 +2309,15 @@ class AsyncSessions(AsyncAPIResource):
           callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
+          tags: Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
           sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
+          user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
+          biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2316,12 +2336,15 @@ class AsyncSessions(AsyncAPIResource):
                     "callback": callback,
                     "callback_method": callback_method,
                     "metadata": metadata,
+                    "tags": tags,
                     "language": language,
                     "contact_details": contact_details,
                     "expected_details": expected_details,
                     "portrait_image": portrait_image,
                     "sandbox_scenario": sandbox_scenario,
                     "sign": sign,
+                    "user_state": user_state,
+                    "biometric_consent": biometric_consent,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -2428,6 +2451,8 @@ class AsyncSessions(AsyncAPIResource):
         **Rate limit:** shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         To bulk-delete KYC sessions by their numeric `session_number`, use `POST /v3/sessions/delete/` instead.
+
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``DELETE /v3/session/{sessionId}/delete/``
 
@@ -2669,7 +2694,7 @@ class AsyncSessions(AsyncAPIResource):
           offset: Number of rows to skip before the first returned row. Defaults to 0. Prefer following the `next`/`previous` URLs from the response.
           status: Comma-separated list of session statuses to include, e.g. `Approved,In Review`. Values are case-sensitive; see [Verification Statuses](/integration/verification-statuses). Unknown values match nothing.
           vendor_data: Exact-match filter on the `vendor_data` you sent at session creation (your own user/business identifier). For partial matches use `search` instead.
-          search: Smart free-text search. A full UUID matches `session_id`; numeric input matches session-number prefix, document/personal numbers, phone prefix, or `vendor_data`; input containing `@` matches email prefixes; other text matches names (accent-insensitive) and `vendor_data`. Free text containing digits additionally matches document/personal-number search fields and session-number prefixes.
+          search: A complete displayed reference such as `S-0001` (user) or `B-0001` (business) matches only that session number and kind; leading zeros and letter case do not affect matching. Smart free-text search. A full UUID matches `session_id`; numeric input matches session-number prefix, document/personal numbers, phone prefix, or `vendor_data`; input containing `@` matches email prefixes; other text matches names (accent-insensitive) and `vendor_data`. Free text containing digits additionally matches document/personal-number search fields and session-number prefixes.
           workflow_id: Comma-separated workflow UUIDs (find them on the Workflows page in the Console). Malformed UUIDs in the list are ignored; if none are valid the result is empty.
           date_from: Only sessions created on or after this date (UTC), format `YYYY-MM-DD`. Malformed dates return `400`.
           date_to: Only sessions created up to this date (UTC), format `YYYY-MM-DD`. For KYC rows the entire day is included; for KYB rows the comparison is `created_at <= date_to` (midnight), so use the next day's date to include a full day of KYB sessions.
@@ -2889,6 +2914,8 @@ class AsyncSessions(AsyncAPIResource):
         **Rate limit:** shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.
 
         This endpoint accepts API keys only. Business Console user Bearer tokens are rejected with `403` (unlike the single-session delete, which accepts both).
+
+        **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
         ``POST /v3/sessions/delete/``
 

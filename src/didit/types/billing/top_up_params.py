@@ -8,7 +8,7 @@ __all__ = ["BillingTopUpParams"]
 
 class BillingTopUpParams(TypedDict, total=False):
     amount_in_dollars: Required[float]
-    """Amount to charge, in USD. **Must be at least 50.** Tax is added automatically at checkout based on the customer's billing address."""
+    """Amount to charge, in USD. **Must be from 50 to 10,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address."""
 
     success_url: str
     """URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID."""
