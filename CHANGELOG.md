@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/didit-protocol/sdk-python/compare/v1.0.0...v1.0.1) (2026-10-29)
+
+
+### Miscellaneous Chores
+
+* release 1.0.1 ([6922b70](https://github.com/didit-protocol/sdk-python/commit/6922b7080f345870855483e367a60ec514957cff))
+
 ## [1.0.0](https://github.com/didit-protocol/sdk-python/compare/v0.1.0...v1.0.0) (2026-10-29)
 
 
