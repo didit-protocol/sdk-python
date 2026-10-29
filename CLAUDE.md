@@ -1,7 +1,7 @@
 # Didit Python SDK (`sdk-python`)
 
 The official Didit server-side library for Python: `didit-sdk` on PyPI (name transfer pending, see docs/DESIGN.md 2.1).
-Status: in development, not released.
+Status: released (1.0.0 on 2026-10-29). Merging the release-please pull request publishes the next version.
 
 ## Read first
 

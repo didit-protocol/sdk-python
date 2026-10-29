@@ -2,8 +2,6 @@
 
 The official Didit Python library: identity verification (KYC), business verification (KYB), AML screening, biometrics, transaction monitoring, Travel Rule and customer authentication, from your Python backend.
 
-> In development, not released yet. The package will be published on PyPI as `didit-sdk` with the first release.
-
 - Every server-side endpoint of the Didit API, with typed requests and responses
 - `Didit` (blocking) and `AsyncDidit` (asyncio) clients with the same methods
 - Webhook verification with every Didit signature scheme, and typed events

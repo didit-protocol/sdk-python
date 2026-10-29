@@ -74,9 +74,9 @@ They never run in the default CI. A maintainer can start them from the CI workfl
 
 Pull request titles and commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fix:` is a patch, `feat:` a minor version, and `feat!:` or a `BREAKING CHANGE:` footer a major version (a minor version while the SDK is 0.x). Pick the type that matches the semver impact of the change.
 
-Releases are cut by release-please from those commits. It updates the version and generates `CHANGELOG.md`; never edit the changelog by hand. Squash-merge pull requests so that their conventional title becomes the commit release-please reads. `.release-please-manifest.json` holds the version in the repository (0.1.0, unreleased). The first public release sets its version with a `Release-As: <version>` footer in a commit on `main`.
+Releases are cut by release-please from those commits. It updates the version and generates `CHANGELOG.md`; never edit the changelog by hand. Squash-merge pull requests so that their conventional title becomes the commit release-please reads. `.release-please-manifest.json` holds the released version.
 
-Nothing is published without Alex's explicit approval, and nothing before the 2026-11-01 Didit release. Do not push release tags or publish packages.
+release-please runs on every push to `main`. Merging the release pull request is the release approval (Alex, 2026-10-29); nobody tags or publishes by hand. The next run creates the `vX.Y.Z` tag and the GitHub release and starts `release.yml`, which publishes to PyPI with trusted publishing (no stored token).
 
 ## Keep the SDKs in sync
 

@@ -33,9 +33,8 @@ The Maven group `me.didit` is the one `sdk-android` already publishes under.
 
 PyPI `didit` belongs to an unrelated project from 2013.
 PyPI `didit-sdk` is a community package by Agustin Saiz (MIT, unofficial, sessions only).
-Didit is asking him to transfer the `didit-sdk` project to Didit, so the official SDK ships under that name.
-Until the transfer is confirmed, keep `didit-sdk` as the distribution name in `pyproject.toml` and do not publish.
-The fallback name, if the transfer does not happen, is `didit-python`.
+He transferred the `didit-sdk` project to Didit, and the official SDK published 1.0.0 under that name on 2026-10-29.
+As agreed with him, his releases 0.1.0 to 0.4.0 stay published, his PyPI user stays on the project, and the 1.0.0 release notes credit the initial community versions.
 
 ## 3. Source of truth: the OpenAPI contract
 
