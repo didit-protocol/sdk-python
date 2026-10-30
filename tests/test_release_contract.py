@@ -97,7 +97,7 @@ def test_every_released_webhook_event_verifies(
         assert event.payload == payload
     else:
         assert webhook_type in TYPED_EVENTS
-        assert event.vendor_data == "vendor-1"
+        assert getattr(event, "vendor_data", None) == "vendor-1"
 
 
 def test_typed_events_are_the_design_set() -> None:
