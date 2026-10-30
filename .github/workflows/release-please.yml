@@ -1,0 +1,44 @@
+# release-please keeps the release pull request (version bump and the generated CHANGELOG.md)
+# up to date on every push to main. Merging that pull request makes the next run create the
+# vX.Y.Z tag and the GitHub release and then start release.yml for that tag, which publishes
+# to PyPI with trusted publishing. No stored token is needed: everything runs on GITHUB_TOKEN.
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write # start release.yml
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - name: Publish the release
+        # A release created with GITHUB_TOKEN does not trigger the `release` event, so start
+        # release.yml for the new tag directly (workflow_dispatch is allowed with GITHUB_TOKEN).
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG" -f tag="$TAG"
