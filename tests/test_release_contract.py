@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import importlib
 import json
 import pathlib
+import sys
 from typing import Any
 
 import pytest
@@ -25,10 +27,8 @@ from didit import webhooks
 from didit.webhooks import UnknownEvent, canonical_json
 from didit.webhooks._events import _BY_TYPE  # pyright: ignore[reportPrivateUsage]
 
-try:  # Python 3.11+
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10
-    import tomli as tomllib  # type: ignore[no-redef]
+# Python 3.11 has tomllib; 3.10 reads the same files with tomli (a mypy dependency there).
+tomllib: Any = importlib.import_module("tomllib" if sys.version_info >= (3, 11) else "tomli")
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPEC = json.loads((ROOT / "openapi" / "verification.json").read_text("utf-8"))
