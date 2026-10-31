@@ -851,6 +851,9 @@ if TYPE_CHECKING:
     from didit.types.components.digital_id_wallet_api_ftn_wallet_verification_start_country_enum import (
         DigitalIdWalletApiFtnWalletVerificationStartCountryEnum as DigitalIdWalletApiFtnWalletVerificationStartCountryEnum,
     )
+    from didit.types.components.digital_id_wallet_api_google_wallet_wallet_verification_start_country_enum import (
+        DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum as DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum,
+    )
     from didit.types.components.digital_id_wallet_api_govbr_wallet_verification_start_country_enum import (
         DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum as DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum,
     )
@@ -889,6 +892,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.digital_id_wallet_api_wallet_catalog_response import (
         DigitalIdWalletApiWalletCatalogResponse as DigitalIdWalletApiWalletCatalogResponse,
+    )
+    from didit.types.components.digital_id_wallet_api_wallet_digital_credentials_request import (
+        DigitalIdWalletApiWalletDigitalCredentialsRequest as DigitalIdWalletApiWalletDigitalCredentialsRequest,
     )
     from didit.types.components.digital_id_wallet_api_wallet_identity import (
         DigitalIdWalletApiWalletIdentity as DigitalIdWalletApiWalletIdentity,
@@ -2387,6 +2393,9 @@ if TYPE_CHECKING:
     from didit.types.id_wallets.start_ftn_params import (
         IdWalletsStartFtnParams as IdWalletsStartFtnParams,
     )
+    from didit.types.id_wallets.start_google_wallet_params import (
+        IdWalletsStartGoogleWalletParams as IdWalletsStartGoogleWalletParams,
+    )
     from didit.types.id_wallets.start_govbr_params import (
         IdWalletsStartGovbrParams as IdWalletsStartGovbrParams,
     )
@@ -2425,6 +2434,9 @@ if TYPE_CHECKING:
     )
     from didit.types.id_wallets.start_vipps_params import (
         IdWalletsStartVippsParams as IdWalletsStartVippsParams,
+    )
+    from didit.types.id_wallets.submit_verification_response_params import (
+        IdWalletsSubmitVerificationResponseParams as IdWalletsSubmitVerificationResponseParams,
     )
     from didit.types.investigator.accept_run_params import (
         InvestigatorAcceptRunParams as InvestigatorAcceptRunParams,
@@ -3493,6 +3505,7 @@ _MODULES: dict[str, str] = {
     "DigitalIdWalletApiEudiWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_eudi_wallet_verification_start_country_enum",
     "DigitalIdWalletApiFranceconnectWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_franceconnect_wallet_verification_start_country_enum",
     "DigitalIdWalletApiFtnWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_ftn_wallet_verification_start_country_enum",
+    "DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_google_wallet_wallet_verification_start_country_enum",
     "DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_govbr_wallet_verification_start_country_enum",
     "DigitalIdWalletApiIdcardEeWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_idcard_ee_wallet_verification_start_country_enum",
     "DigitalIdWalletApiIdinWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_idin_wallet_verification_start_country_enum",
@@ -3506,6 +3519,7 @@ _MODULES: dict[str, str] = {
     "DigitalIdWalletApiWallet": "components.digital_id_wallet_api_wallet",
     "DigitalIdWalletApiWalletCatalogEntry": "components.digital_id_wallet_api_wallet_catalog_entry",
     "DigitalIdWalletApiWalletCatalogResponse": "components.digital_id_wallet_api_wallet_catalog_response",
+    "DigitalIdWalletApiWalletDigitalCredentialsRequest": "components.digital_id_wallet_api_wallet_digital_credentials_request",
     "DigitalIdWalletApiWalletIdentity": "components.digital_id_wallet_api_wallet_identity",
     "DigitalIdWalletApiWalletNextAction": "components.digital_id_wallet_api_wallet_next_action",
     "DigitalIdWalletApiWalletNextActionTypeEnum": "components.digital_id_wallet_api_wallet_next_action_type_enum",
@@ -3604,6 +3618,7 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartFranceconnectParams": "id_wallets.start_franceconnect_params",
     "IdWalletsStartFrejaidParams": "id_wallets.start_frejaid_params",
     "IdWalletsStartFtnParams": "id_wallets.start_ftn_params",
+    "IdWalletsStartGoogleWalletParams": "id_wallets.start_google_wallet_params",
     "IdWalletsStartGovbrParams": "id_wallets.start_govbr_params",
     "IdWalletsStartGovukWalletParams": "id_wallets.start_govuk_wallet_params",
     "IdWalletsStartIdcardEeParams": "id_wallets.start_idcard_ee_params",
@@ -3617,6 +3632,7 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartSmartIdParams": "id_wallets.start_smart_id_params",
     "IdWalletsStartUaePassParams": "id_wallets.start_uae_pass_params",
     "IdWalletsStartVippsParams": "id_wallets.start_vipps_params",
+    "IdWalletsSubmitVerificationResponseParams": "id_wallets.submit_verification_response_params",
     "ImportJobSummary": "components.import_job_summary",
     "ImportJobSummaryFaceTemplates": "components.import_job_summary",
     "ImportJobSummaryProgress": "components.import_job_summary",
@@ -4652,6 +4668,7 @@ __all__ = [
     "DigitalIdWalletApiEudiWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiFranceconnectWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiFtnWalletVerificationStartCountryEnum",
+    "DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiIdcardEeWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiIdinWalletVerificationStartCountryEnum",
@@ -4665,6 +4682,7 @@ __all__ = [
     "DigitalIdWalletApiWallet",
     "DigitalIdWalletApiWalletCatalogEntry",
     "DigitalIdWalletApiWalletCatalogResponse",
+    "DigitalIdWalletApiWalletDigitalCredentialsRequest",
     "DigitalIdWalletApiWalletIdentity",
     "DigitalIdWalletApiWalletNextAction",
     "DigitalIdWalletApiWalletNextActionTypeEnum",
@@ -4763,6 +4781,7 @@ __all__ = [
     "IdWalletsStartFranceconnectParams",
     "IdWalletsStartFrejaidParams",
     "IdWalletsStartFtnParams",
+    "IdWalletsStartGoogleWalletParams",
     "IdWalletsStartGovbrParams",
     "IdWalletsStartGovukWalletParams",
     "IdWalletsStartIdcardEeParams",
@@ -4776,6 +4795,7 @@ __all__ = [
     "IdWalletsStartSmartIdParams",
     "IdWalletsStartUaePassParams",
     "IdWalletsStartVippsParams",
+    "IdWalletsSubmitVerificationResponseParams",
     "ImportJobSummary",
     "ImportJobSummaryFaceTemplates",
     "ImportJobSummaryProgress",

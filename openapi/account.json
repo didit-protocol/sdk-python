@@ -207,12 +207,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/register/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"password\": \"MyStr0ng!Pass\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\nprint(resp.json())\n# {'message': 'Registration successful...', 'email': 'you@yourdomain.com'}"
+            "source": "from didit import Didit\n\n# This call needs no API key.\nclient = Didit()\n\nresult = client.account.register(\n    email=\"you@yourdomain.com\",\n    password=\"MyStr0ng!Pass\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/register/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      password: \"MyStr0ng!Pass\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Register failed: ${resp.status}`);\nconst data = await resp.json();\nconsole.log(data);"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// This call needs no API key.\nconst didit = new Didit();\n\nconst result = await didit.account.register({\n  email: \"you@yourdomain.com\",\n  password: \"MyStr0ng!Pass\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// This call needs no API key.\nclient := didit.NewClient()\n\nresult, err := client.Account.Register(ctx, didit.RegisterRequest{\n\tEmail:    \"you@yourdomain.com\",\n\tPassword: \"MyStr0ng!Pass\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.RegisterRequest;\n\n// This call needs no API key.\nDidit client = new Didit();\n\nvar result = client.account().register(RegisterRequest.builder()\n        .email(\"you@yourdomain.com\")\n        .password(\"MyStr0ng!Pass\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// This call needs no API key.\n$didit = new DiditClient();\n\n$result = $didit->account->register([\n    'email' => 'you@yourdomain.com',\n    'password' => 'MyStr0ng!Pass',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# This call needs no API key.\ndidit = Didit::Client.new\n\nresult = didit.account.register(\n  email: \"you@yourdomain.com\",\n  password: \"MyStr0ng!Pass\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// This call needs no API key.\nusing var client = new DiditClient();\n\nvar result = await client.Account.RegisterAsync(new RegisterRequest\n{\n    Email = \"you@yourdomain.com\",\n    Password = \"MyStr0ng!Pass\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "security": [
@@ -362,12 +387,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/verify-email/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"code\": \"A3K9F2\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\ndata = resp.json()\n\napi_key = data[\"application\"][\"api_key\"]\nprint(f\"Save this for x-api-key: {api_key}\")"
+            "source": "from didit import Didit\n\n# This call needs no API key.\nclient = Didit()\n\nresult = client.account.verify_email(\n    email=\"you@yourdomain.com\",\n    code=\"A3K9F2\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/verify-email/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      code: \"A3K9F2\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Verify failed: ${resp.status}`);\nconst { application, access_token } = await resp.json();\n// application.api_key -> x-api-key for verification.didit.me/v3\n// access_token -> Authorization: Bearer ... for this auth API"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// This call needs no API key.\nconst didit = new Didit();\n\nconst result = await didit.account.verifyEmail({\n  email: \"you@yourdomain.com\",\n  code: \"A3K9F2\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// This call needs no API key.\nclient := didit.NewClient()\n\nresult, err := client.Account.VerifyEmail(ctx, didit.VerifyEmailRequest{\n\tEmail: \"you@yourdomain.com\",\n\tCode:  \"A3K9F2\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.VerifyEmailRequest;\n\n// This call needs no API key.\nDidit client = new Didit();\n\nvar result = client.account().verifyEmail(VerifyEmailRequest.builder()\n        .email(\"you@yourdomain.com\")\n        .code(\"A3K9F2\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// This call needs no API key.\n$didit = new DiditClient();\n\n$result = $didit->account->verifyEmail([\n    'email' => 'you@yourdomain.com',\n    'code' => 'A3K9F2',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# This call needs no API key.\ndidit = Didit::Client.new\n\nresult = didit.account.verify_email(\n  email: \"you@yourdomain.com\",\n  code: \"A3K9F2\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// This call needs no API key.\nusing var client = new DiditClient();\n\nvar result = await client.Account.VerifyEmailAsync(new VerifyEmailRequest\n{\n    Email = \"you@yourdomain.com\",\n    Code = \"A3K9F2\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "security": [
@@ -557,12 +607,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.post(\n    \"https://apx.didit.me/auth/v2/programmatic/login/\",\n    json={\n        \"email\": \"you@yourdomain.com\",\n        \"password\": \"MyStr0ng!Pass\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\ntokens = resp.json()\naccess_token = tokens[\"access_token\"]\n\n# Use against the Account Management endpoints on this host\norgs = requests.get(\n    \"https://apx.didit.me/auth/v2/organizations/me/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n).json()"
+            "source": "from didit import Didit\n\n# This call needs no API key.\nclient = Didit()\n\nresult = client.account.login(\n    email=\"you@yourdomain.com\",\n    password=\"MyStr0ng!Pass\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/programmatic/login/\",\n  {\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\" },\n    body: JSON.stringify({\n      email: \"you@yourdomain.com\",\n      password: \"MyStr0ng!Pass\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Login failed: ${resp.status}`);\nconst { access_token } = await resp.json();\n\n// Use against the Account Management endpoints on this host\nconst orgs = await fetch(\n  \"https://apx.didit.me/auth/v2/organizations/me/\",\n  { headers: { Authorization: `Bearer ${access_token}` } },\n).then((r) => r.json());"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// This call needs no API key.\nconst didit = new Didit();\n\nconst result = await didit.account.login({\n  email: \"you@yourdomain.com\",\n  password: \"MyStr0ng!Pass\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// This call needs no API key.\nclient := didit.NewClient()\n\nresult, err := client.Account.Login(ctx, didit.LoginRequest{\n\tEmail:    \"you@yourdomain.com\",\n\tPassword: \"MyStr0ng!Pass\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.LoginRequest;\n\n// This call needs no API key.\nDidit client = new Didit();\n\nvar result = client.account().login(LoginRequest.builder()\n        .email(\"you@yourdomain.com\")\n        .password(\"MyStr0ng!Pass\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// This call needs no API key.\n$didit = new DiditClient();\n\n$result = $didit->account->login([\n    'email' => 'you@yourdomain.com',\n    'password' => 'MyStr0ng!Pass',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# This call needs no API key.\ndidit = Didit::Client.new\n\nresult = didit.account.login(\n  email: \"you@yourdomain.com\",\n  password: \"MyStr0ng!Pass\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// This call needs no API key.\nusing var client = new DiditClient();\n\nvar result = await client.Account.LoginAsync(new LoginRequest\n{\n    Email = \"you@yourdomain.com\",\n    Password = \"MyStr0ng!Pass\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "security": [
@@ -684,12 +759,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.get(\n    \"https://apx.didit.me/auth/v2/organizations/me/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n)\nresp.raise_for_status()\norgs = resp.json()[\"results\"]  # paginated: count, next, previous, results\nfirst_org_id = orgs[0][\"uuid\"]"
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nfor item in client.account.organizations.list():\n    print(item)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  \"https://apx.didit.me/auth/v2/organizations/me/\",\n  { headers: { Authorization: `Bearer ${accessToken}` } },\n);\nif (!resp.ok) throw new Error(`List orgs failed: ${resp.status}`);\nconst { results: orgs } = await resp.json(); // paginated: count, next, previous, results\nconst firstOrgId = orgs[0].uuid;"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nfor await (const item of didit.account.organizations.list()) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\niter := client.Account.Organizations.ListAutoPaging(ctx, didit.AccountOrganizationsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nfor (var item : client.account().organizations().list()) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\nforeach ($didit->account->organizations->list() as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\ndidit.account.organizations.list.auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nawait foreach (var item in await client.Account.Organizations.ListAsync())\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
           }
         ],
         "parameters": [
@@ -952,12 +1052,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.post(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    json={\n        \"name\": \"Acme Customer App\",\n        \"website_url\": \"https://acme.example\",\n        \"redirect_uris\": [\"https://acme.example/callback\"],\n    },\n    timeout=10,\n)\nresp.raise_for_status()\napp = resp.json()\nprint(\"Save this:\", app[\"api_key\"])"
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nresult = client.account.applications.create(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n    name=\"Acme Customer App\",\n    website_url=\"https://acme.example\",\n    redirect_uris=[\"https://acme.example/callback\"],\n    terms_url=\"https://acme.example/terms\",\n    privacy_url=\"https://acme.example/privacy\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/`,\n  {\n    method: \"POST\",\n    headers: {\n      Authorization: `Bearer ${accessToken}`,\n      \"Content-Type\": \"application/json\",\n    },\n    body: JSON.stringify({\n      name: \"Acme Customer App\",\n      website_url: \"https://acme.example\",\n      redirect_uris: [\"https://acme.example/callback\"],\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Create app failed: ${resp.status}`);\nconst app = await resp.json();\nconsole.log(\"Save this:\", app.api_key);"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nconst result = await didit.account.applications.create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", {\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\nresult, err := client.Account.Applications.Create(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", didit.ApplicationCreateRequest{\n\tName:         didit.String(\"Acme Customer App\"),\n\tWebsiteURL:   didit.String(\"https://acme.example\"),\n\tRedirectURIs: didit.Some([]string{\"https://acme.example/callback\"}),\n\tTermsURL:     didit.String(\"https://acme.example/terms\"),\n\tPrivacyURL:   didit.String(\"https://acme.example/privacy\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.ApplicationCreateRequest;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nvar result = client.account().applications().create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", ApplicationCreateRequest.builder()\n        .name(\"Acme Customer App\")\n        .websiteUrl(\"https://acme.example\")\n        .redirectUris(List.of(\"https://acme.example/callback\"))\n        .termsUrl(\"https://acme.example/terms\")\n        .privacyUrl(\"https://acme.example/privacy\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\n$result = $didit->account->applications->create('a1b2c3d4-5678-90ab-cdef-111111111111', [\n    'name' => 'Acme Customer App',\n    'website_url' => 'https://acme.example',\n    'redirect_uris' => ['https://acme.example/callback'],\n    'terms_url' => 'https://acme.example/terms',\n    'privacy_url' => 'https://acme.example/privacy',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\nresult = didit.account.applications.create(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nvar result = await client.Account.Applications.CreateAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", new ApplicationCreateRequest\n{\n    Name = \"Acme Customer App\",\n    WebsiteUrl = \"https://acme.example\",\n    RedirectUris = new string[] { \"https://acme.example/callback\" },\n    TermsUrl = \"https://acme.example/terms\",\n    PrivacyUrl = \"https://acme.example/privacy\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       },
@@ -1203,6 +1328,43 @@
           {
             "BearerAuth": []
           }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nfor item in client.account.applications.list(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n):\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nfor await (const item of didit.account.applications.list(\"a1b2c3d4-5678-90ab-cdef-111111111111\")) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\niter := client.Account.Applications.ListAutoPaging(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", didit.AccountApplicationsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nfor (var item : client.account().applications().list(\"a1b2c3d4-5678-90ab-cdef-111111111111\")) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\nforeach ($didit->account->applications->list('a1b2c3d4-5678-90ab-cdef-111111111111') as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\ndidit.account.applications.list(\"a1b2c3d4-5678-90ab-cdef-111111111111\").auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nawait foreach (var item in await client.Account.Applications.ListAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
         ]
       }
     },
@@ -1388,12 +1550,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.get(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/{app_id}/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    timeout=10,\n)\nresp.raise_for_status()\napp = resp.json()\napi_key = app[\"api_key\"]  # use as x-api-key on verification.didit.me"
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nresult = client.account.applications.retrieve(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n    \"b2c3d4e5-6789-01bc-defg-222222222222\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/${appId}/`,\n  { headers: { Authorization: `Bearer ${accessToken}` } },\n);\nif (!resp.ok) throw new Error(`Get app failed: ${resp.status}`);\nconst app = await resp.json();\nconst apiKey = app.api_key; // use as x-api-key on verification.didit.me"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nconst result = await didit.account.applications.retrieve(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  \"b2c3d4e5-6789-01bc-defg-222222222222\",\n);\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\nresult, err := client.Account.Applications.Retrieve(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nvar result = client.account().applications().retrieve(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\n$result = $didit->account->applications->retrieve('a1b2c3d4-5678-90ab-cdef-111111111111', 'b2c3d4e5-6789-01bc-defg-222222222222');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\nresult = didit.account.applications.retrieve(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  \"b2c3d4e5-6789-01bc-defg-222222222222\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nvar result = await client.Account.Applications.RetrieveAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       },
@@ -1633,12 +1820,37 @@
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresp = requests.patch(\n    f\"https://apx.didit.me/auth/v2/organizations/me/{org_id}/applications/{app_id}/\",\n    headers={\"Authorization\": f\"Bearer {access_token}\"},\n    json={\n        \"name\": \"Acme Production App\",\n        \"website_url\": \"https://app.acme.example\",\n    },\n    timeout=10,\n)\nresp.raise_for_status()\nupdated = resp.json()"
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nresult = client.account.applications.update(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n    \"b2c3d4e5-6789-01bc-defg-222222222222\",\n    name=\"Acme Production App\",\n    website_url=\"https://app.acme.example\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
-            "label": "JavaScript",
-            "source": "const resp = await fetch(\n  `https://apx.didit.me/auth/v2/organizations/me/${orgId}/applications/${appId}/`,\n  {\n    method: \"PATCH\",\n    headers: {\n      Authorization: `Bearer ${accessToken}`,\n      \"Content-Type\": \"application/json\",\n    },\n    body: JSON.stringify({\n      name: \"Acme Production App\",\n      website_url: \"https://app.acme.example\",\n    }),\n  },\n);\nif (!resp.ok) throw new Error(`Update app failed: ${resp.status}`);\nconst updated = await resp.json();"
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nconst result = await didit.account.applications.update(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  \"b2c3d4e5-6789-01bc-defg-222222222222\",\n  {\n    name: \"Acme Production App\",\n    website_url: \"https://app.acme.example\",\n  },\n);\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\nresult, err := client.Account.Applications.Update(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\", didit.ApplicationUpdateRequest{\n\tName:       didit.String(\"Acme Production App\"),\n\tWebsiteURL: didit.String(\"https://app.acme.example\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.ApplicationUpdateRequest;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nvar result = client.account().applications().update(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\", ApplicationUpdateRequest.builder()\n        .name(\"Acme Production App\")\n        .websiteUrl(\"https://app.acme.example\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\n$result = $didit->account->applications->update('a1b2c3d4-5678-90ab-cdef-111111111111', 'b2c3d4e5-6789-01bc-defg-222222222222', [\n    'name' => 'Acme Production App',\n    'website_url' => 'https://app.acme.example',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\nresult = didit.account.applications.update(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  \"b2c3d4e5-6789-01bc-defg-222222222222\",\n  name: \"Acme Production App\",\n  website_url: \"https://app.acme.example\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nvar result = await client.Account.Applications.UpdateAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"b2c3d4e5-6789-01bc-defg-222222222222\", new ApplicationUpdateRequest\n{\n    Name = \"Acme Production App\",\n    WebsiteUrl = \"https://app.acme.example\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -1761,6 +1973,43 @@
         },
         "security": [
           {}
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# This call needs no API key.\nclient = Didit()\n\nresult = client.account.resend_otp(\n    email=\"dev@example.com\",\n    password=\"S3cure-Passw0rd!\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// This call needs no API key.\nconst didit = new Didit();\n\nconst result = await didit.account.resendOtp({\n  email: \"dev@example.com\",\n  password: \"S3cure-Passw0rd!\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// This call needs no API key.\nclient := didit.NewClient()\n\nresult, err := client.Account.ResendOTP(ctx, didit.AccountResendOTPParams{\n\tEmail:    \"dev@example.com\",\n\tPassword: \"S3cure-Passw0rd!\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.AccountResendOtpParams;\n\n// This call needs no API key.\nDidit client = new Didit();\n\nvar result = client.account().resendOtp(AccountResendOtpParams.builder()\n        .email(\"dev@example.com\")\n        .password(\"S3cure-Passw0rd!\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// This call needs no API key.\n$didit = new DiditClient();\n\n$result = $didit->account->resendOtp([\n    'email' => 'dev@example.com',\n    'password' => 'S3cure-Passw0rd!',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# This call needs no API key.\ndidit = Didit::Client.new\n\nresult = didit.account.resend_otp(\n  email: \"dev@example.com\",\n  password: \"S3cure-Passw0rd!\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// This call needs no API key.\nusing var client = new DiditClient();\n\nvar result = await client.Account.ResendOtpAsync(new AccountResendOtpParams\n{\n    Email = \"dev@example.com\",\n    Password = \"S3cure-Passw0rd!\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
         ]
       }
     }

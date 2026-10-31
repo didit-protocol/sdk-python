@@ -414,7 +414,10 @@ def test_businesses_set_ongoing_monitoring() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/vendor-businesses/toggle-ongoing-monitoring/",
             api="verification",
             auth="api_key",
-            json_body={"is_enabled": True},
+            json_body={
+                "is_enabled": True,
+                "didit_internal_id_list": ["b0000000-0000-4000-8000-0000000000b1"],
+            },
             status=200,
             response_json={
                 "users_total": 1,
@@ -428,8 +431,12 @@ def test_businesses_set_ongoing_monitoring() -> None:
                 "balance_sufficient": True,
             },
         ),
-        lambda c: c.businesses.set_ongoing_monitoring(is_enabled=True),
-        lambda c: c.businesses.set_ongoing_monitoring(is_enabled=True),
+        lambda c: c.businesses.set_ongoing_monitoring(
+            is_enabled=True, didit_internal_id_list=["b0000000-0000-4000-8000-0000000000b1"]
+        ),
+        lambda c: c.businesses.set_ongoing_monitoring(
+            is_enabled=True, didit_internal_id_list=["b0000000-0000-4000-8000-0000000000b1"]
+        ),
         lambda r: (
             (
                 (isinstance(r, OngoingMonitoringToggleResultVariant1))
@@ -455,7 +462,7 @@ def test_businesses_set_session_ongoing_monitoring() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/businesses/toggle-ongoing-monitoring/",
             api="verification",
             auth="api_key",
-            json_body={"is_enabled": True},
+            json_body={"is_enabled": True, "session_numbers": ["1001", "1002"]},
             status=200,
             response_json={
                 "users_total": 1,
@@ -469,8 +476,12 @@ def test_businesses_set_session_ongoing_monitoring() -> None:
                 "balance_sufficient": True,
             },
         ),
-        lambda c: c.businesses.set_session_ongoing_monitoring(is_enabled=True),
-        lambda c: c.businesses.set_session_ongoing_monitoring(is_enabled=True),
+        lambda c: c.businesses.set_session_ongoing_monitoring(
+            is_enabled=True, session_numbers=["1001", "1002"]
+        ),
+        lambda c: c.businesses.set_session_ongoing_monitoring(
+            is_enabled=True, session_numbers=["1001", "1002"]
+        ),
         lambda r: (
             (
                 (isinstance(r, OngoingMonitoringToggleResultVariant1))

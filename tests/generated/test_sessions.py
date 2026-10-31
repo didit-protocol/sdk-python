@@ -156,7 +156,12 @@ def test_sessions_bulk_update_aml_hit_status() -> None:
             api="verification",
             auth="api_key",
             query={"node_id": ["feature_aml_1"]},
-            json_body={"hit_updates": [{"hit_id": "abc123", "review_status": "Unreviewed"}]},
+            json_body={
+                "hit_updates": [
+                    {"hit_id": "abc123", "review_status": "Confirmed Match"},
+                    {"hit_id": "def456", "review_status": "False Positive"},
+                ]
+            },
             status=200,
             response_json={
                 "message": "Updated 2 hit(s) successfully",
@@ -165,12 +170,18 @@ def test_sessions_bulk_update_aml_hit_status() -> None:
         ),
         lambda c: c.sessions.bulk_update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_updates=[{"hit_id": "abc123", "review_status": "Unreviewed"}],
+            hit_updates=[
+                {"hit_id": "abc123", "review_status": "Confirmed Match"},
+                {"hit_id": "def456", "review_status": "False Positive"},
+            ],
             node_id_query="feature_aml_1",
         ),
         lambda c: c.sessions.bulk_update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_updates=[{"hit_id": "abc123", "review_status": "Unreviewed"}],
+            hit_updates=[
+                {"hit_id": "abc123", "review_status": "Confirmed Match"},
+                {"hit_id": "def456", "review_status": "False Positive"},
+            ],
             node_id_query="feature_aml_1",
         ),
         lambda r: isinstance(r, SessionsBulkUpdateAmlHitStatusResponse),
@@ -2673,7 +2684,7 @@ def test_sessions_update_aml_hit_status() -> None:
             api="verification",
             auth="api_key",
             query={"node_id": ["feature_aml_1"]},
-            json_body={"hit_id": "abc123", "review_status": "Unreviewed"},
+            json_body={"hit_id": "abc123", "review_status": "False Positive"},
             status=200,
             response_json={
                 "message": "Hit status updated successfully",
@@ -2684,13 +2695,13 @@ def test_sessions_update_aml_hit_status() -> None:
         lambda c: c.sessions.update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
             hit_id="abc123",
-            review_status="Unreviewed",
+            review_status="False Positive",
             node_id_query="feature_aml_1",
         ),
         lambda c: c.sessions.update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
             hit_id="abc123",
-            review_status="Unreviewed",
+            review_status="False Positive",
             node_id_query="feature_aml_1",
         ),
         lambda r: isinstance(r, SessionsUpdateAmlHitStatusResponse),
@@ -3261,16 +3272,21 @@ def test_sessions_imports_check_provider() -> None:
             path="/v3/session/imports/providers/check/",
             api="verification",
             auth="api_key",
-            json_body={"provider": "sumsub", "credentials": {"key": "sample"}},
+            json_body={
+                "provider": "sumsub",
+                "credentials": {"app_token": "sample-token", "secret_key": "sample-secret"},
+            },
             status=200,
             response_json={"ok": True, "provider": "sample", "credential_hint": "sample-secret"},
             strict_type=SessionsImportsCheckProviderResponse,
         ),
         lambda c: c.sessions.imports.check_provider(
-            provider="sumsub", credentials={"key": "sample"}
+            provider="sumsub",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda c: c.sessions.imports.check_provider(
-            provider="sumsub", credentials={"key": "sample"}
+            provider="sumsub",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
         lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
@@ -3770,10 +3786,12 @@ def test_sessions_imports_retry() -> None:
             strict_type=SessionImportJob,
         ),
         lambda c: c.sessions.imports.retry(
-            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+            "00000000-0000-4000-8000-000000000001",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda c: c.sessions.imports.retry(
-            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+            "00000000-0000-4000-8000-000000000001",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),

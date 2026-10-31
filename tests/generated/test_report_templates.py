@@ -16,7 +16,16 @@ def test_report_templates_create() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/report-templates/",
             api="verification",
             auth="api_key",
-            json_body={"name": "sample", "jurisdiction": "sa", "report_type": "SAR"},
+            json_body={
+                "name": "US SAR default",
+                "jurisdiction": "US",
+                "report_type": "SAR",
+                "field_config": {
+                    "rentity_id": "FIU-US-00123",
+                    "submission_code": "E",
+                    "currency_code_local": "USD",
+                },
+            },
             status=201,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -30,8 +39,26 @@ def test_report_templates_create() -> None:
             },
             strict_type=ReportTemplateDetail,
         ),
-        lambda c: c.report_templates.create(name="sample", jurisdiction="sa", report_type="SAR"),
-        lambda c: c.report_templates.create(name="sample", jurisdiction="sa", report_type="SAR"),
+        lambda c: c.report_templates.create(
+            name="US SAR default",
+            jurisdiction="US",
+            report_type="SAR",
+            field_config={
+                "rentity_id": "FIU-US-00123",
+                "submission_code": "E",
+                "currency_code_local": "USD",
+            },
+        ),
+        lambda c: c.report_templates.create(
+            name="US SAR default",
+            jurisdiction="US",
+            report_type="SAR",
+            field_config={
+                "rentity_id": "FIU-US-00123",
+                "submission_code": "E",
+                "currency_code_local": "USD",
+            },
+        ),
         lambda r: isinstance(r, ReportTemplateDetail),
         lambda r: isinstance(r, ReportTemplateDetail),
     )
@@ -131,7 +158,7 @@ def test_report_templates_update() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/report-templates/7ec00000-0000-4000-8000-000000000006/",
             api="verification",
             auth="api_key",
-            json_body={"name": "sample"},
+            json_body={"field_config": {"rentity_id": "FIU-US-00124"}},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -145,8 +172,12 @@ def test_report_templates_update() -> None:
             },
             strict_type=ReportTemplateDetail,
         ),
-        lambda c: c.report_templates.update("7ec00000-0000-4000-8000-000000000006", name="sample"),
-        lambda c: c.report_templates.update("7ec00000-0000-4000-8000-000000000006", name="sample"),
+        lambda c: c.report_templates.update(
+            "7ec00000-0000-4000-8000-000000000006", field_config={"rentity_id": "FIU-US-00124"}
+        ),
+        lambda c: c.report_templates.update(
+            "7ec00000-0000-4000-8000-000000000006", field_config={"rentity_id": "FIU-US-00124"}
+        ),
         lambda r: isinstance(r, ReportTemplateDetail),
         lambda r: isinstance(r, ReportTemplateDetail),
     )

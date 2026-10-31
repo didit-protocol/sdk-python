@@ -432,7 +432,10 @@ def test_users_set_ongoing_monitoring() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/vendor-users/toggle-ongoing-monitoring/",
             api="verification",
             auth="api_key",
-            json_body={"is_enabled": True},
+            json_body={
+                "is_enabled": True,
+                "didit_internal_id_list": ["5b9a0000-0000-4000-8000-00000000f00d"],
+            },
             status=200,
             response_json={
                 "users_total": 1,
@@ -446,8 +449,12 @@ def test_users_set_ongoing_monitoring() -> None:
                 "balance_sufficient": True,
             },
         ),
-        lambda c: c.users.set_ongoing_monitoring(is_enabled=True),
-        lambda c: c.users.set_ongoing_monitoring(is_enabled=True),
+        lambda c: c.users.set_ongoing_monitoring(
+            is_enabled=True, didit_internal_id_list=["5b9a0000-0000-4000-8000-00000000f00d"]
+        ),
+        lambda c: c.users.set_ongoing_monitoring(
+            is_enabled=True, didit_internal_id_list=["5b9a0000-0000-4000-8000-00000000f00d"]
+        ),
         lambda r: (
             (
                 (isinstance(r, OngoingMonitoringToggleResultVariant1))
