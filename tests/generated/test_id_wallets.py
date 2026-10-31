@@ -940,6 +940,79 @@ def test_id_wallets_start_ftn() -> None:
     )
 
 
+def test_id_wallets_start_google_wallet() -> None:
+    """``POST /v3/id-verification/wallets/google-wallet/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/id-verification/wallets/google-wallet/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "country": "USA",
+                "origin": "https://app.example.com",
+                "vendor_data": "your-customer-reference",
+                "metadata": {"reference": "example"},
+            },
+            status=201,
+            response_json={
+                "request_id": "00000000-0000-4000-8000-000000000001",
+                "wallet_verification": {
+                    "wallet": {
+                        "id": "google_wallet",
+                        "name": "Google Wallet",
+                        "issuing_authority": "Google Wallet (ID pass) and US state issuers (mobile driving licence)",
+                    },
+                    "country": "USA",
+                    "status": "Not Finished",
+                    "outcome": "pending",
+                    "error": None,
+                    "interaction": "digital_credentials",
+                    "simulated": False,
+                    "expires_at": "2026-01-01T10:10:00Z",
+                    "next_action": {
+                        "type": "request_digital_credential",
+                        "digital_credentials": {
+                            "protocol": "openid4vp-v1-signed",
+                            "request": {
+                                "requests": [
+                                    {
+                                        "protocol": "openid4vp-v1-signed",
+                                        "data": {"request": "<compact JWS signed by Didit>"},
+                                    }
+                                ]
+                            },
+                        },
+                    },
+                    "identity": None,
+                    "attributes": None,
+                    "level_of_assurance": None,
+                    "verified_at": None,
+                    "signature_valid": None,
+                    "credential_type": "sample-secret",
+                },
+                "vendor_data": "your-customer-reference",
+                "metadata": {"reference": "example"},
+                "created_at": "2026-01-01T10:00:00Z",
+            },
+        ),
+        lambda c: c.id_wallets.start_google_wallet(
+            country="USA",
+            origin="https://app.example.com",
+            vendor_data="your-customer-reference",
+            metadata={"reference": "example"},
+        ),
+        lambda c: c.id_wallets.start_google_wallet(
+            country="USA",
+            origin="https://app.example.com",
+            vendor_data="your-customer-reference",
+            metadata={"reference": "example"},
+        ),
+        lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),
+        lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),
+    )
+
+
 def test_id_wallets_start_govbr() -> None:
     """``POST /v3/id-verification/wallets/govbr/``"""
     check_operation(
@@ -1754,6 +1827,78 @@ def test_id_wallets_start_vipps() -> None:
             vendor_data="your-customer-reference",
             metadata={"reference": "example"},
             country="NOR",
+        ),
+        lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),
+        lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),
+    )
+
+
+def test_id_wallets_submit_verification_response() -> None:
+    """``POST /v3/id-verification/wallets/verifications/{request_id}/response/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/id-verification/wallets/verifications/00000000-0000-4000-8000-000000000001/response/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "response": {
+                    "protocol": "openid4vp-v1-signed",
+                    "data": {"response": "<compact JWE returned by the wallet>"},
+                }
+            },
+            status=200,
+            response_json={
+                "request_id": "00000000-0000-4000-8000-000000000001",
+                "wallet_verification": {
+                    "wallet": {
+                        "id": "google_wallet",
+                        "name": "Google Wallet",
+                        "issuing_authority": "Google Wallet (ID pass) and US state issuers (mobile driving licence)",
+                    },
+                    "country": "USA",
+                    "status": "Approved",
+                    "outcome": "verified",
+                    "error": None,
+                    "interaction": "digital_credentials",
+                    "simulated": False,
+                    "expires_at": "2026-01-01T10:10:00Z",
+                    "next_action": None,
+                    "identity": {
+                        "full_name": "Alex Example",
+                        "first_name": "Alex",
+                        "last_name": "Example",
+                        "date_of_birth": "1990-01-31",
+                        "nationality": "USA",
+                        "issuing_state": "USA",
+                    },
+                    "attributes": {
+                        "document_number": "X0000000",
+                        "document_expiry_date": "2030-01-31",
+                    },
+                    "level_of_assurance": "substantial",
+                    "verified_at": "2026-01-01T10:01:00Z",
+                    "signature_valid": True,
+                    "credential_type": "sample-secret",
+                },
+                "vendor_data": "your-customer-reference",
+                "metadata": {"reference": "example"},
+                "created_at": "2026-01-01T10:00:00Z",
+            },
+        ),
+        lambda c: c.id_wallets.submit_verification_response(
+            "00000000-0000-4000-8000-000000000001",
+            response={
+                "protocol": "openid4vp-v1-signed",
+                "data": {"response": "<compact JWE returned by the wallet>"},
+            },
+        ),
+        lambda c: c.id_wallets.submit_verification_response(
+            "00000000-0000-4000-8000-000000000001",
+            response={
+                "protocol": "openid4vp-v1-signed",
+                "data": {"response": "<compact JWE returned by the wallet>"},
+            },
         ),
         lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),
         lambda r: isinstance(r, DigitalIdWalletApiWalletVerificationResponse),

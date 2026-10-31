@@ -26,6 +26,7 @@ class DigitalIdWalletApiWalletCatalogEntry(BaseModel):
     interaction: DigitalIdWalletApiInteractionEnum
     """* `redirect` - redirect
     * `in_app` - in_app
+    * `digital_credentials` - digital_credentials
     """
 
     required_fields: list[str]

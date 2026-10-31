@@ -8,7 +8,10 @@ from typing_extensions import TypeAlias
 __all__ = ["DigitalIdWalletApiWalletNextActionTypeEnum"]
 
 
-DigitalIdWalletApiWalletNextActionTypeEnum: TypeAlias = Literal["redirect", "confirm_in_app"] | str
+DigitalIdWalletApiWalletNextActionTypeEnum: TypeAlias = (
+    Literal["redirect", "confirm_in_app", "request_digital_credential"] | str
+)
 """* `redirect` - redirect
 * `confirm_in_app` - confirm_in_app
+* `request_digital_credential` - request_digital_credential
 """

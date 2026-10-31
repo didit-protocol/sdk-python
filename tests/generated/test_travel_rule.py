@@ -1475,7 +1475,11 @@ def test_travel_rule_networks_update_questionnaire() -> None:
             path="/v3/travel-rule/networks/questionnaire/",
             api="verification",
             auth="api_key",
-            json_body={"legal_name": "sample"},
+            json_body={
+                "legal_name": "Example VASP Ltd",
+                "incorporation_country": "ES",
+                "aml_ctf_policy_attested": True,
+            },
             status=200,
             response_json={
                 "status": "draft",
@@ -1520,8 +1524,12 @@ def test_travel_rule_networks_update_questionnaire() -> None:
             },
             strict_type=TravelRuleNetworkQuestionnaire,
         ),
-        lambda c: c.travel_rule.networks.update_questionnaire(legal_name="sample"),
-        lambda c: c.travel_rule.networks.update_questionnaire(legal_name="sample"),
+        lambda c: c.travel_rule.networks.update_questionnaire(
+            legal_name="Example VASP Ltd", incorporation_country="ES", aml_ctf_policy_attested=True
+        ),
+        lambda c: c.travel_rule.networks.update_questionnaire(
+            legal_name="Example VASP Ltd", incorporation_country="ES", aml_ctf_policy_attested=True
+        ),
         lambda r: isinstance(r, TravelRuleNetworkQuestionnaire),
         lambda r: isinstance(r, TravelRuleNetworkQuestionnaire),
     )
@@ -1881,7 +1889,7 @@ def test_travel_rule_wallet_proofs_decide() -> None:
             path="/v3/travel-rule/wallet-proofs/00000000-0000-4000-8000-000000000001/decision/",
             api="verification",
             auth="api_key",
-            json_body={"decision": "approve"},
+            json_body={"decision": "approve", "note": "Address matches the wallet app."},
             status=200,
             response_json={
                 "proof_id": "00000000-0000-4000-8000-000000000003",
@@ -1906,10 +1914,14 @@ def test_travel_rule_wallet_proofs_decide() -> None:
             strict_type=TravelRuleWalletProofReview,
         ),
         lambda c: c.travel_rule.wallet_proofs.decide(
-            "00000000-0000-4000-8000-000000000001", decision="approve"
+            "00000000-0000-4000-8000-000000000001",
+            decision="approve",
+            note="Address matches the wallet app.",
         ),
         lambda c: c.travel_rule.wallet_proofs.decide(
-            "00000000-0000-4000-8000-000000000001", decision="approve"
+            "00000000-0000-4000-8000-000000000001",
+            decision="approve",
+            note="Address matches the wallet app.",
         ),
         lambda r: isinstance(r, TravelRuleWalletProofReview),
         lambda r: isinstance(r, TravelRuleWalletProofReview),
