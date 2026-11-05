@@ -100,7 +100,7 @@ class ReviewItem(BaseModel):
     """Names of the fields modified by this activity (e.g. `["status"]`). Empty for comments and for entries added via `POST …/reviews/`."""
 
     metadata: dict[str, object] | None = None
-    """Extra context for system-generated entries. Console detail-page views carry `{"system_event": "DETAIL_VIEWED", "detail_type": "verification"}` so they can be filtered out of notification logic. `null` for ordinary entries."""
+    """Extra context for system-generated entries. Console detail-page views carry `{"system_event": "DETAIL_VIEWED", "detail_type": "verification"}` so they can be filtered out of notification logic. A `COMMENT` its author edited in the Console carries `edited_at`, the ISO 8601 time of the last edit (`comment` and `mentioned_emails` then hold the edited text and its mentions). `null` for ordinary entries."""
 
     created_at: _dt.datetime | None = None
     """When the entry was written, ISO 8601 UTC."""

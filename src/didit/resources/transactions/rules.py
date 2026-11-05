@@ -137,7 +137,7 @@ class TransactionsRules(SyncAPIResource):
     ) -> TransactionRuleDetail:
         """Create rule.
 
-        Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE.
+        Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE. To change a library rule, create it as a copy: send the library rule's definition with `metadata.based_on` (its library key) and `metadata.based_on_rule_uuid`.
 
         ``POST /v3/transactions/rules/``
 
@@ -278,7 +278,7 @@ class TransactionsRules(SyncAPIResource):
     ) -> TransactionRuleDetail:
         """Update rule.
 
-        Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 ("This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.").
+        Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400, because Didit maintains library rules and applies their updates automatically. To change a library rule's conditions, create a custom copy with `POST /v3/transactions/rules/` using the library rule's definition and `metadata.based_on` (the library key) and `metadata.based_on_rule_uuid`, then switch the library rule off with `mode: DISABLED` so a transaction does not alert twice. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 ("This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.").
 
         ``PATCH /v3/transactions/rules/{rule_uuid}/``
 
@@ -605,7 +605,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
     ) -> TransactionRuleDetail:
         """Create rule.
 
-        Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE.
+        Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE. To change a library rule, create it as a copy: send the library rule's definition with `metadata.based_on` (its library key) and `metadata.based_on_rule_uuid`.
 
         ``POST /v3/transactions/rules/``
 
@@ -746,7 +746,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
     ) -> TransactionRuleDetail:
         """Update rule.
 
-        Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 ("This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.").
+        Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400, because Didit maintains library rules and applies their updates automatically. To change a library rule's conditions, create a custom copy with `POST /v3/transactions/rules/` using the library rule's definition and `metadata.based_on` (the library key) and `metadata.based_on_rule_uuid`, then switch the library rule off with `mode: DISABLED` so a transaction does not alert twice. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 ("This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.").
 
         ``PATCH /v3/transactions/rules/{rule_uuid}/``
 
