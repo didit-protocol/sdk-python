@@ -509,6 +509,9 @@ if TYPE_CHECKING:
     from didit.types.components.application_credentials_summary import (
         ApplicationCredentialsSummary as ApplicationCredentialsSummary,
     )
+    from didit.types.components.application_data_location import (
+        ApplicationDataLocation as ApplicationDataLocation,
+    )
     from didit.types.components.application_product import ApplicationProduct as ApplicationProduct
     from didit.types.components.bank_account_check_business_holder import (
         BankAccountCheckBusinessHolder as BankAccountCheckBusinessHolder,
@@ -3484,6 +3487,7 @@ _MODULES: dict[str, str] = {
     "ApplicationAnalyticsWorkflowFunnelValue": "components.application_analytics_workflow_funnel",
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue": "components.application_analytics_workflow_funnel",
     "ApplicationCredentialsSummary": "components.application_credentials_summary",
+    "ApplicationDataLocation": "components.application_data_location",
     "ApplicationProduct": "components.application_product",
     "BankAccountCheckBusinessHolder": "components.bank_account_check_business_holder",
     "BankAccountCheckHolder": "components.bank_account_check_holder",
@@ -4717,6 +4721,7 @@ __all__ = [
     "ApplicationAnalyticsWorkflowFunnelValue",
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue",
     "ApplicationCredentialsSummary",
+    "ApplicationDataLocation",
     "ApplicationProduct",
     "BankAccountCheckBusinessHolder",
     "BankAccountCheckHolder",

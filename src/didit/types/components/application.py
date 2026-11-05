@@ -4,13 +4,14 @@ from __future__ import annotations
 import datetime as _dt
 
 from didit._models import BaseModel
+from didit.types.components.application_data_location import ApplicationDataLocation
 from didit.types.components.application_product import ApplicationProduct
 
 __all__ = ["Application"]
 
 
 class Application(BaseModel):
-    """Full application record. `uuid`, `client_id`, and `api_key` never change after creation."""
+    """Full application record. `uuid`, `client_id`, and `api_key` never change after creation. `data_location` doesn't either, except once on the live application created with your organization, before it is used (see the update request)."""
 
     uuid: str | None = None
     """Application UUID. Use as `{app_id}` in subsequent calls."""
@@ -40,6 +41,9 @@ class Application(BaseModel):
     """Internal description for the application (not shown to end users)."""
 
     created_at: _dt.datetime | None = None
+
+    data_location: ApplicationDataLocation | None = None
+    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""
 
     products: list[ApplicationProduct] | None = None
     """The application's products. Always all three, in this order: `identity`, `transactions`, `authentication`. A new application has `identity` enabled with every module on, and `transactions` and `authentication` disabled. Read-only: a `products` key in a create or update body is ignored."""
