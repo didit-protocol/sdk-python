@@ -82,15 +82,22 @@ def _is_union(origin: Any) -> bool:
     return origin is Union or origin is types.UnionType
 
 
+def _resolve_lazy(type_: Any) -> Any:
+    """A lazily imported model (a class with ``__didit_resolve__``) as the model itself."""
+    resolve = getattr(type_, "__didit_resolve__", None)
+    return resolve() if resolve is not None else type_
+
+
 def construct_type(type_: Any, value: object) -> object:
     """Best-effort conversion of ``value`` to ``type_`` that never raises."""
+    type_ = _resolve_lazy(type_)
     if value is None or type_ is Any or type_ is object:
         return value
     origin = get_origin(type_)
     if origin is Annotated:
         return construct_type(get_args(type_)[0], value)
     if _is_union(origin):
-        members = [arg for arg in get_args(type_) if arg is not type(None)]
+        members = [_resolve_lazy(arg) for arg in get_args(type_) if arg is not type(None)]
         for member in members:
             try:
                 return _adapter(member).validate_python(value)

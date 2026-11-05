@@ -59,18 +59,28 @@ class WebhookEventBase(BaseModel):
         return self._verified_by in ("signature", "signature_v2")
 
 
-def _bind_session_decision(model: type[BaseModel]) -> None:
-    """Make ``SessionDecision`` resolvable for the deferred session event models.
+if TYPE_CHECKING:
+    LazySessionDecision = SessionDecision
+else:
 
-    The decision model pulls in the whole decision component graph (dozens of
-    generated modules, and more with every spec sync), so it is imported when a
-    session event is first parsed and not when ``didit`` is imported.
-    """
-    if "SessionDecision" not in globals():
-        from ..types.components.session_decision import SessionDecision
+    class LazySessionDecision:
+        """Stands for ``SessionDecision``, imported when a model is first built.
 
-        globals()["SessionDecision"] = SessionDecision
-    model.model_rebuild()
+        The decision model pulls in the whole decision component graph (dozens
+        of generated modules, and more with every spec sync), so ``import didit``
+        does not load it. Pydantic asks for the schema when the event model is
+        first validated or its schema is generated, whichever entry point is used.
+        """
+
+        @staticmethod
+        def __didit_resolve__() -> type[BaseModel]:
+            from ..types.components.session_decision import SessionDecision
+
+            return SessionDecision
+
+        @classmethod
+        def __get_pydantic_core_schema__(cls, source: Any, handler: Any) -> Any:
+            return handler(cls.__didit_resolve__())
 
 
 class _SessionEvent(WebhookEventBase):
@@ -82,7 +92,7 @@ class _SessionEvent(WebhookEventBase):
     workflow_version: int | None = None
     vendor_data: str | None = None
     metadata: object = None
-    decision: SessionDecision | None = None
+    decision: LazySessionDecision | None = None
     resubmit_info: object = None
 
 
@@ -240,8 +250,6 @@ def parse_event(payload: dict[str, Any], verified_by: VerifiedBy = "none") -> We
         envelope = {k: payload[k] for k in WebhookEventBase.model_fields if k in payload}
         event = validate_response(UnknownEvent, {**envelope, "payload": payload})
     else:
-        if issubclass(cls, _SessionEvent):
-            _bind_session_decision(cls)
         event = validate_response(cls, payload)
     event._verified_by = verified_by  # pyright: ignore[reportPrivateUsage]
     return event  # type: ignore[return-value]

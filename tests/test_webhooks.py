@@ -510,3 +510,21 @@ def test_travel_rule_vector_parses_to_its_event(monkeypatch: pytest.MonkeyPatch)
 def test_public_names() -> None:
     assert didit.webhooks.verify is webhooks.verify
     assert didit.WebhookVerificationError is WebhookVerificationError
+
+
+def test_session_event_models_work_through_every_pydantic_entry_point() -> None:
+    from didit.types.components.session_decision import SessionDecision
+    from didit.webhooks import SessionStatusUpdatedEvent
+
+    payload: dict[str, Any] = {
+        "webhook_type": "status.updated",
+        "session_id": "s-1",
+        "decision": {"session_id": "s-1", "status": "Approved"},
+    }
+    event = SessionStatusUpdatedEvent.model_validate(payload)
+    assert isinstance(event.decision, SessionDecision)
+    assert SessionStatusUpdatedEvent(**payload).decision is not None
+    assert "decision" in SessionStatusUpdatedEvent.model_json_schema()["properties"]
+    # A decision that does not match the contract is still built, field by field.
+    lenient = SessionStatusUpdatedEvent.construct_lenient({**payload, "decision": {"status": 7}})
+    assert isinstance(lenient.decision, SessionDecision)
