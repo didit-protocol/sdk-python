@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/didit-protocol/sdk-python/compare/v1.0.1...v1.0.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **codegen:** array file fields in generated tests, lazy session decision in webhook events ([5ebc470](https://github.com/didit-protocol/sdk-python/commit/5ebc4700c6fe58fc1ab3a366cc196d46e237a08d))
+* **webhooks:** resolve the session decision lazily at schema build ([151b5e6](https://github.com/didit-protocol/sdk-python/commit/151b5e61138656e6bd0c378ce0d89c4b277a8944))
+
 ## [1.0.1](https://github.com/didit-protocol/sdk-python/compare/v1.0.0...v1.0.1) (2026-10-29)
 
 
