@@ -18,6 +18,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.application import Application
+from didit.types.components.application_data_location import ApplicationDataLocation
 from didit.types.components.paginated_application_list import PaginatedApplicationList
 
 __all__ = [
@@ -100,6 +101,7 @@ class AccountApplications(SyncAPIResource):
         terms_url: str | NotGiven = NOT_GIVEN,
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -107,7 +109,7 @@ class AccountApplications(SyncAPIResource):
     ) -> Application:
         """Create Application.
 
-        Create an application inside an organization. The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
+        Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
 
         ``POST /organizations/me/{org_id}/applications/``
 
@@ -119,6 +121,7 @@ class AccountApplications(SyncAPIResource):
           terms_url: Terms of service URL shown in the verification flow.
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application (not shown to end users).
+          data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -140,6 +143,7 @@ class AccountApplications(SyncAPIResource):
                     "terms_url": terms_url,
                     "privacy_url": privacy_url,
                     "description": description,
+                    "data_location": data_location,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -199,6 +203,7 @@ class AccountApplications(SyncAPIResource):
         terms_url: str | NotGiven = NOT_GIVEN,
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -206,7 +211,7 @@ class AccountApplications(SyncAPIResource):
     ) -> Application:
         """Update Application.
 
-        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. Requires owner/admin JWT.
+        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 
@@ -219,6 +224,7 @@ class AccountApplications(SyncAPIResource):
           terms_url: Terms of service URL shown in the verification flow.
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application.
+          data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -240,6 +246,7 @@ class AccountApplications(SyncAPIResource):
                     "terms_url": terms_url,
                     "privacy_url": privacy_url,
                     "description": description,
+                    "data_location": data_location,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -319,6 +326,7 @@ class AsyncAccountApplications(AsyncAPIResource):
         terms_url: str | NotGiven = NOT_GIVEN,
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -326,7 +334,7 @@ class AsyncAccountApplications(AsyncAPIResource):
     ) -> Application:
         """Create Application.
 
-        Create an application inside an organization. The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
+        Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
 
         ``POST /organizations/me/{org_id}/applications/``
 
@@ -338,6 +346,7 @@ class AsyncAccountApplications(AsyncAPIResource):
           terms_url: Terms of service URL shown in the verification flow.
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application (not shown to end users).
+          data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -359,6 +368,7 @@ class AsyncAccountApplications(AsyncAPIResource):
                     "terms_url": terms_url,
                     "privacy_url": privacy_url,
                     "description": description,
+                    "data_location": data_location,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -418,6 +428,7 @@ class AsyncAccountApplications(AsyncAPIResource):
         terms_url: str | NotGiven = NOT_GIVEN,
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -425,7 +436,7 @@ class AsyncAccountApplications(AsyncAPIResource):
     ) -> Application:
         """Update Application.
 
-        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. Requires owner/admin JWT.
+        Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 
@@ -438,6 +449,7 @@ class AsyncAccountApplications(AsyncAPIResource):
           terms_url: Terms of service URL shown in the verification flow.
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application.
+          data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -459,6 +471,7 @@ class AsyncAccountApplications(AsyncAPIResource):
                     "terms_url": terms_url,
                     "privacy_url": privacy_url,
                     "description": description,
+                    "data_location": data_location,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

@@ -5,11 +5,13 @@ from typing import Sequence
 
 from typing_extensions import TypedDict
 
+from didit.types.components.application_data_location import ApplicationDataLocation
+
 __all__ = ["AccountApplicationsCreateParams"]
 
 
 class AccountApplicationsCreateParams(TypedDict, total=False):
-    """All fields are optional. Sending an empty body creates an application with a default name."""
+    """All fields are optional. Sending an empty body creates an application with a default name, in the European Union."""
 
     name: str
     """Application display name. Defaults to `"<organization name> App"`."""
@@ -28,3 +30,6 @@ class AccountApplicationsCreateParams(TypedDict, total=False):
 
     description: str
     """Internal description for the application (not shown to end users)."""
+
+    data_location: ApplicationDataLocation
+    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""

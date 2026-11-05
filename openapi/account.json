@@ -300,7 +300,8 @@
                         "uuid": "b2c3d4e5-6789-01bc-defg-222222222222",
                         "name": "developer",
                         "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
-                        "api_key": "sk_live_example_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        "api_key": "sk_live_example_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        "data_location": "eu"
                       }
                     }
                   }
@@ -821,7 +822,7 @@
     "/organizations/me/{org_id}/applications/": {
       "post": {
         "summary": "Create Application",
-        "description": "Create an application inside an organization. The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.",
+        "description": "Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.",
         "operationId": "create_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -868,7 +869,8 @@
                       "https://acme.example/callback"
                     ],
                     "terms_url": "https://acme.example/terms",
-                    "privacy_url": "https://acme.example/privacy"
+                    "privacy_url": "https://acme.example/privacy",
+                    "data_location": "eu"
                   }
                 },
                 "Minimal": {
@@ -908,6 +910,7 @@
                       "privacy_url": "https://acme.example/privacy",
                       "description": null,
                       "created_at": "2025-06-01T10:00:00Z",
+                      "data_location": "eu",
                       "products": [
                         {
                           "product": "identity",
@@ -939,7 +942,7 @@
             }
           },
           "400": {
-            "description": "Validation error in the request body (for example a malformed redirect URI).",
+            "description": "Validation error in the request body: for example a malformed redirect URI, a `data_location` that is not available yet (`au`, `mx`) or one that does not exist. Nothing is created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -950,6 +953,22 @@
                     "value": {
                       "website_url": [
                         "Enter a valid URL."
+                      ]
+                    }
+                  },
+                  "DataLocationNotAvailable": {
+                    "summary": "A data location that is coming soon",
+                    "value": {
+                      "data_location": [
+                        "This data location is not available yet."
+                      ]
+                    }
+                  },
+                  "UnknownDataLocation": {
+                    "summary": "A data location that does not exist",
+                    "value": {
+                      "data_location": [
+                        "\"us\" is not a valid choice."
                       ]
                     }
                   }
@@ -1047,42 +1066,42 @@
           {
             "lang": "curl",
             "label": "cURL",
-            "source": "curl -X POST \"https://apx.didit.me/auth/v2/organizations/me/$ORG_ID/applications/\" \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Acme Customer App\",\n    \"website_url\": \"https://acme.example\",\n    \"redirect_uris\": [\"https://acme.example/callback\"]\n  }'"
+            "source": "curl -X POST \"https://apx.didit.me/auth/v2/organizations/me/$ORG_ID/applications/\" \\\n  -H \"Authorization: Bearer $ACCESS_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Acme Customer App\",\n    \"website_url\": \"https://acme.example\",\n    \"redirect_uris\": [\"https://acme.example/callback\"],\n    \"data_location\": \"eu\"\n  }'"
           },
           {
             "lang": "python",
             "label": "Python",
-            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nresult = client.account.applications.create(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n    name=\"Acme Customer App\",\n    website_url=\"https://acme.example\",\n    redirect_uris=[\"https://acme.example/callback\"],\n    terms_url=\"https://acme.example/terms\",\n    privacy_url=\"https://acme.example/privacy\",\n)\nprint(result)"
+            "source": "from didit import Didit\n\n# Use the access token that account.login returns.\nclient = Didit(account_token=\"YOUR_ACCESS_TOKEN\")\n\nresult = client.account.applications.create(\n    \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n    name=\"Acme Customer App\",\n    website_url=\"https://acme.example\",\n    redirect_uris=[\"https://acme.example/callback\"],\n    terms_url=\"https://acme.example/terms\",\n    privacy_url=\"https://acme.example/privacy\",\n    data_location=\"eu\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
             "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nconst result = await didit.account.applications.create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", {\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\",\n});\nconsole.log(result);"
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Use the access token that account.login returns.\nconst didit = new Didit({ accountToken: \"YOUR_ACCESS_TOKEN\" });\n\nconst result = await didit.account.applications.create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", {\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\",\n  data_location: \"eu\",\n});\nconsole.log(result);"
           },
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\nresult, err := client.Account.Applications.Create(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", didit.ApplicationCreateRequest{\n\tName:         didit.String(\"Acme Customer App\"),\n\tWebsiteURL:   didit.String(\"https://acme.example\"),\n\tRedirectURIs: didit.Some([]string{\"https://acme.example/callback\"}),\n\tTermsURL:     didit.String(\"https://acme.example/terms\"),\n\tPrivacyURL:   didit.String(\"https://acme.example/privacy\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Use the access token that account.login returns.\nclient := didit.NewClient(option.WithAccountToken(\"YOUR_ACCESS_TOKEN\"))\n\nresult, err := client.Account.Applications.Create(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", didit.ApplicationCreateRequest{\n\tName:         didit.String(\"Acme Customer App\"),\n\tWebsiteURL:   didit.String(\"https://acme.example\"),\n\tRedirectURIs: didit.Some([]string{\"https://acme.example/callback\"}),\n\tTermsURL:     didit.String(\"https://acme.example/terms\"),\n\tPrivacyURL:   didit.String(\"https://acme.example/privacy\"),\n\tDataLocation: didit.Some(didit.ApplicationDataLocation(\"eu\")),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
             "label": "Java",
-            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.ApplicationCreateRequest;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nvar result = client.account().applications().create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", ApplicationCreateRequest.builder()\n        .name(\"Acme Customer App\")\n        .websiteUrl(\"https://acme.example\")\n        .redirectUris(List.of(\"https://acme.example/callback\"))\n        .termsUrl(\"https://acme.example/terms\")\n        .privacyUrl(\"https://acme.example/privacy\")\n        .build());\nSystem.out.println(result);"
+            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.ApplicationCreateRequest;\nimport me.didit.types.ApplicationDataLocation;\n\n// Use the access token that account.login returns.\nDidit client = Didit.builder().accountToken(\"YOUR_ACCESS_TOKEN\").build();\n\nvar result = client.account().applications().create(\"a1b2c3d4-5678-90ab-cdef-111111111111\", ApplicationCreateRequest.builder()\n        .name(\"Acme Customer App\")\n        .websiteUrl(\"https://acme.example\")\n        .redirectUris(List.of(\"https://acme.example/callback\"))\n        .termsUrl(\"https://acme.example/terms\")\n        .privacyUrl(\"https://acme.example/privacy\")\n        .dataLocation(ApplicationDataLocation.of(\"eu\"))\n        .build());\nSystem.out.println(result);"
           },
           {
             "lang": "php",
             "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\n$result = $didit->account->applications->create('a1b2c3d4-5678-90ab-cdef-111111111111', [\n    'name' => 'Acme Customer App',\n    'website_url' => 'https://acme.example',\n    'redirect_uris' => ['https://acme.example/callback'],\n    'terms_url' => 'https://acme.example/terms',\n    'privacy_url' => 'https://acme.example/privacy',\n]);\nprint_r($result->toArray());"
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Use the access token that account.login returns.\n$didit = new DiditClient(accountToken: 'YOUR_ACCESS_TOKEN');\n\n$result = $didit->account->applications->create('a1b2c3d4-5678-90ab-cdef-111111111111', [\n    'name' => 'Acme Customer App',\n    'website_url' => 'https://acme.example',\n    'redirect_uris' => ['https://acme.example/callback'],\n    'terms_url' => 'https://acme.example/terms',\n    'privacy_url' => 'https://acme.example/privacy',\n    'data_location' => 'eu',\n]);\nprint_r($result->toArray());"
           },
           {
             "lang": "ruby",
             "label": "Ruby",
-            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\nresult = didit.account.applications.create(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\"\n)\nputs result.to_h"
+            "source": "require \"didit\"\n\n# Use the access token that account.login returns.\ndidit = Didit::Client.new(account_token: \"YOUR_ACCESS_TOKEN\")\n\nresult = didit.account.applications.create(\n  \"a1b2c3d4-5678-90ab-cdef-111111111111\",\n  name: \"Acme Customer App\",\n  website_url: \"https://acme.example\",\n  redirect_uris: [\"https://acme.example/callback\"],\n  terms_url: \"https://acme.example/terms\",\n  privacy_url: \"https://acme.example/privacy\",\n  data_location: \"eu\"\n)\nputs result.to_h"
           },
           {
             "lang": "csharp",
             "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nvar result = await client.Account.Applications.CreateAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", new ApplicationCreateRequest\n{\n    Name = \"Acme Customer App\",\n    WebsiteUrl = \"https://acme.example\",\n    RedirectUris = new string[] { \"https://acme.example/callback\" },\n    TermsUrl = \"https://acme.example/terms\",\n    PrivacyUrl = \"https://acme.example/privacy\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Use the access token that account.login returns.\nusing var client = new DiditClient(new DiditClientOptions { AccountToken = \"YOUR_ACCESS_TOKEN\" });\n\nvar result = await client.Account.Applications.CreateAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", new ApplicationCreateRequest\n{\n    Name = \"Acme Customer App\",\n    WebsiteUrl = \"https://acme.example\",\n    RedirectUris = new string[] { \"https://acme.example/callback\" },\n    TermsUrl = \"https://acme.example/terms\",\n    PrivacyUrl = \"https://acme.example/privacy\",\n    DataLocation = new ApplicationDataLocation(\"eu\"),\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       },
@@ -1221,6 +1240,7 @@
                           "privacy_url": "https://example.com/privacy",
                           "description": "Production application",
                           "created_at": "2025-06-01T10:00:00Z",
+                          "data_location": "eu",
                           "products": [
                             {
                               "product": "identity",
@@ -1434,6 +1454,7 @@
                       "privacy_url": "https://example.com/privacy",
                       "description": "Production application",
                       "created_at": "2025-06-01T10:00:00Z",
+                      "data_location": "eu",
                       "products": [
                         {
                           "product": "identity",
@@ -1586,7 +1607,7 @@
       },
       "patch": {
         "summary": "Update Application",
-        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. Requires owner/admin JWT.",
+        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.",
         "operationId": "update_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -1685,6 +1706,7 @@
                       "privacy_url": "https://acme.example/privacy",
                       "description": null,
                       "created_at": "2025-06-01T10:00:00Z",
+                      "data_location": "eu",
                       "products": [
                         {
                           "product": "identity",
@@ -1716,7 +1738,7 @@
             }
           },
           "400": {
-            "description": "Validation error in the request body.",
+            "description": "Validation error in the request body: for example a malformed URL, a `data_location` that is not available yet, or a `data_location` other than the application's own. Nothing is changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1727,6 +1749,22 @@
                     "value": {
                       "website_url": [
                         "Enter a valid URL."
+                      ]
+                    }
+                  },
+                  "DataLocationFixed": {
+                    "summary": "Another data location than the application's own",
+                    "value": {
+                      "data_location": [
+                        "An application's data location can't be changed after it is created."
+                      ]
+                    }
+                  },
+                  "DataLocationNotAvailable": {
+                    "summary": "A data location that is coming soon",
+                    "value": {
+                      "data_location": [
+                        "This data location is not available yet."
                       ]
                     }
                   }
@@ -1804,6 +1842,24 @@
                     "summary": "No such application in this organization",
                     "value": {
                       "detail": "Application not found."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Only when the update chooses another data location for the live application created with your organization: Didit could not confirm that the application has no verification session yet, so nothing was changed. Retry the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableError"
+                },
+                "examples": {
+                  "DataLocationCheckUnavailable": {
+                    "value": {
+                      "detail": "We couldn't confirm that this application is unused. Try again in a moment.",
+                      "code": "data_location_check_unavailable"
                     }
                   }
                 }
@@ -2209,12 +2265,15 @@
             "type": "string",
             "description": "Use this as `x-api-key` on every verification API call. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged.",
             "example": "sk_live_example_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          },
+          "data_location": {
+            "$ref": "#/components/schemas/ApplicationDataLocation"
           }
         }
       },
       "Application": {
         "type": "object",
-        "description": "Full application record. `uuid`, `client_id`, and `api_key` never change after creation.",
+        "description": "Full application record. `uuid`, `client_id`, and `api_key` never change after creation. `data_location` doesn't either, except once on the live application created with your organization, before it is used (see the update request).",
         "properties": {
           "uuid": {
             "type": "string",
@@ -2275,6 +2334,9 @@
             "format": "date-time",
             "example": "2025-06-01T10:00:00Z"
           },
+          "data_location": {
+            "$ref": "#/components/schemas/ApplicationDataLocation"
+          },
           "products": {
             "type": "array",
             "readOnly": true,
@@ -2311,7 +2373,7 @@
       },
       "ApplicationCreateRequest": {
         "type": "object",
-        "description": "All fields are optional. Sending an empty body creates an application with a default name.",
+        "description": "All fields are optional. Sending an empty body creates an application with a default name, in the European Union.",
         "properties": {
           "name": {
             "type": "string",
@@ -2346,12 +2408,15 @@
           "description": {
             "type": "string",
             "description": "Internal description for the application (not shown to end users)."
+          },
+          "data_location": {
+            "$ref": "#/components/schemas/ApplicationDataLocation"
           }
         }
       },
       "ApplicationUpdateRequest": {
         "type": "object",
-        "description": "PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated. `products` is read-only: a `products` key in the body is ignored.",
+        "description": "PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created: naming the location it already has is accepted, and any other location answers 400. The one exception is the live application created with your organization: the first update that names a `data_location` chooses it, once, while no API key of the application has been used and it has no verification session.",
         "properties": {
           "name": {
             "type": "string",
@@ -2384,8 +2449,21 @@
           "description": {
             "type": "string",
             "description": "Internal description for the application."
+          },
+          "data_location": {
+            "$ref": "#/components/schemas/ApplicationDataLocation"
           }
         }
+      },
+      "ApplicationDataLocation": {
+        "type": "string",
+        "enum": [
+          "eu",
+          "au",
+          "mx"
+        ],
+        "description": "Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.",
+        "example": "eu"
       },
       "ValidationError": {
         "description": "Validation error body. The intended envelope is a `{field: [\"message\", ...]}` map for field-level errors or a `{detail: \"...\"}` single-key envelope for business-rule errors. A handful of validators (password strength on register, code validity on verify-email) currently respond with a bare array `[\"message\"]` -- known server-side inconsistency. The schema below keeps that bare-array branch so client code generated from this spec deserializes today's responses, but new client code should treat it as the relevant field-keyed form (`{password: [...]}` or `{code: [...]}`) and the server contract will converge on that shape.",
@@ -2651,6 +2729,20 @@
               "recovery_setup_required"
             ],
             "example": "recovery_setup_required"
+          }
+        }
+      },
+      "ServiceUnavailableError": {
+        "type": "object",
+        "description": "The request could not be completed right now and nothing was changed. Retry it in a moment.",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "We couldn't confirm that this application is unused. Try again in a moment."
+          },
+          "code": {
+            "type": "string",
+            "example": "data_location_check_unavailable"
           }
         }
       }

@@ -104,6 +104,7 @@ def test_account_verify_email() -> None:
                     "name": "developer",
                     "client_id": "S9LIYGSoWNuGMLHsvEt9dQ",
                     "api_key": "sample-secret",
+                    "data_location": "eu",
                 },
             },
         ),
@@ -128,6 +129,7 @@ def test_account_applications_create() -> None:
                 "redirect_uris": ["https://acme.example/callback"],
                 "terms_url": "https://acme.example/terms",
                 "privacy_url": "https://acme.example/privacy",
+                "data_location": "eu",
             },
             status=201,
             response_json={
@@ -141,6 +143,7 @@ def test_account_applications_create() -> None:
                 "privacy_url": "https://acme.example/privacy",
                 "description": None,
                 "created_at": "2025-06-01T10:00:00Z",
+                "data_location": "eu",
                 "products": [
                     {
                         "product": "identity",
@@ -167,6 +170,7 @@ def test_account_applications_create() -> None:
             redirect_uris=["https://acme.example/callback"],
             terms_url="https://acme.example/terms",
             privacy_url="https://acme.example/privacy",
+            data_location="eu",
         ),
         lambda c: c.account.applications.create(
             "a1b2c3d4-5678-90ab-cdef-111111111111",
@@ -175,6 +179,7 @@ def test_account_applications_create() -> None:
             redirect_uris=["https://acme.example/callback"],
             terms_url="https://acme.example/terms",
             privacy_url="https://acme.example/privacy",
+            data_location="eu",
         ),
         lambda r: isinstance(r, Application),
         lambda r: isinstance(r, Application),
@@ -207,6 +212,7 @@ def test_account_applications_list() -> None:
                         "privacy_url": "https://example.com/privacy",
                         "description": "Production application",
                         "created_at": "2025-06-01T10:00:00Z",
+                        "data_location": "eu",
                         "products": [
                             {
                                 "product": "identity",
@@ -259,6 +265,7 @@ def test_account_applications_retrieve() -> None:
                 "privacy_url": "https://example.com/privacy",
                 "description": "Production application",
                 "created_at": "2025-06-01T10:00:00Z",
+                "data_location": "eu",
                 "products": [
                     {
                         "product": "identity",
@@ -310,6 +317,7 @@ def test_account_applications_update() -> None:
                 "privacy_url": "https://acme.example/privacy",
                 "description": None,
                 "created_at": "2025-06-01T10:00:00Z",
+                "data_location": "eu",
                 "products": [
                     {
                         "product": "identity",

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.application_data_location import ApplicationDataLocation
 
 __all__ = ["ApplicationCredentialsSummary"]
 
@@ -17,3 +18,6 @@ class ApplicationCredentialsSummary(BaseModel):
 
     api_key: str | None = None
     """Use this as `x-api-key` on every verification API call. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged."""
+
+    data_location: ApplicationDataLocation | None = None
+    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""

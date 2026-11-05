@@ -5,11 +5,13 @@ from typing import Sequence
 
 from typing_extensions import TypedDict
 
+from didit.types.components.application_data_location import ApplicationDataLocation
+
 __all__ = ["AccountApplicationsUpdateParams"]
 
 
 class AccountApplicationsUpdateParams(TypedDict, total=False):
-    """PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated. `products` is read-only: a `products` key in the body is ignored."""
+    """PATCH body for application metadata. Send only the fields you want to change; omitted fields are preserved. `uuid`, `client_id`, and `api_key` cannot be updated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created: naming the location it already has is accepted, and any other location answers 400. The one exception is the live application created with your organization: the first update that names a `data_location` chooses it, once, while no API key of the application has been used and it has no verification session."""
 
     name: str
     """Application display name."""
@@ -28,3 +30,6 @@ class AccountApplicationsUpdateParams(TypedDict, total=False):
 
     description: str
     """Internal description for the application."""
+
+    data_location: ApplicationDataLocation
+    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""
