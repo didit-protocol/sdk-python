@@ -55,6 +55,14 @@ def _string_sample(schema: Json, n: int) -> str:
     return text
 
 
+def file_sample(spec: Spec, schema: Json) -> Json:
+    """The sample value of a file argument: one file, or a list of files for an array field."""
+    resolved = spec.resolve(schema)
+    if isinstance(resolved, dict) and resolved.get("type") == "array":
+        return [b"file-content"]
+    return b"file-content"
+
+
 def sample(spec: Spec, schema: Json, *, request: bool, depth: int = 0, full: bool = True) -> Json:
     """A value that conforms to ``schema``."""
     if not isinstance(schema, dict):
@@ -335,7 +343,7 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
         assert isinstance(example, dict)
         for key, value in example.items():
             if key in method.file_fields:
-                value = b"file-content"
+                value = file_sample(spec, by_wire[key].schema)
             chosen[key] = value
     else:
         for i, arg in enumerate(body_args):
@@ -343,7 +351,7 @@ def _kwargs_for(method: Method) -> list[tuple[Arg, Json]]:
                 chosen[arg.wire] = sample(spec, arg.schema, request=True, full=False)
     for name in method.file_fields:
         if name in chosen:
-            chosen[name] = b"file-content"
+            chosen[name] = file_sample(spec, by_wire[name].schema)
     for arg in body_args:
         if arg.wire in chosen:
             out.append((arg, scrub(chosen[arg.wire], arg.wire)))

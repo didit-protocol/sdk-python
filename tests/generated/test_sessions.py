@@ -3575,10 +3575,10 @@ def test_sessions_upload_kyb_documents() -> None:
             },
         ),
         lambda c: c.sessions.upload_kyb_documents(
-            "33333333-4444-5555-6666-777777777777", documents=b"file-content", node_id="sample"
+            "33333333-4444-5555-6666-777777777777", documents=[b"file-content"], node_id="sample"
         ),
         lambda c: c.sessions.upload_kyb_documents(
-            "33333333-4444-5555-6666-777777777777", documents=b"file-content", node_id="sample"
+            "33333333-4444-5555-6666-777777777777", documents=[b"file-content"], node_id="sample"
         ),
         lambda r: isinstance(r, SessionsUploadKybDocumentsResponse),
         lambda r: isinstance(r, SessionsUploadKybDocumentsResponse),

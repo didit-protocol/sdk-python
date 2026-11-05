@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from pydantic import Field, PrivateAttr
 
 from .._models import BaseModel, validate_response
-from ..types.components.session_decision import SessionDecision
+
+if TYPE_CHECKING:
+    from ..types.components.session_decision import SessionDecision
 
 __all__ = [
     "ActivityCreatedEvent",
@@ -55,6 +57,20 @@ class WebhookEventBase(BaseModel):
         signs the envelope, not the body, so re-fetch the record from the API
         before acting on anything else in this event."""
         return self._verified_by in ("signature", "signature_v2")
+
+
+def _bind_session_decision(model: type[BaseModel]) -> None:
+    """Make ``SessionDecision`` resolvable for the deferred session event models.
+
+    The decision model pulls in the whole decision component graph (dozens of
+    generated modules, and more with every spec sync), so it is imported when a
+    session event is first parsed and not when ``didit`` is imported.
+    """
+    if "SessionDecision" not in globals():
+        from ..types.components.session_decision import SessionDecision
+
+        globals()["SessionDecision"] = SessionDecision
+    model.model_rebuild()
 
 
 class _SessionEvent(WebhookEventBase):
@@ -224,6 +240,8 @@ def parse_event(payload: dict[str, Any], verified_by: VerifiedBy = "none") -> We
         envelope = {k: payload[k] for k in WebhookEventBase.model_fields if k in payload}
         event = validate_response(UnknownEvent, {**envelope, "payload": payload})
     else:
+        if issubclass(cls, _SessionEvent):
+            _bind_session_decision(cls)
         event = validate_response(cls, payload)
     event._verified_by = verified_by  # pyright: ignore[reportPrivateUsage]
     return event  # type: ignore[return-value]
