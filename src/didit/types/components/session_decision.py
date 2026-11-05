@@ -1254,7 +1254,7 @@ class SessionDecisionIdVerificationsExtraFields(BaseModel):
 
 
 class SessionDecisionIdVerificationsFallbackFrom(BaseModel):
-    """Why a non-document method ended the ID step. Set on the declined report when a lookup or a wallet sign-in failed and the country's fallback switch was `decline`. `null` otherwise."""
+    """Why a non-document method did not end the ID step. Set when a lookup or a wallet sign-in failed: on the document verification the user continued with when the country's fallback switch was `fallback_to_document` (`action` is `fallback_to_document`), or on the declined report when it was `decline`. `null` otherwise."""
 
     method: Literal["id_lookup", "wallet"] | str | None = None
     """The method that failed."""
@@ -1262,8 +1262,8 @@ class SessionDecisionIdVerificationsFallbackFrom(BaseModel):
     reason: str | None = None
     """The outcome that ended it, e.g. `no_match`, `provider_error`, `cancelled`, `timeout`."""
 
-    action: str | None = None
-    """The configured action that was taken, e.g. `decline`."""
+    action: Literal["fallback_to_document", "decline"] | str | None = None
+    """The configured action that was taken: `fallback_to_document` or `decline`."""
 
 
 class SessionDecisionIdVerificationsFrontImageQualityScore(BaseModel):
@@ -1632,7 +1632,7 @@ class SessionDecisionIdVerifications(BaseModel):
     """Catalog wallet id when `verification_method` is `wallet` (`mitid`, `bankid_se`, `itsme`, ...). `null` otherwise."""
 
     fallback_from: SessionDecisionIdVerificationsFallbackFrom | None = None
-    """Why a non-document method ended the ID step. Set on the declined report when a lookup or a wallet sign-in failed and the country's fallback switch was `decline`. `null` otherwise."""
+    """Why a non-document method did not end the ID step. Set when a lookup or a wallet sign-in failed: on the document verification the user continued with when the country's fallback switch was `fallback_to_document` (`action` is `fallback_to_document`), or on the declined report when it was `decline`. `null` otherwise."""
 
     id_lookup: SessionDecisionIdVerificationsIdLookup | None = None
     """Registry evidence. Present only when `verification_method` is `id_lookup`; `null` otherwise."""

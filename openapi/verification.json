@@ -4303,7 +4303,7 @@
                             "registered_address": "1 Example Street, London, EC1A 1AA",
                             "tax_number": null,
                             "risk_level": null,
-                            "verification_status": null,
+                            "verification_status": "verified",
                             "is_from_registry": true,
                             "fetch_status": "resolved",
                             "alternative_names": null,
@@ -13045,8 +13045,13 @@
                         },
                         "verification_status": {
                           "type": "string",
+                          "enum": [
+                            "verified",
+                            "failed",
+                            "unknown"
+                          ],
                           "nullable": true,
-                          "description": "Registry verification status, when available."
+                          "description": "Cross-jurisdiction verification status: `verified` when the registry status establishes standing (`active`), `failed` when it says the company is no longer standing (for example `dissolved`), otherwise `unknown`. `null` for a company that did not come from a registry and while a selection is still `pending`."
                         },
                         "is_from_registry": {
                           "type": "boolean",
@@ -22728,7 +22733,7 @@
                     "auto_refill_amount": {
                       "type": "string",
                       "nullable": true,
-                      "description": "USD amount that will be charged and added to the balance on each auto-refill, at face value. Set from \\$50 to \\$10,000 in Console → Billing. `null` when auto-refill is disabled or unset."
+                      "description": "USD amount that will be charged and added to the balance on each auto-refill, at face value. Set from \\$50 to \\$20,000 in Console → Billing. `null` when auto-refill is disabled or unset."
                     },
                     "auto_refill_threshold": {
                       "type": "string",
@@ -22797,7 +22802,7 @@
     "/v3/billing/top-up/": {
       "post": {
         "summary": "Top up credits",
-        "description": "Add credits via a hosted Stripe Checkout session (**\\$50 to \\$10,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.",
+        "description": "Add credits via a hosted Stripe Checkout session (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.",
         "operationId": "billing_top_up",
         "x-didit-sdk": {
           "resource": "billing",
@@ -22821,8 +22826,8 @@
                   "amount_in_dollars": {
                     "type": "number",
                     "minimum": 50,
-                    "maximum": 10000,
-                    "description": "Amount to charge, in USD. **Must be from 50 to 10,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address."
+                    "maximum": 20000,
+                    "description": "Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address."
                   },
                   "success_url": {
                     "type": "string",
@@ -22930,7 +22935,7 @@
             }
           },
           "400": {
-            "description": "Invalid payload: the amount is missing, not a number, below the \\$50 minimum or above the \\$10,000 maximum, or the organization is on an Enterprise annual contract. The error body is a JSON array.",
+            "description": "Invalid payload: the amount is missing, not a number, below the \\$50 minimum or above the \\$20,000 maximum, or the organization is on an Enterprise annual contract. The error body is a JSON array.",
             "content": {
               "application/json": {
                 "examples": {
@@ -22951,7 +22956,7 @@
                   },
                   "Above maximum": {
                     "value": [
-                      "Amount must be at most $10,000."
+                      "Amount must be at most $20,000."
                     ]
                   },
                   "Annual plan": {
@@ -47202,7 +47207,7 @@
       },
       "post": {
         "summary": "Create rule",
-        "description": "Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE.",
+        "description": "Create a CUSTOM transaction-monitoring rule. Titles are unique per application (duplicate -> 400). A `change_status` action targeting `AWAITING_USER` must carry `workflow_id`. Rules created in ACTIVE mode apply to new transactions immediately - the recommended workflow is create in TEST mode, backtest, then switch mode to ACTIVE. To change a library rule, create it as a copy: send the library rule's definition with `metadata.based_on` (its library key) and `metadata.based_on_rule_uuid`.",
         "operationId": "createTransactionRule",
         "x-didit-sdk": {
           "resource": "transactions.rules",
@@ -47457,7 +47462,7 @@
       },
       "patch": {
         "summary": "Update rule",
-        "description": "Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 (\"This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.\").",
+        "description": "Partially update a rule. Custom rules accept every configuration field. Library (PRESET) rules accept only `mode` - use it to activate, disable, or switch a preset to TEST; any other field returns 400, because Didit maintains library rules and applies their updates automatically. To change a library rule's conditions, create a custom copy with `POST /v3/transactions/rules/` using the library rule's definition and `metadata.based_on` (the library key) and `metadata.based_on_rule_uuid`, then switch the library rule off with `mode: DISABLED` so a transaction does not alert twice. An installed copy of a withheld library rule is switched off: setting its `mode` to anything but `DISABLED` answers 400 (\"This library rule cannot run yet: its conditions read data the rules engine cannot evaluate.\").",
         "operationId": "updateTransactionRule",
         "x-didit-sdk": {
           "resource": "transactions.rules",
@@ -52081,8 +52086,13 @@
                         },
                         "verification_status": {
                           "type": "string",
+                          "enum": [
+                            "verified",
+                            "failed",
+                            "unknown"
+                          ],
                           "nullable": true,
-                          "description": "Registry verification status, when available."
+                          "description": "Cross-jurisdiction verification status: `verified` when the registry status establishes standing (`active`), `failed` when it says the company is no longer standing (for example `dissolved`), otherwise `unknown`. `null` for a company that did not come from a registry and while a selection is still `pending`."
                         },
                         "is_from_registry": {
                           "type": "boolean",
@@ -53015,8 +53025,13 @@
                         },
                         "verification_status": {
                           "type": "string",
+                          "enum": [
+                            "verified",
+                            "failed",
+                            "unknown"
+                          ],
                           "nullable": true,
-                          "description": "Registry verification status, when available."
+                          "description": "Cross-jurisdiction verification status: `verified` when the registry status establishes standing (`active`), `failed` when it says the company is no longer standing (for example `dissolved`), otherwise `unknown`. `null` for a company that did not come from a registry and while a selection is still `pending`."
                         },
                         "is_from_registry": {
                           "type": "boolean",
@@ -93055,7 +93070,7 @@
           "metadata": {
             "type": "object",
             "nullable": true,
-            "description": "Extra context for system-generated entries. Console detail-page views carry `{\"system_event\": \"DETAIL_VIEWED\", \"detail_type\": \"verification\"}` so they can be filtered out of notification logic. `null` for ordinary entries.",
+            "description": "Extra context for system-generated entries. Console detail-page views carry `{\"system_event\": \"DETAIL_VIEWED\", \"detail_type\": \"verification\"}` so they can be filtered out of notification logic. A `COMMENT` its author edited in the Console carries `edited_at`, the ISO 8601 time of the last edit (`comment` and `mentioned_emails` then hold the edited text and its mentions). `null` for ordinary entries.",
             "example": null
           },
           "created_at": {
@@ -108924,7 +108939,7 @@
                 "fallback_from": {
                   "type": "object",
                   "nullable": true,
-                  "description": "Why a non-document method ended the ID step. Set on the declined report when a lookup or a wallet sign-in failed and the country's fallback switch was `decline`. `null` otherwise.",
+                  "description": "Why a non-document method did not end the ID step. Set when a lookup or a wallet sign-in failed: on the document verification the user continued with when the country's fallback switch was `fallback_to_document` (`action` is `fallback_to_document`), or on the declined report when it was `decline`. `null` otherwise.",
                   "properties": {
                     "method": {
                       "type": "string",
@@ -108940,7 +108955,11 @@
                     },
                     "action": {
                       "type": "string",
-                      "description": "The configured action that was taken, e.g. `decline`."
+                      "enum": [
+                        "fallback_to_document",
+                        "decline"
+                      ],
+                      "description": "The configured action that was taken: `fallback_to_document` or `decline`."
                     }
                   }
                 },
