@@ -74,6 +74,14 @@ if TYPE_CHECKING:
         TravelRuleTransfersWithRawResponse,
         TravelRuleTransfersWithStreamingResponse,
     )
+    from didit.resources.travel_rule.unmatched_deposits import (
+        AsyncTravelRuleUnmatchedDeposits,
+        AsyncTravelRuleUnmatchedDepositsWithRawResponse,
+        AsyncTravelRuleUnmatchedDepositsWithStreamingResponse,
+        TravelRuleUnmatchedDeposits,
+        TravelRuleUnmatchedDepositsWithRawResponse,
+        TravelRuleUnmatchedDepositsWithStreamingResponse,
+    )
     from didit.resources.travel_rule.wallet_addresses import (
         AsyncTravelRuleWalletAddresses,
         AsyncTravelRuleWalletAddressesWithRawResponse,
@@ -114,7 +122,7 @@ class TravelRule(SyncAPIResource):
 
     Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -134,6 +142,12 @@ class TravelRule(SyncAPIResource):
         from didit.resources.travel_rule.transfers import TravelRuleTransfers
 
         return TravelRuleTransfers(self._client)
+
+    @cached_property
+    def unmatched_deposits(self) -> TravelRuleUnmatchedDeposits:
+        from didit.resources.travel_rule.unmatched_deposits import TravelRuleUnmatchedDeposits
+
+        return TravelRuleUnmatchedDeposits(self._client)
 
     @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddresses:
@@ -850,7 +864,7 @@ class AsyncTravelRule(AsyncAPIResource):
 
     Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
-    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -872,6 +886,12 @@ class AsyncTravelRule(AsyncAPIResource):
         from didit.resources.travel_rule.transfers import AsyncTravelRuleTransfers
 
         return AsyncTravelRuleTransfers(self._client)
+
+    @cached_property
+    def unmatched_deposits(self) -> AsyncTravelRuleUnmatchedDeposits:
+        from didit.resources.travel_rule.unmatched_deposits import AsyncTravelRuleUnmatchedDeposits
+
+        return AsyncTravelRuleUnmatchedDeposits(self._client)
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddresses:
@@ -1624,6 +1644,14 @@ class TravelRuleWithRawResponse:
         return TravelRuleTransfersWithRawResponse(self._resource.transfers)
 
     @cached_property
+    def unmatched_deposits(self) -> TravelRuleUnmatchedDepositsWithRawResponse:
+        from didit.resources.travel_rule.unmatched_deposits import (
+            TravelRuleUnmatchedDepositsWithRawResponse,
+        )
+
+        return TravelRuleUnmatchedDepositsWithRawResponse(self._resource.unmatched_deposits)
+
+    @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddressesWithRawResponse:
         from didit.resources.travel_rule.wallet_addresses import (
             TravelRuleWalletAddressesWithRawResponse,
@@ -1691,6 +1719,14 @@ class AsyncTravelRuleWithRawResponse:
         from didit.resources.travel_rule.transfers import AsyncTravelRuleTransfersWithRawResponse
 
         return AsyncTravelRuleTransfersWithRawResponse(self._resource.transfers)
+
+    @cached_property
+    def unmatched_deposits(self) -> AsyncTravelRuleUnmatchedDepositsWithRawResponse:
+        from didit.resources.travel_rule.unmatched_deposits import (
+            AsyncTravelRuleUnmatchedDepositsWithRawResponse,
+        )
+
+        return AsyncTravelRuleUnmatchedDepositsWithRawResponse(self._resource.unmatched_deposits)
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddressesWithRawResponse:
@@ -1764,6 +1800,14 @@ class TravelRuleWithStreamingResponse:
         from didit.resources.travel_rule.transfers import TravelRuleTransfersWithStreamingResponse
 
         return TravelRuleTransfersWithStreamingResponse(self._resource.transfers)
+
+    @cached_property
+    def unmatched_deposits(self) -> TravelRuleUnmatchedDepositsWithStreamingResponse:
+        from didit.resources.travel_rule.unmatched_deposits import (
+            TravelRuleUnmatchedDepositsWithStreamingResponse,
+        )
+
+        return TravelRuleUnmatchedDepositsWithStreamingResponse(self._resource.unmatched_deposits)
 
     @cached_property
     def wallet_addresses(self) -> TravelRuleWalletAddressesWithStreamingResponse:
@@ -1847,6 +1891,16 @@ class AsyncTravelRuleWithStreamingResponse:
         )
 
         return AsyncTravelRuleTransfersWithStreamingResponse(self._resource.transfers)
+
+    @cached_property
+    def unmatched_deposits(self) -> AsyncTravelRuleUnmatchedDepositsWithStreamingResponse:
+        from didit.resources.travel_rule.unmatched_deposits import (
+            AsyncTravelRuleUnmatchedDepositsWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleUnmatchedDepositsWithStreamingResponse(
+            self._resource.unmatched_deposits
+        )
 
     @cached_property
     def wallet_addresses(self) -> AsyncTravelRuleWalletAddressesWithStreamingResponse:

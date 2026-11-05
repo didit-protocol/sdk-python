@@ -41,6 +41,7 @@ class SessionsPreviewResubmissionResponseNodesToResubmit(BaseModel):
             "KYB_REGISTRY",
             "KYB_KEY_PEOPLE",
             "KYB",
+            "GEOLOCATION",
         ]
         | str
     )
@@ -71,6 +72,9 @@ class SessionsPreviewResubmissionResponse(BaseModel):
 
     html: str
     """The email's HTML exactly as it is sent, with its logo embedded as a data URL. Render it in a sandboxed frame, never directly in your application DOM."""
+
+    text: str
+    """The email's words as plain text, as the person's Messages thread keeps them, for a compact preview (the HTML stays the email the person receives)."""
 
     language: str
     """The language the email is written in. English (`en`) when the `email_language` you asked for is not offered."""

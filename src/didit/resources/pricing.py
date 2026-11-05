@@ -54,7 +54,7 @@ class Pricing(SyncAPIResource):
     ) -> BankVerificationPricing:
         """Get bank verification prices (public, unauthenticated).
 
-        Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.
+        Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Bank Verification is not enabled in production yet, so a bank step is refused on production workflows until it is; treat these prices as a list price, not as an offer you can buy today. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.
 
         Public: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
 
@@ -111,7 +111,7 @@ class AsyncPricing(AsyncAPIResource):
     ) -> BankVerificationPricing:
         """Get bank verification prices (public, unauthenticated).
 
-        Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.
+        Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Bank Verification is not enabled in production yet, so a bank step is refused on production workflows until it is; treat these prices as a list price, not as an offer you can buy today. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.
 
         Public: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
 

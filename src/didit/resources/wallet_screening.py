@@ -71,11 +71,16 @@ class WalletScreening(SyncAPIResource):
             "BASE",
             "OP",
             "ARB",
+            "AVAX",
+            "ADA",
+            "XLM",
+            "HBAR",
             "CELO",
             "MODE",
             "PLUME",
         ]
-        | str,
+        | str
+        | NotGiven = NOT_GIVEN,
         direction: Literal["inbound", "outbound", "deposit", "withdrawal"]
         | str
         | NotGiven = NOT_GIVEN,
@@ -92,7 +97,7 @@ class WalletScreening(SyncAPIResource):
 
         Args:
           wallet_address: The crypto address or network identifier to screen. Must match the selected network (e.g. a `0x`-prefixed 40-hex-char address for EVM chains). Alias: `address`.
-          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
+          blockchain: Optional network identifier. When omitted, the network is read from the address format: `bc1`, `1` and `3` addresses are Bitcoin (BTC), `T` addresses are Tron (TRX) and base58 public keys are Solana (SOL). A `0x` address is valid on every EVM network, so omitting `blockchain` for it answers 422 with the candidate networks in `candidate_chains`. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), ARB (Arbitrum One), AVAX (Avalanche C-Chain), ADA (Cardano), XLM (Stellar) and HBAR (Hedera). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
           direction: Optional. Whether the address is being screened as an inbound (deposit) or outbound (withdrawal) counterparty. Accepts `inbound`, `outbound`, `deposit`, or `withdrawal`. Defaults to a neutral pre-transfer screen when omitted. This is passed to the provider as context only; it does not change the returned `risk_score`, `severity`, or the `source_of_funds`/`destination_of_funds` breakdowns, which are always both returned regardless of `direction`. Changing or omitting `direction` therefore does not require re-screening an address.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -277,11 +282,16 @@ class AsyncWalletScreening(AsyncAPIResource):
             "BASE",
             "OP",
             "ARB",
+            "AVAX",
+            "ADA",
+            "XLM",
+            "HBAR",
             "CELO",
             "MODE",
             "PLUME",
         ]
-        | str,
+        | str
+        | NotGiven = NOT_GIVEN,
         direction: Literal["inbound", "outbound", "deposit", "withdrawal"]
         | str
         | NotGiven = NOT_GIVEN,
@@ -298,7 +308,7 @@ class AsyncWalletScreening(AsyncAPIResource):
 
         Args:
           wallet_address: The crypto address or network identifier to screen. Must match the selected network (e.g. a `0x`-prefixed 40-hex-char address for EVM chains). Alias: `address`.
-          blockchain: Network identifier. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), and ARB (Arbitrum One). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
+          blockchain: Optional network identifier. When omitted, the network is read from the address format: `bc1`, `1` and `3` addresses are Bitcoin (BTC), `T` addresses are Tron (TRX) and base58 public keys are Solana (SOL). A `0x` address is valid on every EVM network, so omitting `blockchain` for it answers 422 with the candidate networks in `candidate_chains`. Managed screening supports BTC, ETH, LTC, XRP, BCH, DOGE, TRX, SOL, MATIC, BNB, BASE (Base), OP (Optimism), ARB (Arbitrum One), AVAX (Avalanche C-Chain), ADA (Cardano), XLM (Stellar) and HBAR (Hedera). USDT and USDC are legacy Ethereum aliases, not multi-network searches. Connected-provider coverage varies. LIGHTNING requires a supported connected provider. CELO (Celo), MODE (Mode) and PLUME (Plume) are screened through a connected TRM Labs account; managed screening answers 400 for them. Alias: `currency`.
           direction: Optional. Whether the address is being screened as an inbound (deposit) or outbound (withdrawal) counterparty. Accepts `inbound`, `outbound`, `deposit`, or `withdrawal`. Defaults to a neutral pre-transfer screen when omitted. This is passed to the provider as context only; it does not change the returned `risk_score`, `severity`, or the `source_of_funds`/`destination_of_funds` breakdowns, which are always both returned regardless of `direction`. Changing or omitting `direction` therefore does not require re-screening an address.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

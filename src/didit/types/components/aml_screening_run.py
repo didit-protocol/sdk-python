@@ -16,6 +16,9 @@ class AMLScreeningRun(BaseModel):
     uuid: str
     """Identifier of this screening run."""
 
+    run_id: str
+    """The monitoring run this screening belongs to. Every verification screened in the same run shares it."""
+
     completed_at: _dt.datetime
     """When this subject's re-screen finished. Results are ordered by it, newest first."""
 
@@ -41,6 +44,12 @@ class AMLScreeningRun(BaseModel):
 
     total_hits: int | None
     """Number of hits this run left the check in."""
+
+    new_hits: int | None
+    """Number of hits this run found that the check did not have before it. `0` when nothing new was found; `null` when the run failed or was recorded before this count existed."""
+
+    entities_screened: int
+    """Number of entities this run screened for the verification: `1` when the subject was screened, `0` when the run failed."""
 
     dataset_freshness: AMLDatasetFreshness | None
     """Dataset freshness behind this run, or `null` when no dates were available."""

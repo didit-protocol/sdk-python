@@ -13,7 +13,7 @@ class SessionsUpdateAmlHitStatusResponse(BaseModel):
     """Always `Hit status updated successfully`."""
 
     hit_id: str
-    """The updated hit, with surrounding whitespace removed."""
+    """The `id` of the updated hit, as the session decision returns it, also when the request named the hit by an id in the earlier format."""
 
     review_status: Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"] | str
     """The review status now stored on the hit."""

@@ -8,24 +8,38 @@ from didit._models import BaseModel
 from didit.types.components.address_validation_result import AddressValidationResult
 from didit.types.components.aml_screening import AMLScreening
 from didit.types.components.bank_verification_result import BankVerificationResult
+from didit.types.components.biometric_retention import BiometricRetention
 from didit.types.components.document_ai_detected_code import DocumentAIDetectedCode
+from didit.types.components.email_intelligence import EmailIntelligence
+from didit.types.components.email_social_footprint import EmailSocialFootprint
+from didit.types.components.geolocation_attempt import GeolocationAttempt
+from didit.types.components.geolocation_check import GeolocationCheck
 from didit.types.components.investigator_block import InvestigatorBlock
+from didit.types.components.kyb_ownership_structure import KYBOwnershipStructure
 from didit.types.components.kyb_registry_address import KYBRegistryAddress
+from didit.types.components.kyb_registry_data import KYBRegistryData
 from didit.types.components.kyb_registry_industry import KYBRegistryIndustry
 from didit.types.components.kyb_registry_ownership import KYBRegistryOwnership
 from didit.types.components.kyb_registry_shareholding import KYBRegistryShareholding
+from didit.types.components.phone_intelligence import PhoneIntelligence
+from didit.types.components.phone_social_footprint import PhoneSocialFootprint
 from didit.types.components.signature_result import SignatureResult
 
 __all__ = [
     "SessionDecision",
+    "SessionDecisionAssignee",
     "SessionDecisionBiometricConsent",
     "SessionDecisionContactDetails",
+    "SessionDecisionDatabaseValidationNotPerformedReason",
     "SessionDecisionDatabaseValidations",
     "SessionDecisionDatabaseValidationsErrors",
     "SessionDecisionDatabaseValidationsScreenedData",
     "SessionDecisionDatabaseValidationsValidations",
     "SessionDecisionDatabaseValidationsValidationsValidation",
     "SessionDecisionDatabaseValidationsWarnings",
+    "SessionDecisionDecisionTrace",
+    "SessionDecisionDecisionTraceActor",
+    "SessionDecisionDecisionTraceStatusWarnings",
     "SessionDecisionDocumentAiDocuments",
     "SessionDecisionDocumentAiDocumentsItems",
     "SessionDecisionDocumentAiDocumentsItemsFields",
@@ -43,6 +57,10 @@ __all__ = [
     "SessionDecisionEmailVerificationsWarnings",
     "SessionDecisionExpectedDetails",
     "SessionDecisionFaceMatches",
+    "SessionDecisionFaceMatchesFaceCoverage",
+    "SessionDecisionFaceMatchesFaceCoverageEyes",
+    "SessionDecisionFaceMatchesFaceCoverageFace",
+    "SessionDecisionFaceMatchesFaceCoverageMouth",
     "SessionDecisionFaceMatchesWarnings",
     "SessionDecisionIdVerifications",
     "SessionDecisionIdVerificationsBackImageQualityScore",
@@ -97,6 +115,12 @@ __all__ = [
     "SessionDecisionKeyPeopleChecksSubmittedPartiesRoles",
     "SessionDecisionKeyPeopleChecksSubmittedPartiesVerificationWorkflowFeatures",
     "SessionDecisionKeyPeopleChecksUboKycSummary",
+    "SessionDecisionLinkedRecords",
+    "SessionDecisionLinkedRecordsEarlierVerifications",
+    "SessionDecisionLinkedRecordsNetworks",
+    "SessionDecisionLinkedRecordsNetworksItems",
+    "SessionDecisionLinkedRecordsSameFace",
+    "SessionDecisionLinkedRecordsSameFaceBestMatch",
     "SessionDecisionLivenessChecks",
     "SessionDecisionLivenessChecksMatches",
     "SessionDecisionLivenessChecksMatchesUserDetails",
@@ -132,11 +156,21 @@ __all__ = [
     "SessionDecisionRegistryChecksCompany",
     "SessionDecisionRegistryChecksCompanyBeneficialOwners",
     "SessionDecisionRegistryChecksCompanyOfficers",
+    "SessionDecisionRegistryChecksCompanyRegistryMonitoring",
     "SessionDecisionResubmissions",
     "SessionDecisionResubmissionsNodes",
     "SessionDecisionResubmissionsRequestedBy",
     "SessionDecisionReviews",
+    "SessionDecisionStatusOverride",
 ]
+
+
+class SessionDecisionAssignee(BaseModel):
+    """The Console reviewer the session is assigned to, or `null` when nobody holds it."""
+
+    email: str | None = None
+
+    assigned_at: _dt.datetime | None = None
 
 
 class SessionDecisionBiometricConsent(BaseModel):
@@ -253,6 +287,16 @@ class SessionDecisionContactDetails(BaseModel):
     """Phone number of the user in E.164 format if available (e.g., +14155552671). `null` when only an email was supplied at session creation. Note: This field returns the original phone number provided during session creation. If the number was invalid, it may not be in E.164 format."""
 
 
+class SessionDecisionDatabaseValidationNotPerformedReason(BaseModel):
+    """Why a configured database validation produced no result, as `{code, message}` plus context fields. Present only when `database_validations` is `null` for a workflow that has the step, so you can tell "the registry agreed" from "nothing ran". `null` otherwise."""
+
+    code: str | None = None
+    """Stable machine-readable reason."""
+
+    message: str | None = None
+    """Human-readable explanation."""
+
+
 class SessionDecisionDatabaseValidationsErrors(BaseModel):
     """The upstream service's error object spread as-is - its keys vary by service (commonly a message/code and any provider-specific details) - plus `service_id` identifying the service that errored."""
 
@@ -336,6 +380,8 @@ class SessionDecisionDatabaseValidationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -385,6 +431,58 @@ class SessionDecisionDatabaseValidations(BaseModel):
 
     warnings: list[SessionDecisionDatabaseValidationsWarnings] | None = None
     """Warnings related to the database validation."""
+
+
+class SessionDecisionDecisionTraceActor(BaseModel):
+    """The reviewer behind a manual decision."""
+
+    user: str | None = None
+
+    actor_type: str | None = None
+
+
+class SessionDecisionDecisionTraceStatusWarnings(BaseModel):
+    risk: str | None = None
+
+    feature: str | None = None
+
+    node_id: str | None = None
+
+    log_type: str | None = None
+
+    check_status: str | None = None
+
+    source: str | None = None
+    """The payload list the warning came from, for example `id_verifications`."""
+
+    short_description: str | None = None
+
+
+class SessionDecisionDecisionTrace(BaseModel):
+    """How the status was reached: who set it and which warnings did."""
+
+    status: str | None = None
+    """The session status."""
+
+    decided_by: Literal["manual", "automatic", "investigator"] | str | None = None
+    """Who set the status. `null` while the session is not decided."""
+
+    decided_at: _dt.datetime | None = None
+
+    automatic_status: str | None = None
+    """What the platform's own checks conclude, which differs from `status` after a manual decision."""
+
+    terminal_node_id: str | None = None
+    """The workflow status node that ended the session, when one did."""
+
+    actor: SessionDecisionDecisionTraceActor | None = None
+    """The reviewer behind a manual decision."""
+
+    warning_counts: dict[str, int] | None = None
+    """Warnings per `log_type` (`error`, `warning`, `information`) and `total`."""
+
+    status_warnings: list[SessionDecisionDecisionTraceStatusWarnings] | None = None
+    """The warnings that set a `Declined` or `In Review` status."""
 
 
 class SessionDecisionDocumentAiDocumentsItemsFields(BaseModel):
@@ -740,6 +838,8 @@ class SessionDecisionEmailVerificationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -799,6 +899,12 @@ class SessionDecisionEmailVerifications(BaseModel):
     matches: list[SessionDecisionEmailVerificationsMatches] | None = None
     """Matches found for this email address. Each match has a `source`: `session` (another verification session in your application matched on the same email, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the email is on an org-managed allow/block list - see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
 
+    email_intelligence: EmailIntelligence | None = None
+    """Email intelligence signals. Present only when the email intelligence add-on ran for this address."""
+
+    email_social: EmailSocialFootprint | None = None
+    """Social footprint of the address. Present only when the social footprint add-on ran for this address."""
+
 
 class SessionDecisionExpectedDetails(BaseModel):
     """Expected details supplied at session creation - used for cross-validation against extracted data (KYC) or to pre-fill the company registry search (KYB). Echoes back exactly the keys that were provided; `null` when none were supplied. KYC sessions carry the person fields; Business (KYB) sessions carry `company_name`, `registry_country` and `registration_number`."""
@@ -851,6 +957,43 @@ class SessionDecisionExpectedDetails(BaseModel):
     """Expected company registration number. Business (KYB) sessions only."""
 
 
+class SessionDecisionFaceMatchesFaceCoverageEyes(BaseModel):
+    covered: bool | None = None
+
+    calibrated: bool | None = None
+    """`false` means the reading is shadow evidence only and no warning acts on it."""
+
+    visibility_score: float | None = None
+
+
+class SessionDecisionFaceMatchesFaceCoverageFace(BaseModel):
+    covered: bool | None = None
+
+    calibrated: bool | None = None
+    """`false` means the reading is shadow evidence only and no warning acts on it."""
+
+    visibility_score: float | None = None
+
+
+class SessionDecisionFaceMatchesFaceCoverageMouth(BaseModel):
+    covered: bool | None = None
+
+    calibrated: bool | None = None
+    """`false` means the reading is shadow evidence only and no warning acts on it."""
+
+    visibility_score: float | None = None
+
+
+class SessionDecisionFaceMatchesFaceCoverage(BaseModel):
+    """Whether the eyes, mouth and face are covered in the captured image. Returned by `GET /v3/session/{sessionId}/decision/` only; it is not part of webhook payloads. `null` when no coverage reading exists."""
+
+    eyes: SessionDecisionFaceMatchesFaceCoverageEyes | None = None
+
+    mouth: SessionDecisionFaceMatchesFaceCoverageMouth | None = None
+
+    face: SessionDecisionFaceMatchesFaceCoverageFace | None = None
+
+
 class SessionDecisionFaceMatchesWarnings(BaseModel):
     feature: (
         Literal[
@@ -869,6 +1012,8 @@ class SessionDecisionFaceMatchesWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -914,6 +1059,9 @@ class SessionDecisionFaceMatches(BaseModel):
 
     warnings: list[SessionDecisionFaceMatchesWarnings] | None = None
     """Face match verification warnings"""
+
+    face_coverage: SessionDecisionFaceMatchesFaceCoverage | None = None
+    """Whether the eyes, mouth and face are covered in the captured image. Returned by `GET /v3/session/{sessionId}/decision/` only; it is not part of webhook payloads. `null` when no coverage reading exists."""
 
 
 class SessionDecisionIdVerificationsBackImageQualityScore(BaseModel):
@@ -1444,6 +1592,8 @@ class SessionDecisionIdVerificationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -1620,6 +1770,15 @@ class SessionDecisionIdVerifications(BaseModel):
     address_validation: AddressValidationResult | None = None
     """Address Validation of the address printed on this document: whether it exists and its normalised form, as the document read it (a later correction of `address` does not run it again). Present when this ID verification step enabled the Address Validation add-on; `null` otherwise."""
 
+    region: str | None = None
+    """Region or state of the document's issuing country where the document identifies one."""
+
+    extracted_data: dict[str, object] | None = None
+    """Snapshot of the data extracted from the document that the person was shown to review, kept next to the confirmed values so you can compare what was read with what the person confirmed. `null` when the person was not asked to review."""
+
+    barcodes: list[dict[str, object]] | None = None
+    """Data read from the document's barcodes. Empty when the document has none or none was read."""
+
 
 class SessionDecisionIpAnalysesIdDocumentLocation(BaseModel):
     """Coordinates, or `null` when unavailable."""
@@ -1788,6 +1947,8 @@ class SessionDecisionIpAnalysesWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -1887,6 +2048,28 @@ class SessionDecisionIpAnalyses(BaseModel):
 
     matches: list[SessionDecisionIpAnalysesMatches] | None = None
     """Cross-session matches found for this entry's IP address or device identity. Every match is another verification session in your application (`source` is always `session`) that shares the same value, always belonging to a different vendor user / `vendor_data` than the current session, capped at 5 per collector (`device_fingerprint` sums two independently capped collectors, so up to 10 entries are possible). Every item carries `match_source`, `confidence`, `match_mode`, `device_info` and `location_info`; the keys `recovery_similarity`, `tls_ja4_corroborated` and `recovery_gate_reason` are present only when `match_source` is `recovered_high`."""
+
+    browser_version: str | None = None
+
+    os_version: str | None = None
+
+    user_agent: str | None = None
+    """The browser's user agent string."""
+
+    accept_language: str | None = None
+    """The `Accept-Language` header the browser sent."""
+
+    session_identifier: str | None = None
+    """Identifier of the browsing session the verification ran in."""
+
+    session_age_ms: int | None = None
+    """Age of that browsing session in milliseconds when the step ran."""
+
+    coords_accuracy: float | None = None
+    """Accuracy radius, in metres, of the coordinates the device reported."""
+
+    raw_device_data: dict[str, object] | None = None
+    """Raw device signals collected for the step."""
 
 
 class SessionDecisionKeyPeopleChecksRegistryBeneficialOwnersKycAmlCategories(BaseModel):
@@ -2378,6 +2561,63 @@ class SessionDecisionKeyPeopleChecks(BaseModel):
     warnings: list[dict[str, object]] | None = None
 
 
+class SessionDecisionLinkedRecordsEarlierVerifications(BaseModel):
+    count: int | None = None
+
+    vendor_user_id: str | None = None
+
+
+class SessionDecisionLinkedRecordsNetworksItems(BaseModel):
+    network_id: str | None = None
+
+    display_number: int | None = None
+
+    name: str | None = None
+
+    status: str | None = None
+
+    risk_score: float | None = None
+
+
+class SessionDecisionLinkedRecordsNetworks(BaseModel):
+    count: int | None = None
+
+    open: int | None = None
+
+    dismissed: int | None = None
+
+    items: list[SessionDecisionLinkedRecordsNetworksItems] | None = None
+
+
+class SessionDecisionLinkedRecordsSameFaceBestMatch(BaseModel):
+    session_id: str | None = None
+
+    session_number: int | None = None
+
+    vendor_user_id: str | None = None
+
+    similarity_percentage: float | None = None
+
+
+class SessionDecisionLinkedRecordsSameFace(BaseModel):
+    """Other people whose face matched one of this session's face searches."""
+
+    count: int | None = None
+
+    best_match: SessionDecisionLinkedRecordsSameFaceBestMatch | None = None
+
+
+class SessionDecisionLinkedRecords(BaseModel):
+    """A summary of other records linked to the session. `null` when there is nothing to show, and for workflows that declare an age assurance standard."""
+
+    same_face: SessionDecisionLinkedRecordsSameFace | None = None
+    """Other people whose face matched one of this session's face searches."""
+
+    earlier_verifications: SessionDecisionLinkedRecordsEarlierVerifications | None = None
+
+    networks: SessionDecisionLinkedRecordsNetworks | None = None
+
+
 class SessionDecisionLivenessChecksMatchesUserDetails(BaseModel):
     """Identity data from the matching session or imported User profile. Always `null` for `retained_template` and `list_entry` matches."""
 
@@ -2449,6 +2689,8 @@ class SessionDecisionLivenessChecksWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -2667,6 +2909,8 @@ class SessionDecisionNfcVerificationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -2812,6 +3056,8 @@ class SessionDecisionPhoneVerificationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -2881,6 +3127,12 @@ class SessionDecisionPhoneVerifications(BaseModel):
 
     matches: list[SessionDecisionPhoneVerificationsMatches] | None = None
     """Matches found for this phone number. Each match has a `source`: `session` (another verification session in your application matched on the same number, returned with `session_id`/`session_number`/`vendor_data`/`verification_date`) or `list_entry` (the number is on an org-managed allow/block list - see `/management-api/lists/overview`). Cross-session matches use different `vendor_data` and are capped at 5."""
+
+    phone_intelligence: PhoneIntelligence | None = None
+    """Phone intelligence signals. Present only when the phone intelligence add-on ran for this number."""
+
+    phone_social: PhoneSocialFootprint | None = None
+    """Social footprint of the number. Present only when the social footprint add-on ran for this number."""
 
 
 class SessionDecisionPoaVerificationsDocumentMetadataOverlayManipulationManipulatedRegions(
@@ -3047,6 +3299,8 @@ class SessionDecisionPoaVerificationsWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None
@@ -3346,6 +3600,31 @@ class SessionDecisionRegistryChecksCompanyOfficers(BaseModel):
     """Registry-reported birth month. Null when only the year is known."""
 
 
+class SessionDecisionRegistryChecksCompanyRegistryMonitoring(BaseModel):
+    """The latest registry monitor for the company, or `null` when none exists."""
+
+    uuid: str | None = None
+
+    status: str | None = None
+
+    unavailable_reason: str | None = None
+
+    enrolled_at: _dt.datetime | None = None
+
+    cancelled_at: _dt.datetime | None = None
+
+    last_bill_date: _dt.date | None = None
+
+    next_bill_date: _dt.date | None = None
+
+    last_event_at: _dt.datetime | None = None
+
+    events_count: int | None = None
+
+    watched_fields: object = None
+    """The company fields the monitor watches."""
+
+
 class SessionDecisionRegistryChecksCompany(BaseModel):
     """Full registry payload for the company (registry record merged with any user-provided or console-edited data)."""
 
@@ -3470,8 +3749,8 @@ class SessionDecisionRegistryChecksCompany(BaseModel):
     accounts: dict[str, object] | None = None
     """Registry filing dates, when available. Annual returns and general meetings use last_annual_return_date and last_agm_date; they are distinct from financial accounts."""
 
-    registry_data: dict[str, object] | None = None
-    """Raw record returned by the registry source, kept for reviewers. Its shape differs by country and source and is not a stable contract: read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) instead."""
+    registry_data: KYBRegistryData | None = None
+    """Didit's normalized registry detail for the company: the ownership outcome (`ownership_error`, `section_errors`, `ubo_resolution`, `lite_enrichment`), the corrections made with update-data, and registry facts that have no field of their own. It never carries the registry source's own record. Every key is optional and present only when the company has a value for it; new keys may be added. Read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) for anything they cover."""
 
     user_provided_data: dict[str, object] | None = None
     """Data confirmed or edited by the end user."""
@@ -3494,6 +3773,9 @@ class SessionDecisionRegistryChecksCompany(BaseModel):
     registry_ownership_status: str | None = None
     """`not_requested`, `pending`, `delivered`, `not_held` or `unavailable`. Also in `ownership.status`."""
 
+    registry_monitoring: SessionDecisionRegistryChecksCompanyRegistryMonitoring | None = None
+    """The latest registry monitor for the company, or `null` when none exists."""
+
 
 class SessionDecisionRegistryChecks(BaseModel):
     """One company registry check - the full company-registry payload enriched with ownership structure and warnings. Present only when `session_kind = business`."""
@@ -3508,8 +3790,8 @@ class SessionDecisionRegistryChecks(BaseModel):
     company: SessionDecisionRegistryChecksCompany | None = None
     """Full registry payload for the company (registry record merged with any user-provided or console-edited data)."""
 
-    ownership_structure: dict[str, object] | None = None
-    """Raw ownership snapshot kept for reviewers; its shape differs by registry source and is not a stable contract. Read `company.beneficial_owners` and `company.ownership` instead."""
+    ownership_structure: KYBOwnershipStructure | None = None
+    """The cap table the registry proved, as it stood when the ownership tier was delivered: direct `shareholders` and `beneficial_owners`. Null when the registry proved no ownership. It never carries the registry source's own rows; read `company.beneficial_owners` and `company.ownership` for the current record."""
 
     warnings: list[dict[str, object]] | None = None
 
@@ -3564,6 +3846,15 @@ class SessionDecisionReviews(BaseModel):
     created_at: _dt.datetime | None = None
 
 
+class SessionDecisionStatusOverride(BaseModel):
+    """Present when a reviewer set `status` by hand. `null` when the status is the automatic one. Use it to tell a manual approval from an automatic one."""
+
+    overridden_at: _dt.datetime | None = None
+
+    automatic_status: str | None = None
+    """The status the platform's own checks conclude."""
+
+
 class SessionDecision(BaseModel):
     session_id: str | None = None
     """The unique identifier of the session."""
@@ -3573,6 +3864,9 @@ class SessionDecision(BaseModel):
 
     shared_from_session: str | None = None
     """For a session cloned with `POST /v3/session/import-shared/`: the `session_id` of the original session in the source application. `null` for every other session. Omitted when `include=events` is passed."""
+
+    shared_from_session_number: int | None = None
+    """`session_number` of the source session when this session was imported from another application of your organization. `null` otherwise."""
 
     session_number: int | None = None
     """The number of the session."""
@@ -3598,11 +3892,20 @@ class SessionDecision(BaseModel):
     ) = None
     """Overall lifecycle status of the session - the rolled-up workflow result. Terminal values are `Approved`, `Declined`, `In Review`, `Expired`, `Kyc Expired`, and `Abandoned`; `Not Started`, `In Progress`, `Awaiting User`, and `Resubmitted` indicate the session is still moving through the workflow."""
 
+    status_override: SessionDecisionStatusOverride | None = None
+    """Present when a reviewer set `status` by hand. `null` when the status is the automatic one. Use it to tell a manual approval from an automatic one."""
+
+    decision_trace: SessionDecisionDecisionTrace | None = None
+    """How the status was reached: who set it and which warnings did."""
+
+    linked_records: SessionDecisionLinkedRecords | None = None
+    """A summary of other records linked to the session. `null` when there is nothing to show, and for workflows that declare an age assurance standard."""
+
     workflow_id: str | None = None
     """Stable identifier of the workflow group that produced this session. Workflows are versioned - this value identifies the workflow itself, not the specific version."""
 
     features: list[str] | None = None
-    """List of verification features configured for this session, as display names: `ID_VERIFICATION`, `NFC`, `LIVENESS`, `FACE_MATCH`, `POA`, `PHONE`, `EMAIL_VERIFICATION`, `AML`, `IP_ANALYSIS`, `DATABASE_VALIDATION`, `QUESTIONNAIRE`, `AGE_ESTIMATION`, `FACE_SEARCH` (Business Verification sessions use the KYB feature set: `KYB_REGISTRY`, `KYB_DOCUMENTS`, `KYB_KEY_PEOPLE`, `AML`, `PHONE`, `EMAIL_VERIFICATION`, `IP_ANALYSIS`, `QUESTIONNAIRE`). With `include=events` each entry becomes an object `{feature, node_id}` instead of a plain string, and the email feature is renamed: it appears as `EMAIL` in events mode instead of the `EMAIL_VERIFICATION` used here."""
+    """List of verification features configured for this session, as display names: `ID_VERIFICATION`, `NFC`, `LIVENESS`, `FACE_MATCH`, `POA`, `PHONE`, `EMAIL_VERIFICATION`, `AML`, `IP_ANALYSIS`, `DATABASE_VALIDATION`, `QUESTIONNAIRE`, `AGE_ESTIMATION`, `FACE_SEARCH`, `GEOLOCATION` (Location verification) (Business Verification sessions use the KYB feature set: `KYB_REGISTRY`, `KYB_DOCUMENTS`, `KYB_KEY_PEOPLE`, `AML`, `PHONE`, `EMAIL_VERIFICATION`, `IP_ANALYSIS`, `QUESTIONNAIRE`). With `include=events` each entry becomes an object `{feature, node_id}` instead of a plain string, and the email feature is renamed: it appears as `EMAIL` in events mode instead of the `EMAIL_VERIFICATION` used here."""
 
     vendor_data: str | None = None
     """The vendor data of the session."""
@@ -3662,16 +3965,22 @@ class SessionDecision(BaseModel):
     """**Array of questionnaire response reports** - always a JSON array, never a singular `questionnaire` object. `null` until at least one questionnaire step has produced data. Each item is the full report, including `node_id`, the questionnaire metadata, sections with form elements, and the user's answers."""
 
     bank_verifications: list[BankVerificationResult] | None = None
-    """Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `statement` or `microdeposits` fallback, and `none` when the person continued without a bank before any attempt was evaluated (`continued_without_bank`). See [Bank verification methods](/core-technology/bank-verification/verification-methods)."""
+    """Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `statement` or `microdeposits` fallback, and `none` when the person continued without a bank before any attempt was evaluated (`continued_without_bank`). See [Bank verification methods](/core-technology/bank-verification/verification-methods). Bank Verification is not enabled in production yet, so this stays `null` on production sessions until it is."""
 
     signatures: list[SignatureResult] | None = None
-    """Electronic Signature results, one item per signer and signature step, for User and Business Verification. Present only when the workflow has an Electronic Signature step; an empty array until a signer reaches it. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature)."""
+    """E-signature results, one item per signer and signature step, for User and Business Verification. Present only when the workflow has an E-signature step; an empty array until a signer reaches it. See the [E-signature report](/core-technology/electronic-signature/report-electronic-signature)."""
 
     aml_screenings: list[AMLScreening] | None = None
     """**Array of AML screening reports** - always a JSON array, never a singular `aml` object. `null` until at least one AML step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `total_hits`, `entity_type`, `hits[]`, `score`, `screened_data`, `is_ongoing_monitoring_enabled`, and `warnings[]`."""
 
     ip_analyses: list[SessionDecisionIpAnalyses] | None = None
     """**Array of Device & IP Analysis reports** - always a JSON array, never a singular `ip_analysis` object. `null` until at least one IP-analysis step has produced data. Each item is the full report, including `node_id`, feature-level `status`, IP and geolocation data, device fingerprint, and `warnings[]`. Entries with duplicate `(node_id, ip_address, device_fingerprint)` are deduplicated server-side."""
+
+    geolocation_checks: list[GeolocationCheck] | None = None
+    """**Array of Location verification results**, one per Location verification step: that step's accepted attempt. `null` until a Location verification step has produced data. Earlier attempts of the same step are in `geolocation_attempts`."""
+
+    geolocation_attempts: list[GeolocationAttempt] | None = None
+    """Every attempt of every Location verification step of this session, oldest first. Attempts that a resubmission replaced are left out. A workflow that withholds `geolocation_checks` through its response attributes withholds this list too."""
 
     database_validations: list[SessionDecisionDatabaseValidations] | None = None
     """**Array of Database Validation reports** - always a JSON array, never a singular `database_validation` object. `null` until at least one DB validation step has produced data. Each item is the full report, including `node_id`, feature-level `status`, `screened_data`, the per-service `validations[]` (each with its registry `source_data`), and `warnings[]`. The `screened_data` and `source_data` fields vary by country:
@@ -3713,7 +4022,21 @@ class SessionDecision(BaseModel):
     **VEN (Venezuela)**: screened_data: {document_number, first_name, last_name}. source_data: {identification_number, first_name, last_name, full_name, gender, date_of_birth, document_type}
     """
 
+    database_validation_not_performed_reason: (
+        SessionDecisionDatabaseValidationNotPerformedReason | None
+    ) = None
+    """Why a configured database validation produced no result, as `{code, message}` plus context fields. Present only when `database_validations` is `null` for a workflow that has the step, so you can tell "the registry agreed" from "nothing ran". `null` otherwise."""
+
     reviews: list[SessionDecisionReviews] | None = None
+
+    assignee: SessionDecisionAssignee | None = None
+    """The Console reviewer the session is assigned to, or `null` when nobody holds it."""
+
+    waiting_since: _dt.datetime | None = None
+    """When the session started waiting for review. `null` unless the session is `In Review` and your application sets a review deadline."""
+
+    sla_due_at: _dt.datetime | None = None
+    """When the review is due. `null` unless the session is `In Review` and your application sets a review deadline."""
 
     created_at: _dt.datetime | None = None
     """Timestamp at which the session was created (ISO 8601, UTC)."""
@@ -3733,6 +4056,9 @@ class SessionDecision(BaseModel):
     environment: Literal["live", "sandbox"] | str | None = None
     """Whether the session was created by a live application (`live`) or a sandbox application (`sandbox`). Sandbox sessions are free, fully simulated, and never bill credits."""
 
+    sandbox_scenario: str | None = None
+    """The sandbox scenario the session was created with. `null` for live sessions and for sandbox sessions created without one."""
+
     resubmissions: list[SessionDecisionResubmissions] | None = None
     """Returned only with `include=resubmissions`, for user and business sessions. One entry per resubmission request, oldest first. Each entry carries the results the resubmitted steps returned before the request, so earlier submissions stay readable. Deleting the session deletes every submission."""
 
@@ -3741,3 +4067,15 @@ class SessionDecision(BaseModel):
 
     investigator: InvestigatorBlock | None = None
     """The item's latest Investigator review, or null when it never had one. Carried by the V3 session and business session decision (and so by `status.updated` webhooks)."""
+
+    biometric_retention: BiometricRetention | None = None
+    """When the live biometric data of this session is deleted."""
+
+    fraud_check: dict[str, object] | None = None
+    """The result of a Fraud Check API call. `null` for every other session."""
+
+    full_session_video: str | None = None
+    """Expiring URL of the full-session recording. Returned only when your organization records full-session video."""
+
+    full_session_video_recorded_at: _dt.datetime | None = None
+    """When the full-session recording was made. Returned only when your organization records full-session video."""

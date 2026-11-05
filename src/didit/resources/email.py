@@ -79,7 +79,7 @@ class Email(SyncAPIResource):
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
-        **Rate limit.** Shared write budget of 300 requests per minute per API key across all POST/PATCH/DELETE endpoints.
+        **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
         **Social footprint.** Set `enable_social` to `true` to add a `email_social` block: the online platforms this address is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the address was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `email_social` unit per request on top of this endpoint's own price.
 
@@ -194,6 +194,12 @@ class Email(SyncAPIResource):
         duplicated_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         breached_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         disposable_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        enable_enrichment: bool | NotGiven = NOT_GIVEN,
+        email_intelligence_score_action: Literal["NO_ACTION", "DECLINE"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        recent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        frequent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
         email_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
@@ -235,6 +241,10 @@ class Email(SyncAPIResource):
           duplicated_email_action: What to do when the same address was already used and approved by a different user (only previously Approved verifications count) (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings` and fills `email.matches`.
           breached_email_action: What to do when the address appears in known data breaches (`email.is_breached`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings`.
           disposable_email_action: What to do when the domain belongs to a disposable/temporary-mail provider (`email.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings`.
+          enable_enrichment: When `true`, also run email intelligence on the address: a risk score and its breach history. Billed as one `email_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it.
+          email_intelligence_score_action: Action when the email intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          recent_email_breach_action: Action when the address appears in a recent known data breach. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          frequent_email_breach_action: Action when the address appears in many known data breaches. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
           email_no_social_presence_action: Action when the social footprint check finds the address registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -255,6 +265,10 @@ class Email(SyncAPIResource):
                     "duplicated_email_action": duplicated_email_action,
                     "breached_email_action": breached_email_action,
                     "disposable_email_action": disposable_email_action,
+                    "enable_enrichment": enable_enrichment,
+                    "email_intelligence_score_action": email_intelligence_score_action,
+                    "recent_email_breach_action": recent_email_breach_action,
+                    "frequent_email_breach_action": frequent_email_breach_action,
                     "enable_social": enable_social,
                     "email_no_social_presence_action": email_no_social_presence_action,
                 },
@@ -310,7 +324,7 @@ class AsyncEmail(AsyncAPIResource):
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
-        **Rate limit.** Shared write budget of 300 requests per minute per API key across all POST/PATCH/DELETE endpoints.
+        **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
         **Social footprint.** Set `enable_social` to `true` to add a `email_social` block: the online platforms this address is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the address was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `email_social` unit per request on top of this endpoint's own price.
 
@@ -425,6 +439,12 @@ class AsyncEmail(AsyncAPIResource):
         duplicated_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         breached_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         disposable_email_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        enable_enrichment: bool | NotGiven = NOT_GIVEN,
+        email_intelligence_score_action: Literal["NO_ACTION", "DECLINE"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        recent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        frequent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
         email_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
@@ -466,6 +486,10 @@ class AsyncEmail(AsyncAPIResource):
           duplicated_email_action: What to do when the same address was already used and approved by a different user (only previously Approved verifications count) (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings` and fills `email.matches`.
           breached_email_action: What to do when the address appears in known data breaches (`email.is_breached`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings`.
           disposable_email_action: What to do when the domain belongs to a disposable/temporary-mail provider (`email.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings`.
+          enable_enrichment: When `true`, also run email intelligence on the address: a risk score and its breach history. Billed as one `email_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it.
+          email_intelligence_score_action: Action when the email intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          recent_email_breach_action: Action when the address appears in a recent known data breach. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          frequent_email_breach_action: Action when the address appears in many known data breaches. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
           email_no_social_presence_action: Action when the social footprint check finds the address registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -486,6 +510,10 @@ class AsyncEmail(AsyncAPIResource):
                     "duplicated_email_action": duplicated_email_action,
                     "breached_email_action": breached_email_action,
                     "disposable_email_action": disposable_email_action,
+                    "enable_enrichment": enable_enrichment,
+                    "email_intelligence_score_action": email_intelligence_score_action,
+                    "recent_email_breach_action": recent_email_breach_action,
+                    "frequent_email_breach_action": frequent_email_breach_action,
                     "enable_social": enable_social,
                     "email_no_social_presence_action": email_no_social_presence_action,
                 },

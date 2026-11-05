@@ -24,6 +24,18 @@ class EmailCheckCodeParams(TypedDict, total=False):
     disposable_email_action: Literal["NO_ACTION", "DECLINE"] | str
     """What to do when the domain belongs to a disposable/temporary-mail provider (`email.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `email.warnings`."""
 
+    enable_enrichment: bool
+    """When `true`, also run email intelligence on the address: a risk score and its breach history. Billed as one `email_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it."""
+
+    email_intelligence_score_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the email intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
+    recent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the address appears in a recent known data breach. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
+    frequent_email_breach_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the address appears in many known data breaches. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
     enable_social: bool
     """When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price."""
 

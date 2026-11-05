@@ -16,7 +16,14 @@ def test_fraud_checks_create() -> None:
             path="/v3/fraud/checks/",
             api="verification",
             auth="api_key",
-            json_body={"subject": {"identifiers": [{"type": "email", "value": "sample"}]}},
+            json_body={
+                "subject": {
+                    "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                    "attributes": {"first_name": "Alex", "last_name": "Example"},
+                },
+                "client_reference": "review-attempt-001",
+                "checks": {"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
+            },
             status=200,
             response_json={
                 "check_id": "00000000-0000-4000-8000-000000000003",
@@ -80,10 +87,20 @@ def test_fraud_checks_create() -> None:
             strict_type=FraudCheckResponse,
         ),
         lambda c: c.fraud_checks.create(
-            subject={"identifiers": [{"type": "email", "value": "sample"}]}
+            subject={
+                "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                "attributes": {"first_name": "Alex", "last_name": "Example"},
+            },
+            client_reference="review-attempt-001",
+            checks={"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
         ),
         lambda c: c.fraud_checks.create(
-            subject={"identifiers": [{"type": "email", "value": "sample"}]}
+            subject={
+                "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                "attributes": {"first_name": "Alex", "last_name": "Example"},
+            },
+            client_reference="review-attempt-001",
+            checks={"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
         ),
         lambda r: isinstance(r, FraudCheckResponse),
         lambda r: isinstance(r, FraudCheckResponse),
@@ -98,7 +115,14 @@ def test_fraud_checks_plan() -> None:
             path="/v3/fraud/checks/plan/",
             api="verification",
             auth="api_key",
-            json_body={"subject": {"identifiers": [{"type": "email", "value": "sample"}]}},
+            json_body={
+                "subject": {
+                    "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                    "attributes": {"first_name": "Alex", "last_name": "Example"},
+                },
+                "client_reference": "review-attempt-001",
+                "checks": {"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
+            },
             status=200,
             response_json={
                 "profile_id": "sample",
@@ -121,10 +145,20 @@ def test_fraud_checks_plan() -> None:
             strict_type=FraudCheckPlan,
         ),
         lambda c: c.fraud_checks.plan(
-            subject={"identifiers": [{"type": "email", "value": "sample"}]}
+            subject={
+                "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                "attributes": {"first_name": "Alex", "last_name": "Example"},
+            },
+            client_reference="review-attempt-001",
+            checks={"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
         ),
         lambda c: c.fraud_checks.plan(
-            subject={"identifiers": [{"type": "email", "value": "sample"}]}
+            subject={
+                "identifiers": [{"type": "email", "value": "applicant@example.com"}],
+                "attributes": {"first_name": "Alex", "last_name": "Example"},
+            },
+            client_reference="review-attempt-001",
+            checks={"include": ["networks_same_org", "networks_cross_org", "email_risk"]},
         ),
         lambda r: isinstance(r, FraudCheckPlan),
         lambda r: isinstance(r, FraudCheckPlan),

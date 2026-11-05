@@ -10,7 +10,7 @@ __all__ = ["SessionsListResponse"]
 
 class SessionsListResponse(BaseModel):
     count: int
-    """Number of sessions matching the filters. Exact for KYC rows; for KYB rows it is capped at 100 (use `next` to know whether more pages exist). For `session_kind=all` it is the sum of both kinds."""
+    """Number of sessions matching the filters: exact up to 100 and capped at 100 beyond that, so do not use it as a total. Use `next` to know whether more pages exist. For `session_kind=all` it is the sum of both kinds, each capped at 100."""
 
     next: str | None
     """Absolute URL of the next page, or `null` on the last page."""

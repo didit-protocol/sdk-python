@@ -249,7 +249,12 @@ def test_transactions_list() -> None:
             path="/v3/transactions/",
             api="verification",
             auth="api_key",
-            query={"limit": ["1"], "offset": ["1"], "travel_rule_status": ["sample"]},
+            query={
+                "limit": ["1"],
+                "offset": ["1"],
+                "travel_rule_status": ["sample"],
+                "assignee": ["sample"],
+            },
             status=200,
             response_json={
                 "count": 1,
@@ -298,8 +303,12 @@ def test_transactions_list() -> None:
                 ],
             },
         ),
-        lambda c: c.transactions.list(limit=1, offset=1, travel_rule_status="sample"),
-        lambda c: c.transactions.list(limit=1, offset=1, travel_rule_status="sample"),
+        lambda c: c.transactions.list(
+            limit=1, offset=1, travel_rule_status="sample", assignee="sample"
+        ),
+        lambda c: c.transactions.list(
+            limit=1, offset=1, travel_rule_status="sample", assignee="sample"
+        ),
         lambda r: (
             isinstance(r, SyncPage)
             and all(isinstance(x1, TransactionsListResponseResults) for x1 in r.results)

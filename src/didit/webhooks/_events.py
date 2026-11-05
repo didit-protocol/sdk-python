@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from pydantic import Field, PrivateAttr
 
 from .._models import BaseModel, validate_response
-from ..types.components.session_decision import SessionDecision
+
+if TYPE_CHECKING:
+    from ..types.components.session_decision import SessionDecision
 
 __all__ = [
     "ActivityCreatedEvent",
@@ -57,6 +59,30 @@ class WebhookEventBase(BaseModel):
         return self._verified_by in ("signature", "signature_v2")
 
 
+if TYPE_CHECKING:
+    LazySessionDecision = SessionDecision
+else:
+
+    class LazySessionDecision:
+        """Stands for ``SessionDecision``, imported when a model is first built.
+
+        The decision model pulls in the whole decision component graph (dozens
+        of generated modules, and more with every spec sync), so ``import didit``
+        does not load it. Pydantic asks for the schema when the event model is
+        first validated or its schema is generated, whichever entry point is used.
+        """
+
+        @staticmethod
+        def __didit_resolve__() -> type[BaseModel]:
+            from ..types.components.session_decision import SessionDecision
+
+            return SessionDecision
+
+        @classmethod
+        def __get_pydantic_core_schema__(cls, source: Any, handler: Any) -> Any:
+            return handler(cls.__didit_resolve__())
+
+
 class _SessionEvent(WebhookEventBase):
     session_id: str | None = None
     business_session_id: str | None = None
@@ -66,7 +92,7 @@ class _SessionEvent(WebhookEventBase):
     workflow_version: int | None = None
     vendor_data: str | None = None
     metadata: object = None
-    decision: SessionDecision | None = None
+    decision: LazySessionDecision | None = None
     resubmit_info: object = None
 
 

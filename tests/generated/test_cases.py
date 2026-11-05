@@ -74,7 +74,11 @@ def test_cases_apply_entity_action() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/00000000-0000-4000-8000-000000000001/entity-actions/",
             api="verification",
             auth="api_key",
-            json_body={"action": "set_status"},
+            json_body={
+                "action": "add_tags",
+                "client_reference": "e1a00000-0000-4000-8000-000000000001",
+                "tags": ["source-of-funds-reviewed"],
+            },
             status=200,
             response_json={
                 "receipt": {
@@ -101,10 +105,16 @@ def test_cases_apply_entity_action() -> None:
             strict_type=CaseActionCaseEntityActionResult,
         ),
         lambda c: c.cases.apply_entity_action(
-            "00000000-0000-4000-8000-000000000001", action="set_status"
+            "00000000-0000-4000-8000-000000000001",
+            action="add_tags",
+            client_reference="e1a00000-0000-4000-8000-000000000001",
+            tags=["source-of-funds-reviewed"],
         ),
         lambda c: c.cases.apply_entity_action(
-            "00000000-0000-4000-8000-000000000001", action="set_status"
+            "00000000-0000-4000-8000-000000000001",
+            action="add_tags",
+            client_reference="e1a00000-0000-4000-8000-000000000001",
+            tags=["source-of-funds-reviewed"],
         ),
         lambda r: isinstance(r, CaseActionCaseEntityActionResult),
         lambda r: isinstance(r, CaseActionCaseEntityActionResult),
@@ -279,7 +289,7 @@ def test_cases_assign() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/assign/",
             api="verification",
             auth="api_key",
-            json_body={"assignee_user_id": "00000000-0000-4000-8000-000000000001"},
+            json_body={"assignee_user_id": "9a000000-0000-4000-8000-0000000000aa"},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -427,11 +437,11 @@ def test_cases_assign() -> None:
         ),
         lambda c: c.cases.assign(
             "c1a5e000-0000-4000-8000-000000000001",
-            assignee_user_id="00000000-0000-4000-8000-000000000001",
+            assignee_user_id="9a000000-0000-4000-8000-0000000000aa",
         ),
         lambda c: c.cases.assign(
             "c1a5e000-0000-4000-8000-000000000001",
-            assignee_user_id="00000000-0000-4000-8000-000000000001",
+            assignee_user_id="9a000000-0000-4000-8000-0000000000aa",
         ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
@@ -447,8 +457,8 @@ def test_cases_bulk_assign() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "case_uuids": ["00000000-0000-4000-8000-000000000002"],
-                "assignee_user_id": "00000000-0000-4000-8000-000000000001",
+                "case_uuids": ["c1a5e000-0000-4000-8000-000000000001"],
+                "assignee_user_id": "9a000000-0000-4000-8000-0000000000aa",
             },
             status=200,
             response_json={
@@ -460,12 +470,12 @@ def test_cases_bulk_assign() -> None:
             strict_type=CaseBulkUpdateResult,
         ),
         lambda c: c.cases.bulk_assign(
-            case_uuids=["00000000-0000-4000-8000-000000000002"],
-            assignee_user_id="00000000-0000-4000-8000-000000000001",
+            case_uuids=["c1a5e000-0000-4000-8000-000000000001"],
+            assignee_user_id="9a000000-0000-4000-8000-0000000000aa",
         ),
         lambda c: c.cases.bulk_assign(
-            case_uuids=["00000000-0000-4000-8000-000000000002"],
-            assignee_user_id="00000000-0000-4000-8000-000000000001",
+            case_uuids=["c1a5e000-0000-4000-8000-000000000001"],
+            assignee_user_id="9a000000-0000-4000-8000-0000000000aa",
         ),
         lambda r: isinstance(r, CaseBulkUpdateResult),
         lambda r: isinstance(r, CaseBulkUpdateResult),
@@ -480,7 +490,11 @@ def test_cases_bulk_update_status() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/bulk/status/",
             api="verification",
             auth="api_key",
-            json_body={"case_uuids": ["00000000-0000-4000-8000-000000000002"], "status": "OPEN"},
+            json_body={
+                "case_uuids": ["c1a5e000-0000-4000-8000-000000000001"],
+                "status": "RESOLVED",
+                "resolution": "FALSE_POSITIVE",
+            },
             status=200,
             response_json={
                 "updated": 1,
@@ -491,10 +505,14 @@ def test_cases_bulk_update_status() -> None:
             strict_type=CaseBulkUpdateResult,
         ),
         lambda c: c.cases.bulk_update_status(
-            case_uuids=["00000000-0000-4000-8000-000000000002"], status="OPEN"
+            case_uuids=["c1a5e000-0000-4000-8000-000000000001"],
+            status="RESOLVED",
+            resolution="FALSE_POSITIVE",
         ),
         lambda c: c.cases.bulk_update_status(
-            case_uuids=["00000000-0000-4000-8000-000000000002"], status="OPEN"
+            case_uuids=["c1a5e000-0000-4000-8000-000000000001"],
+            status="RESOLVED",
+            resolution="FALSE_POSITIVE",
         ),
         lambda r: isinstance(r, CaseBulkUpdateResult),
         lambda r: isinstance(r, CaseBulkUpdateResult),
@@ -509,7 +527,13 @@ def test_cases_create() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/",
             api="verification",
             auth="api_key",
-            json_body={"title": "sample"},
+            json_body={
+                "title": "Manual - Jane Doe",
+                "blueprint": "b1de0000-0000-4000-8000-000000000002",
+                "priority": "HIGH",
+                "tags": ["review"],
+                "subject": {"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"},
+            },
             status=201,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -655,8 +679,20 @@ def test_cases_create() -> None:
             },
             strict_type=CaseDetail,
         ),
-        lambda c: c.cases.create(title="sample"),
-        lambda c: c.cases.create(title="sample"),
+        lambda c: c.cases.create(
+            title="Manual - Jane Doe",
+            blueprint="b1de0000-0000-4000-8000-000000000002",
+            priority="HIGH",
+            tags=["review"],
+            subject={"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"},
+        ),
+        lambda c: c.cases.create(
+            title="Manual - Jane Doe",
+            blueprint="b1de0000-0000-4000-8000-000000000002",
+            priority="HIGH",
+            tags=["review"],
+            subject={"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"},
+        ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
     )
@@ -847,7 +883,7 @@ def test_cases_find_duplicates() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/duplicates/",
             api="verification",
             auth="api_key",
-            json_body={"subject": {"type": "user", "uuid": "00000000-0000-4000-8000-000000000003"}},
+            json_body={"subject": {"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"}},
             status=200,
             response_json={
                 "count": 1,
@@ -866,10 +902,10 @@ def test_cases_find_duplicates() -> None:
             strict_type=CaseDuplicateCaseDuplicatePage,
         ),
         lambda c: c.cases.find_duplicates(
-            subject={"type": "user", "uuid": "00000000-0000-4000-8000-000000000003"}
+            subject={"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"}
         ),
         lambda c: c.cases.find_duplicates(
-            subject={"type": "user", "uuid": "00000000-0000-4000-8000-000000000003"}
+            subject={"type": "user", "uuid": "5b9a0000-0000-4000-8000-00000000f00d"}
         ),
         lambda r: isinstance(r, CaseDuplicateCaseDuplicatePage),
         lambda r: isinstance(r, CaseDuplicateCaseDuplicatePage),
@@ -1343,7 +1379,7 @@ def test_cases_reject_resolution() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/reject-approval/",
             api="verification",
             auth="api_key",
-            json_body={"notes": "sample"},
+            json_body={"notes": "Needs a clearer rationale before this can be approved."},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -1489,8 +1525,14 @@ def test_cases_reject_resolution() -> None:
             },
             strict_type=CaseDetail,
         ),
-        lambda c: c.cases.reject_resolution("c1a5e000-0000-4000-8000-000000000001", notes="sample"),
-        lambda c: c.cases.reject_resolution("c1a5e000-0000-4000-8000-000000000001", notes="sample"),
+        lambda c: c.cases.reject_resolution(
+            "c1a5e000-0000-4000-8000-000000000001",
+            notes="Needs a clearer rationale before this can be approved.",
+        ),
+        lambda c: c.cases.reject_resolution(
+            "c1a5e000-0000-4000-8000-000000000001",
+            notes="Needs a clearer rationale before this can be approved.",
+        ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
     )
@@ -2316,7 +2358,7 @@ def test_cases_transfer() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/transfer/",
             api="verification",
             auth="api_key",
-            json_body={"target_blueprint": "00000000-0000-4000-8000-000000000001"},
+            json_body={"target_blueprint": "b1de0000-0000-4000-8000-000000000002"},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -2464,11 +2506,11 @@ def test_cases_transfer() -> None:
         ),
         lambda c: c.cases.transfer(
             "c1a5e000-0000-4000-8000-000000000001",
-            target_blueprint="00000000-0000-4000-8000-000000000001",
+            target_blueprint="b1de0000-0000-4000-8000-000000000002",
         ),
         lambda c: c.cases.transfer(
             "c1a5e000-0000-4000-8000-000000000001",
-            target_blueprint="00000000-0000-4000-8000-000000000001",
+            target_blueprint="b1de0000-0000-4000-8000-000000000002",
         ),
         lambda r: isinstance(r, CaseDetail),
         lambda r: isinstance(r, CaseDetail),
@@ -2648,7 +2690,16 @@ def test_cases_blueprints_create() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/blueprints/",
             api="verification",
             auth="api_key",
-            json_body={"name": "sample", "assignee_pool": ["00000000-0000-4000-8000-000000000002"]},
+            json_body={
+                "name": "AML investigation",
+                "assignee_pool": ["9a000000-0000-4000-8000-0000000000aa"],
+                "assignment_method": "AUTOMATIC",
+                "max_active_cases": 15,
+                "require_resolution_note": True,
+                "content_config": {
+                    "aml_control": {"enabled": True, "financial": True, "identity": False}
+                },
+            },
             status=201,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -2696,10 +2747,20 @@ def test_cases_blueprints_create() -> None:
             strict_type=CaseBlueprintDetail,
         ),
         lambda c: c.cases.blueprints.create(
-            name="sample", assignee_pool=["00000000-0000-4000-8000-000000000002"]
+            name="AML investigation",
+            assignee_pool=["9a000000-0000-4000-8000-0000000000aa"],
+            assignment_method="AUTOMATIC",
+            max_active_cases=15,
+            require_resolution_note=True,
+            content_config={"aml_control": {"enabled": True, "financial": True, "identity": False}},
         ),
         lambda c: c.cases.blueprints.create(
-            name="sample", assignee_pool=["00000000-0000-4000-8000-000000000002"]
+            name="AML investigation",
+            assignee_pool=["9a000000-0000-4000-8000-0000000000aa"],
+            assignment_method="AUTOMATIC",
+            max_active_cases=15,
+            require_resolution_note=True,
+            content_config={"aml_control": {"enabled": True, "financial": True, "identity": False}},
         ),
         lambda r: isinstance(r, CaseBlueprintDetail),
         lambda r: isinstance(r, CaseBlueprintDetail),
@@ -2760,13 +2821,13 @@ def test_cases_blueprints_install_presets() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/blueprints/presets/install/",
             api="verification",
             auth="api_key",
-            json_body={"preset_keys": ["sample"]},
+            json_body={"preset_keys": ["aml_investigation", "kyc"]},
             status=200,
             response_json={"created": ["sample"]},
             strict_type=CaseBlueprintPresetInstallResult,
         ),
-        lambda c: c.cases.blueprints.install_presets(preset_keys=["sample"]),
-        lambda c: c.cases.blueprints.install_presets(preset_keys=["sample"]),
+        lambda c: c.cases.blueprints.install_presets(preset_keys=["aml_investigation", "kyc"]),
+        lambda c: c.cases.blueprints.install_presets(preset_keys=["aml_investigation", "kyc"]),
         lambda r: isinstance(r, CaseBlueprintPresetInstallResult),
         lambda r: isinstance(r, CaseBlueprintPresetInstallResult),
     )
@@ -3060,8 +3121,8 @@ def test_cases_blueprints_save_draft() -> None:
             auth="api_key",
             json_body={
                 "expected_version": 1,
-                "expected_revision": "00000000-0000-4000-8000-000000000001",
-                "changes": {},
+                "expected_revision": "4e5f0000-0000-4000-8000-000000000003",
+                "changes": {"max_active_cases": 20},
             },
             status=200,
             response_json={
@@ -3076,14 +3137,14 @@ def test_cases_blueprints_save_draft() -> None:
         lambda c: c.cases.blueprints.save_draft(
             "00000000-0000-4000-8000-000000000001",
             expected_version=1,
-            expected_revision="00000000-0000-4000-8000-000000000001",
-            changes={},
+            expected_revision="4e5f0000-0000-4000-8000-000000000003",
+            changes={"max_active_cases": 20},
         ),
         lambda c: c.cases.blueprints.save_draft(
             "00000000-0000-4000-8000-000000000001",
             expected_version=1,
-            expected_revision="00000000-0000-4000-8000-000000000001",
-            changes={},
+            expected_revision="4e5f0000-0000-4000-8000-000000000003",
+            changes={"max_active_cases": 20},
         ),
         lambda r: isinstance(r, CasePublicationPolicyDraft),
         lambda r: isinstance(r, CasePublicationPolicyDraft),
@@ -3098,7 +3159,7 @@ def test_cases_blueprints_update() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/blueprints/b1de0000-0000-4000-8000-000000000002/",
             api="verification",
             auth="api_key",
-            json_body={"name": "sample"},
+            json_body={"transfer_enabled": True},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -3145,8 +3206,12 @@ def test_cases_blueprints_update() -> None:
             },
             strict_type=CaseBlueprintDetail,
         ),
-        lambda c: c.cases.blueprints.update("b1de0000-0000-4000-8000-000000000002", name="sample"),
-        lambda c: c.cases.blueprints.update("b1de0000-0000-4000-8000-000000000002", name="sample"),
+        lambda c: c.cases.blueprints.update(
+            "b1de0000-0000-4000-8000-000000000002", transfer_enabled=True
+        ),
+        lambda c: c.cases.blueprints.update(
+            "b1de0000-0000-4000-8000-000000000002", transfer_enabled=True
+        ),
         lambda r: isinstance(r, CaseBlueprintDetail),
         lambda r: isinstance(r, CaseBlueprintDetail),
     )
@@ -3224,8 +3289,8 @@ def test_cases_links_create() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "entity_type": "session",
-                "entity_uuid": "00000000-0000-4000-8000-000000000001",
+                "entity_type": "transaction",
+                "entity_uuid": "77000000-0000-4000-8000-000000000077",
             },
             status=201,
             response_json={
@@ -3239,13 +3304,13 @@ def test_cases_links_create() -> None:
         ),
         lambda c: c.cases.links.create(
             "c1a5e000-0000-4000-8000-000000000001",
-            entity_type="session",
-            entity_uuid="00000000-0000-4000-8000-000000000001",
+            entity_type="transaction",
+            entity_uuid="77000000-0000-4000-8000-000000000077",
         ),
         lambda c: c.cases.links.create(
             "c1a5e000-0000-4000-8000-000000000001",
-            entity_type="session",
-            entity_uuid="00000000-0000-4000-8000-000000000001",
+            entity_type="transaction",
+            entity_uuid="77000000-0000-4000-8000-000000000077",
         ),
         lambda r: isinstance(r, CaseLink),
         lambda r: isinstance(r, CaseLink),
@@ -3308,7 +3373,7 @@ def test_cases_notes_create() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/00000000-0000-4000-8000-000000000001/notes/",
             api="verification",
             auth="api_key",
-            json_body={"comment": "sample"},
+            json_body={"comment": "Proof of address matches the ID document."},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -3331,8 +3396,14 @@ def test_cases_notes_create() -> None:
             },
             strict_type=CaseCollaborationCaseNote,
         ),
-        lambda c: c.cases.notes.create("00000000-0000-4000-8000-000000000001", comment="sample"),
-        lambda c: c.cases.notes.create("00000000-0000-4000-8000-000000000001", comment="sample"),
+        lambda c: c.cases.notes.create(
+            "00000000-0000-4000-8000-000000000001",
+            comment="Proof of address matches the ID document.",
+        ),
+        lambda c: c.cases.notes.create(
+            "00000000-0000-4000-8000-000000000001",
+            comment="Proof of address matches the ID document.",
+        ),
         lambda r: isinstance(r, CaseCollaborationCaseNote),
         lambda r: isinstance(r, CaseCollaborationCaseNote),
     )
@@ -3525,7 +3596,7 @@ def test_cases_regulatory_reports_create() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/c1a5e000-0000-4000-8000-000000000001/regulatory-reports/",
             api="verification",
             auth="api_key",
-            json_body={"report_type": "SAR"},
+            json_body={"template": "7ec00000-0000-4000-8000-000000000006"},
             status=201,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -3572,10 +3643,10 @@ def test_cases_regulatory_reports_create() -> None:
             strict_type=RegulatoryReportDetail,
         ),
         lambda c: c.cases.regulatory_reports.create(
-            "c1a5e000-0000-4000-8000-000000000001", report_type="SAR"
+            "c1a5e000-0000-4000-8000-000000000001", template="7ec00000-0000-4000-8000-000000000006"
         ),
         lambda c: c.cases.regulatory_reports.create(
-            "c1a5e000-0000-4000-8000-000000000001", report_type="SAR"
+            "c1a5e000-0000-4000-8000-000000000001", template="7ec00000-0000-4000-8000-000000000006"
         ),
         lambda r: isinstance(r, RegulatoryReportDetail),
         lambda r: isinstance(r, RegulatoryReportDetail),
@@ -3942,9 +4013,9 @@ def test_cases_routing_rules_create() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "name": "sample",
-                "conditions": [{"field": "source", "operator": "equals", "value": "sample"}],
-                "blueprint": "00000000-0000-4000-8000-000000000001",
+                "name": "AML screening alerts",
+                "conditions": [{"field": "source", "operator": "equals", "value": "AML_SCREENING"}],
+                "blueprint": "b1de0000-0000-4000-8000-000000000002",
             },
             status=201,
             response_json={
@@ -3966,14 +4037,14 @@ def test_cases_routing_rules_create() -> None:
             strict_type=CaseRoutingRule,
         ),
         lambda c: c.cases.routing_rules.create(
-            name="sample",
-            conditions=[{"field": "source", "operator": "equals", "value": "sample"}],
-            blueprint="00000000-0000-4000-8000-000000000001",
+            name="AML screening alerts",
+            conditions=[{"field": "source", "operator": "equals", "value": "AML_SCREENING"}],
+            blueprint="b1de0000-0000-4000-8000-000000000002",
         ),
         lambda c: c.cases.routing_rules.create(
-            name="sample",
-            conditions=[{"field": "source", "operator": "equals", "value": "sample"}],
-            blueprint="00000000-0000-4000-8000-000000000001",
+            name="AML screening alerts",
+            conditions=[{"field": "source", "operator": "equals", "value": "AML_SCREENING"}],
+            blueprint="b1de0000-0000-4000-8000-000000000002",
         ),
         lambda r: isinstance(r, CaseRoutingRule),
         lambda r: isinstance(r, CaseRoutingRule),
@@ -4257,8 +4328,8 @@ def test_cases_routing_rules_save_draft() -> None:
             auth="api_key",
             json_body={
                 "expected_version": 1,
-                "expected_revision": "00000000-0000-4000-8000-000000000001",
-                "changes": {},
+                "expected_revision": "4e5f0000-0000-4000-8000-000000000003",
+                "changes": {"priority": 10},
             },
             status=200,
             response_json={
@@ -4273,14 +4344,14 @@ def test_cases_routing_rules_save_draft() -> None:
         lambda c: c.cases.routing_rules.save_draft(
             "00000000-0000-4000-8000-000000000001",
             expected_version=1,
-            expected_revision="00000000-0000-4000-8000-000000000001",
-            changes={},
+            expected_revision="4e5f0000-0000-4000-8000-000000000003",
+            changes={"priority": 10},
         ),
         lambda c: c.cases.routing_rules.save_draft(
             "00000000-0000-4000-8000-000000000001",
             expected_version=1,
-            expected_revision="00000000-0000-4000-8000-000000000001",
-            changes={},
+            expected_revision="4e5f0000-0000-4000-8000-000000000003",
+            changes={"priority": 10},
         ),
         lambda r: isinstance(r, RoutingPublicationPolicyDraft),
         lambda r: isinstance(r, RoutingPublicationPolicyDraft),
@@ -4335,8 +4406,8 @@ def test_cases_teams_create() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "name": "sample",
-                "members": [{"user_id": "00000000-0000-4000-8000-000000000004"}],
+                "name": "AML analysts",
+                "members": [{"user_id": "9a000000-0000-4000-8000-0000000000aa", "capacity": 10}],
             },
             status=201,
             response_json={
@@ -4360,10 +4431,12 @@ def test_cases_teams_create() -> None:
             strict_type=CaseReviewTeam,
         ),
         lambda c: c.cases.teams.create(
-            name="sample", members=[{"user_id": "00000000-0000-4000-8000-000000000004"}]
+            name="AML analysts",
+            members=[{"user_id": "9a000000-0000-4000-8000-0000000000aa", "capacity": 10}],
         ),
         lambda c: c.cases.teams.create(
-            name="sample", members=[{"user_id": "00000000-0000-4000-8000-000000000004"}]
+            name="AML analysts",
+            members=[{"user_id": "9a000000-0000-4000-8000-0000000000aa", "capacity": 10}],
         ),
         lambda r: isinstance(r, CaseReviewTeam),
         lambda r: isinstance(r, CaseReviewTeam),

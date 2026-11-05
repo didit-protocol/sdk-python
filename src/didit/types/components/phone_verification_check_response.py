@@ -5,6 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.phone_intelligence import PhoneIntelligence
 from didit.types.components.phone_social_footprint import PhoneSocialFootprint
 
 __all__ = [
@@ -142,6 +143,9 @@ class PhoneVerificationCheckResponsePhone(BaseModel):
 
     phone_social: PhoneSocialFootprint | None = None
     """Social footprint of the phone number: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
+
+    phone_intelligence: PhoneIntelligence | None = None
+    """Phone intelligence signals. Present only when `enable_enrichment` was `true` on the check."""
 
 
 class PhoneVerificationCheckResponse(BaseModel):

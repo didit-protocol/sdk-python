@@ -41,7 +41,7 @@ class SignatureResultAdoptedSignature(BaseModel):
 
 
 class SignatureResultCertificate(BaseModel):
-    """The certificate the documents were signed with. `null` until signed."""
+    """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
     issuer: str | None = None
 
@@ -57,6 +57,7 @@ class SignatureResultCertificate(BaseModel):
 
 class SignatureResultConfirmation(BaseModel):
     channel: Literal["email", "sms"] | str | None = None
+    """`null` for a Simple signature, which has no code."""
 
     destination: str | None = None
     """The masked contact the code went to."""
@@ -139,6 +140,8 @@ class SignatureResultDocuments(BaseModel):
 
 
 class SignatureResultIdentityUsed(BaseModel):
+    """The verified identity the signature relies on. Empty for a Simple signature with no verified identity."""
+
     session_id: str | None = None
 
     kyc_id: str | None = None
@@ -151,7 +154,7 @@ class SignatureResultIdentityUsed(BaseModel):
 
 class SignatureResultSigner(BaseModel):
     name: str | None = None
-    """Verified name."""
+    """The signer's name. Verified (from the approved ID verification or the session) except at the Simple level without a verified session name, where it is the name the signer typed and is not verified."""
 
     capacity: Literal["self", "company"] | str | None = None
 
@@ -168,7 +171,7 @@ class SignatureResultSigner(BaseModel):
 
 
 class SignatureResultTimestamp(BaseModel):
-    """The trusted timestamp in the signature. `null` until signed."""
+    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
 
     time: _dt.datetime | None = None
 
@@ -179,7 +182,7 @@ class SignatureResultTimestamp(BaseModel):
 
 
 class SignatureResultValidationDocumentsCertificate(BaseModel):
-    """The certificate the documents were signed with. `null` until signed."""
+    """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
     issuer: str | None = None
 
@@ -194,7 +197,7 @@ class SignatureResultValidationDocumentsCertificate(BaseModel):
 
 
 class SignatureResultValidationDocumentsTimestamp(BaseModel):
-    """The trusted timestamp in the signature. `null` until signed."""
+    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
 
     time: _dt.datetime | None = None
 
@@ -232,10 +235,10 @@ class SignatureResultValidationDocuments(BaseModel):
     """EU Trusted List check. For AES: `{"status": "not_applicable", "reason": "aes_not_qualified"}`."""
 
     certificate: SignatureResultValidationDocumentsCertificate | None = None
-    """The certificate the documents were signed with. `null` until signed."""
+    """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
     timestamp: SignatureResultValidationDocumentsTimestamp | None = None
-    """The trusted timestamp in the signature. `null` until signed."""
+    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
 
 
 class SignatureResultValidation(BaseModel):
@@ -270,7 +273,7 @@ class SignatureResultWarnings(BaseModel):
 
 
 class SignatureResult(BaseModel):
-    """One signer's result for one Electronic Signature step. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature)."""
+    """One signer's result for one E-signature step. See the [E-signature report](/core-technology/electronic-signature/report-electronic-signature)."""
 
     id: str | None = None
     """Pass it as `signature_id` to download this signer's evidence or validate their signature."""
@@ -284,25 +287,27 @@ class SignatureResult(BaseModel):
     verdict: Literal["Not Finished", "Approved", "In Review", "Declined"] | str | None = None
     """The step's outcome. A warning sets it through its rule; custom status rules apply after."""
 
-    level: Literal["aes", "qes"] | str | None = None
-    """`aes`. `qes` (Qualified Electronic Signature, QES) is coming soon."""
+    level: Literal["simple", "aes", "qes"] | str | None = None
+    """`simple` (default) or `aes`. `qes` (Qualified Electronic Signature, QES) is an add-on that is not available yet."""
 
-    format: Literal["pades"] | str | None = None
+    format: Literal["pdf", "pades"] | str | None = None
+    """`pdf` for a Simple signature, `pades` for Advanced (AES)."""
 
     profile: str | None = None
-    """`PAdES-B-LT` once signed."""
+    """`PAdES-B-LT` once an Advanced (AES) signature is signed, otherwise null."""
 
     signer: SignatureResultSigner | None = None
 
     identity_used: SignatureResultIdentityUsed | None = None
+    """The verified identity the signature relies on. Empty for a Simple signature with no verified identity."""
 
     certificate: SignatureResultCertificate | None = None
-    """The certificate the documents were signed with. `null` until signed."""
+    """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
     confirmation: SignatureResultConfirmation | None = None
 
     timestamp: SignatureResultTimestamp | None = None
-    """The trusted timestamp in the signature. `null` until signed."""
+    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
 
     documents: list[SignatureResultDocuments] | None = None
 
@@ -316,7 +321,7 @@ class SignatureResult(BaseModel):
     """Path of the evidence PDF, once signed. See [Download the signature evidence](/sessions-api/electronic-signature/download-evidence)."""
 
     warnings: list[SignatureResultWarnings] | None = None
-    """Warnings raised for this signer. See [Electronic Signature warnings](/core-technology/electronic-signature/warnings-electronic-signature)."""
+    """Warnings raised for this signer. See [E-signature warnings](/core-technology/electronic-signature/warnings-electronic-signature)."""
 
     validation: SignatureResultValidation | None = None
     """The last cryptographic check of the signed documents. `null` until the documents are signed. If Didit can't confirm the outcome of signing, it's `{"valid": null, "reason": "signature_provider_outcome_unknown", "checked_at": ...}` and `status` stays `signing`: treat it as not signed."""

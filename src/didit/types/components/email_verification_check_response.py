@@ -5,6 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.email_intelligence import EmailIntelligence
 from didit.types.components.email_social_footprint import EmailSocialFootprint
 
 __all__ = [
@@ -146,6 +147,9 @@ class EmailVerificationCheckResponseEmail(BaseModel):
 
     email_social: EmailSocialFootprint | None = None
     """Social footprint of the email address: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the email address was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
+
+    email_intelligence: EmailIntelligence | None = None
+    """Email intelligence signals. Present only when `enable_enrichment` was `true` on the check."""
 
 
 class EmailVerificationCheckResponse(BaseModel):

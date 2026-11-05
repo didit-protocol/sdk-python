@@ -355,7 +355,7 @@ class AMLScreeningHitsWarningMatches(BaseModel):
 
 class AMLScreeningHits(BaseModel):
     id: str | None = None
-    """Unique identifier of the match"""
+    """Didit's stable identifier for the hit: `hit_` followed by 24 hexadecimal characters. The same matched entity keeps the same `id` when the subject is screened again. Pass it as `hit_id` to the AML hit review endpoints."""
 
     url: str | None = None
     """Source URL for the match"""
@@ -387,12 +387,13 @@ class AMLScreeningHits(BaseModel):
                 "SIP",
                 "SIE",
                 "Insolvency",
+                "Other Lists",
             ]
             | str
         ]
         | None
     ) = None
-    """List of dataset categories where the match was found. Indicates whether the entity appeared in PEP lists (with level), sanctions databases, adverse media, warnings/regulatory enforcement, or other compliance datasets."""
+    """List of dataset categories where the match was found. Indicates whether the entity appeared in PEP lists (with level), sanctions databases, adverse media, warnings/regulatory enforcement, or other compliance datasets. `Other Lists` when the entity's source states none of these categories."""
 
     features: dict[str, object] | None = None
     """Additional features of the match"""
@@ -469,6 +470,8 @@ class AMLScreeningWarnings(BaseModel):
             "KYB_REGISTRY",
             "KYB_DOCUMENTS",
             "KYB_KEY_PEOPLE",
+            "GEOLOCATION",
+            "SIGNATURE",
         ]
         | str
         | None

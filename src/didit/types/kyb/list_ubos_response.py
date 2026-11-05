@@ -6,6 +6,7 @@ from typing import Literal
 
 from didit._models import BaseModel
 from didit.types.components.kyb_registry_address import KYBRegistryAddress
+from didit.types.components.kyb_registry_data import KYBRegistryData
 from didit.types.components.kyb_registry_industry import KYBRegistryIndustry
 from didit.types.components.kyb_registry_ownership import KYBRegistryOwnership
 from didit.types.components.kyb_registry_shareholding import KYBRegistryShareholding
@@ -16,9 +17,11 @@ __all__ = [
     "KybListUbosResponse202KybRegistry",
     "KybListUbosResponse202KybRegistryBeneficialOwners",
     "KybListUbosResponse202KybRegistryOfficers",
+    "KybListUbosResponse202KybRegistryRegistryMonitoring",
     "KybListUbosResponseKybRegistry",
     "KybListUbosResponseKybRegistryBeneficialOwners",
     "KybListUbosResponseKybRegistryOfficers",
+    "KybListUbosResponseKybRegistryRegistryMonitoring",
 ]
 
 
@@ -145,6 +148,31 @@ class KybListUbosResponseKybRegistryOfficers(BaseModel):
 
     date_of_birth_month: int | None = None
     """Registry-reported birth month. Null when only the year is known."""
+
+
+class KybListUbosResponseKybRegistryRegistryMonitoring(BaseModel):
+    """The latest registry monitor for the company, or `null` when none exists."""
+
+    uuid: str | None = None
+
+    status: str | None = None
+
+    unavailable_reason: str | None = None
+
+    enrolled_at: _dt.datetime | None = None
+
+    cancelled_at: _dt.datetime | None = None
+
+    last_bill_date: _dt.date | None = None
+
+    next_bill_date: _dt.date | None = None
+
+    last_event_at: _dt.datetime | None = None
+
+    events_count: int | None = None
+
+    watched_fields: object = None
+    """The company fields the monitor watches."""
 
 
 class KybListUbosResponseKybRegistry(BaseModel):
@@ -301,8 +329,8 @@ class KybListUbosResponseKybRegistry(BaseModel):
     accounts: dict[str, object] | None = None
     """Registry filing dates, when available. Annual returns and general meetings use last_annual_return_date and last_agm_date; they are distinct from financial accounts."""
 
-    registry_data: dict[str, object] | None = None
-    """Raw record returned by the registry source, kept for reviewers. Its shape differs by country and source and is not a stable contract: read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) instead."""
+    registry_data: KYBRegistryData | None = None
+    """Didit's normalized registry detail for the company: the ownership outcome (`ownership_error`, `section_errors`, `ubo_resolution`, `lite_enrichment`), the corrections made with update-data, and registry facts that have no field of their own. It never carries the registry source's own record. Every key is optional and present only when the company has a value for it; new keys may be added. Read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) for anything they cover."""
 
     user_provided_data: dict[str, object] | None = None
     """Always `null` on this endpoint (used by the hosted KYB flow when end users edit registry data)."""
@@ -329,6 +357,9 @@ class KybListUbosResponseKybRegistry(BaseModel):
 
     registry_tier: str | None = None
     """The registry tier the workflow ordered: `basic`, `shareholders` or `ubo`. Also in `ownership.tier_requested`."""
+
+    registry_monitoring: KybListUbosResponseKybRegistryRegistryMonitoring | None = None
+    """The latest registry monitor for the company, or `null` when none exists."""
 
 
 class KybListUbosResponse(BaseModel):
@@ -476,6 +507,31 @@ class KybListUbosResponse202KybRegistryOfficers(BaseModel):
 
     date_of_birth_month: int | None = None
     """Registry-reported birth month. Null when only the year is known."""
+
+
+class KybListUbosResponse202KybRegistryRegistryMonitoring(BaseModel):
+    """The latest registry monitor for the company, or `null` when none exists."""
+
+    uuid: str | None = None
+
+    status: str | None = None
+
+    unavailable_reason: str | None = None
+
+    enrolled_at: _dt.datetime | None = None
+
+    cancelled_at: _dt.datetime | None = None
+
+    last_bill_date: _dt.date | None = None
+
+    next_bill_date: _dt.date | None = None
+
+    last_event_at: _dt.datetime | None = None
+
+    events_count: int | None = None
+
+    watched_fields: object = None
+    """The company fields the monitor watches."""
 
 
 class KybListUbosResponse202KybRegistry(BaseModel):
@@ -632,8 +688,8 @@ class KybListUbosResponse202KybRegistry(BaseModel):
     accounts: dict[str, object] | None = None
     """Registry filing dates, when available. Annual returns and general meetings use last_annual_return_date and last_agm_date; they are distinct from financial accounts."""
 
-    registry_data: dict[str, object] | None = None
-    """Raw record returned by the registry source, kept for reviewers. Its shape differs by country and source and is not a stable contract: read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) instead."""
+    registry_data: KYBRegistryData | None = None
+    """Didit's normalized registry detail for the company: the ownership outcome (`ownership_error`, `section_errors`, `ubo_resolution`, `lite_enrichment`), the corrections made with update-data, and registry facts that have no field of their own. It never carries the registry source's own record. Every key is optional and present only when the company has a value for it; new keys may be added. Read the canonical fields (`addresses`, `industries`, `ownership`, `beneficial_owners[].shareholding`) for anything they cover."""
 
     user_provided_data: dict[str, object] | None = None
     """Always `null` on this endpoint (used by the hosted KYB flow when end users edit registry data)."""
@@ -660,6 +716,9 @@ class KybListUbosResponse202KybRegistry(BaseModel):
 
     registry_tier: str | None = None
     """The registry tier the workflow ordered: `basic`, `shareholders` or `ubo`. Also in `ownership.tier_requested`."""
+
+    registry_monitoring: KybListUbosResponse202KybRegistryRegistryMonitoring | None = None
+    """The latest registry monitor for the company, or `null` when none exists."""
 
 
 class KybListUbosResponse202(BaseModel):

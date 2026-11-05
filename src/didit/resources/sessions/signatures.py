@@ -57,15 +57,15 @@ class SessionsSignatures(SyncAPIResource):
     ) -> bytes:
         """Download a signed document.
 
-        Download the signed PDF of one document of an Electronic Signature step. Use the `signed_file` path of `signatures[].documents[]` in the decision. The PDF holds the document the signer was shown with their field values stamped, the evidence page (unless `signature_evidence_page` is off) and the PAdES signature with its timestamp. Didit checks the file against `sha256_signed` before returning it.
+        Download the signed PDF of one document of an E-signature step. Use the `signed_file` path of `signatures[].documents[]` in the decision. The PDF holds the document the signer was shown with their field values stamped and the evidence page (unless `signature_evidence_page` is off). An Advanced (AES) PDF also carries the PAdES signature with its timestamp; a Simple PDF has no digital signature, seal or timestamp. Didit checks the file against `sha256_signed` before returning it.
 
-        Works for User Verification (KYC) and Business Verification (KYB) sessions. Needs `read:sessions`; your API key works. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature#download-the-signed-documents).
+        Works for User Verification (KYC) and Business Verification (KYB) sessions. Needs `read:sessions`; your API key works. See the [E-signature report](/core-technology/electronic-signature/report-electronic-signature#download-the-signed-documents).
 
         ``GET /v3/session/{sessionId}/signatures/{nodeId}/documents/{documentId}/file/``
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           document_id: `id` of the document in `signatures[].documents[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -101,7 +101,7 @@ class SessionsSignatures(SyncAPIResource):
     ) -> bytes:
         """Download the signature evidence.
 
-        Download a signer's evidence PDF: the level and format, the signer and their verified identity session, the code confirmation, the IP address, each document with its original SHA-256 and field values, the certificate, the timestamp and the SHA-256 of every signed file. Use the `evidence_file` path of the signer's item in `signatures[]`.
+        Download a signer's evidence PDF: the level and format, the signer, the IP address, each document with its original SHA-256 and field values and the SHA-256 of every signed file, plus, for an Advanced (AES) signature, the verified identity session, the code confirmation, the certificate and the timestamp. Use the `evidence_file` path of the signer's item in `signatures[]`.
 
         Always pass `signature_id` when a Business Verification step has several signers: without it, the route picks one of the step's signers. Needs `read:sessions`; your API key works.
 
@@ -109,7 +109,7 @@ class SessionsSignatures(SyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of the signer's item in `signatures[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -152,7 +152,7 @@ class SessionsSignatures(SyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           field_id: The field on this signer's copy, as in the field's `image_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -188,7 +188,7 @@ class SessionsSignatures(SyncAPIResource):
     ) -> SessionsSignaturesValidateResponse:
         """Validate signatures again.
 
-        Re-check the signed documents of an Electronic Signature step. Didit re-reads every signed PDF, checks its SHA-256 and validates the PAdES signature, the certificate, the revocation data and the timestamp, then saves the result in each signer's `validation` and returns the updated items. Nothing is signed again. Send `signature_id` to check one signer; without it, every signer of the step is checked, and the call fails if any of them hasn't signed.
+        Re-check the signed documents of an E-signature step. Didit re-reads every signed PDF, checks its SHA-256 and, for an Advanced (AES) signature, validates the PAdES signature, the certificate, the revocation data and the timestamp (a Simple signature has no digital signature, so only the file integrity is checked), then saves the result in each signer's `validation` and returns the updated items. Nothing is signed again. Send `signature_id` to check one signer; without it, every signer of the step is checked, and the call fails if any of them hasn't signed.
 
         Needs `write:sessions`; your API key works. In the console it's the **Validate again** button.
 
@@ -196,7 +196,7 @@ class SessionsSignatures(SyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of one signer's item in `signatures[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -249,15 +249,15 @@ class AsyncSessionsSignatures(AsyncAPIResource):
     ) -> bytes:
         """Download a signed document.
 
-        Download the signed PDF of one document of an Electronic Signature step. Use the `signed_file` path of `signatures[].documents[]` in the decision. The PDF holds the document the signer was shown with their field values stamped, the evidence page (unless `signature_evidence_page` is off) and the PAdES signature with its timestamp. Didit checks the file against `sha256_signed` before returning it.
+        Download the signed PDF of one document of an E-signature step. Use the `signed_file` path of `signatures[].documents[]` in the decision. The PDF holds the document the signer was shown with their field values stamped and the evidence page (unless `signature_evidence_page` is off). An Advanced (AES) PDF also carries the PAdES signature with its timestamp; a Simple PDF has no digital signature, seal or timestamp. Didit checks the file against `sha256_signed` before returning it.
 
-        Works for User Verification (KYC) and Business Verification (KYB) sessions. Needs `read:sessions`; your API key works. See the [Electronic Signature report](/core-technology/electronic-signature/report-electronic-signature#download-the-signed-documents).
+        Works for User Verification (KYC) and Business Verification (KYB) sessions. Needs `read:sessions`; your API key works. See the [E-signature report](/core-technology/electronic-signature/report-electronic-signature#download-the-signed-documents).
 
         ``GET /v3/session/{sessionId}/signatures/{nodeId}/documents/{documentId}/file/``
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           document_id: `id` of the document in `signatures[].documents[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -293,7 +293,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
     ) -> bytes:
         """Download the signature evidence.
 
-        Download a signer's evidence PDF: the level and format, the signer and their verified identity session, the code confirmation, the IP address, each document with its original SHA-256 and field values, the certificate, the timestamp and the SHA-256 of every signed file. Use the `evidence_file` path of the signer's item in `signatures[]`.
+        Download a signer's evidence PDF: the level and format, the signer, the IP address, each document with its original SHA-256 and field values and the SHA-256 of every signed file, plus, for an Advanced (AES) signature, the verified identity session, the code confirmation, the certificate and the timestamp. Use the `evidence_file` path of the signer's item in `signatures[]`.
 
         Always pass `signature_id` when a Business Verification step has several signers: without it, the route picks one of the step's signers. Needs `read:sessions`; your API key works.
 
@@ -301,7 +301,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of the signer's item in `signatures[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -344,7 +344,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           field_id: The field on this signer's copy, as in the field's `image_url`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -380,7 +380,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
     ) -> SessionsSignaturesValidateResponse:
         """Validate signatures again.
 
-        Re-check the signed documents of an Electronic Signature step. Didit re-reads every signed PDF, checks its SHA-256 and validates the PAdES signature, the certificate, the revocation data and the timestamp, then saves the result in each signer's `validation` and returns the updated items. Nothing is signed again. Send `signature_id` to check one signer; without it, every signer of the step is checked, and the call fails if any of them hasn't signed.
+        Re-check the signed documents of an E-signature step. Didit re-reads every signed PDF, checks its SHA-256 and, for an Advanced (AES) signature, validates the PAdES signature, the certificate, the revocation data and the timestamp (a Simple signature has no digital signature, so only the file integrity is checked), then saves the result in each signer's `validation` and returns the updated items. Nothing is signed again. Send `signature_id` to check one signer; without it, every signer of the step is checked, and the call fails if any of them hasn't signed.
 
         Needs `write:sessions`; your API key works. In the console it's the **Validate again** button.
 
@@ -388,7 +388,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
 
         Args:
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
-          node_id: The Electronic Signature step: `node_id` of the item in `signatures[]`.
+          node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of one signer's item in `signatures[]`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

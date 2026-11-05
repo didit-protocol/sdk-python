@@ -117,6 +117,7 @@ class Transactions(SyncAPIResource):
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         travel_rule_status: str | NotGiven = NOT_GIVEN,
+        assignee: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -132,6 +133,7 @@ class Transactions(SyncAPIResource):
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page.
           travel_rule_status: Return only transactions whose Travel Rule transfer is in this exact status (for example `ON_HOLD` or `AWAITING_COUNTERPARTY`). `count` follows this filter; `total_transactions` still counts every transaction in the application.
+          assignee: Comma-separated; a transaction matches when it meets any value. `unassigned` is what nobody holds yet, `rules` is what the rules decided on their own without a reviewer, and a member email matches the reviewer assigned to it. `me` is the signed-in Console reviewer, so an API key sending `me` gets `400`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -145,7 +147,12 @@ class Transactions(SyncAPIResource):
                 cast_to=TransactionsListResponse,
                 item_type=TransactionsListResponseResults,
                 auth="api_key",
-                query={"limit": limit, "offset": offset, "travel_rule_status": travel_rule_status},
+                query={
+                    "limit": limit,
+                    "offset": offset,
+                    "travel_rule_status": travel_rule_status,
+                    "assignee": assignee,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -568,6 +575,7 @@ class AsyncTransactions(AsyncAPIResource):
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         travel_rule_status: str | NotGiven = NOT_GIVEN,
+        assignee: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -583,6 +591,7 @@ class AsyncTransactions(AsyncAPIResource):
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page.
           travel_rule_status: Return only transactions whose Travel Rule transfer is in this exact status (for example `ON_HOLD` or `AWAITING_COUNTERPARTY`). `count` follows this filter; `total_transactions` still counts every transaction in the application.
+          assignee: Comma-separated; a transaction matches when it meets any value. `unassigned` is what nobody holds yet, `rules` is what the rules decided on their own without a reviewer, and a member email matches the reviewer assigned to it. `me` is the signed-in Console reviewer, so an API key sending `me` gets `400`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -596,7 +605,12 @@ class AsyncTransactions(AsyncAPIResource):
                 cast_to=TransactionsListResponse,
                 item_type=TransactionsListResponseResults,
                 auth="api_key",
-                query={"limit": limit, "offset": offset, "travel_rule_status": travel_rule_status},
+                query={
+                    "limit": limit,
+                    "offset": offset,
+                    "travel_rule_status": travel_rule_status,
+                    "assignee": assignee,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

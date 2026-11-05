@@ -132,7 +132,7 @@ class AmlScreenResponseAmlHits(BaseModel):
     """One screening hit. `match_score` (0–100) measures identity confidence - hits below `aml_match_score_threshold` are tagged `review_status: "False Positive"` and excluded from the risk assessment; hits at or above it are `"Unreviewed"` possible matches. `risk_score` (0–100) measures how risky the matched entity is and drives the top-level `aml.score`."""
 
     id: str | None = None
-    """Stable identifier of the matched entity in the screening datasets."""
+    """Didit's stable identifier for the hit: `hit_` followed by 24 hexadecimal characters. The same matched entity keeps the same `id` when the subject is screened again. Pass it as `hit_id` to the AML hit review endpoints."""
 
     url: str | None = None
     """Source URL for the matched entity, when available."""
@@ -154,8 +154,28 @@ class AmlScreenResponseAmlHits(BaseModel):
     caption: str | None = None
     """Display name of the matched entity."""
 
-    datasets: list[str] | None = None
-    """Datasets the entity appears in (e.g. `PEP`, `PEP Level 1`, sanctions list names)."""
+    datasets: (
+        list[
+            Literal[
+                "PEP",
+                "PEP Level 1",
+                "PEP Level 2",
+                "PEP Level 3",
+                "PEP Level 4",
+                "Sanctions",
+                "Adverse Media",
+                "Warnings and Regulatory Enforcement",
+                "Fitness and Probity",
+                "SIP",
+                "SIE",
+                "Insolvency",
+                "Other Lists",
+            ]
+            | str
+        ]
+        | None
+    ) = None
+    """Risk categories the entity is listed under: `PEP` (with its level, `PEP Level 1` to `PEP Level 4`), `Sanctions`, `Adverse Media`, `Warnings and Regulatory Enforcement`, `Fitness and Probity`, `SIP`, `SIE` or `Insolvency`. `Other Lists` when the entity's source states none of these categories."""
 
     features: dict[str, object] | None = None
 

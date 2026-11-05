@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from didit.types.components.application_analytics_summary import ApplicationAnalyticsSummary
+from didit.types.components.application_analytics_today import ApplicationAnalyticsToday
 from didit.types.components.application_analytics_widget_response import (
     ApplicationAnalyticsWidgetResponse,
 )
@@ -308,4 +309,83 @@ def test_analytics_retrieve() -> None:
             (isinstance(r, ApplicationAnalyticsSummary))
             or (isinstance(r, ApplicationAnalyticsWidgetResponse))
         ),
+    )
+
+
+def test_analytics_retrieve_today() -> None:
+    """``GET /v3/organization/{organization_id}/application/{application_id}/analytics/today/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/analytics/today/",
+            api="verification",
+            auth="api_key",
+            query={"tz": ["Europe/Madrid"]},
+            status=200,
+            response_json={
+                "time_zone": "Europe/Madrid",
+                "date": "2026-10-30",
+                "current_hour": 14,
+                "previous_date": "2026-10-23",
+                "hours": [
+                    3,
+                    1,
+                    0,
+                    0,
+                    1,
+                    2,
+                    4,
+                    9,
+                    14,
+                    18,
+                    21,
+                    19,
+                    22,
+                    24,
+                    27,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                "previous_hours": [
+                    2,
+                    1,
+                    1,
+                    0,
+                    1,
+                    3,
+                    5,
+                    8,
+                    12,
+                    16,
+                    19,
+                    18,
+                    20,
+                    22,
+                    24,
+                    26,
+                    23,
+                    19,
+                    15,
+                    12,
+                    9,
+                    7,
+                    5,
+                    3,
+                ],
+                "total": 165,
+                "previous_total_so_far": 151,
+                "outcomes": {"approved": 139, "in_review": 6, "declined": 18},
+            },
+        ),
+        lambda c: c.analytics.retrieve_today(tz="Europe/Madrid"),
+        lambda c: c.analytics.retrieve_today(tz="Europe/Madrid"),
+        lambda r: isinstance(r, ApplicationAnalyticsToday),
+        lambda r: isinstance(r, ApplicationAnalyticsToday),
     )

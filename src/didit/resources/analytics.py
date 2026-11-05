@@ -18,6 +18,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.application_analytics_summary import ApplicationAnalyticsSummary
+from didit.types.components.application_analytics_today import ApplicationAnalyticsToday
 from didit.types.components.application_analytics_widget_response import (
     ApplicationAnalyticsWidgetResponse,
 )
@@ -35,7 +36,7 @@ __all__ = [
 class Analytics(SyncAPIResource):
     """The ``analytics`` resource of the Didit API.
 
-    Methods: ``retrieve``.
+    Methods: ``retrieve``, ``retrieve_today``.
     """
 
     @cached_property
@@ -119,11 +120,51 @@ class Analytics(SyncAPIResource):
             ),
         )
 
+    def retrieve_today(
+        self,
+        *,
+        tz: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> ApplicationAnalyticsToday:
+        """Get today's verifications by hour.
+
+        Today's user verification (KYC) sessions, from local midnight in `tz`, counted per local hour they were created in, next to the same hours of the same weekday one week before, and split by the outcome each one holds now: approved, in review or declined. This is the volume card of the Business Console's Home.
+
+        `total` is today so far. `previous_total_so_far` counts the comparison day only up to the same local time, so a change between them compares the same part of both days. The hours still to come today are `0`. A day on which the clocks change has 23 or 25 hours: the missing hour stays `0` and the repeated hour holds both.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/analytics/today/``
+
+        Args:
+          tz: IANA time zone whose midnight starts today, for example `Europe/Madrid` or `America/Mexico_City`. Omit it for UTC.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "ApplicationAnalyticsToday",
+            self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/analytics/today/",
+                cast_to=ApplicationAnalyticsToday,
+                scope="application",
+                auth="api_key",
+                query={"tz": tz},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncAnalytics(AsyncAPIResource):
     """The ``analytics`` resource of the Didit API.
 
-    Methods: ``retrieve``.
+    Methods: ``retrieve``, ``retrieve_today``.
     """
 
     @cached_property
@@ -207,26 +248,70 @@ class AsyncAnalytics(AsyncAPIResource):
             ),
         )
 
+    async def retrieve_today(
+        self,
+        *,
+        tz: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> ApplicationAnalyticsToday:
+        """Get today's verifications by hour.
+
+        Today's user verification (KYC) sessions, from local midnight in `tz`, counted per local hour they were created in, next to the same hours of the same weekday one week before, and split by the outcome each one holds now: approved, in review or declined. This is the volume card of the Business Console's Home.
+
+        `total` is today so far. `previous_total_so_far` counts the comparison day only up to the same local time, so a change between them compares the same part of both days. The hours still to come today are `0`. A day on which the clocks change has 23 or 25 hours: the missing hour stays `0` and the repeated hour holds both.
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/analytics/today/``
+
+        Args:
+          tz: IANA time zone whose midnight starts today, for example `Europe/Madrid` or `America/Mexico_City`. Omit it for UTC.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "ApplicationAnalyticsToday",
+            await self._client.request(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/analytics/today/",
+                cast_to=ApplicationAnalyticsToday,
+                scope="application",
+                auth="api_key",
+                query={"tz": tz},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AnalyticsWithRawResponse:
     def __init__(self, resource: Analytics) -> None:
         self._resource = resource
         self.retrieve = to_raw_response_wrapper(resource.retrieve)
+        self.retrieve_today = to_raw_response_wrapper(resource.retrieve_today)
 
 
 class AsyncAnalyticsWithRawResponse:
     def __init__(self, resource: AsyncAnalytics) -> None:
         self._resource = resource
         self.retrieve = async_to_raw_response_wrapper(resource.retrieve)
+        self.retrieve_today = async_to_raw_response_wrapper(resource.retrieve_today)
 
 
 class AnalyticsWithStreamingResponse:
     def __init__(self, resource: Analytics) -> None:
         self._resource = resource
         self.retrieve = to_streamed_response_wrapper(resource.retrieve)
+        self.retrieve_today = to_streamed_response_wrapper(resource.retrieve_today)
 
 
 class AsyncAnalyticsWithStreamingResponse:
     def __init__(self, resource: AsyncAnalytics) -> None:
         self._resource = resource
         self.retrieve = async_to_streamed_response_wrapper(resource.retrieve)
+        self.retrieve_today = async_to_streamed_response_wrapper(resource.retrieve_today)

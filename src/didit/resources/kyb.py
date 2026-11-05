@@ -151,7 +151,7 @@ class Kyb(SyncAPIResource):
         ``POST /v3/kyb/select/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -196,7 +196,7 @@ class Kyb(SyncAPIResource):
 
         Retrieve the Lite profile **plus the direct shareholders** (natural persons and corporate entities, with their ownership bands) of one candidate returned by `POST /v3/kyb/search/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The search runs on the Lite registry chain; when the country's ownership data lives at another registry Didit re-finds the company there by registration number, at no extra cost.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. Search at the tier you intend to buy (`tier` on `POST /v3/kyb/search/`), because the search runs on the registry chain that serves that tier and an empty Lite search is not proof that the registry does not hold the company. When the country's ownership data lives at another registry, Didit re-finds the company there by registration number, at no extra cost.
 
         **Billing.** Billed at the country's Shareholders price - see [KYB registry pricing](/getting-started/kyb-registry-pricing). When the registry holds no shareholder record for the company (or the country offers no ownership data at all) the Lite profile is delivered and billed instead: read `registry_tier_delivered` and `registry_ownership_status`. The balance is checked against the Shareholders price before any registry call (`403` when short).
 
@@ -207,7 +207,7 @@ class Kyb(SyncAPIResource):
         ``POST /v3/kyb/shareholders/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -252,7 +252,7 @@ class Kyb(SyncAPIResource):
 
         Retrieve the Lite profile, the direct shareholders **and the ultimate beneficial owners** resolved through the ownership chain (`registry_data.ubo_resolution` carries the corporate parent chain) of one candidate returned by `POST /v3/kyb/search/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The search runs on the Lite registry chain; when the country's ownership data lives at another registry Didit re-finds the company there by registration number, at no extra cost.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. Search at the tier you intend to buy (`tier` on `POST /v3/kyb/search/`), because the search runs on the registry chain that serves that tier and an empty Lite search is not proof that the registry does not hold the company. When the country's ownership data lives at another registry, Didit re-finds the company there by registration number, at no extra cost.
 
         **Billing.** Billed at the country's UBO price - see [KYB registry pricing](/getting-started/kyb-registry-pricing). The tier delivered is the highest the country and the registry can serve: Shareholders when the resolved report names no natural person as a beneficial owner, Lite when there is no ownership record at all; `registry_tier_delivered` names what was billed. The balance is checked against the UBO price before any registry call (`403` when short).
 
@@ -263,7 +263,7 @@ class Kyb(SyncAPIResource):
         ``POST /v3/kyb/ubo/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -410,7 +410,7 @@ class AsyncKyb(AsyncAPIResource):
         ``POST /v3/kyb/select/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -455,7 +455,7 @@ class AsyncKyb(AsyncAPIResource):
 
         Retrieve the Lite profile **plus the direct shareholders** (natural persons and corporate entities, with their ownership bands) of one candidate returned by `POST /v3/kyb/search/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The search runs on the Lite registry chain; when the country's ownership data lives at another registry Didit re-finds the company there by registration number, at no extra cost.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. Search at the tier you intend to buy (`tier` on `POST /v3/kyb/search/`), because the search runs on the registry chain that serves that tier and an empty Lite search is not proof that the registry does not hold the company. When the country's ownership data lives at another registry, Didit re-finds the company there by registration number, at no extra cost.
 
         **Billing.** Billed at the country's Shareholders price - see [KYB registry pricing](/getting-started/kyb-registry-pricing). When the registry holds no shareholder record for the company (or the country offers no ownership data at all) the Lite profile is delivered and billed instead: read `registry_tier_delivered` and `registry_ownership_status`. The balance is checked against the Shareholders price before any registry call (`403` when short).
 
@@ -466,7 +466,7 @@ class AsyncKyb(AsyncAPIResource):
         ``POST /v3/kyb/shareholders/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
@@ -511,7 +511,7 @@ class AsyncKyb(AsyncAPIResource):
 
         Retrieve the Lite profile, the direct shareholders **and the ultimate beneficial owners** resolved through the ownership chain (`registry_data.ubo_resolution` carries the corporate parent chain) of one candidate returned by `POST /v3/kyb/search/`.
 
-        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. The search runs on the Lite registry chain; when the country's ownership data lives at another registry Didit re-finds the company there by registration number, at no extra cost.
+        **Pairing with search.** Pass the candidate's `kyb_response_id` exactly as returned by a search of the same application. Search at the tier you intend to buy (`tier` on `POST /v3/kyb/search/`), because the search runs on the registry chain that serves that tier and an empty Lite search is not proof that the registry does not hold the company. When the country's ownership data lives at another registry, Didit re-finds the company there by registration number, at no extra cost.
 
         **Billing.** Billed at the country's UBO price - see [KYB registry pricing](/getting-started/kyb-registry-pricing). The tier delivered is the highest the country and the registry can serve: Shareholders when the resolved report names no natural person as a beneficial owner, Lite when there is no ownership record at all; `registry_tier_delivered` names what was billed. The balance is checked against the UBO price before any registry call (`403` when short).
 
@@ -522,7 +522,7 @@ class AsyncKyb(AsyncAPIResource):
         ``POST /v3/kyb/ubo/``
 
         Args:
-          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral - use it shortly after the search that produced it.
+          kyb_response_id: Candidate handle from `POST /v3/kyb/search/` (`kyb_registry.companies[].kyb_response_id`). Ephemeral: use it shortly after the search that produced it. Handles can be long, so store and send the value exactly as returned, without trimming or assuming a length.
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
