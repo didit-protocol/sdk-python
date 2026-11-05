@@ -458,6 +458,12 @@ if TYPE_CHECKING:
     from didit.types.components.application_analytics_summary import (
         ApplicationAnalyticsSummary as ApplicationAnalyticsSummary,
     )
+    from didit.types.components.application_analytics_today import (
+        ApplicationAnalyticsToday as ApplicationAnalyticsToday,
+    )
+    from didit.types.components.application_analytics_today import (
+        ApplicationAnalyticsTodayOutcomes as ApplicationAnalyticsTodayOutcomes,
+    )
     from didit.types.components.application_analytics_verification_time_point import (
         ApplicationAnalyticsVerificationTimePoint as ApplicationAnalyticsVerificationTimePoint,
     )
@@ -559,6 +565,7 @@ if TYPE_CHECKING:
     from didit.types.components.bank_verification_result import (
         BankVerificationResultRoute as BankVerificationResultRoute,
     )
+    from didit.types.components.biometric_retention import BiometricRetention as BiometricRetention
     from didit.types.components.blocklisted_item import BlocklistedItem as BlocklistedItem
     from didit.types.components.branding_customization import (
         BrandingCustomization as BrandingCustomization,
@@ -851,6 +858,9 @@ if TYPE_CHECKING:
     from didit.types.components.digital_id_wallet_api_ftn_wallet_verification_start_country_enum import (
         DigitalIdWalletApiFtnWalletVerificationStartCountryEnum as DigitalIdWalletApiFtnWalletVerificationStartCountryEnum,
     )
+    from didit.types.components.digital_id_wallet_api_google_wallet_wallet_verification_start_country_enum import (
+        DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum as DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum,
+    )
     from didit.types.components.digital_id_wallet_api_govbr_wallet_verification_start_country_enum import (
         DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum as DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum,
     )
@@ -890,6 +900,9 @@ if TYPE_CHECKING:
     from didit.types.components.digital_id_wallet_api_wallet_catalog_response import (
         DigitalIdWalletApiWalletCatalogResponse as DigitalIdWalletApiWalletCatalogResponse,
     )
+    from didit.types.components.digital_id_wallet_api_wallet_digital_credentials_request import (
+        DigitalIdWalletApiWalletDigitalCredentialsRequest as DigitalIdWalletApiWalletDigitalCredentialsRequest,
+    )
     from didit.types.components.digital_id_wallet_api_wallet_identity import (
         DigitalIdWalletApiWalletIdentity as DigitalIdWalletApiWalletIdentity,
     )
@@ -912,6 +925,9 @@ if TYPE_CHECKING:
         DocumentAIDetectedCode as DocumentAIDetectedCode,
     )
     from didit.types.components.email_intelligence import EmailIntelligence as EmailIntelligence
+    from didit.types.components.email_intelligence import (
+        EmailIntelligenceReasonCodes as EmailIntelligenceReasonCodes,
+    )
     from didit.types.components.email_match_item import EmailMatchItem as EmailMatchItem
     from didit.types.components.email_risk_response import EmailRiskResponse as EmailRiskResponse
     from didit.types.components.email_risk_response import (
@@ -1002,6 +1018,29 @@ if TYPE_CHECKING:
     from didit.types.components.fraud_result_enum import FraudResultEnum as FraudResultEnum
     from didit.types.components.fraud_status_enum import FraudStatusEnum as FraudStatusEnum
     from didit.types.components.fraud_type_enum import FraudTypeEnum as FraudTypeEnum
+    from didit.types.components.geolocation_attempt import GeolocationAttempt as GeolocationAttempt
+    from didit.types.components.geolocation_attempt import (
+        GeolocationAttemptAnonymizers as GeolocationAttemptAnonymizers,
+    )
+    from didit.types.components.geolocation_attempt import (
+        GeolocationAttemptConsent as GeolocationAttemptConsent,
+    )
+    from didit.types.components.geolocation_attempt import (
+        GeolocationAttemptGeofence as GeolocationAttemptGeofence,
+    )
+    from didit.types.components.geolocation_check import GeolocationCheck as GeolocationCheck
+    from didit.types.components.geolocation_check import (
+        GeolocationCheckAnonymizers as GeolocationCheckAnonymizers,
+    )
+    from didit.types.components.geolocation_check import (
+        GeolocationCheckConsent as GeolocationCheckConsent,
+    )
+    from didit.types.components.geolocation_check import (
+        GeolocationCheckGeofence as GeolocationCheckGeofence,
+    )
+    from didit.types.components.geolocation_check import (
+        GeolocationCheckWarnings as GeolocationCheckWarnings,
+    )
     from didit.types.components.import_job_summary import ImportJobSummary as ImportJobSummary
     from didit.types.components.import_job_summary import (
         ImportJobSummaryFaceTemplates as ImportJobSummaryFaceTemplates,
@@ -1053,9 +1092,22 @@ if TYPE_CHECKING:
     from didit.types.components.kyb_key_people_party import (
         KYBKeyPeoplePartyVerificationWorkflowFeatures as KYBKeyPeoplePartyVerificationWorkflowFeatures,
     )
+    from didit.types.components.kyb_ownership_structure import (
+        KYBOwnershipStructure as KYBOwnershipStructure,
+    )
+    from didit.types.components.kyb_ownership_structure_owner import (
+        KYBOwnershipStructureOwner as KYBOwnershipStructureOwner,
+    )
     from didit.types.components.kyb_registry_address import KYBRegistryAddress as KYBRegistryAddress
+    from didit.types.components.kyb_registry_data import KYBRegistryData as KYBRegistryData
+    from didit.types.components.kyb_registry_group_company import (
+        KYBRegistryGroupCompany as KYBRegistryGroupCompany,
+    )
     from didit.types.components.kyb_registry_industry import (
         KYBRegistryIndustry as KYBRegistryIndustry,
+    )
+    from didit.types.components.kyb_registry_lite_enrichment import (
+        KYBRegistryLiteEnrichment as KYBRegistryLiteEnrichment,
     )
     from didit.types.components.kyb_registry_ownership import (
         KYBRegistryOwnership as KYBRegistryOwnership,
@@ -1072,8 +1124,18 @@ if TYPE_CHECKING:
     from didit.types.components.kyb_registry_search_results import (
         KYBRegistrySearchResultsPagination as KYBRegistrySearchResultsPagination,
     )
+    from didit.types.components.kyb_registry_section_error import (
+        KYBRegistrySectionError as KYBRegistrySectionError,
+    )
     from didit.types.components.kyb_registry_shareholding import (
         KYBRegistryShareholding as KYBRegistryShareholding,
+    )
+    from didit.types.components.kyb_registry_source import KYBRegistrySource as KYBRegistrySource
+    from didit.types.components.kyb_registry_ubo_resolution import (
+        KYBRegistryUboResolution as KYBRegistryUboResolution,
+    )
+    from didit.types.components.kyb_registry_ubo_resolution import (
+        KYBRegistryUboResolutionUnresolved as KYBRegistryUboResolutionUnresolved,
     )
     from didit.types.components.login_response import LoginResponse as LoginResponse
     from didit.types.components.monitoring_event import MonitoringEvent as MonitoringEvent
@@ -1247,6 +1309,9 @@ if TYPE_CHECKING:
         PaginatedOrganizationList as PaginatedOrganizationList,
     )
     from didit.types.components.phone_intelligence import PhoneIntelligence as PhoneIntelligence
+    from didit.types.components.phone_intelligence import (
+        PhoneIntelligenceReasonCodes as PhoneIntelligenceReasonCodes,
+    )
     from didit.types.components.phone_match_item import PhoneMatchItem as PhoneMatchItem
     from didit.types.components.phone_risk_response import PhoneRiskResponse as PhoneRiskResponse
     from didit.types.components.phone_risk_response import (
@@ -1334,10 +1399,16 @@ if TYPE_CHECKING:
     )
     from didit.types.components.session_decision import SessionDecision as SessionDecision
     from didit.types.components.session_decision import (
+        SessionDecisionAssignee as SessionDecisionAssignee,
+    )
+    from didit.types.components.session_decision import (
         SessionDecisionBiometricConsent as SessionDecisionBiometricConsent,
     )
     from didit.types.components.session_decision import (
         SessionDecisionContactDetails as SessionDecisionContactDetails,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionDatabaseValidationNotPerformedReason as SessionDecisionDatabaseValidationNotPerformedReason,
     )
     from didit.types.components.session_decision import (
         SessionDecisionDatabaseValidations as SessionDecisionDatabaseValidations,
@@ -1356,6 +1427,15 @@ if TYPE_CHECKING:
     )
     from didit.types.components.session_decision import (
         SessionDecisionDatabaseValidationsWarnings as SessionDecisionDatabaseValidationsWarnings,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionDecisionTrace as SessionDecisionDecisionTrace,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionDecisionTraceActor as SessionDecisionDecisionTraceActor,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionDecisionTraceStatusWarnings as SessionDecisionDecisionTraceStatusWarnings,
     )
     from didit.types.components.session_decision import (
         SessionDecisionDocumentAiDocuments as SessionDecisionDocumentAiDocuments,
@@ -1407,6 +1487,18 @@ if TYPE_CHECKING:
     )
     from didit.types.components.session_decision import (
         SessionDecisionFaceMatches as SessionDecisionFaceMatches,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionFaceMatchesFaceCoverage as SessionDecisionFaceMatchesFaceCoverage,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionFaceMatchesFaceCoverageEyes as SessionDecisionFaceMatchesFaceCoverageEyes,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionFaceMatchesFaceCoverageFace as SessionDecisionFaceMatchesFaceCoverageFace,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionFaceMatchesFaceCoverageMouth as SessionDecisionFaceMatchesFaceCoverageMouth,
     )
     from didit.types.components.session_decision import (
         SessionDecisionFaceMatchesWarnings as SessionDecisionFaceMatchesWarnings,
@@ -1571,6 +1663,24 @@ if TYPE_CHECKING:
         SessionDecisionKeyPeopleChecksUboKycSummary as SessionDecisionKeyPeopleChecksUboKycSummary,
     )
     from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecords as SessionDecisionLinkedRecords,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecordsEarlierVerifications as SessionDecisionLinkedRecordsEarlierVerifications,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecordsNetworks as SessionDecisionLinkedRecordsNetworks,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecordsNetworksItems as SessionDecisionLinkedRecordsNetworksItems,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecordsSameFace as SessionDecisionLinkedRecordsSameFace,
+    )
+    from didit.types.components.session_decision import (
+        SessionDecisionLinkedRecordsSameFaceBestMatch as SessionDecisionLinkedRecordsSameFaceBestMatch,
+    )
+    from didit.types.components.session_decision import (
         SessionDecisionLivenessChecks as SessionDecisionLivenessChecks,
     )
     from didit.types.components.session_decision import (
@@ -1676,6 +1786,9 @@ if TYPE_CHECKING:
         SessionDecisionRegistryChecksCompanyOfficers as SessionDecisionRegistryChecksCompanyOfficers,
     )
     from didit.types.components.session_decision import (
+        SessionDecisionRegistryChecksCompanyRegistryMonitoring as SessionDecisionRegistryChecksCompanyRegistryMonitoring,
+    )
+    from didit.types.components.session_decision import (
         SessionDecisionResubmissions as SessionDecisionResubmissions,
     )
     from didit.types.components.session_decision import (
@@ -1687,11 +1800,15 @@ if TYPE_CHECKING:
     from didit.types.components.session_decision import (
         SessionDecisionReviews as SessionDecisionReviews,
     )
+    from didit.types.components.session_decision import (
+        SessionDecisionStatusOverride as SessionDecisionStatusOverride,
+    )
     from didit.types.components.session_deletion_job import SessionDeletionJob as SessionDeletionJob
     from didit.types.components.session_deletion_job import (
         SessionDeletionJobOutcomes as SessionDeletionJobOutcomes,
     )
     from didit.types.components.session_event import SessionEvent as SessionEvent
+    from didit.types.components.session_files_export import SessionFilesExport as SessionFilesExport
     from didit.types.components.session_import_error import SessionImportError as SessionImportError
     from didit.types.components.session_import_job import SessionImportJob as SessionImportJob
     from didit.types.components.session_sign_document import (
@@ -1967,6 +2084,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_inbound_response import (
         TravelRuleInboundResponse as TravelRuleInboundResponse,
     )
+    from didit.types.components.travel_rule_manual_match_response import (
+        TravelRuleManualMatchResponse as TravelRuleManualMatchResponse,
+    )
     from didit.types.components.travel_rule_matching_rules import (
         TravelRuleMatchingRules as TravelRuleMatchingRules,
     )
@@ -2126,6 +2246,9 @@ if TYPE_CHECKING:
         UserSessionListItemAdditionalDetailsPoa as UserSessionListItemAdditionalDetailsPoa,
     )
     from didit.types.components.user_session_list_item import (
+        UserSessionListItemAssignee as UserSessionListItemAssignee,
+    )
+    from didit.types.components.user_session_list_item import (
         UserSessionListItemEmailAddress as UserSessionListItemEmailAddress,
     )
     from didit.types.components.user_session_list_item import (
@@ -2133,6 +2256,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.user_session_list_item import (
         UserSessionListItemPhoneNumber as UserSessionListItemPhoneNumber,
+    )
+    from didit.types.components.user_session_list_item import (
+        UserSessionListItemTopWarnings as UserSessionListItemTopWarnings,
     )
     from didit.types.components.vasp_directory_entry import VaspDirectoryEntry as VaspDirectoryEntry
     from didit.types.components.vasp_directory_entry import (
@@ -2217,6 +2343,9 @@ if TYPE_CHECKING:
         WebhookSubscribedEventsParam as WebhookSubscribedEventsParam,
     )
     from didit.types.components.workflow_detail import WorkflowDetail as WorkflowDetail
+    from didit.types.components.workflow_detail import (
+        WorkflowDetailSignatureAvailability as WorkflowDetailSignatureAvailability,
+    )
     from didit.types.components.workflow_list_item import WorkflowListItem as WorkflowListItem
     from didit.types.components.workflow_list_item import (
         WorkflowListItemCreatedBy as WorkflowListItemCreatedBy,
@@ -2387,6 +2516,9 @@ if TYPE_CHECKING:
     from didit.types.id_wallets.start_ftn_params import (
         IdWalletsStartFtnParams as IdWalletsStartFtnParams,
     )
+    from didit.types.id_wallets.start_google_wallet_params import (
+        IdWalletsStartGoogleWalletParams as IdWalletsStartGoogleWalletParams,
+    )
     from didit.types.id_wallets.start_govbr_params import (
         IdWalletsStartGovbrParams as IdWalletsStartGovbrParams,
     )
@@ -2425,6 +2557,9 @@ if TYPE_CHECKING:
     )
     from didit.types.id_wallets.start_vipps_params import (
         IdWalletsStartVippsParams as IdWalletsStartVippsParams,
+    )
+    from didit.types.id_wallets.submit_verification_response_params import (
+        IdWalletsSubmitVerificationResponseParams as IdWalletsSubmitVerificationResponseParams,
     )
     from didit.types.investigator.accept_run_params import (
         InvestigatorAcceptRunParams as InvestigatorAcceptRunParams,
@@ -2482,6 +2617,9 @@ if TYPE_CHECKING:
         KybListShareholdersResponse202KybRegistryOfficers as KybListShareholdersResponse202KybRegistryOfficers,
     )
     from didit.types.kyb.list_shareholders_response import (
+        KybListShareholdersResponse202KybRegistryRegistryMonitoring as KybListShareholdersResponse202KybRegistryRegistryMonitoring,
+    )
+    from didit.types.kyb.list_shareholders_response import (
         KybListShareholdersResponseKybRegistry as KybListShareholdersResponseKybRegistry,
     )
     from didit.types.kyb.list_shareholders_response import (
@@ -2489,6 +2627,9 @@ if TYPE_CHECKING:
     )
     from didit.types.kyb.list_shareholders_response import (
         KybListShareholdersResponseKybRegistryOfficers as KybListShareholdersResponseKybRegistryOfficers,
+    )
+    from didit.types.kyb.list_shareholders_response import (
+        KybListShareholdersResponseKybRegistryRegistryMonitoring as KybListShareholdersResponseKybRegistryRegistryMonitoring,
     )
     from didit.types.kyb.list_ubos_params import KybListUbosParams as KybListUbosParams
     from didit.types.kyb.list_ubos_response import KybListUbosResponse as KybListUbosResponse
@@ -2503,6 +2644,9 @@ if TYPE_CHECKING:
         KybListUbosResponse202KybRegistryOfficers as KybListUbosResponse202KybRegistryOfficers,
     )
     from didit.types.kyb.list_ubos_response import (
+        KybListUbosResponse202KybRegistryRegistryMonitoring as KybListUbosResponse202KybRegistryRegistryMonitoring,
+    )
+    from didit.types.kyb.list_ubos_response import (
         KybListUbosResponseKybRegistry as KybListUbosResponseKybRegistry,
     )
     from didit.types.kyb.list_ubos_response import (
@@ -2510,6 +2654,9 @@ if TYPE_CHECKING:
     )
     from didit.types.kyb.list_ubos_response import (
         KybListUbosResponseKybRegistryOfficers as KybListUbosResponseKybRegistryOfficers,
+    )
+    from didit.types.kyb.list_ubos_response import (
+        KybListUbosResponseKybRegistryRegistryMonitoring as KybListUbosResponseKybRegistryRegistryMonitoring,
     )
     from didit.types.kyb.search_params import KybSearchParams as KybSearchParams
     from didit.types.kyb.search_response import KybSearchResponse as KybSearchResponse
@@ -2523,6 +2670,9 @@ if TYPE_CHECKING:
     )
     from didit.types.kyb.select_response import (
         KybSelectResponseKybRegistryOfficers as KybSelectResponseKybRegistryOfficers,
+    )
+    from didit.types.kyb.select_response import (
+        KybSelectResponseKybRegistryRegistryMonitoring as KybSelectResponseKybRegistryRegistryMonitoring,
     )
     from didit.types.lists.create_params import ListsCreateParams as ListsCreateParams
     from didit.types.lists.entries.create_params import (
@@ -2716,6 +2866,15 @@ if TYPE_CHECKING:
     from didit.types.sessions.bulk_update_aml_hit_status_response import (
         SessionsBulkUpdateAmlHitStatusResponse as SessionsBulkUpdateAmlHitStatusResponse,
     )
+    from didit.types.sessions.create_kyb_party_draft_params import (
+        SessionsCreateKybPartyDraftParams as SessionsCreateKybPartyDraftParams,
+    )
+    from didit.types.sessions.create_kyb_party_draft_response import (
+        SessionsCreateKybPartyDraftResponse as SessionsCreateKybPartyDraftResponse,
+    )
+    from didit.types.sessions.create_kyb_party_draft_response import (
+        SessionsCreateKybPartyDraftResponseParty as SessionsCreateKybPartyDraftResponseParty,
+    )
     from didit.types.sessions.create_params import SessionsCreateParams as SessionsCreateParams
     from didit.types.sessions.create_params import (
         SessionsCreateParamsBiometricConsent as SessionsCreateParamsBiometricConsent,
@@ -2784,6 +2943,30 @@ if TYPE_CHECKING:
     from didit.types.sessions.list_feature_overrides_response import (
         SessionsListFeatureOverridesResponse as SessionsListFeatureOverridesResponse,
     )
+    from didit.types.sessions.list_kyb_extracted_parties_response import (
+        SessionsListKybExtractedPartiesResponse as SessionsListKybExtractedPartiesResponse,
+    )
+    from didit.types.sessions.list_kyb_extracted_parties_response import (
+        SessionsListKybExtractedPartiesResponseParties as SessionsListKybExtractedPartiesResponseParties,
+    )
+    from didit.types.sessions.list_kyb_extracted_parties_response import (
+        SessionsListKybExtractedPartiesResponsePartiesDocuments as SessionsListKybExtractedPartiesResponsePartiesDocuments,
+    )
+    from didit.types.sessions.list_kyb_extracted_parties_response import (
+        SessionsListKybExtractedPartiesResponsePartiesRoles as SessionsListKybExtractedPartiesResponsePartiesRoles,
+    )
+    from didit.types.sessions.list_kyb_extracted_parties_response import (
+        SessionsListKybExtractedPartiesResponsePartiesRolesOwnershipPercent as SessionsListKybExtractedPartiesResponsePartiesRolesOwnershipPercent,
+    )
+    from didit.types.sessions.list_kyb_party_drafts_response import (
+        SessionsListKybPartyDraftsResponse as SessionsListKybPartyDraftsResponse,
+    )
+    from didit.types.sessions.list_kyb_party_drafts_response import (
+        SessionsListKybPartyDraftsResponseParties as SessionsListKybPartyDraftsResponseParties,
+    )
+    from didit.types.sessions.list_kyb_party_drafts_response import (
+        SessionsListKybPartyDraftsResponsePartiesParty as SessionsListKybPartyDraftsResponsePartiesParty,
+    )
     from didit.types.sessions.list_response import SessionsListResponse as SessionsListResponse
     from didit.types.sessions.preview_decision_email_params import (
         SessionsPreviewDecisionEmailParams as SessionsPreviewDecisionEmailParams,
@@ -2822,6 +3005,12 @@ if TYPE_CHECKING:
     )
     from didit.types.sessions.simulate_params import (
         SessionsSimulateParams as SessionsSimulateParams,
+    )
+    from didit.types.sessions.submit_kyb_parties_params import (
+        SessionsSubmitKybPartiesParams as SessionsSubmitKybPartiesParams,
+    )
+    from didit.types.sessions.submit_kyb_parties_response import (
+        SessionsSubmitKybPartiesResponse as SessionsSubmitKybPartiesResponse,
     )
     from didit.types.sessions.update_aml_hit_status_params import (
         SessionsUpdateAmlHitStatusParams as SessionsUpdateAmlHitStatusParams,
@@ -2865,6 +3054,15 @@ if TYPE_CHECKING:
     from didit.types.sessions.update_kyb_company_data_response import (
         SessionsUpdateKybCompanyDataResponse as SessionsUpdateKybCompanyDataResponse,
     )
+    from didit.types.sessions.update_kyb_party_draft_params import (
+        SessionsUpdateKybPartyDraftParams as SessionsUpdateKybPartyDraftParams,
+    )
+    from didit.types.sessions.update_kyb_party_draft_response import (
+        SessionsUpdateKybPartyDraftResponse as SessionsUpdateKybPartyDraftResponse,
+    )
+    from didit.types.sessions.update_kyb_party_draft_response import (
+        SessionsUpdateKybPartyDraftResponseParty as SessionsUpdateKybPartyDraftResponseParty,
+    )
     from didit.types.sessions.update_kyb_party_params import (
         SessionsUpdateKybPartyParams as SessionsUpdateKybPartyParams,
     )
@@ -2891,6 +3089,12 @@ if TYPE_CHECKING:
     )
     from didit.types.sessions.update_status_response import (
         SessionsUpdateStatusResponse as SessionsUpdateStatusResponse,
+    )
+    from didit.types.sessions.upload_kyb_documents_params import (
+        SessionsUploadKybDocumentsParams as SessionsUploadKybDocumentsParams,
+    )
+    from didit.types.sessions.upload_kyb_documents_response import (
+        SessionsUploadKybDocumentsResponse as SessionsUploadKybDocumentsResponse,
     )
     from didit.types.transactions.batch_delete_params import (
         TransactionsBatchDeleteParamsAllTransactions as TransactionsBatchDeleteParamsAllTransactions,
@@ -3035,6 +3239,12 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.transfers.list_response import (
         TravelRuleTransfersListResponse as TravelRuleTransfersListResponse,
+    )
+    from didit.types.travel_rule.unmatched_deposits.list_response import (
+        TravelRuleUnmatchedDepositsListResponse as TravelRuleUnmatchedDepositsListResponse,
+    )
+    from didit.types.travel_rule.unmatched_deposits.match_params import (
+        TravelRuleUnmatchedDepositsMatchParams as TravelRuleUnmatchedDepositsMatchParams,
     )
     from didit.types.travel_rule.update_settings_params import (
         TravelRuleUpdateSettingsParams as TravelRuleUpdateSettingsParams,
@@ -3257,6 +3467,8 @@ _MODULES: dict[str, str] = {
     "ApplicationAnalyticsResubmissionPoint": "components.application_analytics_resubmission_point",
     "ApplicationAnalyticsResubmissionStats": "components.application_analytics_resubmission_stats",
     "ApplicationAnalyticsSummary": "components.application_analytics_summary",
+    "ApplicationAnalyticsToday": "components.application_analytics_today",
+    "ApplicationAnalyticsTodayOutcomes": "components.application_analytics_today",
     "ApplicationAnalyticsVerificationTimePoint": "components.application_analytics_verification_time_point",
     "ApplicationAnalyticsVerificationTimeStats": "components.application_analytics_verification_time_stats",
     "ApplicationAnalyticsVerificationTimeStatsPerFeatureValue": "components.application_analytics_verification_time_stats",
@@ -3297,6 +3509,7 @@ _MODULES: dict[str, str] = {
     "BillingRetrieveBalanceResponse": "billing.retrieve_balance_response",
     "BillingTopUpParams": "billing.top_up_params",
     "BillingTopUpResponse": "billing.top_up_response",
+    "BiometricRetention": "components.biometric_retention",
     "BiometricTemplatesBatchDeleteParams": "biometric_templates.batch_delete_params",
     "BiometricTemplatesBatchDeleteResponse": "biometric_templates.batch_delete_response",
     "BiometricTemplatesBatchDeleteResponseResults": "biometric_templates.batch_delete_response",
@@ -3493,6 +3706,7 @@ _MODULES: dict[str, str] = {
     "DigitalIdWalletApiEudiWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_eudi_wallet_verification_start_country_enum",
     "DigitalIdWalletApiFranceconnectWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_franceconnect_wallet_verification_start_country_enum",
     "DigitalIdWalletApiFtnWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_ftn_wallet_verification_start_country_enum",
+    "DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_google_wallet_wallet_verification_start_country_enum",
     "DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_govbr_wallet_verification_start_country_enum",
     "DigitalIdWalletApiIdcardEeWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_idcard_ee_wallet_verification_start_country_enum",
     "DigitalIdWalletApiIdinWalletVerificationStartCountryEnum": "components.digital_id_wallet_api_idin_wallet_verification_start_country_enum",
@@ -3506,6 +3720,7 @@ _MODULES: dict[str, str] = {
     "DigitalIdWalletApiWallet": "components.digital_id_wallet_api_wallet",
     "DigitalIdWalletApiWalletCatalogEntry": "components.digital_id_wallet_api_wallet_catalog_entry",
     "DigitalIdWalletApiWalletCatalogResponse": "components.digital_id_wallet_api_wallet_catalog_response",
+    "DigitalIdWalletApiWalletDigitalCredentialsRequest": "components.digital_id_wallet_api_wallet_digital_credentials_request",
     "DigitalIdWalletApiWalletIdentity": "components.digital_id_wallet_api_wallet_identity",
     "DigitalIdWalletApiWalletNextAction": "components.digital_id_wallet_api_wallet_next_action",
     "DigitalIdWalletApiWalletNextActionTypeEnum": "components.digital_id_wallet_api_wallet_next_action_type_enum",
@@ -3521,6 +3736,7 @@ _MODULES: dict[str, str] = {
     "EmailAssessRiskParams": "email.assess_risk_params",
     "EmailCheckCodeParams": "email.check_code_params",
     "EmailIntelligence": "components.email_intelligence",
+    "EmailIntelligenceReasonCodes": "components.email_intelligence",
     "EmailMatchItem": "components.email_match_item",
     "EmailRiskResponse": "components.email_risk_response",
     "EmailRiskResponseEmail": "components.email_risk_response",
@@ -3580,6 +3796,15 @@ _MODULES: dict[str, str] = {
     "FraudResultEnum": "components.fraud_result_enum",
     "FraudStatusEnum": "components.fraud_status_enum",
     "FraudTypeEnum": "components.fraud_type_enum",
+    "GeolocationAttempt": "components.geolocation_attempt",
+    "GeolocationAttemptAnonymizers": "components.geolocation_attempt",
+    "GeolocationAttemptConsent": "components.geolocation_attempt",
+    "GeolocationAttemptGeofence": "components.geolocation_attempt",
+    "GeolocationCheck": "components.geolocation_check",
+    "GeolocationCheckAnonymizers": "components.geolocation_check",
+    "GeolocationCheckConsent": "components.geolocation_check",
+    "GeolocationCheckGeofence": "components.geolocation_check",
+    "GeolocationCheckWarnings": "components.geolocation_check",
     "IPRiskResponse": "components.ip_risk_response",
     "IPRiskResponseIp": "components.ip_risk_response",
     "IdVerificationVerifyParams": "id_verification.verify_params",
@@ -3604,6 +3829,7 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartFranceconnectParams": "id_wallets.start_franceconnect_params",
     "IdWalletsStartFrejaidParams": "id_wallets.start_frejaid_params",
     "IdWalletsStartFtnParams": "id_wallets.start_ftn_params",
+    "IdWalletsStartGoogleWalletParams": "id_wallets.start_google_wallet_params",
     "IdWalletsStartGovbrParams": "id_wallets.start_govbr_params",
     "IdWalletsStartGovukWalletParams": "id_wallets.start_govuk_wallet_params",
     "IdWalletsStartIdcardEeParams": "id_wallets.start_idcard_ee_params",
@@ -3617,6 +3843,7 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartSmartIdParams": "id_wallets.start_smart_id_params",
     "IdWalletsStartUaePassParams": "id_wallets.start_uae_pass_params",
     "IdWalletsStartVippsParams": "id_wallets.start_vipps_params",
+    "IdWalletsSubmitVerificationResponseParams": "id_wallets.submit_verification_response_params",
     "ImportJobSummary": "components.import_job_summary",
     "ImportJobSummaryFaceTemplates": "components.import_job_summary",
     "ImportJobSummaryProgress": "components.import_job_summary",
@@ -3649,32 +3876,45 @@ _MODULES: dict[str, str] = {
     "KYBKeyPeopleParty": "components.kyb_key_people_party",
     "KYBKeyPeoplePartyRoles": "components.kyb_key_people_party",
     "KYBKeyPeoplePartyVerificationWorkflowFeatures": "components.kyb_key_people_party",
+    "KYBOwnershipStructure": "components.kyb_ownership_structure",
+    "KYBOwnershipStructureOwner": "components.kyb_ownership_structure_owner",
     "KYBRegistryAddress": "components.kyb_registry_address",
+    "KYBRegistryData": "components.kyb_registry_data",
+    "KYBRegistryGroupCompany": "components.kyb_registry_group_company",
     "KYBRegistryIndustry": "components.kyb_registry_industry",
+    "KYBRegistryLiteEnrichment": "components.kyb_registry_lite_enrichment",
     "KYBRegistryOwnership": "components.kyb_registry_ownership",
     "KYBRegistryOwnershipUnresolved": "components.kyb_registry_ownership",
     "KYBRegistrySearchResults": "components.kyb_registry_search_results",
     "KYBRegistrySearchResultsCompanies": "components.kyb_registry_search_results",
     "KYBRegistrySearchResultsPagination": "components.kyb_registry_search_results",
+    "KYBRegistrySectionError": "components.kyb_registry_section_error",
     "KYBRegistryShareholding": "components.kyb_registry_shareholding",
+    "KYBRegistrySource": "components.kyb_registry_source",
+    "KYBRegistryUboResolution": "components.kyb_registry_ubo_resolution",
+    "KYBRegistryUboResolutionUnresolved": "components.kyb_registry_ubo_resolution",
     "KybListShareholdersParams": "kyb.list_shareholders_params",
     "KybListShareholdersResponse": "kyb.list_shareholders_response",
     "KybListShareholdersResponse202": "kyb.list_shareholders_response",
     "KybListShareholdersResponse202KybRegistry": "kyb.list_shareholders_response",
     "KybListShareholdersResponse202KybRegistryBeneficialOwners": "kyb.list_shareholders_response",
     "KybListShareholdersResponse202KybRegistryOfficers": "kyb.list_shareholders_response",
+    "KybListShareholdersResponse202KybRegistryRegistryMonitoring": "kyb.list_shareholders_response",
     "KybListShareholdersResponseKybRegistry": "kyb.list_shareholders_response",
     "KybListShareholdersResponseKybRegistryBeneficialOwners": "kyb.list_shareholders_response",
     "KybListShareholdersResponseKybRegistryOfficers": "kyb.list_shareholders_response",
+    "KybListShareholdersResponseKybRegistryRegistryMonitoring": "kyb.list_shareholders_response",
     "KybListUbosParams": "kyb.list_ubos_params",
     "KybListUbosResponse": "kyb.list_ubos_response",
     "KybListUbosResponse202": "kyb.list_ubos_response",
     "KybListUbosResponse202KybRegistry": "kyb.list_ubos_response",
     "KybListUbosResponse202KybRegistryBeneficialOwners": "kyb.list_ubos_response",
     "KybListUbosResponse202KybRegistryOfficers": "kyb.list_ubos_response",
+    "KybListUbosResponse202KybRegistryRegistryMonitoring": "kyb.list_ubos_response",
     "KybListUbosResponseKybRegistry": "kyb.list_ubos_response",
     "KybListUbosResponseKybRegistryBeneficialOwners": "kyb.list_ubos_response",
     "KybListUbosResponseKybRegistryOfficers": "kyb.list_ubos_response",
+    "KybListUbosResponseKybRegistryRegistryMonitoring": "kyb.list_ubos_response",
     "KybSearchParams": "kyb.search_params",
     "KybSearchResponse": "kyb.search_response",
     "KybSelectParams": "kyb.select_params",
@@ -3682,6 +3922,7 @@ _MODULES: dict[str, str] = {
     "KybSelectResponseKybRegistry": "kyb.select_response",
     "KybSelectResponseKybRegistryBeneficialOwners": "kyb.select_response",
     "KybSelectResponseKybRegistryOfficers": "kyb.select_response",
+    "KybSelectResponseKybRegistryRegistryMonitoring": "kyb.select_response",
     "ListsCreateParams": "lists.create_params",
     "ListsEntriesCreateParams": "lists.entries.create_params",
     "ListsEntriesCreateParamsMetadata": "lists.entries.create_params",
@@ -3792,6 +4033,7 @@ _MODULES: dict[str, str] = {
     "PhoneAssessRiskParams": "phone.assess_risk_params",
     "PhoneCheckCodeParams": "phone.check_code_params",
     "PhoneIntelligence": "components.phone_intelligence",
+    "PhoneIntelligenceReasonCodes": "components.phone_intelligence",
     "PhoneMatchItem": "components.phone_match_item",
     "PhoneRiskResponse": "components.phone_risk_response",
     "PhoneRiskResponsePhone": "components.phone_risk_response",
@@ -3850,14 +4092,19 @@ _MODULES: dict[str, str] = {
     "RoutingPublicationRoutingCondition": "components.routing_publication_routing_condition",
     "SandboxSimulateResponse": "components.sandbox_simulate_response",
     "SessionDecision": "components.session_decision",
+    "SessionDecisionAssignee": "components.session_decision",
     "SessionDecisionBiometricConsent": "components.session_decision",
     "SessionDecisionContactDetails": "components.session_decision",
+    "SessionDecisionDatabaseValidationNotPerformedReason": "components.session_decision",
     "SessionDecisionDatabaseValidations": "components.session_decision",
     "SessionDecisionDatabaseValidationsErrors": "components.session_decision",
     "SessionDecisionDatabaseValidationsScreenedData": "components.session_decision",
     "SessionDecisionDatabaseValidationsValidations": "components.session_decision",
     "SessionDecisionDatabaseValidationsValidationsValidation": "components.session_decision",
     "SessionDecisionDatabaseValidationsWarnings": "components.session_decision",
+    "SessionDecisionDecisionTrace": "components.session_decision",
+    "SessionDecisionDecisionTraceActor": "components.session_decision",
+    "SessionDecisionDecisionTraceStatusWarnings": "components.session_decision",
     "SessionDecisionDocumentAiDocuments": "components.session_decision",
     "SessionDecisionDocumentAiDocumentsItems": "components.session_decision",
     "SessionDecisionDocumentAiDocumentsItemsFields": "components.session_decision",
@@ -3875,6 +4122,10 @@ _MODULES: dict[str, str] = {
     "SessionDecisionEmailVerificationsWarnings": "components.session_decision",
     "SessionDecisionExpectedDetails": "components.session_decision",
     "SessionDecisionFaceMatches": "components.session_decision",
+    "SessionDecisionFaceMatchesFaceCoverage": "components.session_decision",
+    "SessionDecisionFaceMatchesFaceCoverageEyes": "components.session_decision",
+    "SessionDecisionFaceMatchesFaceCoverageFace": "components.session_decision",
+    "SessionDecisionFaceMatchesFaceCoverageMouth": "components.session_decision",
     "SessionDecisionFaceMatchesWarnings": "components.session_decision",
     "SessionDecisionIdVerifications": "components.session_decision",
     "SessionDecisionIdVerificationsBackImageQualityScore": "components.session_decision",
@@ -3929,6 +4180,12 @@ _MODULES: dict[str, str] = {
     "SessionDecisionKeyPeopleChecksSubmittedPartiesRoles": "components.session_decision",
     "SessionDecisionKeyPeopleChecksSubmittedPartiesVerificationWorkflowFeatures": "components.session_decision",
     "SessionDecisionKeyPeopleChecksUboKycSummary": "components.session_decision",
+    "SessionDecisionLinkedRecords": "components.session_decision",
+    "SessionDecisionLinkedRecordsEarlierVerifications": "components.session_decision",
+    "SessionDecisionLinkedRecordsNetworks": "components.session_decision",
+    "SessionDecisionLinkedRecordsNetworksItems": "components.session_decision",
+    "SessionDecisionLinkedRecordsSameFace": "components.session_decision",
+    "SessionDecisionLinkedRecordsSameFaceBestMatch": "components.session_decision",
     "SessionDecisionLivenessChecks": "components.session_decision",
     "SessionDecisionLivenessChecksMatches": "components.session_decision",
     "SessionDecisionLivenessChecksMatchesUserDetails": "components.session_decision",
@@ -3964,13 +4221,16 @@ _MODULES: dict[str, str] = {
     "SessionDecisionRegistryChecksCompany": "components.session_decision",
     "SessionDecisionRegistryChecksCompanyBeneficialOwners": "components.session_decision",
     "SessionDecisionRegistryChecksCompanyOfficers": "components.session_decision",
+    "SessionDecisionRegistryChecksCompanyRegistryMonitoring": "components.session_decision",
     "SessionDecisionResubmissions": "components.session_decision",
     "SessionDecisionResubmissionsNodes": "components.session_decision",
     "SessionDecisionResubmissionsRequestedBy": "components.session_decision",
     "SessionDecisionReviews": "components.session_decision",
+    "SessionDecisionStatusOverride": "components.session_decision",
     "SessionDeletionJob": "components.session_deletion_job",
     "SessionDeletionJobOutcomes": "components.session_deletion_job",
     "SessionEvent": "components.session_event",
+    "SessionFilesExport": "components.session_files_export",
     "SessionImportError": "components.session_import_error",
     "SessionImportJob": "components.session_import_job",
     "SessionSignDocument": "components.session_sign_document",
@@ -3983,6 +4243,9 @@ _MODULES: dict[str, str] = {
     "SessionsBulkUpdateAmlHitStatusParams": "sessions.bulk_update_aml_hit_status_params",
     "SessionsBulkUpdateAmlHitStatusParamsHitUpdates": "sessions.bulk_update_aml_hit_status_params",
     "SessionsBulkUpdateAmlHitStatusResponse": "sessions.bulk_update_aml_hit_status_response",
+    "SessionsCreateKybPartyDraftParams": "sessions.create_kyb_party_draft_params",
+    "SessionsCreateKybPartyDraftResponse": "sessions.create_kyb_party_draft_response",
+    "SessionsCreateKybPartyDraftResponseParty": "sessions.create_kyb_party_draft_response",
     "SessionsCreateParams": "sessions.create_params",
     "SessionsCreateParamsBiometricConsent": "sessions.create_params",
     "SessionsCreateParamsContactDetails": "sessions.create_params",
@@ -4007,6 +4270,14 @@ _MODULES: dict[str, str] = {
     "SessionsListAmlScreeningHistoryResponse": "sessions.list_aml_screening_history_response",
     "SessionsListEventsResponse": "sessions.list_events_response",
     "SessionsListFeatureOverridesResponse": "sessions.list_feature_overrides_response",
+    "SessionsListKybExtractedPartiesResponse": "sessions.list_kyb_extracted_parties_response",
+    "SessionsListKybExtractedPartiesResponseParties": "sessions.list_kyb_extracted_parties_response",
+    "SessionsListKybExtractedPartiesResponsePartiesDocuments": "sessions.list_kyb_extracted_parties_response",
+    "SessionsListKybExtractedPartiesResponsePartiesRoles": "sessions.list_kyb_extracted_parties_response",
+    "SessionsListKybExtractedPartiesResponsePartiesRolesOwnershipPercent": "sessions.list_kyb_extracted_parties_response",
+    "SessionsListKybPartyDraftsResponse": "sessions.list_kyb_party_drafts_response",
+    "SessionsListKybPartyDraftsResponseParties": "sessions.list_kyb_party_drafts_response",
+    "SessionsListKybPartyDraftsResponsePartiesParty": "sessions.list_kyb_party_drafts_response",
     "SessionsListResponse": "sessions.list_response",
     "SessionsPreviewDecisionEmailParams": "sessions.preview_decision_email_params",
     "SessionsPreviewDecisionEmailResponse": "sessions.preview_decision_email_response",
@@ -4022,6 +4293,8 @@ _MODULES: dict[str, str] = {
     "SessionsSignaturesValidateParams": "sessions.signatures.validate_params",
     "SessionsSignaturesValidateResponse": "sessions.signatures.validate_response",
     "SessionsSimulateParams": "sessions.simulate_params",
+    "SessionsSubmitKybPartiesParams": "sessions.submit_kyb_parties_params",
+    "SessionsSubmitKybPartiesResponse": "sessions.submit_kyb_parties_response",
     "SessionsUpdateAmlHitStatusParams": "sessions.update_aml_hit_status_params",
     "SessionsUpdateAmlHitStatusResponse": "sessions.update_aml_hit_status_response",
     "SessionsUpdateAmlStatusParams": "sessions.update_aml_status_params",
@@ -4036,6 +4309,9 @@ _MODULES: dict[str, str] = {
     "SessionsUpdateFeatureStatusResponse": "sessions.update_feature_status_response",
     "SessionsUpdateKybCompanyDataParams": "sessions.update_kyb_company_data_params",
     "SessionsUpdateKybCompanyDataResponse": "sessions.update_kyb_company_data_response",
+    "SessionsUpdateKybPartyDraftParams": "sessions.update_kyb_party_draft_params",
+    "SessionsUpdateKybPartyDraftResponse": "sessions.update_kyb_party_draft_response",
+    "SessionsUpdateKybPartyDraftResponseParty": "sessions.update_kyb_party_draft_response",
     "SessionsUpdateKybPartyParams": "sessions.update_kyb_party_params",
     "SessionsUpdateKybPartyResponse": "sessions.update_kyb_party_response",
     "SessionsUpdatePoaDataParams": "sessions.update_poa_data_params",
@@ -4045,6 +4321,8 @@ _MODULES: dict[str, str] = {
     "SessionsUpdateStatusParams": "sessions.update_status_params",
     "SessionsUpdateStatusParamsNodesToResubmit": "sessions.update_status_params",
     "SessionsUpdateStatusResponse": "sessions.update_status_response",
+    "SessionsUploadKybDocumentsParams": "sessions.upload_kyb_documents_params",
+    "SessionsUploadKybDocumentsResponse": "sessions.upload_kyb_documents_response",
     "SignatureField": "components.signature_field",
     "SignatureFieldAnchor": "components.signature_field_anchor",
     "SignatureFieldResult": "components.signature_field_result",
@@ -4178,6 +4456,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleDiscoveryStep": "components.travel_rule_discovery_step",
     "TravelRuleInboundResponse": "components.travel_rule_inbound_response",
     "TravelRuleListVaspsResponse": "travel_rule.list_vasps_response",
+    "TravelRuleManualMatchResponse": "components.travel_rule_manual_match_response",
     "TravelRuleMatchingRules": "components.travel_rule_matching_rules",
     "TravelRuleMatchingRulesCompany": "components.travel_rule_matching_rules",
     "TravelRuleMatchingRulesCompanyParam": "components.travel_rule_matching_rules",
@@ -4216,6 +4495,8 @@ _MODULES: dict[str, str] = {
     "TravelRuleTransferDetailTimeline": "components.travel_rule_transfer_detail",
     "TravelRuleTransferRow": "components.travel_rule_transfer_row",
     "TravelRuleTransfersListResponse": "travel_rule.transfers.list_response",
+    "TravelRuleUnmatchedDepositsListResponse": "travel_rule.unmatched_deposits.list_response",
+    "TravelRuleUnmatchedDepositsMatchParams": "travel_rule.unmatched_deposits.match_params",
     "TravelRuleUpdateSettingsParams": "travel_rule.update_settings_params",
     "TravelRuleUpdateVaspDecisionParams": "travel_rule.update_vasp_decision_params",
     "TravelRuleUtxo": "components.travel_rule_utxo",
@@ -4253,9 +4534,11 @@ _MODULES: dict[str, str] = {
     "UserSessionListItemAdditionalDetailsLiveness": "components.user_session_list_item",
     "UserSessionListItemAdditionalDetailsPhoneVerification": "components.user_session_list_item",
     "UserSessionListItemAdditionalDetailsPoa": "components.user_session_list_item",
+    "UserSessionListItemAssignee": "components.user_session_list_item",
     "UserSessionListItemEmailAddress": "components.user_session_list_item",
     "UserSessionListItemFeatures": "components.user_session_list_item",
     "UserSessionListItemPhoneNumber": "components.user_session_list_item",
+    "UserSessionListItemTopWarnings": "components.user_session_list_item",
     "UsersBatchDeleteParams": "users.batch_delete_params",
     "UsersBatchDeleteResponse": "users.batch_delete_response",
     "UsersCreateParams": "users.create_params",
@@ -4324,6 +4607,7 @@ _MODULES: dict[str, str] = {
     "WebhooksDestinationsUpdateResponseSummary": "webhooks.destinations.update_response",
     "WebhooksUpdateConfigParams": "webhooks.update_config_params",
     "WorkflowDetail": "components.workflow_detail",
+    "WorkflowDetailSignatureAvailability": "components.workflow_detail",
     "WorkflowListItem": "components.workflow_list_item",
     "WorkflowListItemCreatedBy": "components.workflow_list_item",
     "WorkflowsCreateParams": "workflows.create_params",
@@ -4416,6 +4700,8 @@ __all__ = [
     "ApplicationAnalyticsResubmissionPoint",
     "ApplicationAnalyticsResubmissionStats",
     "ApplicationAnalyticsSummary",
+    "ApplicationAnalyticsToday",
+    "ApplicationAnalyticsTodayOutcomes",
     "ApplicationAnalyticsVerificationTimePoint",
     "ApplicationAnalyticsVerificationTimeStats",
     "ApplicationAnalyticsVerificationTimeStatsPerFeatureValue",
@@ -4456,6 +4742,7 @@ __all__ = [
     "BillingRetrieveBalanceResponse",
     "BillingTopUpParams",
     "BillingTopUpResponse",
+    "BiometricRetention",
     "BiometricTemplatesBatchDeleteParams",
     "BiometricTemplatesBatchDeleteResponse",
     "BiometricTemplatesBatchDeleteResponseResults",
@@ -4652,6 +4939,7 @@ __all__ = [
     "DigitalIdWalletApiEudiWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiFranceconnectWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiFtnWalletVerificationStartCountryEnum",
+    "DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiIdcardEeWalletVerificationStartCountryEnum",
     "DigitalIdWalletApiIdinWalletVerificationStartCountryEnum",
@@ -4665,6 +4953,7 @@ __all__ = [
     "DigitalIdWalletApiWallet",
     "DigitalIdWalletApiWalletCatalogEntry",
     "DigitalIdWalletApiWalletCatalogResponse",
+    "DigitalIdWalletApiWalletDigitalCredentialsRequest",
     "DigitalIdWalletApiWalletIdentity",
     "DigitalIdWalletApiWalletNextAction",
     "DigitalIdWalletApiWalletNextActionTypeEnum",
@@ -4680,6 +4969,7 @@ __all__ = [
     "EmailAssessRiskParams",
     "EmailCheckCodeParams",
     "EmailIntelligence",
+    "EmailIntelligenceReasonCodes",
     "EmailMatchItem",
     "EmailRiskResponse",
     "EmailRiskResponseEmail",
@@ -4739,6 +5029,15 @@ __all__ = [
     "FraudResultEnum",
     "FraudStatusEnum",
     "FraudTypeEnum",
+    "GeolocationAttempt",
+    "GeolocationAttemptAnonymizers",
+    "GeolocationAttemptConsent",
+    "GeolocationAttemptGeofence",
+    "GeolocationCheck",
+    "GeolocationCheckAnonymizers",
+    "GeolocationCheckConsent",
+    "GeolocationCheckGeofence",
+    "GeolocationCheckWarnings",
     "IPRiskResponse",
     "IPRiskResponseIp",
     "IdVerificationVerifyParams",
@@ -4763,6 +5062,7 @@ __all__ = [
     "IdWalletsStartFranceconnectParams",
     "IdWalletsStartFrejaidParams",
     "IdWalletsStartFtnParams",
+    "IdWalletsStartGoogleWalletParams",
     "IdWalletsStartGovbrParams",
     "IdWalletsStartGovukWalletParams",
     "IdWalletsStartIdcardEeParams",
@@ -4776,6 +5076,7 @@ __all__ = [
     "IdWalletsStartSmartIdParams",
     "IdWalletsStartUaePassParams",
     "IdWalletsStartVippsParams",
+    "IdWalletsSubmitVerificationResponseParams",
     "ImportJobSummary",
     "ImportJobSummaryFaceTemplates",
     "ImportJobSummaryProgress",
@@ -4808,32 +5109,45 @@ __all__ = [
     "KYBKeyPeopleParty",
     "KYBKeyPeoplePartyRoles",
     "KYBKeyPeoplePartyVerificationWorkflowFeatures",
+    "KYBOwnershipStructure",
+    "KYBOwnershipStructureOwner",
     "KYBRegistryAddress",
+    "KYBRegistryData",
+    "KYBRegistryGroupCompany",
     "KYBRegistryIndustry",
+    "KYBRegistryLiteEnrichment",
     "KYBRegistryOwnership",
     "KYBRegistryOwnershipUnresolved",
     "KYBRegistrySearchResults",
     "KYBRegistrySearchResultsCompanies",
     "KYBRegistrySearchResultsPagination",
+    "KYBRegistrySectionError",
     "KYBRegistryShareholding",
+    "KYBRegistrySource",
+    "KYBRegistryUboResolution",
+    "KYBRegistryUboResolutionUnresolved",
     "KybListShareholdersParams",
     "KybListShareholdersResponse",
     "KybListShareholdersResponse202",
     "KybListShareholdersResponse202KybRegistry",
     "KybListShareholdersResponse202KybRegistryBeneficialOwners",
     "KybListShareholdersResponse202KybRegistryOfficers",
+    "KybListShareholdersResponse202KybRegistryRegistryMonitoring",
     "KybListShareholdersResponseKybRegistry",
     "KybListShareholdersResponseKybRegistryBeneficialOwners",
     "KybListShareholdersResponseKybRegistryOfficers",
+    "KybListShareholdersResponseKybRegistryRegistryMonitoring",
     "KybListUbosParams",
     "KybListUbosResponse",
     "KybListUbosResponse202",
     "KybListUbosResponse202KybRegistry",
     "KybListUbosResponse202KybRegistryBeneficialOwners",
     "KybListUbosResponse202KybRegistryOfficers",
+    "KybListUbosResponse202KybRegistryRegistryMonitoring",
     "KybListUbosResponseKybRegistry",
     "KybListUbosResponseKybRegistryBeneficialOwners",
     "KybListUbosResponseKybRegistryOfficers",
+    "KybListUbosResponseKybRegistryRegistryMonitoring",
     "KybSearchParams",
     "KybSearchResponse",
     "KybSelectParams",
@@ -4841,6 +5155,7 @@ __all__ = [
     "KybSelectResponseKybRegistry",
     "KybSelectResponseKybRegistryBeneficialOwners",
     "KybSelectResponseKybRegistryOfficers",
+    "KybSelectResponseKybRegistryRegistryMonitoring",
     "ListsCreateParams",
     "ListsEntriesCreateParams",
     "ListsEntriesCreateParamsMetadata",
@@ -4951,6 +5266,7 @@ __all__ = [
     "PhoneAssessRiskParams",
     "PhoneCheckCodeParams",
     "PhoneIntelligence",
+    "PhoneIntelligenceReasonCodes",
     "PhoneMatchItem",
     "PhoneRiskResponse",
     "PhoneRiskResponsePhone",
@@ -5009,14 +5325,19 @@ __all__ = [
     "RoutingPublicationRoutingCondition",
     "SandboxSimulateResponse",
     "SessionDecision",
+    "SessionDecisionAssignee",
     "SessionDecisionBiometricConsent",
     "SessionDecisionContactDetails",
+    "SessionDecisionDatabaseValidationNotPerformedReason",
     "SessionDecisionDatabaseValidations",
     "SessionDecisionDatabaseValidationsErrors",
     "SessionDecisionDatabaseValidationsScreenedData",
     "SessionDecisionDatabaseValidationsValidations",
     "SessionDecisionDatabaseValidationsValidationsValidation",
     "SessionDecisionDatabaseValidationsWarnings",
+    "SessionDecisionDecisionTrace",
+    "SessionDecisionDecisionTraceActor",
+    "SessionDecisionDecisionTraceStatusWarnings",
     "SessionDecisionDocumentAiDocuments",
     "SessionDecisionDocumentAiDocumentsItems",
     "SessionDecisionDocumentAiDocumentsItemsFields",
@@ -5034,6 +5355,10 @@ __all__ = [
     "SessionDecisionEmailVerificationsWarnings",
     "SessionDecisionExpectedDetails",
     "SessionDecisionFaceMatches",
+    "SessionDecisionFaceMatchesFaceCoverage",
+    "SessionDecisionFaceMatchesFaceCoverageEyes",
+    "SessionDecisionFaceMatchesFaceCoverageFace",
+    "SessionDecisionFaceMatchesFaceCoverageMouth",
     "SessionDecisionFaceMatchesWarnings",
     "SessionDecisionIdVerifications",
     "SessionDecisionIdVerificationsBackImageQualityScore",
@@ -5088,6 +5413,12 @@ __all__ = [
     "SessionDecisionKeyPeopleChecksSubmittedPartiesRoles",
     "SessionDecisionKeyPeopleChecksSubmittedPartiesVerificationWorkflowFeatures",
     "SessionDecisionKeyPeopleChecksUboKycSummary",
+    "SessionDecisionLinkedRecords",
+    "SessionDecisionLinkedRecordsEarlierVerifications",
+    "SessionDecisionLinkedRecordsNetworks",
+    "SessionDecisionLinkedRecordsNetworksItems",
+    "SessionDecisionLinkedRecordsSameFace",
+    "SessionDecisionLinkedRecordsSameFaceBestMatch",
     "SessionDecisionLivenessChecks",
     "SessionDecisionLivenessChecksMatches",
     "SessionDecisionLivenessChecksMatchesUserDetails",
@@ -5123,13 +5454,16 @@ __all__ = [
     "SessionDecisionRegistryChecksCompany",
     "SessionDecisionRegistryChecksCompanyBeneficialOwners",
     "SessionDecisionRegistryChecksCompanyOfficers",
+    "SessionDecisionRegistryChecksCompanyRegistryMonitoring",
     "SessionDecisionResubmissions",
     "SessionDecisionResubmissionsNodes",
     "SessionDecisionResubmissionsRequestedBy",
     "SessionDecisionReviews",
+    "SessionDecisionStatusOverride",
     "SessionDeletionJob",
     "SessionDeletionJobOutcomes",
     "SessionEvent",
+    "SessionFilesExport",
     "SessionImportError",
     "SessionImportJob",
     "SessionSignDocument",
@@ -5142,6 +5476,9 @@ __all__ = [
     "SessionsBulkUpdateAmlHitStatusParams",
     "SessionsBulkUpdateAmlHitStatusParamsHitUpdates",
     "SessionsBulkUpdateAmlHitStatusResponse",
+    "SessionsCreateKybPartyDraftParams",
+    "SessionsCreateKybPartyDraftResponse",
+    "SessionsCreateKybPartyDraftResponseParty",
     "SessionsCreateParams",
     "SessionsCreateParamsBiometricConsent",
     "SessionsCreateParamsContactDetails",
@@ -5166,6 +5503,14 @@ __all__ = [
     "SessionsListAmlScreeningHistoryResponse",
     "SessionsListEventsResponse",
     "SessionsListFeatureOverridesResponse",
+    "SessionsListKybExtractedPartiesResponse",
+    "SessionsListKybExtractedPartiesResponseParties",
+    "SessionsListKybExtractedPartiesResponsePartiesDocuments",
+    "SessionsListKybExtractedPartiesResponsePartiesRoles",
+    "SessionsListKybExtractedPartiesResponsePartiesRolesOwnershipPercent",
+    "SessionsListKybPartyDraftsResponse",
+    "SessionsListKybPartyDraftsResponseParties",
+    "SessionsListKybPartyDraftsResponsePartiesParty",
     "SessionsListResponse",
     "SessionsPreviewDecisionEmailParams",
     "SessionsPreviewDecisionEmailResponse",
@@ -5181,6 +5526,8 @@ __all__ = [
     "SessionsSignaturesValidateParams",
     "SessionsSignaturesValidateResponse",
     "SessionsSimulateParams",
+    "SessionsSubmitKybPartiesParams",
+    "SessionsSubmitKybPartiesResponse",
     "SessionsUpdateAmlHitStatusParams",
     "SessionsUpdateAmlHitStatusResponse",
     "SessionsUpdateAmlStatusParams",
@@ -5195,6 +5542,9 @@ __all__ = [
     "SessionsUpdateFeatureStatusResponse",
     "SessionsUpdateKybCompanyDataParams",
     "SessionsUpdateKybCompanyDataResponse",
+    "SessionsUpdateKybPartyDraftParams",
+    "SessionsUpdateKybPartyDraftResponse",
+    "SessionsUpdateKybPartyDraftResponseParty",
     "SessionsUpdateKybPartyParams",
     "SessionsUpdateKybPartyResponse",
     "SessionsUpdatePoaDataParams",
@@ -5204,6 +5554,8 @@ __all__ = [
     "SessionsUpdateStatusParams",
     "SessionsUpdateStatusParamsNodesToResubmit",
     "SessionsUpdateStatusResponse",
+    "SessionsUploadKybDocumentsParams",
+    "SessionsUploadKybDocumentsResponse",
     "SignatureField",
     "SignatureFieldAnchor",
     "SignatureFieldResult",
@@ -5337,6 +5689,7 @@ __all__ = [
     "TravelRuleDiscoveryStep",
     "TravelRuleInboundResponse",
     "TravelRuleListVaspsResponse",
+    "TravelRuleManualMatchResponse",
     "TravelRuleMatchingRules",
     "TravelRuleMatchingRulesCompany",
     "TravelRuleMatchingRulesCompanyParam",
@@ -5375,6 +5728,8 @@ __all__ = [
     "TravelRuleTransferDetailTimeline",
     "TravelRuleTransferRow",
     "TravelRuleTransfersListResponse",
+    "TravelRuleUnmatchedDepositsListResponse",
+    "TravelRuleUnmatchedDepositsMatchParams",
     "TravelRuleUpdateSettingsParams",
     "TravelRuleUpdateVaspDecisionParams",
     "TravelRuleUtxo",
@@ -5412,9 +5767,11 @@ __all__ = [
     "UserSessionListItemAdditionalDetailsLiveness",
     "UserSessionListItemAdditionalDetailsPhoneVerification",
     "UserSessionListItemAdditionalDetailsPoa",
+    "UserSessionListItemAssignee",
     "UserSessionListItemEmailAddress",
     "UserSessionListItemFeatures",
     "UserSessionListItemPhoneNumber",
+    "UserSessionListItemTopWarnings",
     "UsersBatchDeleteParams",
     "UsersBatchDeleteResponse",
     "UsersCreateParams",
@@ -5483,6 +5840,7 @@ __all__ = [
     "WebhooksDestinationsUpdateResponseSummary",
     "WebhooksUpdateConfigParams",
     "WorkflowDetail",
+    "WorkflowDetailSignatureAvailability",
     "WorkflowListItem",
     "WorkflowListItemCreatedBy",
     "WorkflowsCreateParams",

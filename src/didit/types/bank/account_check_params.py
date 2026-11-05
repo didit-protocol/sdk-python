@@ -60,3 +60,6 @@ class BankAccountCheckParams(TypedDict, total=False):
 
     vendor_data: str | None
     """Your own reference for this check, returned unchanged."""
+
+    consent: bool
+    """Set to `true` when the account holder has explicitly consented to this check. Required in the countries whose account check needs that consent: without it the check is refused with a `400` whose `field` is `consent` and whose `reason` is `required`, and nothing is billed. Elsewhere it is optional, and Didit records it with the check's charge when you send it."""

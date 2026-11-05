@@ -21,8 +21,8 @@ def test_regulatory_reports_create() -> None:
             api="verification",
             auth="api_key",
             json_body={
-                "case": "00000000-0000-4000-8000-000000000001",
-                "template": "00000000-0000-4000-8000-000000000001",
+                "case": "c1a5e000-0000-4000-8000-000000000001",
+                "template": "7ec00000-0000-4000-8000-000000000006",
             },
             status=201,
             response_json={
@@ -70,12 +70,12 @@ def test_regulatory_reports_create() -> None:
             strict_type=RegulatoryReportDetail,
         ),
         lambda c: c.regulatory_reports.create(
-            case="00000000-0000-4000-8000-000000000001",
-            template="00000000-0000-4000-8000-000000000001",
+            case="c1a5e000-0000-4000-8000-000000000001",
+            template="7ec00000-0000-4000-8000-000000000006",
         ),
         lambda c: c.regulatory_reports.create(
-            case="00000000-0000-4000-8000-000000000001",
-            template="00000000-0000-4000-8000-000000000001",
+            case="c1a5e000-0000-4000-8000-000000000001",
+            template="7ec00000-0000-4000-8000-000000000006",
         ),
         lambda r: isinstance(r, RegulatoryReportDetail),
         lambda r: isinstance(r, RegulatoryReportDetail),
@@ -347,7 +347,7 @@ def test_regulatory_reports_update() -> None:
             path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/regulatory-reports/5ec00000-0000-4000-8000-000000000007/",
             api="verification",
             auth="api_key",
-            json_body={"jurisdiction": "sa"},
+            json_body={"rentity_id": "FIU-US-00123", "currency_code_local": "USD"},
             status=200,
             response_json={
                 "uuid": "00000000-0000-4000-8000-000000000003",
@@ -394,10 +394,14 @@ def test_regulatory_reports_update() -> None:
             strict_type=RegulatoryReportDetail,
         ),
         lambda c: c.regulatory_reports.update(
-            "5ec00000-0000-4000-8000-000000000007", jurisdiction="sa"
+            "5ec00000-0000-4000-8000-000000000007",
+            rentity_id="FIU-US-00123",
+            currency_code_local="USD",
         ),
         lambda c: c.regulatory_reports.update(
-            "5ec00000-0000-4000-8000-000000000007", jurisdiction="sa"
+            "5ec00000-0000-4000-8000-000000000007",
+            rentity_id="FIU-US-00123",
+            currency_code_local="USD",
         ),
         lambda r: isinstance(r, RegulatoryReportDetail),
         lambda r: isinstance(r, RegulatoryReportDetail),

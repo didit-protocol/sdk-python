@@ -17,9 +17,11 @@ __all__ = [
     "UserSessionListItemAdditionalDetailsLiveness",
     "UserSessionListItemAdditionalDetailsPhoneVerification",
     "UserSessionListItemAdditionalDetailsPoa",
+    "UserSessionListItemAssignee",
     "UserSessionListItemEmailAddress",
     "UserSessionListItemFeatures",
     "UserSessionListItemPhoneNumber",
+    "UserSessionListItemTopWarnings",
 ]
 
 
@@ -143,6 +145,14 @@ class UserSessionListItemAdditionalDetails(BaseModel):
     """Present when email verification ran."""
 
 
+class UserSessionListItemAssignee(BaseModel):
+    """The Console reviewer the session is assigned to, or `null` when nobody holds it."""
+
+    email: str | None = None
+
+    assigned_at: _dt.datetime | None = None
+
+
 class UserSessionListItemEmailAddress(BaseModel):
     """Email associated with the session: the verified email when email verification ran, otherwise the contact email provided at session creation. `null` when neither exists."""
 
@@ -167,6 +177,7 @@ class UserSessionListItemFeatures(BaseModel):
             "IP_ANALYSIS",
             "AGE_ESTIMATION",
             "DATABASE_VALIDATION",
+            "GEOLOCATION",
         ]
         | str
     )
@@ -184,6 +195,19 @@ class UserSessionListItemPhoneNumber(BaseModel):
 
     is_verified: bool
     """`true` only when the phone-verification feature approved this number."""
+
+
+class UserSessionListItemTopWarnings(BaseModel):
+    risk: str | None = None
+    """Warning code, for example `FACE_MATCH_LOW_SIMILARITY`."""
+
+    feature: str | None = None
+    """The feature that raised it."""
+
+    log_type: str | None = None
+    """`error` or `warning`; `null` for a legacy entry."""
+
+    short_description: str | None = None
 
 
 class UserSessionListItem(BaseModel):
@@ -261,3 +285,18 @@ class UserSessionListItem(BaseModel):
 
     additional_details: UserSessionListItemAdditionalDetails | None
     """Compact per-feature extras. Only features that produced data appear as keys; `null` when no feature produced extras. Fields excluded by the workflow's response-attributes configuration are omitted."""
+
+    assignee: UserSessionListItemAssignee | None = None
+    """The Console reviewer the session is assigned to, or `null` when nobody holds it."""
+
+    waiting_since: _dt.datetime | None = None
+    """When the session started waiting for review. `null` unless the session is `In Review`."""
+
+    sla_due_at: _dt.datetime | None = None
+    """When the review is due, from the review deadline set for your application in the Console. `null` unless the session is `In Review` and a deadline is set."""
+
+    top_warnings: list[UserSessionListItemTopWarnings] | None = None
+    """Up to a few of the session's most important warnings, for a quick triage view. The full list is in the decision."""
+
+    warnings_count: int | None = None
+    """Number of warnings on the session."""

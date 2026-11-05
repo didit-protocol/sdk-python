@@ -14,6 +14,7 @@ from didit.types.components.sandbox_simulate_response import SandboxSimulateResp
 from didit.types.components.session_decision import SessionDecision
 from didit.types.components.session_deletion_job import SessionDeletionJob
 from didit.types.components.session_event import SessionEvent
+from didit.types.components.session_files_export import SessionFilesExport
 from didit.types.components.session_import_error import SessionImportError
 from didit.types.components.session_import_job import SessionImportJob
 from didit.types.components.session_webhook_delivery import SessionWebhookDelivery
@@ -23,6 +24,7 @@ from didit.types.sessions.batch_delete_response import SessionsBatchDeleteRespon
 from didit.types.sessions.bulk_update_aml_hit_status_response import (
     SessionsBulkUpdateAmlHitStatusResponse,
 )
+from didit.types.sessions.create_kyb_party_draft_response import SessionsCreateKybPartyDraftResponse
 from didit.types.sessions.create_response import SessionsCreateResponse
 from didit.types.sessions.delete_response import SessionsDeleteResponse
 from didit.types.sessions.imports.check_provider_response import (
@@ -38,6 +40,10 @@ from didit.types.sessions.imports.list_providers_response import (
 from didit.types.sessions.list_feature_overrides_response import (
     SessionsListFeatureOverridesResponse,
 )
+from didit.types.sessions.list_kyb_extracted_parties_response import (
+    SessionsListKybExtractedPartiesResponse,
+)
+from didit.types.sessions.list_kyb_party_drafts_response import SessionsListKybPartyDraftsResponse
 from didit.types.sessions.preview_decision_email_response import (
     SessionsPreviewDecisionEmailResponse,
 )
@@ -45,6 +51,7 @@ from didit.types.sessions.preview_resubmission_response import SessionsPreviewRe
 from didit.types.sessions.reviews.create_response import SessionsReviewsCreateResponse
 from didit.types.sessions.share_response import SessionsShareResponse
 from didit.types.sessions.signatures.validate_response import SessionsSignaturesValidateResponse
+from didit.types.sessions.submit_kyb_parties_response import SessionsSubmitKybPartiesResponse
 from didit.types.sessions.update_aml_hit_status_response import SessionsUpdateAmlHitStatusResponse
 from didit.types.sessions.update_aml_status_response import SessionsUpdateAmlStatusResponse
 from didit.types.sessions.update_data_response import SessionsUpdateDataResponse
@@ -55,9 +62,11 @@ from didit.types.sessions.update_feature_status_response import SessionsUpdateFe
 from didit.types.sessions.update_kyb_company_data_response import (
     SessionsUpdateKybCompanyDataResponse,
 )
+from didit.types.sessions.update_kyb_party_draft_response import SessionsUpdateKybPartyDraftResponse
 from didit.types.sessions.update_kyb_party_response import SessionsUpdateKybPartyResponse
 from didit.types.sessions.update_poa_data_response import SessionsUpdatePoaDataResponse
 from didit.types.sessions.update_status_response import SessionsUpdateStatusResponse
+from didit.types.sessions.upload_kyb_documents_response import SessionsUploadKybDocumentsResponse
 from tests.harness import BINARY_BODY, Expect, check_operation
 
 
@@ -156,21 +165,32 @@ def test_sessions_bulk_update_aml_hit_status() -> None:
             api="verification",
             auth="api_key",
             query={"node_id": ["feature_aml_1"]},
-            json_body={"hit_updates": [{"hit_id": "abc123", "review_status": "Unreviewed"}]},
+            json_body={
+                "hit_updates": [
+                    {"hit_id": "hit_7c1e9a40b2d35f86e0a4c912", "review_status": "Confirmed Match"},
+                    {"hit_id": "hit_3b8f20d6a91c4e75f0b2d6a8", "review_status": "False Positive"},
+                ]
+            },
             status=200,
             response_json={
                 "message": "Updated 2 hit(s) successfully",
-                "updated_hits": ["abc123", "def456"],
+                "updated_hits": ["hit_7c1e9a40b2d35f86e0a4c912", "hit_3b8f20d6a91c4e75f0b2d6a8"],
             },
         ),
         lambda c: c.sessions.bulk_update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_updates=[{"hit_id": "abc123", "review_status": "Unreviewed"}],
+            hit_updates=[
+                {"hit_id": "hit_7c1e9a40b2d35f86e0a4c912", "review_status": "Confirmed Match"},
+                {"hit_id": "hit_3b8f20d6a91c4e75f0b2d6a8", "review_status": "False Positive"},
+            ],
             node_id_query="feature_aml_1",
         ),
         lambda c: c.sessions.bulk_update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_updates=[{"hit_id": "abc123", "review_status": "Unreviewed"}],
+            hit_updates=[
+                {"hit_id": "hit_7c1e9a40b2d35f86e0a4c912", "review_status": "Confirmed Match"},
+                {"hit_id": "hit_3b8f20d6a91c4e75f0b2d6a8", "review_status": "False Positive"},
+            ],
             node_id_query="feature_aml_1",
         ),
         lambda r: isinstance(r, SessionsBulkUpdateAmlHitStatusResponse),
@@ -312,6 +332,71 @@ def test_sessions_create() -> None:
     )
 
 
+def test_sessions_create_kyb_party_draft() -> None:
+    """``POST /v3/session/{sessionId}/kyb/parties/drafts/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/drafts/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            json_body={
+                "entity_type": "person",
+                "nationality": "MEX",
+                "first_name": "Ana",
+                "last_name": "Lopez",
+                "roles": ["ubo", "director"],
+                "date_of_birth": "1984-06-12",
+                "email": "ana.lopez@example.com",
+                "ownership_percent": 60,
+            },
+            status=201,
+            response_json={
+                "draft_id": "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+                "created_at": "2026-10-31T10:00:00Z",
+                "updated_at": "2026-10-31T10:00:00Z",
+                "party": {
+                    "entity_type": "person",
+                    "first_name": "Ana",
+                    "last_name": "Lopez",
+                    "roles": ["ubo", "director"],
+                    "ownership_percent": 60,
+                    "nationality": "MEX",
+                    "email": "ana.lopez@example.com",
+                    "date_of_birth": "1984-06-12",
+                },
+            },
+        ),
+        lambda c: c.sessions.create_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            entity_type="person",
+            nationality="MEX",
+            first_name="Ana",
+            last_name="Lopez",
+            roles=["ubo", "director"],
+            date_of_birth="1984-06-12",
+            email="ana.lopez@example.com",
+            ownership_percent=60,
+            node_id="sample",
+        ),
+        lambda c: c.sessions.create_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            entity_type="person",
+            nationality="MEX",
+            first_name="Ana",
+            last_name="Lopez",
+            roles=["ubo", "director"],
+            date_of_birth="1984-06-12",
+            email="ana.lopez@example.com",
+            ownership_percent=60,
+            node_id="sample",
+        ),
+        lambda r: isinstance(r, SessionsCreateKybPartyDraftResponse),
+        lambda r: isinstance(r, SessionsCreateKybPartyDraftResponse),
+    )
+
+
 def test_sessions_delete() -> None:
     """``DELETE /v3/session/{sessionId}/delete/``"""
     check_operation(
@@ -352,6 +437,32 @@ def test_sessions_delete() -> None:
     )
 
 
+def test_sessions_delete_kyb_party_draft() -> None:
+    """``DELETE /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/drafts/5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            status=204,
+        ),
+        lambda c: c.sessions.delete_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+            node_id="sample",
+        ),
+        lambda c: c.sessions.delete_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+            node_id="sample",
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
 def test_sessions_export_aml_screening_history() -> None:
     """``GET /v3/session/{sessionId}/aml-screening-history/export/``"""
     check_operation(
@@ -360,19 +471,48 @@ def test_sessions_export_aml_screening_history() -> None:
             path="/v3/session/11111111-2222-3333-4444-555555555555/aml-screening-history/export/",
             api="verification",
             auth="api_key",
-            query={"node_id": ["feature_aml_1"]},
+            query={"node_id": ["feature_aml_1"], "month": ["2026-09"]},
             status=200,
             response_bytes=BINARY_BODY,
             response_content_type="text/csv",
         ),
         lambda c: c.sessions.export_aml_screening_history(
-            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1"
+            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1", month="2026-09"
         ),
         lambda c: c.sessions.export_aml_screening_history(
-            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1"
+            "11111111-2222-3333-4444-555555555555", node_id="feature_aml_1", month="2026-09"
         ),
         lambda r: r == BINARY_BODY,
         lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_export_files() -> None:
+    """``POST /v3/session/{sessionId}/files-export/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/files-export/",
+            api="verification",
+            auth="api_key",
+            status=202,
+            response_json={
+                "export_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                "session_id": "11111111-2222-3333-4444-555555555555",
+                "status": "PENDING",
+                "file_count": None,
+                "size_bytes": None,
+                "download_url": None,
+                "expires_at": None,
+                "error": None,
+                "created_at": "2026-10-29T12:00:03Z",
+                "completed_at": None,
+            },
+        ),
+        lambda c: c.sessions.export_files("11111111-2222-3333-4444-555555555555"),
+        lambda c: c.sessions.export_files("11111111-2222-3333-4444-555555555555"),
+        lambda r: isinstance(r, SessionFilesExport),
+        lambda r: isinstance(r, SessionFilesExport),
     )
 
 
@@ -392,6 +532,39 @@ def test_sessions_generate_pdf() -> None:
         lambda c: c.sessions.generate_pdf("11111111-2222-3333-4444-555555555555"),
         lambda r: r == BINARY_BODY,
         lambda r: r == BINARY_BODY,
+    )
+
+
+def test_sessions_get_files_export() -> None:
+    """``GET /v3/session/{sessionId}/files-export/{exportId}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/11111111-2222-3333-4444-555555555555/files-export/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "export_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                "session_id": "11111111-2222-3333-4444-555555555555",
+                "status": "READY",
+                "file_count": 9,
+                "size_bytes": 18734120,
+                "download_url": "https://storage.example.com/session/11111111-2222-3333-4444-555555555555/files-export/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/session-42-files.zip?X-Amz-Signature=...",
+                "expires_at": "2026-10-30T12:00:41Z",
+                "error": None,
+                "created_at": "2026-10-29T12:00:03Z",
+                "completed_at": "2026-10-29T12:00:41Z",
+            },
+        ),
+        lambda c: c.sessions.get_files_export(
+            "11111111-2222-3333-4444-555555555555", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        ),
+        lambda c: c.sessions.get_files_export(
+            "11111111-2222-3333-4444-555555555555", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        ),
+        lambda r: isinstance(r, SessionFilesExport),
+        lambda r: isinstance(r, SessionFilesExport),
     )
 
 
@@ -458,6 +631,9 @@ def test_sessions_list() -> None:
                 "workflow_id": ["9f9b1234-aaaa-bbbb-cccc-1234567890ab"],
                 "date_from": ["2026-06-01"],
                 "date_to": ["2026-06-30"],
+                "tags": ["sample"],
+                "decided_from": ["2026-01-01T00:00:00Z"],
+                "decided_to": ["2026-01-01T00:00:00Z"],
                 "country": ["ESP,USA"],
                 "document_type": ["P,ID"],
                 "document_name": ["Spain - Id Card (2021)"],
@@ -547,6 +723,9 @@ def test_sessions_list() -> None:
             workflow_id="9f9b1234-aaaa-bbbb-cccc-1234567890ab",
             date_from="2026-06-01",
             date_to="2026-06-30",
+            tags="sample",
+            decided_from="2026-01-01T00:00:00Z",
+            decided_to="2026-01-01T00:00:00Z",
             country="ESP,USA",
             document_type="P,ID",
             document_name="Spain - Id Card (2021)",
@@ -571,6 +750,9 @@ def test_sessions_list() -> None:
             workflow_id="9f9b1234-aaaa-bbbb-cccc-1234567890ab",
             date_from="2026-06-01",
             date_to="2026-06-30",
+            tags="sample",
+            decided_from="2026-01-01T00:00:00Z",
+            decided_to="2026-01-01T00:00:00Z",
             country="ESP,USA",
             document_type="P,ID",
             document_name="Spain - Id Card (2021)",
@@ -612,6 +794,7 @@ def test_sessions_list_aml_screening_history() -> None:
             auth="api_key",
             query={
                 "node_id": ["feature_aml_1"],
+                "month": ["2026-09"],
                 "limit": ["50"],
                 "offset": ["0"],
                 "ordering": ["completed_at"],
@@ -624,6 +807,7 @@ def test_sessions_list_aml_screening_history() -> None:
                 "results": [
                     {
                         "uuid": "dddddddd-1111-2222-3333-444444444444",
+                        "run_id": "aaaaaaaa-1111-2222-3333-444444444444",
                         "completed_at": "2026-09-14T04:12:33.481207Z",
                         "started_at": "2026-09-14T04:00:01.002311Z",
                         "outcome": "NO_CHANGE",
@@ -632,6 +816,8 @@ def test_sessions_list_aml_screening_history() -> None:
                         "status": "Approved",
                         "score": 0.0,
                         "total_hits": 0,
+                        "new_hits": 0,
+                        "entities_screened": 1,
                         "dataset_freshness": {
                             "captured_at": "2026-09-14T03:58:02.114820+00:00",
                             "provider": "aml_data_source",
@@ -660,6 +846,7 @@ def test_sessions_list_aml_screening_history() -> None:
                     },
                     {
                         "uuid": "eeeeeeee-1111-2222-3333-444444444444",
+                        "run_id": "bbbbbbbb-1111-2222-3333-444444444444",
                         "completed_at": "2026-09-13T04:11:58.020914Z",
                         "started_at": "2026-09-13T04:00:00.871022Z",
                         "outcome": "FAILED",
@@ -668,6 +855,8 @@ def test_sessions_list_aml_screening_history() -> None:
                         "status": "Approved",
                         "score": 0.0,
                         "total_hits": 0,
+                        "new_hits": None,
+                        "entities_screened": 0,
                         "dataset_freshness": None,
                     },
                 ],
@@ -676,6 +865,7 @@ def test_sessions_list_aml_screening_history() -> None:
         lambda c: c.sessions.list_aml_screening_history(
             "11111111-2222-3333-4444-555555555555",
             node_id="feature_aml_1",
+            month="2026-09",
             limit=50,
             offset=0,
             ordering="completed_at",
@@ -683,6 +873,7 @@ def test_sessions_list_aml_screening_history() -> None:
         lambda c: c.sessions.list_aml_screening_history(
             "11111111-2222-3333-4444-555555555555",
             node_id="feature_aml_1",
+            month="2026-09",
             limit=50,
             offset=0,
             ordering="completed_at",
@@ -830,6 +1021,99 @@ def test_sessions_list_feature_overrides() -> None:
         lambda c: c.sessions.list_feature_overrides("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
         lambda r: isinstance(r, SessionsListFeatureOverridesResponse),
         lambda r: isinstance(r, SessionsListFeatureOverridesResponse),
+    )
+
+
+def test_sessions_list_kyb_extracted_parties() -> None:
+    """``GET /v3/session/{sessionId}/kyb/extracted-parties/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/extracted-parties/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            status=200,
+            response_json={
+                "parties": [
+                    {
+                        "name": "Ana Lopez",
+                        "entity_type": "person",
+                        "first_name": "Ana",
+                        "last_name": "Lopez",
+                        "appointment_date": None,
+                        "designation": "Administrador unico",
+                        "roles": [
+                            {
+                                "role": "shareholder",
+                                "ownership_percent": {"text": "60%", "min": 60, "max": 60},
+                            }
+                        ],
+                        "documents": [
+                            {
+                                "document_uuid": "0a3f1e2c-7c2f-4a1b-9d55-2f8d2a5d6b41",
+                                "document_type": "OWNERSHIP_STRUCTURE",
+                                "document_subtype": "ARTICLES_OF_INCORPORATION",
+                                "original_filename": "acta_constitutiva.pdf",
+                                "status": "Approved",
+                            }
+                        ],
+                    }
+                ],
+                "document_count": 1,
+                "node_id": "node_kyb_documents",
+            },
+        ),
+        lambda c: c.sessions.list_kyb_extracted_parties(
+            "33333333-4444-5555-6666-777777777777", node_id="sample"
+        ),
+        lambda c: c.sessions.list_kyb_extracted_parties(
+            "33333333-4444-5555-6666-777777777777", node_id="sample"
+        ),
+        lambda r: isinstance(r, SessionsListKybExtractedPartiesResponse),
+        lambda r: isinstance(r, SessionsListKybExtractedPartiesResponse),
+    )
+
+
+def test_sessions_list_kyb_party_drafts() -> None:
+    """``GET /v3/session/{sessionId}/kyb/parties/drafts/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/drafts/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            status=200,
+            response_json={
+                "parties": [
+                    {
+                        "draft_id": "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+                        "created_at": "2026-10-31T10:00:00Z",
+                        "updated_at": "2026-10-31T10:00:00Z",
+                        "party": {
+                            "entity_type": "person",
+                            "first_name": "Ana",
+                            "last_name": "Lopez",
+                            "roles": ["ubo", "director"],
+                            "ownership_percent": 60,
+                            "nationality": "MEX",
+                            "email": "ana.lopez@example.com",
+                            "date_of_birth": "1984-06-12",
+                        },
+                    }
+                ],
+                "node_id": "node_kyb_key_people",
+            },
+        ),
+        lambda c: c.sessions.list_kyb_party_drafts(
+            "33333333-4444-5555-6666-777777777777", node_id="sample"
+        ),
+        lambda c: c.sessions.list_kyb_party_drafts(
+            "33333333-4444-5555-6666-777777777777", node_id="sample"
+        ),
+        lambda r: isinstance(r, SessionsListKybPartyDraftsResponse),
+        lambda r: isinstance(r, SessionsListKybPartyDraftsResponse),
     )
 
 
@@ -2009,7 +2293,7 @@ def test_sessions_retrieve_decision() -> None:
                         "entity_type": "person",
                         "hits": [
                             {
-                                "id": "cPtTGRKkyddAcAC4xgsLCm",
+                                "id": "hit_7c1e9a40b2d35f86e0a4c912",
                                 "url": "https://news.example.org/articles/sample",
                                 "match": False,
                                 "score": 0.73,
@@ -2664,6 +2948,38 @@ def test_sessions_simulate() -> None:
     )
 
 
+def test_sessions_submit_kyb_parties() -> None:
+    """``POST /v3/session/{sessionId}/kyb/parties/submit/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/submit/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            json_body={"locale": "es"},
+            status=200,
+            response_json={
+                "valid": True,
+                "next_step": "FINISHED",
+                "status": "In Progress",
+                "advanced": True,
+                "already_submitted": False,
+                "kyb_key_people_status": "In Progress",
+                "parties": [],
+            },
+        ),
+        lambda c: c.sessions.submit_kyb_parties(
+            "33333333-4444-5555-6666-777777777777", locale="es", node_id="sample"
+        ),
+        lambda c: c.sessions.submit_kyb_parties(
+            "33333333-4444-5555-6666-777777777777", locale="es", node_id="sample"
+        ),
+        lambda r: isinstance(r, SessionsSubmitKybPartiesResponse),
+        lambda r: isinstance(r, SessionsSubmitKybPartiesResponse),
+    )
+
+
 def test_sessions_update_aml_hit_status() -> None:
     """``PATCH /v3/session/{sessionId}/update-aml-hit-status/``"""
     check_operation(
@@ -2673,24 +2989,24 @@ def test_sessions_update_aml_hit_status() -> None:
             api="verification",
             auth="api_key",
             query={"node_id": ["feature_aml_1"]},
-            json_body={"hit_id": "abc123", "review_status": "Unreviewed"},
+            json_body={"hit_id": "hit_7c1e9a40b2d35f86e0a4c912", "review_status": "False Positive"},
             status=200,
             response_json={
                 "message": "Hit status updated successfully",
-                "hit_id": "abc123",
+                "hit_id": "hit_7c1e9a40b2d35f86e0a4c912",
                 "review_status": "False Positive",
             },
         ),
         lambda c: c.sessions.update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_id="abc123",
-            review_status="Unreviewed",
+            hit_id="hit_7c1e9a40b2d35f86e0a4c912",
+            review_status="False Positive",
             node_id_query="feature_aml_1",
         ),
         lambda c: c.sessions.update_aml_hit_status(
             "11111111-2222-3333-4444-555555555555",
-            hit_id="abc123",
-            review_status="Unreviewed",
+            hit_id="hit_7c1e9a40b2d35f86e0a4c912",
+            review_status="False Positive",
             node_id_query="feature_aml_1",
         ),
         lambda r: isinstance(r, SessionsUpdateAmlHitStatusResponse),
@@ -3067,6 +3383,50 @@ def test_sessions_update_kyb_party() -> None:
     )
 
 
+def test_sessions_update_kyb_party_draft() -> None:
+    """``PATCH /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/parties/drafts/5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            json_body={"ownership_percent": 55},
+            status=200,
+            response_json={
+                "draft_id": "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+                "created_at": "2026-10-31T10:00:00Z",
+                "updated_at": "2026-10-31T10:00:00Z",
+                "party": {
+                    "entity_type": "person",
+                    "first_name": "Ana",
+                    "last_name": "Lopez",
+                    "roles": ["ubo", "director"],
+                    "ownership_percent": 55,
+                    "nationality": "MEX",
+                    "email": "ana.lopez@example.com",
+                    "date_of_birth": "1984-06-12",
+                },
+            },
+        ),
+        lambda c: c.sessions.update_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+            ownership_percent=55,
+            node_id="sample",
+        ),
+        lambda c: c.sessions.update_kyb_party_draft(
+            "33333333-4444-5555-6666-777777777777",
+            "5b0d7a52-9d3e-4f0c-8c6a-0e5f3a1b2c4d",
+            ownership_percent=55,
+            node_id="sample",
+        ),
+        lambda r: isinstance(r, SessionsUpdateKybPartyDraftResponse),
+        lambda r: isinstance(r, SessionsUpdateKybPartyDraftResponse),
+    )
+
+
 def test_sessions_update_poa_data() -> None:
     """``PATCH /v3/session/{sessionId}/update-poa-data/``"""
     check_operation(
@@ -3196,6 +3556,35 @@ def test_sessions_update_status() -> None:
     )
 
 
+def test_sessions_upload_kyb_documents() -> None:
+    """``POST /v3/session/{sessionId}/kyb/documents/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/33333333-4444-5555-6666-777777777777/kyb/documents/",
+            api="verification",
+            auth="api_key",
+            query={"node_id": ["sample"]},
+            multipart_fields=[],
+            multipart_files=["documents"],
+            status=200,
+            response_json={
+                "valid": True,
+                "next_step": "KYB_KEY_PEOPLE",
+                "kyb_status": "In Progress",
+            },
+        ),
+        lambda c: c.sessions.upload_kyb_documents(
+            "33333333-4444-5555-6666-777777777777", documents=b"file-content", node_id="sample"
+        ),
+        lambda c: c.sessions.upload_kyb_documents(
+            "33333333-4444-5555-6666-777777777777", documents=b"file-content", node_id="sample"
+        ),
+        lambda r: isinstance(r, SessionsUploadKybDocumentsResponse),
+        lambda r: isinstance(r, SessionsUploadKybDocumentsResponse),
+    )
+
+
 def test_sessions_imports_cancel() -> None:
     """``POST /v3/session/imports/{importId}/cancel/``"""
     check_operation(
@@ -3261,16 +3650,21 @@ def test_sessions_imports_check_provider() -> None:
             path="/v3/session/imports/providers/check/",
             api="verification",
             auth="api_key",
-            json_body={"provider": "sumsub", "credentials": {"key": "sample"}},
+            json_body={
+                "provider": "sumsub",
+                "credentials": {"app_token": "sample-token", "secret_key": "sample-secret"},
+            },
             status=200,
             response_json={"ok": True, "provider": "sample", "credential_hint": "sample-secret"},
             strict_type=SessionsImportsCheckProviderResponse,
         ),
         lambda c: c.sessions.imports.check_provider(
-            provider="sumsub", credentials={"key": "sample"}
+            provider="sumsub",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda c: c.sessions.imports.check_provider(
-            provider="sumsub", credentials={"key": "sample"}
+            provider="sumsub",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
         lambda r: isinstance(r, SessionsImportsCheckProviderResponse),
@@ -3770,10 +4164,12 @@ def test_sessions_imports_retry() -> None:
             strict_type=SessionImportJob,
         ),
         lambda c: c.sessions.imports.retry(
-            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+            "00000000-0000-4000-8000-000000000001",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda c: c.sessions.imports.retry(
-            "00000000-0000-4000-8000-000000000001", credentials={"key": "sample"}
+            "00000000-0000-4000-8000-000000000001",
+            credentials={"app_token": "sample-token", "secret_key": "sample-secret"},
         ),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),
@@ -4053,8 +4449,8 @@ def test_sessions_signatures_validate() -> None:
                         "node_id": "sample",
                         "status": "intro",
                         "verdict": "Not Finished",
-                        "level": "aes",
-                        "format": "pades",
+                        "level": "simple",
+                        "format": "pdf",
                         "profile": "sample",
                         "signer": {
                             "name": "sample",

@@ -21,6 +21,7 @@ from didit.types.components.travel_rule_counterparty_screening_status import (
     TravelRuleCounterpartyScreeningStatus,
 )
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse
+from didit.types.components.travel_rule_manual_match_response import TravelRuleManualMatchResponse
 from didit.types.components.travel_rule_network_participant import TravelRuleNetworkParticipant
 from didit.types.components.travel_rule_network_questionnaire import TravelRuleNetworkQuestionnaire
 from didit.types.components.travel_rule_networks_overview import TravelRuleNetworksOverview
@@ -1475,7 +1476,11 @@ def test_travel_rule_networks_update_questionnaire() -> None:
             path="/v3/travel-rule/networks/questionnaire/",
             api="verification",
             auth="api_key",
-            json_body={"legal_name": "sample"},
+            json_body={
+                "legal_name": "Example VASP Ltd",
+                "incorporation_country": "ES",
+                "aml_ctf_policy_attested": True,
+            },
             status=200,
             response_json={
                 "status": "draft",
@@ -1520,8 +1525,12 @@ def test_travel_rule_networks_update_questionnaire() -> None:
             },
             strict_type=TravelRuleNetworkQuestionnaire,
         ),
-        lambda c: c.travel_rule.networks.update_questionnaire(legal_name="sample"),
-        lambda c: c.travel_rule.networks.update_questionnaire(legal_name="sample"),
+        lambda c: c.travel_rule.networks.update_questionnaire(
+            legal_name="Example VASP Ltd", incorporation_country="ES", aml_ctf_policy_attested=True
+        ),
+        lambda c: c.travel_rule.networks.update_questionnaire(
+            legal_name="Example VASP Ltd", incorporation_country="ES", aml_ctf_policy_attested=True
+        ),
         lambda r: isinstance(r, TravelRuleNetworkQuestionnaire),
         lambda r: isinstance(r, TravelRuleNetworkQuestionnaire),
     )
@@ -1611,6 +1620,165 @@ def test_travel_rule_transfers_list() -> None:
             isinstance(r, AsyncPage)
             and all(isinstance(x1, TravelRuleTransferRow) for x1 in r.results)
         ),
+    )
+
+
+def test_travel_rule_unmatched_deposits_list() -> None:
+    """``GET /v3/travel-rule/unmatched/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/unmatched/",
+            api="verification",
+            auth="api_key",
+            query={
+                "direction": ["sample"],
+                "status": ["sample"],
+                "rail": ["sample"],
+                "kind": ["sample"],
+                "currency": ["sample"],
+                "start_date": ["2026-01-01"],
+                "end_date": ["2026-01-01"],
+                "counterparty": ["00000000-0000-4000-8000-000000000001"],
+                "limit": ["1"],
+                "offset": ["1"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "id": "7d3a1c55-0b9e-4d52-8a3c-1f6e2b9d4a08",
+                        "transaction_id": "c41f9b2e-5a8d-4e0c-9f17-3b6d8a2e5c91",
+                        "txn_id": "dep-2026-10-20-0007",
+                        "txn_date": "2026-10-19T08:41:12Z",
+                        "kind": "deposit",
+                        "direction": "INBOUND",
+                        "status": "AWAITING_COUNTERPARTY",
+                        "rail": "TRP",
+                        "asset": "ETH",
+                        "amount": "1.25",
+                        "originator_vasp": "",
+                        "beneficiary_vasp": "Example Counterparty VASP",
+                        "originator_wallet": "0x77ccff0cc624a53cd8b8d8703ced826710211ec7",
+                        "beneficiary_wallet": "0xede2d7e4f5b097e6391ab6bbcf2f47a53f4778cb",
+                        "originator_memo": "",
+                        "beneficiary_memo": "",
+                        "originator_wallet_type": "vasp",
+                        "beneficiary_wallet_type": "vasp",
+                        "matched_transaction_id": None,
+                        "deadline_at": None,
+                        "created_at": "2026-10-19T08:41:13Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.travel_rule.unmatched_deposits.list(
+            direction="sample",
+            status="sample",
+            rail="sample",
+            kind="sample",
+            currency="sample",
+            start_date="2026-01-01",
+            end_date="2026-01-01",
+            counterparty="00000000-0000-4000-8000-000000000001",
+            limit=1,
+            offset=1,
+        ),
+        lambda c: c.travel_rule.unmatched_deposits.list(
+            direction="sample",
+            status="sample",
+            rail="sample",
+            kind="sample",
+            currency="sample",
+            start_date="2026-01-01",
+            end_date="2026-01-01",
+            counterparty="00000000-0000-4000-8000-000000000001",
+            limit=1,
+            offset=1,
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, TravelRuleTransferRow) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, TravelRuleTransferRow) for x1 in r.results)
+        ),
+    )
+
+
+def test_travel_rule_unmatched_deposits_match() -> None:
+    """``POST /v3/travel-rule/unmatched/{transaction_uuid}/match/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/unmatched/00000000-0000-4000-8000-000000000001/match/",
+            api="verification",
+            auth="api_key",
+            json_body={"transaction_id": "e90a4d7b-1c2f-4b83-a6d5-8f0e3c1b7a24"},
+            status=200,
+            response_json={
+                "deposit": {
+                    "id": "7d3a1c55-0b9e-4d52-8a3c-1f6e2b9d4a08",
+                    "transaction_id": "c41f9b2e-5a8d-4e0c-9f17-3b6d8a2e5c91",
+                    "txn_id": "dep-2026-10-20-0007",
+                    "txn_date": "2026-10-19T08:41:12Z",
+                    "kind": "deposit",
+                    "direction": "INBOUND",
+                    "status": "AWAITING_COUNTERPARTY",
+                    "rail": "TRP",
+                    "asset": "ETH",
+                    "amount": "1.25",
+                    "originator_vasp": "Example Counterparty VASP",
+                    "beneficiary_vasp": "Example Counterparty VASP",
+                    "originator_wallet": "0x77ccff0cc624a53cd8b8d8703ced826710211ec7",
+                    "beneficiary_wallet": "0xede2d7e4f5b097e6391ab6bbcf2f47a53f4778cb",
+                    "originator_memo": "",
+                    "beneficiary_memo": "",
+                    "originator_wallet_type": "vasp",
+                    "beneficiary_wallet_type": "vasp",
+                    "matched_transaction_id": "e90a4d7b-1c2f-4b83-a6d5-8f0e3c1b7a24",
+                    "deadline_at": None,
+                    "created_at": "2026-10-19T08:41:13Z",
+                },
+                "message": {
+                    "id": "2b8e6f10-9c3a-47d1-b5e2-0a4c7d9f3e66",
+                    "transaction_id": "e90a4d7b-1c2f-4b83-a6d5-8f0e3c1b7a24",
+                    "txn_id": "msg-2026-10-20-0003",
+                    "txn_date": "2026-10-19T08:41:12Z",
+                    "kind": "message",
+                    "direction": "INBOUND",
+                    "status": "COMPLETED",
+                    "rail": "TRP",
+                    "asset": "ETH",
+                    "amount": "1.25",
+                    "originator_vasp": "Origin CASP SL",
+                    "beneficiary_vasp": "Example Counterparty VASP",
+                    "originator_wallet": "0x77ccff0cc624a53cd8b8d8703ced826710211ec7",
+                    "beneficiary_wallet": "0xede2d7e4f5b097e6391ab6bbcf2f47a53f4778cb",
+                    "originator_memo": "",
+                    "beneficiary_memo": "",
+                    "originator_wallet_type": "vasp",
+                    "beneficiary_wallet_type": "vasp",
+                    "matched_transaction_id": None,
+                    "deadline_at": "2026-10-21T08:41:13Z",
+                    "created_at": "2026-10-19T08:41:13Z",
+                },
+            },
+        ),
+        lambda c: c.travel_rule.unmatched_deposits.match(
+            "00000000-0000-4000-8000-000000000001",
+            transaction_id="e90a4d7b-1c2f-4b83-a6d5-8f0e3c1b7a24",
+        ),
+        lambda c: c.travel_rule.unmatched_deposits.match(
+            "00000000-0000-4000-8000-000000000001",
+            transaction_id="e90a4d7b-1c2f-4b83-a6d5-8f0e3c1b7a24",
+        ),
+        lambda r: isinstance(r, TravelRuleManualMatchResponse),
+        lambda r: isinstance(r, TravelRuleManualMatchResponse),
     )
 
 
@@ -1881,7 +2049,7 @@ def test_travel_rule_wallet_proofs_decide() -> None:
             path="/v3/travel-rule/wallet-proofs/00000000-0000-4000-8000-000000000001/decision/",
             api="verification",
             auth="api_key",
-            json_body={"decision": "approve"},
+            json_body={"decision": "approve", "note": "Address matches the wallet app."},
             status=200,
             response_json={
                 "proof_id": "00000000-0000-4000-8000-000000000003",
@@ -1906,10 +2074,14 @@ def test_travel_rule_wallet_proofs_decide() -> None:
             strict_type=TravelRuleWalletProofReview,
         ),
         lambda c: c.travel_rule.wallet_proofs.decide(
-            "00000000-0000-4000-8000-000000000001", decision="approve"
+            "00000000-0000-4000-8000-000000000001",
+            decision="approve",
+            note="Address matches the wallet app.",
         ),
         lambda c: c.travel_rule.wallet_proofs.decide(
-            "00000000-0000-4000-8000-000000000001", decision="approve"
+            "00000000-0000-4000-8000-000000000001",
+            decision="approve",
+            note="Address matches the wallet app.",
         ),
         lambda r: isinstance(r, TravelRuleWalletProofReview),
         lambda r: isinstance(r, TravelRuleWalletProofReview),

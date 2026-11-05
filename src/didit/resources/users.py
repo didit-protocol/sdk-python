@@ -259,6 +259,8 @@ class Users(SyncAPIResource):
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
         delete_all: bool | NotGiven = NOT_GIVEN,
+        retain_face_embeddings: bool | NotGiven = NOT_GIVEN,
+        face_retention_days: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -268,7 +270,7 @@ class Users(SyncAPIResource):
 
         **Permanently delete** users: the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. This endpoint never narrows `delete_all` with filters. The Console's People filters are refused with a `400` (see the `400` response), so a narrowed intent does not turn into a full wipe. Two exceptions: `filter_has_approved_sessions` and `filter_has_declined_sessions` are not refused and not applied, so with `delete_all: true` they still delete every user; do not send them.
 
-        **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
+        **Biometric templates:** unless you set `retain_face_embeddings` to `true`, every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. With `retain_face_embeddings: true` and `face_retention_days`, you choose to keep one image-free biometric template per person for that many days, and nothing else about the person is kept. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
 
         **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
@@ -278,6 +280,8 @@ class Users(SyncAPIResource):
           vendor_data_list: Your own identifiers to delete, matched exactly as sent.
           didit_internal_id_list: Didit internal user IDs to delete - the `didit_internal_id` returned by the create and get endpoints.
           delete_all: If `true`, deletes every user in the application.
+          retain_face_embeddings: Your explicit choice to keep one image-free biometric template of each deleted person for duplicate detection, for `face_retention_days`. Everything else about the person is deleted. Omit it, or send `false`, to delete the templates with the users. When `true`, `face_retention_days` is required.
+          face_retention_days: Number of days the image-free biometric template is kept when `retain_face_embeddings` is `true`. Required with it, and rejected without it with a `400` on `face_retention_days`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -294,6 +298,8 @@ class Users(SyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                     "delete_all": delete_all,
+                    "retain_face_embeddings": retain_face_embeddings,
+                    "face_retention_days": face_retention_days,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -890,6 +896,8 @@ class AsyncUsers(AsyncAPIResource):
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
         delete_all: bool | NotGiven = NOT_GIVEN,
+        retain_face_embeddings: bool | NotGiven = NOT_GIVEN,
+        face_retention_days: int | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -899,7 +907,7 @@ class AsyncUsers(AsyncAPIResource):
 
         **Permanently delete** users: the user records are removed permanently. For everyday blocking prefer [Update User Status](#patch-/v3/users/-vendor_data-/update-status/) with `BLOCKED`. Select users with `vendor_data_list`, with `didit_internal_id_list`, or with both at once; or pass `delete_all: true`. This endpoint never narrows `delete_all` with filters. The Console's People filters are refused with a `400` (see the `400` response), so a narrowed intent does not turn into a full wipe. Two exceptions: `filter_has_approved_sessions` and `filter_has_declined_sessions` are not refused and not applied, so with `delete_all: true` they still delete every user; do not send them.
 
-        **Biometric templates:** every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
+        **Biometric templates:** unless you set `retain_face_embeddings` to `true`, every image-free biometric template retained for these users after session deletion (see `/v3/biometric-templates/`) is purged before the user is deleted, so the person stops matching in duplicate detection and Face Search. With `retain_face_embeddings: true` and `face_retention_days`, you choose to keep one image-free biometric template per person for that many days, and nothing else about the person is kept. If a template cannot be purged because a biometric store is unavailable, the call returns `503`, no user in the request is deleted, and repeating the request finishes the job.
 
         **Filed regulatory reports:** if the selected data is in a finalized regulatory report, the whole request is refused with `409` and nothing is deleted. The body uses `code: in_filed_report` and names each report with `uuid`, `report_number`, `report_type` and `case_uuid`. Delete the reports, then repeat the request.
 
@@ -909,6 +917,8 @@ class AsyncUsers(AsyncAPIResource):
           vendor_data_list: Your own identifiers to delete, matched exactly as sent.
           didit_internal_id_list: Didit internal user IDs to delete - the `didit_internal_id` returned by the create and get endpoints.
           delete_all: If `true`, deletes every user in the application.
+          retain_face_embeddings: Your explicit choice to keep one image-free biometric template of each deleted person for duplicate detection, for `face_retention_days`. Everything else about the person is deleted. Omit it, or send `false`, to delete the templates with the users. When `true`, `face_retention_days` is required.
+          face_retention_days: Number of days the image-free biometric template is kept when `retain_face_embeddings` is `true`. Required with it, and rejected without it with a `400` on `face_retention_days`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -925,6 +935,8 @@ class AsyncUsers(AsyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                     "delete_all": delete_all,
+                    "retain_face_embeddings": retain_face_embeddings,
+                    "face_retention_days": face_retention_days,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

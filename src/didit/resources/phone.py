@@ -79,7 +79,7 @@ class Phone(SyncAPIResource):
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
-        **Rate limit.** Shared write budget of 300 requests per minute per API key across all POST/PATCH/DELETE endpoints.
+        **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
         **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
 
@@ -198,6 +198,13 @@ class Phone(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         disposable_number_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         voip_number_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        enable_enrichment: bool | NotGiven = NOT_GIVEN,
+        phone_intelligence_score_action: Literal["NO_ACTION", "DECLINE"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        phone_type_risk_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        recent_port_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        low_phone_trust_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
         phone_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
@@ -239,6 +246,11 @@ class Phone(SyncAPIResource):
           duplicated_phone_number_action: What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`.
           disposable_number_action: What to do when the carrier lookup flags the number as a temporary/burner line (`phone.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
           voip_number_action: What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
+          enable_enrichment: When `true`, also run phone intelligence on the number: a risk score, the line type, whether it was recently ported and a trust index. Billed as one `phone_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it.
+          phone_intelligence_score_action: Action when the phone intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          phone_type_risk_action: Action when the number is a high-risk line type. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          recent_port_action: Action when the number was ported to another carrier recently. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          low_phone_trust_action: Action when the phone intelligence trust index is at or below the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -259,6 +271,11 @@ class Phone(SyncAPIResource):
                     "duplicated_phone_number_action": duplicated_phone_number_action,
                     "disposable_number_action": disposable_number_action,
                     "voip_number_action": voip_number_action,
+                    "enable_enrichment": enable_enrichment,
+                    "phone_intelligence_score_action": phone_intelligence_score_action,
+                    "phone_type_risk_action": phone_type_risk_action,
+                    "recent_port_action": recent_port_action,
+                    "low_phone_trust_action": low_phone_trust_action,
                     "enable_social": enable_social,
                     "phone_no_social_presence_action": phone_no_social_presence_action,
                 },
@@ -314,7 +331,7 @@ class AsyncPhone(AsyncAPIResource):
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
-        **Rate limit.** Shared write budget of 300 requests per minute per API key across all POST/PATCH/DELETE endpoints.
+        **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
         **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
 
@@ -433,6 +450,13 @@ class AsyncPhone(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         disposable_number_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         voip_number_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        enable_enrichment: bool | NotGiven = NOT_GIVEN,
+        phone_intelligence_score_action: Literal["NO_ACTION", "DECLINE"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        phone_type_risk_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        recent_port_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
+        low_phone_trust_action: Literal["NO_ACTION", "DECLINE"] | str | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
         phone_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
@@ -474,6 +498,11 @@ class AsyncPhone(AsyncAPIResource):
           duplicated_phone_number_action: What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`.
           disposable_number_action: What to do when the carrier lookup flags the number as a temporary/burner line (`phone.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
           voip_number_action: What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
+          enable_enrichment: When `true`, also run phone intelligence on the number: a risk score, the line type, whether it was recently ported and a trust index. Billed as one `phone_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it.
+          phone_intelligence_score_action: Action when the phone intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          phone_type_risk_action: Action when the number is a high-risk line type. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          recent_port_action: Action when the number was ported to another carrier recently. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
+          low_phone_trust_action: Action when the phone intelligence trust index is at or below the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -494,6 +523,11 @@ class AsyncPhone(AsyncAPIResource):
                     "duplicated_phone_number_action": duplicated_phone_number_action,
                     "disposable_number_action": disposable_number_action,
                     "voip_number_action": voip_number_action,
+                    "enable_enrichment": enable_enrichment,
+                    "phone_intelligence_score_action": phone_intelligence_score_action,
+                    "phone_type_risk_action": phone_type_risk_action,
+                    "recent_port_action": recent_port_action,
+                    "low_phone_trust_action": low_phone_trust_action,
                     "enable_social": enable_social,
                     "phone_no_social_presence_action": phone_no_social_presence_action,
                 },

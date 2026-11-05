@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.digital_id_wallet_api_wallet_digital_credentials_request import (
+    DigitalIdWalletApiWalletDigitalCredentialsRequest,
+)
 from didit.types.components.digital_id_wallet_api_wallet_next_action_type_enum import (
     DigitalIdWalletApiWalletNextActionTypeEnum,
 )
@@ -11,14 +14,18 @@ __all__ = ["DigitalIdWalletApiWalletNextAction"]
 
 class DigitalIdWalletApiWalletNextAction(BaseModel):
     type: DigitalIdWalletApiWalletNextActionTypeEnum
-    """redirect: send the user's browser to url. confirm_in_app: show verification_code to the user, who checks it matches the code in their wallet app and confirms there; then poll.
+    """redirect: send the user's browser to url. confirm_in_app: show verification_code to the user, who checks it matches the code in their wallet app and confirms there; then poll. request_digital_credential: in a user gesture on the origin you started with, ask the wallet with digital_credentials.request, then send what it returns to POST .../verifications/{request_id}/response/.
 
     * `redirect` - redirect
     * `confirm_in_app` - confirm_in_app
+    * `request_digital_credential` - request_digital_credential
     """
 
     url: str | None = None
     """redirect only: where the user signs in with the wallet."""
+
+    digital_credentials: DigitalIdWalletApiWalletDigitalCredentialsRequest | None = None
+    """request_digital_credential only: the request to hand to the wallet."""
 
     verification_code: str | None = None
     """confirm_in_app only: the 4-digit comparison code the wallet app shows too."""

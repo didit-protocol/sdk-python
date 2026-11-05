@@ -38,6 +38,7 @@ class SessionsPreviewResubmissionParamsNodesToResubmit(TypedDict, total=False):
             "KYB_REGISTRY",
             "KYB_KEY_PEOPLE",
             "KYB",
+            "GEOLOCATION",
         ]
         | str
     ]

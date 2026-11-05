@@ -10,7 +10,7 @@ __all__ = ["SessionsUpdateAmlHitStatusParams"]
 
 class SessionsUpdateAmlHitStatusParams(TypedDict, total=False):
     hit_id: Required[str]
-    """The `id` of the hit in the AML check's `hits` array."""
+    """The `id` of the hit in the AML check's `hits` array (`hit_...`). A hit id returned in the earlier format is still accepted."""
 
     review_status: Required[
         Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"] | str

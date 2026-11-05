@@ -19,3 +19,9 @@ class UsersBatchDeleteParams(TypedDict, total=False):
 
     delete_all: bool
     """If `true`, deletes every user in the application."""
+
+    retain_face_embeddings: bool
+    """Your explicit choice to keep one image-free biometric template of each deleted person for duplicate detection, for `face_retention_days`. Everything else about the person is deleted. Omit it, or send `false`, to delete the templates with the users. When `true`, `face_retention_days` is required."""
+
+    face_retention_days: int
+    """Number of days the image-free biometric template is kept when `retain_face_embeddings` is `true`. Required with it, and rejected without it with a `400` on `face_retention_days`."""

@@ -17,7 +17,7 @@ def test_wallet_screening_screen() -> None:
             auth="api_key",
             json_body={
                 "wallet_address": "0x94f1b9b64e2932f6a2db338f616844400cd58e8a",
-                "blockchain": "BTC",
+                "blockchain": "ETH",
             },
             status=200,
             response_json={
@@ -191,10 +191,10 @@ def test_wallet_screening_screen() -> None:
             },
         ),
         lambda c: c.wallet_screening.screen(
-            wallet_address="0x94f1b9b64e2932f6a2db338f616844400cd58e8a", blockchain="BTC"
+            wallet_address="0x94f1b9b64e2932f6a2db338f616844400cd58e8a", blockchain="ETH"
         ),
         lambda c: c.wallet_screening.screen(
-            wallet_address="0x94f1b9b64e2932f6a2db338f616844400cd58e8a", blockchain="BTC"
+            wallet_address="0x94f1b9b64e2932f6a2db338f616844400cd58e8a", blockchain="ETH"
         ),
         lambda r: isinstance(r, WalletScreeningResult),
         lambda r: isinstance(r, WalletScreeningResult),

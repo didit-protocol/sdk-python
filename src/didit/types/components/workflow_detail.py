@@ -6,7 +6,20 @@ from typing import Literal
 
 from didit._models import BaseModel
 
-__all__ = ["WorkflowDetail"]
+__all__ = ["WorkflowDetail", "WorkflowDetailSignatureAvailability"]
+
+
+class WorkflowDetailSignatureAvailability(BaseModel):
+    """Which E-signature levels can sign right now. Check it before you set `signature_level`. Returned on `kyc`, `kyb` and graph workflows."""
+
+    simple: bool | None = None
+    """Simple is always available."""
+
+    aes: bool | None = None
+    """Whether Advanced (AES) can sign now. While it is `false`, saving a new step at `signature_level: "aes"` is refused with `aes_not_available`."""
+
+    qes: bool | None = None
+    """Whether Qualified (QES) can sign now. It is `false` until a qualified provider is connected."""
 
 
 class WorkflowDetail(BaseModel):
@@ -97,6 +110,9 @@ class WorkflowDetail(BaseModel):
     created_at: _dt.datetime | None = None
 
     updated_at: _dt.datetime | None = None
+
+    signature_availability: WorkflowDetailSignatureAvailability | None = None
+    """Which E-signature levels can sign right now. Check it before you set `signature_level`. Returned on `kyc`, `kyb` and graph workflows."""
 
     is_bank_verification_enabled: bool | None = None
     """Whether a simple KYC or KYB workflow runs Bank verification. It runs after the contact steps (and Location verification) and before database validation, AML and IP analysis. Bank verification is not generally available yet: turning it on is refused wherever it is not enabled."""

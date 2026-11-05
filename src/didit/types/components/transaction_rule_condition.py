@@ -43,7 +43,7 @@ class TransactionRuleCondition(BaseModel):
     """Comparison operator. in/not_in test membership (value may be a list or a single scalar). contains/not_contains are case-insensitive substring checks against a string value. contains_any takes a list of strings and matches when any is a case-insensitive substring of the field value. regex matches the value pattern against the field. fuzzy_match compares against the value string with the required `score` threshold (0-100). gt/gte/lt/lte never match when either side is missing. exists/is_not_empty/is_not_null (aliases) and not_exists/is_empty/is_null (aliases) are presence checks that ignore `value`."""
 
     value: object = None
-    """Comparison value. Its shape depends on the operator and value_type; omit for the presence-check operators."""
+    """Comparison value. Its shape depends on the operator and value_type; omit it for the presence-check operators. Every other operator needs a value that is not `null` or an empty list, otherwise the rule is refused with `400`. `contains_any` needs a list of strings, and `contains`, `not_contains` and `regex` need a single string."""
 
     value_type: Literal["list", "field", "relative_date"] | str | None = None
     """Optional value interpretation. `list`: value is a List UUID and the list's entries become the comparison value. `field`: value is another field path, compared field-to-field. `relative_date`: value is a relative-date object, e.g. {"direction": "past", "unit": "days", "amount": 30}."""
@@ -94,7 +94,7 @@ class TransactionRuleConditionParam(TypedDict, total=False):
     """Comparison operator. in/not_in test membership (value may be a list or a single scalar). contains/not_contains are case-insensitive substring checks against a string value. contains_any takes a list of strings and matches when any is a case-insensitive substring of the field value. regex matches the value pattern against the field. fuzzy_match compares against the value string with the required `score` threshold (0-100). gt/gte/lt/lte never match when either side is missing. exists/is_not_empty/is_not_null (aliases) and not_exists/is_empty/is_null (aliases) are presence checks that ignore `value`."""
 
     value: object
-    """Comparison value. Its shape depends on the operator and value_type; omit for the presence-check operators."""
+    """Comparison value. Its shape depends on the operator and value_type; omit it for the presence-check operators. Every other operator needs a value that is not `null` or an empty list, otherwise the rule is refused with `400`. `contains_any` needs a list of strings, and `contains`, `not_contains` and `regex` need a single string."""
 
     value_type: Literal["list", "field", "relative_date"] | str
     """Optional value interpretation. `list`: value is a List UUID and the list's entries become the comparison value. `field`: value is another field path, compared field-to-field. `relative_date`: value is a relative-date object, e.g. {"direction": "past", "unit": "days", "amount": 30}."""

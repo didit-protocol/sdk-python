@@ -11,4 +11,4 @@ class SessionsBulkUpdateAmlHitStatusResponse(BaseModel):
     """`Updated {n} hit(s) successfully`, where `n` is the number of entries in `hit_updates`."""
 
     updated_hits: list[str]
-    """The `hit_id` of every entry in `hit_updates`, in request order, including hits whose status did not change."""
+    """The `id` of the hit each entry in `hit_updates` names, as the session decision returns it, in request order, including hits whose status did not change."""

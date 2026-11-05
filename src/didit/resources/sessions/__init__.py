@@ -27,6 +27,7 @@ from didit.types.components.sandbox_simulate_response import SandboxSimulateResp
 from didit.types.components.session_decision import SessionDecision
 from didit.types.components.session_deletion_job import SessionDeletionJob
 from didit.types.components.session_event import SessionEvent
+from didit.types.components.session_files_export import SessionFilesExport
 from didit.types.components.user_session_list_item import UserSessionListItem
 from didit.types.sessions.add_images_response import SessionsAddImagesResponse
 from didit.types.sessions.batch_delete_response import SessionsBatchDeleteResponse
@@ -36,6 +37,7 @@ from didit.types.sessions.bulk_update_aml_hit_status_params import (
 from didit.types.sessions.bulk_update_aml_hit_status_response import (
     SessionsBulkUpdateAmlHitStatusResponse,
 )
+from didit.types.sessions.create_kyb_party_draft_response import SessionsCreateKybPartyDraftResponse
 from didit.types.sessions.create_params import (
     SessionsCreateParamsBiometricConsent,
     SessionsCreateParamsContactDetails,
@@ -51,6 +53,10 @@ from didit.types.sessions.list_events_response import SessionsListEventsResponse
 from didit.types.sessions.list_feature_overrides_response import (
     SessionsListFeatureOverridesResponse,
 )
+from didit.types.sessions.list_kyb_extracted_parties_response import (
+    SessionsListKybExtractedPartiesResponse,
+)
+from didit.types.sessions.list_kyb_party_drafts_response import SessionsListKybPartyDraftsResponse
 from didit.types.sessions.list_response import SessionsListResponse
 from didit.types.sessions.preview_decision_email_response import (
     SessionsPreviewDecisionEmailResponse,
@@ -60,6 +66,7 @@ from didit.types.sessions.preview_resubmission_params import (
 )
 from didit.types.sessions.preview_resubmission_response import SessionsPreviewResubmissionResponse
 from didit.types.sessions.share_response import SessionsShareResponse
+from didit.types.sessions.submit_kyb_parties_response import SessionsSubmitKybPartiesResponse
 from didit.types.sessions.update_aml_hit_status_response import SessionsUpdateAmlHitStatusResponse
 from didit.types.sessions.update_aml_status_response import SessionsUpdateAmlStatusResponse
 from didit.types.sessions.update_data_params import SessionsUpdateDataParamsParsedAddress
@@ -71,11 +78,13 @@ from didit.types.sessions.update_feature_status_response import SessionsUpdateFe
 from didit.types.sessions.update_kyb_company_data_response import (
     SessionsUpdateKybCompanyDataResponse,
 )
+from didit.types.sessions.update_kyb_party_draft_response import SessionsUpdateKybPartyDraftResponse
 from didit.types.sessions.update_kyb_party_response import SessionsUpdateKybPartyResponse
 from didit.types.sessions.update_poa_data_params import SessionsUpdatePoaDataParamsPoaParsedAddress
 from didit.types.sessions.update_poa_data_response import SessionsUpdatePoaDataResponse
 from didit.types.sessions.update_status_params import SessionsUpdateStatusParamsNodesToResubmit
 from didit.types.sessions.update_status_response import SessionsUpdateStatusResponse
+from didit.types.sessions.upload_kyb_documents_response import SessionsUploadKybDocumentsResponse
 
 if TYPE_CHECKING:
     from didit.resources.sessions.imports import (
@@ -124,7 +133,7 @@ __all__ = [
 class Sessions(SyncAPIResource):
     """The ``sessions`` resource of the Didit API.
 
-    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``delete``, ``export_aml_screening_history``, ``generate_pdf``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
+    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``create_kyb_party_draft``, ``delete``, ``delete_kyb_party_draft``, ``export_aml_screening_history``, ``export_files``, ``generate_pdf``, ``get_files_export``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_kyb_extracted_parties``, ``list_kyb_party_drafts``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``submit_kyb_parties``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_kyb_party_draft``, ``update_poa_data``, ``update_status``, ``upload_kyb_documents``.
 
     Nested resources: ``imports``, ``reviews``, ``signatures``, ``webhooks``.
     """
@@ -168,6 +177,7 @@ class Sessions(SyncAPIResource):
         *,
         workflow_id: str,
         vendor_data: str | NotGiven = NOT_GIVEN,
+        multi_account_segment: str | NotGiven = NOT_GIVEN,
         callback: str | NotGiven = NOT_GIVEN,
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
@@ -257,6 +267,7 @@ class Sessions(SyncAPIResource):
         Args:
           workflow_id: Stable identifier of the workflow that defines which verification steps the session will run. Workflows are created and managed in the [Workflows](/console/workflows) page of the Console. The `workflow_id` also implicitly selects whether the session is KYC or KYB.
           vendor_data: A unique identifier for the user being verified, such as a UUID, email, or internal user ID. This field is used for: (1) **User grouping** - sessions with the same vendor_data are linked to the same user profile in the Users tab. (2) **Cross-session duplicate detection** - when checking for duplicated faces, documents, phone numbers, emails, IP addresses, or device fingerprints, sessions with the same vendor_data are treated as the same user and excluded from matches. Without vendor_data, every session is treated as a unique user and all potential duplicates are surfaced. We strongly recommend always providing a vendor_data to reduce noise in duplicate detection.
+          multi_account_segment: Optional duplicate-detection realm inside your organization. Duplicate face checks compare this session only with other sessions that carry the same segment, so separate account bases (personal and business accounts, or one per B2B sub-client) do not flag a person who legitimately holds one account in each. Omit it to use the single default realm, which is what every session uses today. Blocklist and allowlist matching ignore this field.
           callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
@@ -266,7 +277,7 @@ class Sessions(SyncAPIResource):
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
-          sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
+          sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
           user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
           biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -284,6 +295,7 @@ class Sessions(SyncAPIResource):
                 body={
                     "workflow_id": workflow_id,
                     "vendor_data": vendor_data,
+                    "multi_account_segment": multi_account_segment,
                     "callback": callback,
                     "callback_method": callback_method,
                     "metadata": metadata,
@@ -320,7 +332,7 @@ class Sessions(SyncAPIResource):
 
         Retrieve the complete decision report for a verification session - the rolled-up session `status` plus one report per verification feature the workflow executed. This is the canonical read endpoint for both User Verification (KYC) and Business Verification (KYB) sessions: the same path serves both, and the top-level `session_kind` discriminator tells you which shape you received (`"user"` or `"business"`).
 
-        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. Electronic Signature results are in `signatures`, which is present only when the workflow has an Electronic Signature step.
+        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. E-signature results are in `signatures`, which is present only when the workflow has an E-signature step.
 
         **When to call.** The recommended pattern is event-driven: wait for the `status.updated` webhook that fires when the session reaches a decision (`Approved`, `Declined`, `In Review`), then call this endpoint once to fetch the full report. Polling also works - the endpoint can be called at any point in the session lifecycle and returns the data produced so far - but webhook-then-fetch is cheaper and faster. Media URLs in the response (document images, videos, PDFs) are short-lived presigned links: fetch them promptly or re-request the decision to get fresh ones, and do not persist them as long-term references.
 
@@ -378,7 +390,7 @@ class Sessions(SyncAPIResource):
 
         **What is deleted:**
         - The session and every verification attempt it holds, including results that a resubmission replaced: the decision, extracted data, all related feature records (ID verification, face, liveness, face match, AML, registry checks, IP analysis, and so on), its reviews and its activity log.
-        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Electronic Signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
+        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). E-signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
         - The session's face data. Its face embedding is deleted too, unless you choose to keep an image-free template (see **Face biometric data**).
         - Webhook deliveries still queued for the session, and their retries. Webhooks already delivered are not affected.
         - For a Business Verification (KYB) session: the verifications it created for its key people (KYC) and its corporate owners (KYB), recursively, reported as `deleted_child_verifications`. A verification it only links to, such as an existing approved KYC it reused, is not deleted.
@@ -582,6 +594,9 @@ class Sessions(SyncAPIResource):
         workflow_id: str | NotGiven = NOT_GIVEN,
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        tags: str | NotGiven = NOT_GIVEN,
+        decided_from: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        decided_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         document_type: str | NotGiven = NOT_GIVEN,
         document_name: str | NotGiven = NOT_GIVEN,
@@ -649,6 +664,9 @@ class Sessions(SyncAPIResource):
           workflow_id: Comma-separated workflow UUIDs (find them on the Workflows page in the Console). Malformed UUIDs in the list are ignored; if none are valid the result is empty.
           date_from: Only sessions created on or after this date (UTC), format `YYYY-MM-DD`. Malformed dates return `400`.
           date_to: Only sessions created up to this date (UTC), format `YYYY-MM-DD`. For KYC rows the entire day is included; for KYB rows the comparison is `created_at <= date_to` (midnight), so use the next day's date to include a full day of KYB sessions.
+          tags: Comma-separated tag ids (`tags` of your application). Returns the sessions that carry any of them. Ids that are not valid UUIDs are ignored, and when none is valid the list is empty.
+          decided_from: ISO 8601 datetime. Returns the sessions whose status last changed at or after it. It filters on the time of the last status change, not on creation time.
+          decided_to: ISO 8601 datetime. Returns the sessions whose status last changed before it. Combine with `decided_from` for a half-open window.
           country: Comma-separated country filter. For KYC rows: ISO 3166-1 alpha-3 codes of the ID document's issuing state (e.g. `ESP,USA`), which may differ from nationality. For KYB rows: the registry company's country code.
           document_type: Comma-separated ID-document type codes verified in the session (KYC rows only): `P` (Passport), `ID` (Identity Card), `DL` (Driver's License), `RP` (Residence Permit), `SSC` (Social Security Card), `HIC` (Health Insurance Card), `WP` (Work Permit), `TC` (Tax Card), `VISA`, `PSC` (Public Service Card), `BC` (Birth Certificate), `OTHER`. Note the response field `document_type` contains the display name, not the code.
           document_name: Exact document names; multiple names can be passed comma-separated, but the value is only split on commas when it contains more than one ` - ` separator (a lone name with an embedded comma is matched whole). Names are as recognized by document verification (front or back side), e.g. `Spain - Id Card (2021)`. KYC rows only.
@@ -685,6 +703,9 @@ class Sessions(SyncAPIResource):
                     "workflow_id": workflow_id,
                     "date_from": date_from,
                     "date_to": date_to,
+                    "tags": tags,
+                    "decided_from": decided_from,
+                    "decided_to": decided_to,
                     "country": country,
                     "document_type": document_type,
                     "document_name": document_name,
@@ -1204,7 +1225,7 @@ class Sessions(SyncAPIResource):
     ) -> SessionsUpdateAmlHitStatusResponse:
         """Update an AML hit review status.
 
-        Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision).
+        Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision). A hit id returned in the earlier format is still accepted; the response always names the hit by its current `id`.
 
         `review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`. Reviewer decisions are preserved across ongoing-monitoring updates, so a hit you mark `False Positive` stays that way when the provider re-screens.
 
@@ -1216,7 +1237,7 @@ class Sessions(SyncAPIResource):
 
         Args:
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs - the service resolves the ID across both session types.
-          hit_id: The `id` of the hit in the AML check's `hits` array.
+          hit_id: The `id` of the hit in the AML check's `hits` array (`hit_...`). A hit id returned in the earlier format is still accepted.
           review_status: The new review status for the hit.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
@@ -1797,6 +1818,7 @@ class Sessions(SyncAPIResource):
         session_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        month: str | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         ordering: str | NotGiven = NOT_GIVEN,
@@ -1807,13 +1829,14 @@ class Sessions(SyncAPIResource):
     ) -> SyncPage[AMLScreeningRun]:
         """List AML screening history.
 
-        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
+        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. Pass `month` to read one calendar month at a time. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
 
         ``GET /v3/session/{sessionId}/aml-screening-history/``
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
           node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          month: A UTC calendar month as `YYYY-MM`. Only screenings completed in that month are returned; without it every month is returned. A malformed month returns `400`.
           limit: Maximum number of screening runs per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
           offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
           ordering: Optional sort override. The default order is `-completed_at`. Pass a result field name (for example `completed_at`, `started_at`, `outcome` or `score`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
@@ -1831,7 +1854,13 @@ class Sessions(SyncAPIResource):
                 item_type=AMLScreeningRun,
                 path_params={"sessionId": session_id},
                 auth="api_key",
-                query={"node_id": node_id, "limit": limit, "offset": offset, "ordering": ordering},
+                query={
+                    "node_id": node_id,
+                    "month": month,
+                    "limit": limit,
+                    "offset": offset,
+                    "ordering": ordering,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1844,6 +1873,7 @@ class Sessions(SyncAPIResource):
         session_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        month: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1851,13 +1881,14 @@ class Sessions(SyncAPIResource):
     ) -> bytes:
         """Export AML screening history as CSV.
 
-        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
+        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Pass `month` to export one calendar month. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
 
         ``GET /v3/session/{sessionId}/aml-screening-history/export/``
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
           node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          month: A UTC calendar month as `YYYY-MM`. Only screenings completed in that month are returned; without it every month is returned. A malformed month returns `400`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1871,7 +1902,7 @@ class Sessions(SyncAPIResource):
                 cast_to=bytes,
                 path_params={"sessionId": session_id},
                 auth="api_key",
-                query={"node_id": node_id},
+                query={"node_id": node_id, "month": month},
                 accept="text/csv, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -2169,11 +2200,583 @@ class Sessions(SyncAPIResource):
             ),
         )
 
+    def upload_kyb_documents(
+        self,
+        session_id: str,
+        *,
+        documents: Sequence[FileTypes],
+        document_passwords: Sequence[str] | NotGiven = NOT_GIVEN,
+        document_group: Literal[
+            "LEGAL_PRESENCE",
+            "COMPANY_DETAILS",
+            "OWNERSHIP_STRUCTURE",
+            "REPRESENTATIVES_AUTHORIZATION",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        locale: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUploadKybDocumentsResponse:
+        """Upload KYB documents to a session.
+
+        Upload one or more corporate documents (articles of incorporation, shareholder register, certificate of incorporation, ...) to the KYB Documents step of a Business Verification session, from your own server instead of the hosted page. Didit runs the hosted pipeline: compression, OCR, tampering and cross-document checks, document grouping, and advances the session when the required document groups are satisfied. The step costs one flat fee however many files you send. The session must be open and on the KYB Documents step, and the company chosen at the registry step must exist. Read the people the documents name with `GET /v3/session/{sessionId}/kyb/extracted-parties/`. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/documents/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          documents: Files to upload: JPG, JPEG, PNG, TIFF, WEBP, PDF or ZIP archives of them. PDFs up to 50 MB, photos up to 6 MB before compression.
+          document_passwords: One entry per file in `documents`, in the same order: the password of a protected PDF, empty for any other file.
+          document_group: Required document group this upload answers.
+          locale: Locale used to translate the response of the next step.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUploadKybDocumentsResponse",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/documents/",
+                cast_to=SessionsUploadKybDocumentsResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "documents": documents,
+                    "document_passwords": document_passwords,
+                    "document_group": document_group,
+                    "locale": locale,
+                },
+                multipart=True,
+                file_fields=("documents",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_kyb_extracted_parties(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListKybExtractedPartiesResponse:
+        """List the parties named by the uploaded documents.
+
+        Return the shareholders and directors that the documents uploaded to this KYB session name, merged per person and attributed to the documents that named them. Show them to your applicant to confirm, then declare them with the party draft endpoints. A range stays a range: `ownership_percent.text` keeps the verbatim figure and `min` / `max` the numbers read from it. Nobody is labelled a UBO here; that is decided when the parties are submitted, from the role settings and ownership thresholds of the workflow. The same list is in the session decision as `document_verifications[].extracted_parties`. Requires `read:businesses` or `read:sessions`.
+
+        ``GET /v3/session/{sessionId}/kyb/extracted-parties/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListKybExtractedPartiesResponse",
+            self._client.request(
+                "get",
+                "/v3/session/{sessionId}/kyb/extracted-parties/",
+                cast_to=SessionsListKybExtractedPartiesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_kyb_party_drafts(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListKybPartyDraftsResponse:
+        """List the KYB party drafts.
+
+        List the parties you are preparing for this KYB session, oldest first. A draft is not a declared party: it does not appear in the decision or the console and creates no verification session until you submit it with `POST /v3/session/{sessionId}/kyb/parties/submit/`. Requires `write:businesses`.
+
+        ``GET /v3/session/{sessionId}/kyb/parties/drafts/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListKybPartyDraftsResponse",
+            self._client.request(
+                "get",
+                "/v3/session/{sessionId}/kyb/parties/drafts/",
+                cast_to=SessionsListKybPartyDraftsResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def create_kyb_party_draft(
+        self,
+        session_id: str,
+        *,
+        entity_type: Literal["person", "company"] | str,
+        nationality: str,
+        full_name: str | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        role: Literal[
+            "director",
+            "non_executive_director",
+            "secretary",
+            "chairman",
+            "ubo",
+            "shareholder",
+            "representative",
+            "founder",
+            "legal_advisor",
+            "authorized_signatory",
+            "trustee",
+            "beneficiary",
+            "settlor",
+            "protector",
+            "company_officer",
+            "investor",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        roles: Sequence[
+            Literal[
+                "director",
+                "non_executive_director",
+                "secretary",
+                "chairman",
+                "ubo",
+                "shareholder",
+                "representative",
+                "founder",
+                "legal_advisor",
+                "authorized_signatory",
+                "trustee",
+                "beneficiary",
+                "settlor",
+                "protector",
+                "company_officer",
+                "investor",
+                "other",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        position: str | NotGiven = NOT_GIVEN,
+        date_of_birth: str | _dt.date | None | NotGiven = NOT_GIVEN,
+        company_name: str | NotGiven = NOT_GIVEN,
+        registration_number: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        ownership_percent: float | None | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        skip_verification: bool | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsCreateKybPartyDraftResponse:
+        """Create a KYB party draft.
+
+        Add a party (a person or a company) to the list you are preparing for this KYB session. The same fields and rules as the hosted Key People screen apply: a person needs `full_name` or `first_name` and `last_name`, at least one role and a nationality; a company needs `company_name` and the country of incorporation in `nationality`. Nothing is declared or billed until `POST /v3/session/{sessionId}/kyb/parties/submit/`. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/drafts/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          entity_type: Whether the party is an individual or a company.
+          nationality: Nationality of a person, or country of incorporation of a company. Required for every party.
+          full_name: Full name of a person. Send it, or `first_name` and `last_name`.
+          first_name
+          last_name
+          role: Role the party holds. Interchangeable with `roles`; when both are sent they are merged.
+          roles: Every role the party holds. A person needs at least one role (here or in `role`).
+          position: Job title of a person.
+          date_of_birth
+          company_name: Name of a company party. Required when `entity_type` is `company`.
+          registration_number: Registration number of a company party.
+          email: Where the verification link is sent. Required when the party has to complete verification, which depends on the role settings and ownership thresholds of the workflow.
+          ownership_percent: Share of the company the party owns.
+          phone_number
+          custom_fields: Workflow-defined extra fields.
+          skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsCreateKybPartyDraftResponse",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/drafts/",
+                cast_to=SessionsCreateKybPartyDraftResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "entity_type": entity_type,
+                    "nationality": nationality,
+                    "full_name": full_name,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "role": role,
+                    "roles": roles,
+                    "position": position,
+                    "date_of_birth": date_of_birth,
+                    "company_name": company_name,
+                    "registration_number": registration_number,
+                    "email": email,
+                    "ownership_percent": ownership_percent,
+                    "phone_number": phone_number,
+                    "custom_fields": custom_fields,
+                    "skip_verification": skip_verification,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def delete_kyb_party_draft(
+        self,
+        session_id: str,
+        draft_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Delete a KYB party draft.
+
+        Drop one party draft. Declared parties are not affected. Requires `write:businesses`.
+
+        ``DELETE /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          draft_id: UUID of the party draft (`draft_id` returned when it was created).
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            self._client.request(
+                "delete",
+                "/v3/session/{sessionId}/kyb/parties/drafts/{draftId}/",
+                cast_to=None,
+                path_params={"sessionId": session_id, "draftId": draft_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def update_kyb_party_draft(
+        self,
+        session_id: str,
+        draft_id: str,
+        *,
+        entity_type: Literal["person", "company"] | str | NotGiven = NOT_GIVEN,
+        full_name: str | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        role: Literal[
+            "director",
+            "non_executive_director",
+            "secretary",
+            "chairman",
+            "ubo",
+            "shareholder",
+            "representative",
+            "founder",
+            "legal_advisor",
+            "authorized_signatory",
+            "trustee",
+            "beneficiary",
+            "settlor",
+            "protector",
+            "company_officer",
+            "investor",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        roles: Sequence[
+            Literal[
+                "director",
+                "non_executive_director",
+                "secretary",
+                "chairman",
+                "ubo",
+                "shareholder",
+                "representative",
+                "founder",
+                "legal_advisor",
+                "authorized_signatory",
+                "trustee",
+                "beneficiary",
+                "settlor",
+                "protector",
+                "company_officer",
+                "investor",
+                "other",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        position: str | NotGiven = NOT_GIVEN,
+        date_of_birth: str | _dt.date | None | NotGiven = NOT_GIVEN,
+        company_name: str | NotGiven = NOT_GIVEN,
+        registration_number: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        ownership_percent: float | None | NotGiven = NOT_GIVEN,
+        nationality: str | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        skip_verification: bool | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateKybPartyDraftResponse:
+        """Edit a KYB party draft.
+
+        Change fields of one party draft. The edit is merged into the stored draft and the merged party is validated as a whole, so an edit that would leave the party incomplete is rejected. Changing `first_name` or `last_name` replaces the stored full name. Requires `write:businesses`.
+
+        ``PATCH /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          draft_id: UUID of the party draft (`draft_id` returned when it was created).
+          entity_type: Whether the party is an individual or a company.
+          full_name: Full name of a person. Send it, or `first_name` and `last_name`.
+          first_name
+          last_name
+          role: Role the party holds. Interchangeable with `roles`; when both are sent they are merged.
+          roles: Every role the party holds. A person needs at least one role (here or in `role`).
+          position: Job title of a person.
+          date_of_birth
+          company_name: Name of a company party. Required when `entity_type` is `company`.
+          registration_number: Registration number of a company party.
+          email: Where the verification link is sent. Required when the party has to complete verification, which depends on the role settings and ownership thresholds of the workflow.
+          ownership_percent: Share of the company the party owns.
+          nationality: Nationality of a person, or country of incorporation of a company. Required for every party.
+          phone_number
+          custom_fields: Workflow-defined extra fields.
+          skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateKybPartyDraftResponse",
+            self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/kyb/parties/drafts/{draftId}/",
+                cast_to=SessionsUpdateKybPartyDraftResponse,
+                path_params={"sessionId": session_id, "draftId": draft_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "entity_type": entity_type,
+                    "full_name": full_name,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "role": role,
+                    "roles": roles,
+                    "position": position,
+                    "date_of_birth": date_of_birth,
+                    "company_name": company_name,
+                    "registration_number": registration_number,
+                    "email": email,
+                    "ownership_percent": ownership_percent,
+                    "nationality": nationality,
+                    "phone_number": phone_number,
+                    "custom_fields": custom_fields,
+                    "skip_verification": skip_verification,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def submit_kyb_parties(
+        self,
+        session_id: str,
+        *,
+        locale: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsSubmitKybPartiesResponse:
+        """Submit the KYB party drafts.
+
+        Declare the stored drafts as the company's key people. This is the hosted Key People step under your API key: Didit decides from the role settings and ownership thresholds of the workflow which parties must be verified, creates one individual KYC session (or a KYB sub-session for a corporate owner) for each of them, sends the emails the workflow asks for, and advances the session. Each child session is billed like in the hosted flow. The drafts are consumed. Repeating the call after a successful submit changes nothing and answers `200` with `already_submitted: true` and the parties that already exist. The session must be on the Key People step. Send each person's `kyc_session_url` to them, or embed it. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/submit/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          locale: Locale used to translate the response of the step the session advances to.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsSubmitKybPartiesResponse",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/submit/",
+                cast_to=SessionsSubmitKybPartiesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={"locale": locale},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def export_files(
+        self,
+        session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionFilesExport:
+        """Export every file of a session.
+
+        Start preparing one ZIP with every image, video and document of a User Verification (KYC) or Business Verification (KYB) session, in original quality: the files are stored in the ZIP as they were captured, never recompressed. Answers `202` with the export; read it with `GET /v3/session/{sessionId}/files-export/{exportId}/` until `status` is `READY`, then download `download_url`. While an export of the same session is still being prepared, that export is returned instead of a new one.
+
+        The ZIP is deleted 24 hours after it is ready, and at once when the session is deleted. A deleted session cannot be exported. Every export and every download link handed out is written to the session's audit log. A scoped API key needs `media: read` and `decisions: read`; a console user needs the privilege to read sessions.
+
+        ``POST /v3/session/{sessionId}/files-export/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionFilesExport",
+            self._client.request(
+                "post",
+                "/v3/session/{sessionId}/files-export/",
+                cast_to=SessionFilesExport,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def get_files_export(
+        self,
+        session_id: str,
+        export_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionFilesExport:
+        """Get a session files export.
+
+        Progress of an export started with `POST /v3/session/{sessionId}/files-export/`. Once `status` is `READY`, `download_url` is a signed URL of the ZIP that stays valid for a short time; read the export again for a new one until `expires_at`. Each read that hands out a download link is written to the session's audit log. An export of a deleted session returns `404`.
+
+        ``GET /v3/session/{sessionId}/files-export/{exportId}/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          export_id: The `export_id` returned by `POST /v3/session/{sessionId}/files-export/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionFilesExport",
+            self._client.request(
+                "get",
+                "/v3/session/{sessionId}/files-export/{exportId}/",
+                cast_to=SessionFilesExport,
+                path_params={"sessionId": session_id, "exportId": export_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncSessions(AsyncAPIResource):
     """The ``sessions`` resource of the Didit API.
 
-    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``delete``, ``export_aml_screening_history``, ``generate_pdf``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_poa_data``, ``update_status``.
+    Methods: ``add_images``, ``batch_delete``, ``bulk_update_aml_hit_status``, ``cancel_feature_override``, ``create``, ``create_kyb_party_draft``, ``delete``, ``delete_kyb_party_draft``, ``export_aml_screening_history``, ``export_files``, ``generate_pdf``, ``get_files_export``, ``import_shared``, ``list``, ``list_aml_screening_history``, ``list_events``, ``list_feature_overrides``, ``list_kyb_extracted_parties``, ``list_kyb_party_drafts``, ``list_networks``, ``preview_decision_email``, ``preview_resubmission``, ``regenerate_kyb_party``, ``retrieve_decision``, ``retrieve_deletion_job``, ``share``, ``simulate``, ``submit_kyb_parties``, ``update_aml_hit_status``, ``update_aml_status``, ``update_data``, ``update_document_ai_data``, ``update_feature_status``, ``update_kyb_company_data``, ``update_kyb_party``, ``update_kyb_party_draft``, ``update_poa_data``, ``update_status``, ``upload_kyb_documents``.
 
     Nested resources: ``imports``, ``reviews``, ``signatures``, ``webhooks``.
     """
@@ -2217,6 +2820,7 @@ class AsyncSessions(AsyncAPIResource):
         *,
         workflow_id: str,
         vendor_data: str | NotGiven = NOT_GIVEN,
+        multi_account_segment: str | NotGiven = NOT_GIVEN,
         callback: str | NotGiven = NOT_GIVEN,
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
@@ -2306,6 +2910,7 @@ class AsyncSessions(AsyncAPIResource):
         Args:
           workflow_id: Stable identifier of the workflow that defines which verification steps the session will run. Workflows are created and managed in the [Workflows](/console/workflows) page of the Console. The `workflow_id` also implicitly selects whether the session is KYC or KYB.
           vendor_data: A unique identifier for the user being verified, such as a UUID, email, or internal user ID. This field is used for: (1) **User grouping** - sessions with the same vendor_data are linked to the same user profile in the Users tab. (2) **Cross-session duplicate detection** - when checking for duplicated faces, documents, phone numbers, emails, IP addresses, or device fingerprints, sessions with the same vendor_data are treated as the same user and excluded from matches. Without vendor_data, every session is treated as a unique user and all potential duplicates are surfaced. We strongly recommend always providing a vendor_data to reduce noise in duplicate detection.
+          multi_account_segment: Optional duplicate-detection realm inside your organization. Duplicate face checks compare this session only with other sessions that carry the same segment, so separate account bases (personal and business accounts, or one per B2B sub-client) do not flag a person who legitimately holds one account in each. Omit it to use the single default realm, which is what every session uses today. Blocklist and allowlist matching ignore this field.
           callback: URL to redirect the user to after verification completes. Didit automatically appends `verificationSessionId` and `status` (Approved, Declined, In Review) as query parameters. Custom URL schemes (e.g. `myapp://`) are supported for mobile callbacks. If omitted, the workflow's default `callback_url` is used. When the application has allowed domains (`allowed_domains` on `PATCH /v3/webhook/`), an `http` or `https` callback must be on one of those origins (same scheme, host and port), otherwise the request fails with 400 on `callback`: `callback must be on one of the application's allowed domains: https://app.example.com`. Custom URL schemes are always accepted.
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
@@ -2315,7 +2920,7 @@ class AsyncSessions(AsyncAPIResource):
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
-          sign: Electronic Signature input for this session. `documents` are the documents to sign, for a workflow whose Electronic Signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [Electronic signature documents](/sessions-api/create-session#electronic-signature-documents).
+          sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
           user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
           biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -2333,6 +2938,7 @@ class AsyncSessions(AsyncAPIResource):
                 body={
                     "workflow_id": workflow_id,
                     "vendor_data": vendor_data,
+                    "multi_account_segment": multi_account_segment,
                     "callback": callback,
                     "callback_method": callback_method,
                     "metadata": metadata,
@@ -2369,7 +2975,7 @@ class AsyncSessions(AsyncAPIResource):
 
         Retrieve the complete decision report for a verification session - the rolled-up session `status` plus one report per verification feature the workflow executed. This is the canonical read endpoint for both User Verification (KYC) and Business Verification (KYB) sessions: the same path serves both, and the top-level `session_kind` discriminator tells you which shape you received (`"user"` or `"business"`).
 
-        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. Electronic Signature results are in `signatures`, which is present only when the workflow has an Electronic Signature step.
+        **Every feature report is a plural array.** V3 workflows are graphs that can run the same feature more than once, so each block (`id_verifications`, `nfc_verifications`, `liveness_checks`, `face_matches`, `poa_verifications`, `document_ai_documents`, `phone_verifications`, `email_verifications`, `aml_screenings`, `ip_analyses`, `database_validations`, `questionnaire_responses`) is a JSON array whose items each carry a `node_id` identifying the workflow graph node that produced them. Read NFC as `response.nfc_verifications[0]` - never as a singular `nfc` field. A block is `null` until the workflow has run that feature at least once; features the workflow does not include never appear with data. E-signature results are in `signatures`, which is present only when the workflow has an E-signature step.
 
         **When to call.** The recommended pattern is event-driven: wait for the `status.updated` webhook that fires when the session reaches a decision (`Approved`, `Declined`, `In Review`), then call this endpoint once to fetch the full report. Polling also works - the endpoint can be called at any point in the session lifecycle and returns the data produced so far - but webhook-then-fetch is cheaper and faster. Media URLs in the response (document images, videos, PDFs) are short-lived presigned links: fetch them promptly or re-request the decision to get fresh ones, and do not persist them as long-term references.
 
@@ -2427,7 +3033,7 @@ class AsyncSessions(AsyncAPIResource):
 
         **What is deleted:**
         - The session and every verification attempt it holds, including results that a resubmission replaced: the decision, extracted data, all related feature records (ID verification, face, liveness, face match, AML, registry checks, IP analysis, and so on), its reviews and its activity log.
-        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). Electronic Signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
+        - All stored files owned by the session: document front/back photos (full, cropped, and privacy-blurred variants), document-capture videos, portrait crops, NFC chip portrait and signature images, face reference images, liveness videos, face-match source/target images, Proof of Address documents, and any extra uploaded files (KYC); uploaded company documents and extra files (KYB). E-signature documents, signed PDFs, evidence PDFs and signature images (KYC and KYB): their download paths stop working. Previously issued media URLs (`https://<media-host>/...`) stop resolving.
         - The session's face data. Its face embedding is deleted too, unless you choose to keep an image-free template (see **Face biometric data**).
         - Webhook deliveries still queued for the session, and their retries. Webhooks already delivered are not affected.
         - For a Business Verification (KYB) session: the verifications it created for its key people (KYC) and its corporate owners (KYB), recursively, reported as `deleted_child_verifications`. A verification it only links to, such as an existing approved KYC it reused, is not deleted.
@@ -2631,6 +3237,9 @@ class AsyncSessions(AsyncAPIResource):
         workflow_id: str | NotGiven = NOT_GIVEN,
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
+        tags: str | NotGiven = NOT_GIVEN,
+        decided_from: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        decided_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         document_type: str | NotGiven = NOT_GIVEN,
         document_name: str | NotGiven = NOT_GIVEN,
@@ -2698,6 +3307,9 @@ class AsyncSessions(AsyncAPIResource):
           workflow_id: Comma-separated workflow UUIDs (find them on the Workflows page in the Console). Malformed UUIDs in the list are ignored; if none are valid the result is empty.
           date_from: Only sessions created on or after this date (UTC), format `YYYY-MM-DD`. Malformed dates return `400`.
           date_to: Only sessions created up to this date (UTC), format `YYYY-MM-DD`. For KYC rows the entire day is included; for KYB rows the comparison is `created_at <= date_to` (midnight), so use the next day's date to include a full day of KYB sessions.
+          tags: Comma-separated tag ids (`tags` of your application). Returns the sessions that carry any of them. Ids that are not valid UUIDs are ignored, and when none is valid the list is empty.
+          decided_from: ISO 8601 datetime. Returns the sessions whose status last changed at or after it. It filters on the time of the last status change, not on creation time.
+          decided_to: ISO 8601 datetime. Returns the sessions whose status last changed before it. Combine with `decided_from` for a half-open window.
           country: Comma-separated country filter. For KYC rows: ISO 3166-1 alpha-3 codes of the ID document's issuing state (e.g. `ESP,USA`), which may differ from nationality. For KYB rows: the registry company's country code.
           document_type: Comma-separated ID-document type codes verified in the session (KYC rows only): `P` (Passport), `ID` (Identity Card), `DL` (Driver's License), `RP` (Residence Permit), `SSC` (Social Security Card), `HIC` (Health Insurance Card), `WP` (Work Permit), `TC` (Tax Card), `VISA`, `PSC` (Public Service Card), `BC` (Birth Certificate), `OTHER`. Note the response field `document_type` contains the display name, not the code.
           document_name: Exact document names; multiple names can be passed comma-separated, but the value is only split on commas when it contains more than one ` - ` separator (a lone name with an embedded comma is matched whole). Names are as recognized by document verification (front or back side), e.g. `Spain - Id Card (2021)`. KYC rows only.
@@ -2734,6 +3346,9 @@ class AsyncSessions(AsyncAPIResource):
                     "workflow_id": workflow_id,
                     "date_from": date_from,
                     "date_to": date_to,
+                    "tags": tags,
+                    "decided_from": decided_from,
+                    "decided_to": decided_to,
                     "country": country,
                     "document_type": document_type,
                     "document_name": document_name,
@@ -3253,7 +3868,7 @@ class AsyncSessions(AsyncAPIResource):
     ) -> SessionsUpdateAmlHitStatusResponse:
         """Update an AML hit review status.
 
-        Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision).
+        Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array - see the session decision). A hit id returned in the earlier format is still accepted; the response always names the hit by its current `id`.
 
         `review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`. Reviewer decisions are preserved across ongoing-monitoring updates, so a hit you mark `False Positive` stays that way when the provider re-screens.
 
@@ -3265,7 +3880,7 @@ class AsyncSessions(AsyncAPIResource):
 
         Args:
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs - the service resolves the ID across both session types.
-          hit_id: The `id` of the hit in the AML check's `hits` array.
+          hit_id: The `id` of the hit in the AML check's `hits` array (`hit_...`). A hit id returned in the earlier format is still accepted.
           review_status: The new review status for the hit.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
@@ -3846,6 +4461,7 @@ class AsyncSessions(AsyncAPIResource):
         session_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        month: str | NotGiven = NOT_GIVEN,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         ordering: str | NotGiven = NOT_GIVEN,
@@ -3856,13 +4472,14 @@ class AsyncSessions(AsyncAPIResource):
     ) -> AsyncPaginator[AMLScreeningRun]:
         """List AML screening history.
 
-        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
+        List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. Pass `month` to read one calendar month at a time. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).
 
         ``GET /v3/session/{sessionId}/aml-screening-history/``
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
           node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          month: A UTC calendar month as `YYYY-MM`. Only screenings completed in that month are returned; without it every month is returned. A malformed month returns `400`.
           limit: Maximum number of screening runs per page. Defaults to 50. A value below 1 or a non-numeric value falls back to 50; a value above 1,000,000 returns `400`.
           offset: Number of results to skip before the first returned one. Defaults to 0; a negative or non-numeric value falls back to 0, a value above 1,000,000 returns `400`. Prefer following the `next` and `previous` URLs.
           ordering: Optional sort override. The default order is `-completed_at`. Pass a result field name (for example `completed_at`, `started_at`, `outcome` or `score`) to sort ascending, prefix it with `-` to sort descending, and separate several fields with commas. Unknown fields are ignored.
@@ -3880,7 +4497,13 @@ class AsyncSessions(AsyncAPIResource):
                 item_type=AMLScreeningRun,
                 path_params={"sessionId": session_id},
                 auth="api_key",
-                query={"node_id": node_id, "limit": limit, "offset": offset, "ordering": ordering},
+                query={
+                    "node_id": node_id,
+                    "month": month,
+                    "limit": limit,
+                    "offset": offset,
+                    "ordering": ordering,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3893,6 +4516,7 @@ class AsyncSessions(AsyncAPIResource):
         session_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        month: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3900,13 +4524,14 @@ class AsyncSessions(AsyncAPIResource):
     ) -> bytes:
         """Export AML screening history as CSV.
 
-        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
+        Download the same ongoing-monitoring history as `GET /v3/session/{sessionId}/aml-screening-history/` as a CSV file, one line per completed re-screen, newest first, ready to hand to an auditor. The file is streamed whole (no pagination) and starts with a header line; an empty cell means unknown, dataset dates are never estimated, and a value that would start a spreadsheet formula is prefixed with an apostrophe. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Pass `month` to export one calendar month. Errors are returned as JSON, not CSV. A scoped API key needs `decisions: read` and `media: read`: the response is a file, so a key without `media: read` gets `403`.
 
         ``GET /v3/session/{sessionId}/aml-screening-history/export/``
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs: the server resolves the ID across both session types. Must be a well-formed UUID; a malformed value does not match the route and returns an HTML `404`.
           node_id: Workflow graph node ID of the AML check. Needed only when the session ran more than one AML step; without it the most recent AML check is used. An unknown node returns `404`.
+          month: A UTC calendar month as `YYYY-MM`. Only screenings completed in that month are returned; without it every month is returned. A malformed month returns `400`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3920,7 +4545,7 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=bytes,
                 path_params={"sessionId": session_id},
                 auth="api_key",
-                query={"node_id": node_id},
+                query={"node_id": node_id, "month": month},
                 accept="text/csv, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -4218,6 +4843,578 @@ class AsyncSessions(AsyncAPIResource):
             ),
         )
 
+    async def upload_kyb_documents(
+        self,
+        session_id: str,
+        *,
+        documents: Sequence[FileTypes],
+        document_passwords: Sequence[str] | NotGiven = NOT_GIVEN,
+        document_group: Literal[
+            "LEGAL_PRESENCE",
+            "COMPANY_DETAILS",
+            "OWNERSHIP_STRUCTURE",
+            "REPRESENTATIVES_AUTHORIZATION",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        locale: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUploadKybDocumentsResponse:
+        """Upload KYB documents to a session.
+
+        Upload one or more corporate documents (articles of incorporation, shareholder register, certificate of incorporation, ...) to the KYB Documents step of a Business Verification session, from your own server instead of the hosted page. Didit runs the hosted pipeline: compression, OCR, tampering and cross-document checks, document grouping, and advances the session when the required document groups are satisfied. The step costs one flat fee however many files you send. The session must be open and on the KYB Documents step, and the company chosen at the registry step must exist. Read the people the documents name with `GET /v3/session/{sessionId}/kyb/extracted-parties/`. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/documents/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          documents: Files to upload: JPG, JPEG, PNG, TIFF, WEBP, PDF or ZIP archives of them. PDFs up to 50 MB, photos up to 6 MB before compression.
+          document_passwords: One entry per file in `documents`, in the same order: the password of a protected PDF, empty for any other file.
+          document_group: Required document group this upload answers.
+          locale: Locale used to translate the response of the next step.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUploadKybDocumentsResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/documents/",
+                cast_to=SessionsUploadKybDocumentsResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "documents": documents,
+                    "document_passwords": document_passwords,
+                    "document_group": document_group,
+                    "locale": locale,
+                },
+                multipart=True,
+                file_fields=("documents",),
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_kyb_extracted_parties(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListKybExtractedPartiesResponse:
+        """List the parties named by the uploaded documents.
+
+        Return the shareholders and directors that the documents uploaded to this KYB session name, merged per person and attributed to the documents that named them. Show them to your applicant to confirm, then declare them with the party draft endpoints. A range stays a range: `ownership_percent.text` keeps the verbatim figure and `min` / `max` the numbers read from it. Nobody is labelled a UBO here; that is decided when the parties are submitted, from the role settings and ownership thresholds of the workflow. The same list is in the session decision as `document_verifications[].extracted_parties`. Requires `read:businesses` or `read:sessions`.
+
+        ``GET /v3/session/{sessionId}/kyb/extracted-parties/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListKybExtractedPartiesResponse",
+            await self._client.request(
+                "get",
+                "/v3/session/{sessionId}/kyb/extracted-parties/",
+                cast_to=SessionsListKybExtractedPartiesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def list_kyb_party_drafts(
+        self,
+        session_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsListKybPartyDraftsResponse:
+        """List the KYB party drafts.
+
+        List the parties you are preparing for this KYB session, oldest first. A draft is not a declared party: it does not appear in the decision or the console and creates no verification session until you submit it with `POST /v3/session/{sessionId}/kyb/parties/submit/`. Requires `write:businesses`.
+
+        ``GET /v3/session/{sessionId}/kyb/parties/drafts/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsListKybPartyDraftsResponse",
+            await self._client.request(
+                "get",
+                "/v3/session/{sessionId}/kyb/parties/drafts/",
+                cast_to=SessionsListKybPartyDraftsResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def create_kyb_party_draft(
+        self,
+        session_id: str,
+        *,
+        entity_type: Literal["person", "company"] | str,
+        nationality: str,
+        full_name: str | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        role: Literal[
+            "director",
+            "non_executive_director",
+            "secretary",
+            "chairman",
+            "ubo",
+            "shareholder",
+            "representative",
+            "founder",
+            "legal_advisor",
+            "authorized_signatory",
+            "trustee",
+            "beneficiary",
+            "settlor",
+            "protector",
+            "company_officer",
+            "investor",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        roles: Sequence[
+            Literal[
+                "director",
+                "non_executive_director",
+                "secretary",
+                "chairman",
+                "ubo",
+                "shareholder",
+                "representative",
+                "founder",
+                "legal_advisor",
+                "authorized_signatory",
+                "trustee",
+                "beneficiary",
+                "settlor",
+                "protector",
+                "company_officer",
+                "investor",
+                "other",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        position: str | NotGiven = NOT_GIVEN,
+        date_of_birth: str | _dt.date | None | NotGiven = NOT_GIVEN,
+        company_name: str | NotGiven = NOT_GIVEN,
+        registration_number: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        ownership_percent: float | None | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        skip_verification: bool | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsCreateKybPartyDraftResponse:
+        """Create a KYB party draft.
+
+        Add a party (a person or a company) to the list you are preparing for this KYB session. The same fields and rules as the hosted Key People screen apply: a person needs `full_name` or `first_name` and `last_name`, at least one role and a nationality; a company needs `company_name` and the country of incorporation in `nationality`. Nothing is declared or billed until `POST /v3/session/{sessionId}/kyb/parties/submit/`. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/drafts/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          entity_type: Whether the party is an individual or a company.
+          nationality: Nationality of a person, or country of incorporation of a company. Required for every party.
+          full_name: Full name of a person. Send it, or `first_name` and `last_name`.
+          first_name
+          last_name
+          role: Role the party holds. Interchangeable with `roles`; when both are sent they are merged.
+          roles: Every role the party holds. A person needs at least one role (here or in `role`).
+          position: Job title of a person.
+          date_of_birth
+          company_name: Name of a company party. Required when `entity_type` is `company`.
+          registration_number: Registration number of a company party.
+          email: Where the verification link is sent. Required when the party has to complete verification, which depends on the role settings and ownership thresholds of the workflow.
+          ownership_percent: Share of the company the party owns.
+          phone_number
+          custom_fields: Workflow-defined extra fields.
+          skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsCreateKybPartyDraftResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/drafts/",
+                cast_to=SessionsCreateKybPartyDraftResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "entity_type": entity_type,
+                    "nationality": nationality,
+                    "full_name": full_name,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "role": role,
+                    "roles": roles,
+                    "position": position,
+                    "date_of_birth": date_of_birth,
+                    "company_name": company_name,
+                    "registration_number": registration_number,
+                    "email": email,
+                    "ownership_percent": ownership_percent,
+                    "phone_number": phone_number,
+                    "custom_fields": custom_fields,
+                    "skip_verification": skip_verification,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def delete_kyb_party_draft(
+        self,
+        session_id: str,
+        draft_id: str,
+        *,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Delete a KYB party draft.
+
+        Drop one party draft. Declared parties are not affected. Requires `write:businesses`.
+
+        ``DELETE /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          draft_id: UUID of the party draft (`draft_id` returned when it was created).
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            await self._client.request(
+                "delete",
+                "/v3/session/{sessionId}/kyb/parties/drafts/{draftId}/",
+                cast_to=None,
+                path_params={"sessionId": session_id, "draftId": draft_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def update_kyb_party_draft(
+        self,
+        session_id: str,
+        draft_id: str,
+        *,
+        entity_type: Literal["person", "company"] | str | NotGiven = NOT_GIVEN,
+        full_name: str | NotGiven = NOT_GIVEN,
+        first_name: str | NotGiven = NOT_GIVEN,
+        last_name: str | NotGiven = NOT_GIVEN,
+        role: Literal[
+            "director",
+            "non_executive_director",
+            "secretary",
+            "chairman",
+            "ubo",
+            "shareholder",
+            "representative",
+            "founder",
+            "legal_advisor",
+            "authorized_signatory",
+            "trustee",
+            "beneficiary",
+            "settlor",
+            "protector",
+            "company_officer",
+            "investor",
+            "other",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        roles: Sequence[
+            Literal[
+                "director",
+                "non_executive_director",
+                "secretary",
+                "chairman",
+                "ubo",
+                "shareholder",
+                "representative",
+                "founder",
+                "legal_advisor",
+                "authorized_signatory",
+                "trustee",
+                "beneficiary",
+                "settlor",
+                "protector",
+                "company_officer",
+                "investor",
+                "other",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        position: str | NotGiven = NOT_GIVEN,
+        date_of_birth: str | _dt.date | None | NotGiven = NOT_GIVEN,
+        company_name: str | NotGiven = NOT_GIVEN,
+        registration_number: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        ownership_percent: float | None | NotGiven = NOT_GIVEN,
+        nationality: str | NotGiven = NOT_GIVEN,
+        phone_number: str | NotGiven = NOT_GIVEN,
+        custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        skip_verification: bool | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsUpdateKybPartyDraftResponse:
+        """Edit a KYB party draft.
+
+        Change fields of one party draft. The edit is merged into the stored draft and the merged party is validated as a whole, so an edit that would leave the party incomplete is rejected. Changing `first_name` or `last_name` replaces the stored full name. Requires `write:businesses`.
+
+        ``PATCH /v3/session/{sessionId}/kyb/parties/drafts/{draftId}/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          draft_id: UUID of the party draft (`draft_id` returned when it was created).
+          entity_type: Whether the party is an individual or a company.
+          full_name: Full name of a person. Send it, or `first_name` and `last_name`.
+          first_name
+          last_name
+          role: Role the party holds. Interchangeable with `roles`; when both are sent they are merged.
+          roles: Every role the party holds. A person needs at least one role (here or in `role`).
+          position: Job title of a person.
+          date_of_birth
+          company_name: Name of a company party. Required when `entity_type` is `company`.
+          registration_number: Registration number of a company party.
+          email: Where the verification link is sent. Required when the party has to complete verification, which depends on the role settings and ownership thresholds of the workflow.
+          ownership_percent: Share of the company the party owns.
+          nationality: Nationality of a person, or country of incorporation of a company. Required for every party.
+          phone_number
+          custom_fields: Workflow-defined extra fields.
+          skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsUpdateKybPartyDraftResponse",
+            await self._client.request(
+                "patch",
+                "/v3/session/{sessionId}/kyb/parties/drafts/{draftId}/",
+                cast_to=SessionsUpdateKybPartyDraftResponse,
+                path_params={"sessionId": session_id, "draftId": draft_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={
+                    "entity_type": entity_type,
+                    "full_name": full_name,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "role": role,
+                    "roles": roles,
+                    "position": position,
+                    "date_of_birth": date_of_birth,
+                    "company_name": company_name,
+                    "registration_number": registration_number,
+                    "email": email,
+                    "ownership_percent": ownership_percent,
+                    "nationality": nationality,
+                    "phone_number": phone_number,
+                    "custom_fields": custom_fields,
+                    "skip_verification": skip_verification,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def submit_kyb_parties(
+        self,
+        session_id: str,
+        *,
+        locale: str | NotGiven = NOT_GIVEN,
+        node_id: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionsSubmitKybPartiesResponse:
+        """Submit the KYB party drafts.
+
+        Declare the stored drafts as the company's key people. This is the hosted Key People step under your API key: Didit decides from the role settings and ownership thresholds of the workflow which parties must be verified, creates one individual KYC session (or a KYB sub-session for a corporate owner) for each of them, sends the emails the workflow asks for, and advances the session. Each child session is billed like in the hosted flow. The drafts are consumed. Repeating the call after a successful submit changes nothing and answers `200` with `already_submitted: true` and the parties that already exist. The session must be on the Key People step. Send each person's `kyc_session_url` to them, or embed it. Requires `write:businesses`.
+
+        ``POST /v3/session/{sessionId}/kyb/parties/submit/``
+
+        Args:
+          session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
+          locale: Locale used to translate the response of the step the session advances to.
+          node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionsSubmitKybPartiesResponse",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/kyb/parties/submit/",
+                cast_to=SessionsSubmitKybPartiesResponse,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                query={"node_id": node_id},
+                body={"locale": locale},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def export_files(
+        self,
+        session_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionFilesExport:
+        """Export every file of a session.
+
+        Start preparing one ZIP with every image, video and document of a User Verification (KYC) or Business Verification (KYB) session, in original quality: the files are stored in the ZIP as they were captured, never recompressed. Answers `202` with the export; read it with `GET /v3/session/{sessionId}/files-export/{exportId}/` until `status` is `READY`, then download `download_url`. While an export of the same session is still being prepared, that export is returned instead of a new one.
+
+        The ZIP is deleted 24 hours after it is ready, and at once when the session is deleted. A deleted session cannot be exported. Every export and every download link handed out is written to the session's audit log. A scoped API key needs `media: read` and `decisions: read`; a console user needs the privilege to read sessions.
+
+        ``POST /v3/session/{sessionId}/files-export/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionFilesExport",
+            await self._client.request(
+                "post",
+                "/v3/session/{sessionId}/files-export/",
+                cast_to=SessionFilesExport,
+                path_params={"sessionId": session_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def get_files_export(
+        self,
+        session_id: str,
+        export_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionFilesExport:
+        """Get a session files export.
+
+        Progress of an export started with `POST /v3/session/{sessionId}/files-export/`. Once `status` is `READY`, `download_url` is a signed URL of the ZIP that stays valid for a short time; read the export again for a new one until `expires_at`. Each read that hands out a download link is written to the session's audit log. An export of a deleted session returns `404`.
+
+        ``GET /v3/session/{sessionId}/files-export/{exportId}/``
+
+        Args:
+          session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          export_id: The `export_id` returned by `POST /v3/session/{sessionId}/files-export/`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionFilesExport",
+            await self._client.request(
+                "get",
+                "/v3/session/{sessionId}/files-export/{exportId}/",
+                cast_to=SessionFilesExport,
+                path_params={"sessionId": session_id, "exportId": export_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class SessionsWithRawResponse:
     def __init__(self, resource: Sessions) -> None:
@@ -4258,6 +5455,17 @@ class SessionsWithRawResponse:
         self.list_feature_overrides = to_raw_response_wrapper(resource.list_feature_overrides)
         self.cancel_feature_override = to_raw_response_wrapper(resource.cancel_feature_override)
         self.preview_decision_email = to_raw_response_wrapper(resource.preview_decision_email)
+        self.upload_kyb_documents = to_raw_response_wrapper(resource.upload_kyb_documents)
+        self.list_kyb_extracted_parties = to_raw_response_wrapper(
+            resource.list_kyb_extracted_parties
+        )
+        self.list_kyb_party_drafts = to_raw_response_wrapper(resource.list_kyb_party_drafts)
+        self.create_kyb_party_draft = to_raw_response_wrapper(resource.create_kyb_party_draft)
+        self.delete_kyb_party_draft = to_raw_response_wrapper(resource.delete_kyb_party_draft)
+        self.update_kyb_party_draft = to_raw_response_wrapper(resource.update_kyb_party_draft)
+        self.submit_kyb_parties = to_raw_response_wrapper(resource.submit_kyb_parties)
+        self.export_files = to_raw_response_wrapper(resource.export_files)
+        self.get_files_export = to_raw_response_wrapper(resource.get_files_export)
 
     @cached_property
     def imports(self) -> SessionsImportsWithRawResponse:
@@ -4329,6 +5537,17 @@ class AsyncSessionsWithRawResponse:
             resource.cancel_feature_override
         )
         self.preview_decision_email = async_to_raw_response_wrapper(resource.preview_decision_email)
+        self.upload_kyb_documents = async_to_raw_response_wrapper(resource.upload_kyb_documents)
+        self.list_kyb_extracted_parties = async_to_raw_response_wrapper(
+            resource.list_kyb_extracted_parties
+        )
+        self.list_kyb_party_drafts = async_to_raw_response_wrapper(resource.list_kyb_party_drafts)
+        self.create_kyb_party_draft = async_to_raw_response_wrapper(resource.create_kyb_party_draft)
+        self.delete_kyb_party_draft = async_to_raw_response_wrapper(resource.delete_kyb_party_draft)
+        self.update_kyb_party_draft = async_to_raw_response_wrapper(resource.update_kyb_party_draft)
+        self.submit_kyb_parties = async_to_raw_response_wrapper(resource.submit_kyb_parties)
+        self.export_files = async_to_raw_response_wrapper(resource.export_files)
+        self.get_files_export = async_to_raw_response_wrapper(resource.get_files_export)
 
     @cached_property
     def imports(self) -> AsyncSessionsImportsWithRawResponse:
@@ -4400,6 +5619,17 @@ class SessionsWithStreamingResponse:
             resource.cancel_feature_override
         )
         self.preview_decision_email = to_streamed_response_wrapper(resource.preview_decision_email)
+        self.upload_kyb_documents = to_streamed_response_wrapper(resource.upload_kyb_documents)
+        self.list_kyb_extracted_parties = to_streamed_response_wrapper(
+            resource.list_kyb_extracted_parties
+        )
+        self.list_kyb_party_drafts = to_streamed_response_wrapper(resource.list_kyb_party_drafts)
+        self.create_kyb_party_draft = to_streamed_response_wrapper(resource.create_kyb_party_draft)
+        self.delete_kyb_party_draft = to_streamed_response_wrapper(resource.delete_kyb_party_draft)
+        self.update_kyb_party_draft = to_streamed_response_wrapper(resource.update_kyb_party_draft)
+        self.submit_kyb_parties = to_streamed_response_wrapper(resource.submit_kyb_parties)
+        self.export_files = to_streamed_response_wrapper(resource.export_files)
+        self.get_files_export = to_streamed_response_wrapper(resource.get_files_export)
 
     @cached_property
     def imports(self) -> SessionsImportsWithStreamingResponse:
@@ -4485,6 +5715,27 @@ class AsyncSessionsWithStreamingResponse:
         self.preview_decision_email = async_to_streamed_response_wrapper(
             resource.preview_decision_email
         )
+        self.upload_kyb_documents = async_to_streamed_response_wrapper(
+            resource.upload_kyb_documents
+        )
+        self.list_kyb_extracted_parties = async_to_streamed_response_wrapper(
+            resource.list_kyb_extracted_parties
+        )
+        self.list_kyb_party_drafts = async_to_streamed_response_wrapper(
+            resource.list_kyb_party_drafts
+        )
+        self.create_kyb_party_draft = async_to_streamed_response_wrapper(
+            resource.create_kyb_party_draft
+        )
+        self.delete_kyb_party_draft = async_to_streamed_response_wrapper(
+            resource.delete_kyb_party_draft
+        )
+        self.update_kyb_party_draft = async_to_streamed_response_wrapper(
+            resource.update_kyb_party_draft
+        )
+        self.submit_kyb_parties = async_to_streamed_response_wrapper(resource.submit_kyb_parties)
+        self.export_files = async_to_streamed_response_wrapper(resource.export_files)
+        self.get_files_export = async_to_streamed_response_wrapper(resource.get_files_export)
 
     @cached_property
     def imports(self) -> AsyncSessionsImportsWithStreamingResponse:

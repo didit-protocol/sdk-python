@@ -53,3 +53,6 @@ class WebhookConfig(BaseModel):
 
     endpoints: list[WebhookConfigDestination]
     """Every webhook destination of the application, oldest first, each with its signing secret. Read only here: manage destinations with the `/v3/webhook/destinations/` endpoints."""
+
+    allowed_domains: list[str] | None = None
+    """Origins (for example `https://app.example.com`; `http` only for `localhost`) the hosted verification flow may be embedded in and may send the user back to with a session callback. Server-to-server calls are not affected. An empty list means no restriction. Didit stores each origin in lower case without a default port. An invalid entry fails with `400` on `allowed_domains`."""

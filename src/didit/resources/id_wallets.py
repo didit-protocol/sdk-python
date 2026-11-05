@@ -50,6 +50,9 @@ from didit.types.components.digital_id_wallet_api_franceconnect_wallet_verificat
 from didit.types.components.digital_id_wallet_api_ftn_wallet_verification_start_country_enum import (
     DigitalIdWalletApiFtnWalletVerificationStartCountryEnum,
 )
+from didit.types.components.digital_id_wallet_api_google_wallet_wallet_verification_start_country_enum import (
+    DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum,
+)
 from didit.types.components.digital_id_wallet_api_govbr_wallet_verification_start_country_enum import (
     DigitalIdWalletApiGovbrWalletVerificationStartCountryEnum,
 )
@@ -97,7 +100,7 @@ __all__ = [
 class IdWallets(SyncAPIResource):
     """The ``id_wallets`` resource of the Didit API.
 
-    Methods: ``cancel_verification``, ``list``, ``poll_verification``, ``retrieve_verification``, ``start_audkenni``, ``start_bankid_cz``, ``start_bankid_no``, ``start_bankid_se``, ``start_buypass``, ``start_connectid``, ``start_diia``, ``start_eparaksts_mobile``, ``start_eudi``, ``start_franceconnect``, ``start_frejaid``, ``start_ftn``, ``start_govbr``, ``start_govuk_wallet``, ``start_idcard_ee``, ``start_idin``, ``start_itsme``, ``start_mitid``, ``start_mobile_id``, ``start_mojeid``, ``start_oneid``, ``start_personalausweis``, ``start_smart_id``, ``start_uae_pass``, ``start_vipps``.
+    Methods: ``cancel_verification``, ``list``, ``poll_verification``, ``retrieve_verification``, ``start_audkenni``, ``start_bankid_cz``, ``start_bankid_no``, ``start_bankid_se``, ``start_buypass``, ``start_connectid``, ``start_diia``, ``start_eparaksts_mobile``, ``start_eudi``, ``start_franceconnect``, ``start_frejaid``, ``start_ftn``, ``start_google_wallet``, ``start_govbr``, ``start_govuk_wallet``, ``start_idcard_ee``, ``start_idin``, ``start_itsme``, ``start_mitid``, ``start_mobile_id``, ``start_mojeid``, ``start_oneid``, ``start_personalausweis``, ``start_smart_id``, ``start_uae_pass``, ``start_vipps``, ``submit_verification_response``.
     """
 
     @cached_property
@@ -1686,11 +1689,105 @@ class IdWallets(SyncAPIResource):
             ),
         )
 
+    def submit_verification_response(
+        self,
+        request_id: str,
+        *,
+        response: Mapping[str, object],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> DigitalIdWalletApiWalletVerificationResponse:
+        """Submit a wallet response.
+
+        Digital Credentials API wallets (Google Wallet): send what the wallet returned to your page or app for a verification whose next_action is request_digital_credential. Didit decrypts it, checks the issuer's signature against the trusted issuer roots, every returned value against its signed digest, and the device signature over your origin and this request, then decides the verification: verified (billed once) or declined with the error code. Single use: a second submit returns the decided verification.
+
+        ``POST /v3/id-verification/wallets/verifications/{request_id}/response/``
+
+        Args:
+          request_id: The request_id the start endpoint returned.
+          response: Exactly what the wallet returned: {protocol, data} of the DigitalCredential from navigator.credentials.get, or the parsed credentialJson of Android's DigitalCredential. Encrypted to Didit; do not alter it.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "DigitalIdWalletApiWalletVerificationResponse",
+            self._client.request(
+                "post",
+                "/v3/id-verification/wallets/verifications/{request_id}/response/",
+                cast_to=DigitalIdWalletApiWalletVerificationResponse,
+                path_params={"request_id": request_id},
+                auth="api_key",
+                body={"response": response},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def start_google_wallet(
+        self,
+        *,
+        country: DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum,
+        origin: str,
+        vendor_data: str | None | NotGiven = NOT_GIVEN,
+        metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        sandbox_scenario: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> DigitalIdWalletApiWalletVerificationResponse:
+        """Start Google Wallet verification.
+
+        Start a Google Wallet sign-in (Google Wallet (ID pass) and US state issuers (mobile driving licence); USA, GBR, BRA, SGP, TWN) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=request_digital_credential with a request Didit signed for your application, usable only from origin. In a user gesture there, pass next_action.digital_credentials.request to navigator.credentials.get({digital: ...}) (or to Android Credential Manager as GetDigitalCredentialOption requestJson), then POST what the wallet returns to /v3/id-verification/wallets/verifications/{request_id}/response/. The browser offers its own QR code when the wallet is on another device. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider.
+
+        ``POST /v3/id-verification/wallets/google-wallet/``
+
+        Args:
+          country: ISO 3166-1 alpha-3 country of the Google Wallet identity. * `USA` - USA * `GBR` - GBR * `BRA` - BRA * `SGP` - SGP * `TWN` - TWN
+          origin: Where your page or app will ask the wallet: the https origin of your page (its host must be in the application's allowed_return_hosts, or be its white-label domain), e.g. https://app.example.com, or android:apk-key-hash:<base64 SHA-256 of your app's signing certificate, no padding>. The wallet refuses the request anywhere else.
+          vendor_data: Your own reference for this verification (e.g. your user id). Returned in results and webhooks.
+          metadata: Optional JSON object stored with the verification and returned in results and webhooks.
+          sandbox_scenario: Sandbox applications only: the simulated outcome - 'wallet_cancelled', 'wallet_timeout' or 'wallet_provider_error'; any other scenario (or none) verifies. Rejected on live applications. The full catalog is available at GET /v1/sandbox/scenarios/.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "DigitalIdWalletApiWalletVerificationResponse",
+            self._client.request(
+                "post",
+                "/v3/id-verification/wallets/google-wallet/",
+                cast_to=DigitalIdWalletApiWalletVerificationResponse,
+                auth="api_key",
+                body={
+                    "country": country,
+                    "origin": origin,
+                    "vendor_data": vendor_data,
+                    "metadata": metadata,
+                    "sandbox_scenario": sandbox_scenario,
+                },
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncIdWallets(AsyncAPIResource):
     """The ``id_wallets`` resource of the Didit API.
 
-    Methods: ``cancel_verification``, ``list``, ``poll_verification``, ``retrieve_verification``, ``start_audkenni``, ``start_bankid_cz``, ``start_bankid_no``, ``start_bankid_se``, ``start_buypass``, ``start_connectid``, ``start_diia``, ``start_eparaksts_mobile``, ``start_eudi``, ``start_franceconnect``, ``start_frejaid``, ``start_ftn``, ``start_govbr``, ``start_govuk_wallet``, ``start_idcard_ee``, ``start_idin``, ``start_itsme``, ``start_mitid``, ``start_mobile_id``, ``start_mojeid``, ``start_oneid``, ``start_personalausweis``, ``start_smart_id``, ``start_uae_pass``, ``start_vipps``.
+    Methods: ``cancel_verification``, ``list``, ``poll_verification``, ``retrieve_verification``, ``start_audkenni``, ``start_bankid_cz``, ``start_bankid_no``, ``start_bankid_se``, ``start_buypass``, ``start_connectid``, ``start_diia``, ``start_eparaksts_mobile``, ``start_eudi``, ``start_franceconnect``, ``start_frejaid``, ``start_ftn``, ``start_google_wallet``, ``start_govbr``, ``start_govuk_wallet``, ``start_idcard_ee``, ``start_idin``, ``start_itsme``, ``start_mitid``, ``start_mobile_id``, ``start_mojeid``, ``start_oneid``, ``start_personalausweis``, ``start_smart_id``, ``start_uae_pass``, ``start_vipps``, ``submit_verification_response``.
     """
 
     @cached_property
@@ -3279,6 +3376,100 @@ class AsyncIdWallets(AsyncAPIResource):
             ),
         )
 
+    async def submit_verification_response(
+        self,
+        request_id: str,
+        *,
+        response: Mapping[str, object],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> DigitalIdWalletApiWalletVerificationResponse:
+        """Submit a wallet response.
+
+        Digital Credentials API wallets (Google Wallet): send what the wallet returned to your page or app for a verification whose next_action is request_digital_credential. Didit decrypts it, checks the issuer's signature against the trusted issuer roots, every returned value against its signed digest, and the device signature over your origin and this request, then decides the verification: verified (billed once) or declined with the error code. Single use: a second submit returns the decided verification.
+
+        ``POST /v3/id-verification/wallets/verifications/{request_id}/response/``
+
+        Args:
+          request_id: The request_id the start endpoint returned.
+          response: Exactly what the wallet returned: {protocol, data} of the DigitalCredential from navigator.credentials.get, or the parsed credentialJson of Android's DigitalCredential. Encrypted to Didit; do not alter it.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "DigitalIdWalletApiWalletVerificationResponse",
+            await self._client.request(
+                "post",
+                "/v3/id-verification/wallets/verifications/{request_id}/response/",
+                cast_to=DigitalIdWalletApiWalletVerificationResponse,
+                path_params={"request_id": request_id},
+                auth="api_key",
+                body={"response": response},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def start_google_wallet(
+        self,
+        *,
+        country: DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum,
+        origin: str,
+        vendor_data: str | None | NotGiven = NOT_GIVEN,
+        metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        sandbox_scenario: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> DigitalIdWalletApiWalletVerificationResponse:
+        """Start Google Wallet verification.
+
+        Start a Google Wallet sign-in (Google Wallet (ID pass) and US state issuers (mobile driving licence); USA, GBR, BRA, SGP, TWN) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=request_digital_credential with a request Didit signed for your application, usable only from origin. In a user gesture there, pass next_action.digital_credentials.request to navigator.credentials.get({digital: ...}) (or to Android Credential Manager as GetDigitalCredentialOption requestJson), then POST what the wallet returns to /v3/id-verification/wallets/verifications/{request_id}/response/. The browser offers its own QR code when the wallet is on another device. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider.
+
+        ``POST /v3/id-verification/wallets/google-wallet/``
+
+        Args:
+          country: ISO 3166-1 alpha-3 country of the Google Wallet identity. * `USA` - USA * `GBR` - GBR * `BRA` - BRA * `SGP` - SGP * `TWN` - TWN
+          origin: Where your page or app will ask the wallet: the https origin of your page (its host must be in the application's allowed_return_hosts, or be its white-label domain), e.g. https://app.example.com, or android:apk-key-hash:<base64 SHA-256 of your app's signing certificate, no padding>. The wallet refuses the request anywhere else.
+          vendor_data: Your own reference for this verification (e.g. your user id). Returned in results and webhooks.
+          metadata: Optional JSON object stored with the verification and returned in results and webhooks.
+          sandbox_scenario: Sandbox applications only: the simulated outcome - 'wallet_cancelled', 'wallet_timeout' or 'wallet_provider_error'; any other scenario (or none) verifies. Rejected on live applications. The full catalog is available at GET /v1/sandbox/scenarios/.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "DigitalIdWalletApiWalletVerificationResponse",
+            await self._client.request(
+                "post",
+                "/v3/id-verification/wallets/google-wallet/",
+                cast_to=DigitalIdWalletApiWalletVerificationResponse,
+                auth="api_key",
+                body={
+                    "country": country,
+                    "origin": origin,
+                    "vendor_data": vendor_data,
+                    "metadata": metadata,
+                    "sandbox_scenario": sandbox_scenario,
+                },
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class IdWalletsWithRawResponse:
     def __init__(self, resource: IdWallets) -> None:
@@ -3312,6 +3503,10 @@ class IdWalletsWithRawResponse:
         self.start_audkenni = to_raw_response_wrapper(resource.start_audkenni)
         self.start_connectid = to_raw_response_wrapper(resource.start_connectid)
         self.start_eudi = to_raw_response_wrapper(resource.start_eudi)
+        self.submit_verification_response = to_raw_response_wrapper(
+            resource.submit_verification_response
+        )
+        self.start_google_wallet = to_raw_response_wrapper(resource.start_google_wallet)
 
 
 class AsyncIdWalletsWithRawResponse:
@@ -3346,6 +3541,10 @@ class AsyncIdWalletsWithRawResponse:
         self.start_audkenni = async_to_raw_response_wrapper(resource.start_audkenni)
         self.start_connectid = async_to_raw_response_wrapper(resource.start_connectid)
         self.start_eudi = async_to_raw_response_wrapper(resource.start_eudi)
+        self.submit_verification_response = async_to_raw_response_wrapper(
+            resource.submit_verification_response
+        )
+        self.start_google_wallet = async_to_raw_response_wrapper(resource.start_google_wallet)
 
 
 class IdWalletsWithStreamingResponse:
@@ -3380,6 +3579,10 @@ class IdWalletsWithStreamingResponse:
         self.start_audkenni = to_streamed_response_wrapper(resource.start_audkenni)
         self.start_connectid = to_streamed_response_wrapper(resource.start_connectid)
         self.start_eudi = to_streamed_response_wrapper(resource.start_eudi)
+        self.submit_verification_response = to_streamed_response_wrapper(
+            resource.submit_verification_response
+        )
+        self.start_google_wallet = to_streamed_response_wrapper(resource.start_google_wallet)
 
 
 class AsyncIdWalletsWithStreamingResponse:
@@ -3420,3 +3623,7 @@ class AsyncIdWalletsWithStreamingResponse:
         self.start_audkenni = async_to_streamed_response_wrapper(resource.start_audkenni)
         self.start_connectid = async_to_streamed_response_wrapper(resource.start_connectid)
         self.start_eudi = async_to_streamed_response_wrapper(resource.start_eudi)
+        self.submit_verification_response = async_to_streamed_response_wrapper(
+            resource.submit_verification_response
+        )
+        self.start_google_wallet = async_to_streamed_response_wrapper(resource.start_google_wallet)

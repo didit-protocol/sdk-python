@@ -24,6 +24,21 @@ class PhoneCheckCodeParams(TypedDict, total=False):
     voip_number_action: Literal["NO_ACTION", "DECLINE"] | str
     """What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`."""
 
+    enable_enrichment: bool
+    """When `true`, also run phone intelligence on the number: a risk score, the line type, whether it was recently ported and a trust index. Billed as one `phone_intelligence_api` unit per request ($0.05 at list price) in addition to this endpoint's own price. The request returns `403` when your balance cannot cover it."""
+
+    phone_intelligence_score_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the phone intelligence risk score is above the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
+    phone_type_risk_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the number is a high-risk line type. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
+    recent_port_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the number was ported to another carrier recently. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
+    low_phone_trust_action: Literal["NO_ACTION", "DECLINE"] | str
+    """Action when the phone intelligence trust index is at or below the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`."""
+
     enable_social: bool
     """When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price."""
 

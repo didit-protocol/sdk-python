@@ -53,12 +53,15 @@ class Bank(SyncAPIResource):
         account: BankAccountCheckParamsAccount,
         holder: BankAccountCheckHolder,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
+        consent: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> BankAccountCheckResponse:
         """Check a bank account.
+
+        **Not available in production yet.** Bank Verification is switched off in production, so until it is switched on this endpoint answers `404` with `bank_verification_not_available`. Do not build on it yet. The rest of this description is what the endpoint does once it is available.
 
         Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.
 
@@ -70,7 +73,7 @@ class Bank(SyncAPIResource):
 
         **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
-        **Sandbox.** A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
+        **Sandbox.** Where Bank Verification is available, a sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
 
         **API keys.** A scoped API key needs write access to sessions.
 
@@ -81,6 +84,7 @@ class Bank(SyncAPIResource):
           account: The account the way its country writes it: an `iban`, or an `account_number` with the bank or branch code the country needs (`sort_code`, `routing_number`, `transit_institution`, `bsb`, `ifsc`, `bank_code` or `bic`). Mexico takes a `clabe` and Argentina a `cbu_cvu`, which already name the bank. A business account adds a `registration_id` where the country asks for one. Spaces, dashes and dots are ignored. Keys the country's check does not use are ignored; a key it needs and does not get is a `400` that names it.
           holder: The name the account is checked against. Send exactly one of `full_name` and `business_name`.
           vendor_data: Your own reference for this check, returned unchanged.
+          consent: Set to `true` when the account holder has explicitly consented to this check. Required in the countries whose account check needs that consent: without it the check is refused with a `400` whose `field` is `consent` and whose `reason` is `required`, and nothing is billed. Elsewhere it is optional, and Didit records it with the check's charge when you send it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -98,6 +102,7 @@ class Bank(SyncAPIResource):
                     "account": account,
                     "holder": holder,
                     "vendor_data": vendor_data,
+                    "consent": consent,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -130,12 +135,15 @@ class AsyncBank(AsyncAPIResource):
         account: BankAccountCheckParamsAccount,
         holder: BankAccountCheckHolder,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
+        consent: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> BankAccountCheckResponse:
         """Check a bank account.
+
+        **Not available in production yet.** Bank Verification is switched off in production, so until it is switched on this endpoint answers `404` with `bank_verification_not_available`. Do not build on it yet. The rest of this description is what the endpoint does once it is available.
 
         Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.
 
@@ -147,7 +155,7 @@ class AsyncBank(AsyncAPIResource):
 
         **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
-        **Sandbox.** A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
+        **Sandbox.** Where Bank Verification is available, a sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
 
         **API keys.** A scoped API key needs write access to sessions.
 
@@ -158,6 +166,7 @@ class AsyncBank(AsyncAPIResource):
           account: The account the way its country writes it: an `iban`, or an `account_number` with the bank or branch code the country needs (`sort_code`, `routing_number`, `transit_institution`, `bsb`, `ifsc`, `bank_code` or `bic`). Mexico takes a `clabe` and Argentina a `cbu_cvu`, which already name the bank. A business account adds a `registration_id` where the country asks for one. Spaces, dashes and dots are ignored. Keys the country's check does not use are ignored; a key it needs and does not get is a `400` that names it.
           holder: The name the account is checked against. Send exactly one of `full_name` and `business_name`.
           vendor_data: Your own reference for this check, returned unchanged.
+          consent: Set to `true` when the account holder has explicitly consented to this check. Required in the countries whose account check needs that consent: without it the check is refused with a `400` whose `field` is `consent` and whose `reason` is `required`, and nothing is billed. Elsewhere it is optional, and Didit records it with the check's charge when you send it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -175,6 +184,7 @@ class AsyncBank(AsyncAPIResource):
                     "account": account,
                     "holder": holder,
                     "vendor_data": vendor_data,
+                    "consent": consent,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

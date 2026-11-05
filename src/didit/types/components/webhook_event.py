@@ -21,6 +21,7 @@ WebhookEvent: TypeAlias = (
         "transaction.status.updated",
         "travel_rule.status.updated",
         "workflow.compliance_changed",
+        "transaction_rule_suggestions.created",
         "auth.signup",
         "auth.login",
         "auth.login_failed",

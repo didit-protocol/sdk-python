@@ -21,7 +21,10 @@ def test_kyb_list_shareholders() -> None:
             path="/v3/kyb/shareholders/",
             api="verification",
             auth="api_key",
-            json_body={"kyb_response_id": "69aeeb95febb0f1704042259"},
+            json_body={
+                "kyb_response_id": "69aeeb95febb0f1704042259",
+                "vendor_data": "company-1234",
+            },
             status=200,
             response_json={
                 "request_id": "9d4f2c7a-1b3e-4a5c-8d6f-0e9a8b7c6d5e",
@@ -94,24 +97,7 @@ def test_kyb_list_shareholders() -> None:
                         "next_account": "26 February 2026",
                         "due_by_date": "26 August 2026",
                     },
-                    "registry_data": {
-                        "name": "Tesco PLC",
-                        "registration_number": "00445790",
-                        "status": "active",
-                        "type": "Public Limited Company",
-                        "incorporation_date": "1947-11-27",
-                        "tax_number": "GB412 8925 93",
-                        "country_code": "GB",
-                        "fetch_status": "resolved",
-                        "industries_detail": [
-                            {
-                                "code": "47110",
-                                "name": "Retail Sale In Non-specialised Stores With Food, Beverages Or Tobacco Predominating",
-                                "description": None,
-                                "meta_detail": [],
-                            }
-                        ],
-                    },
+                    "registry_data": {},
                     "user_provided_data": None,
                     "confirmed_by_user_at": None,
                     "last_console_edit_at": None,
@@ -122,8 +108,12 @@ def test_kyb_list_shareholders() -> None:
                 "created_at": "2026-06-11T10:45:00.000000+00:00",
             },
         ),
-        lambda c: c.kyb.list_shareholders(kyb_response_id="69aeeb95febb0f1704042259"),
-        lambda c: c.kyb.list_shareholders(kyb_response_id="69aeeb95febb0f1704042259"),
+        lambda c: c.kyb.list_shareholders(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
+        lambda c: c.kyb.list_shareholders(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
         lambda r: (
             (isinstance(r, KybListShareholdersResponse))
             or (isinstance(r, KybListShareholdersResponse202))
@@ -143,7 +133,10 @@ def test_kyb_list_ubos() -> None:
             path="/v3/kyb/ubo/",
             api="verification",
             auth="api_key",
-            json_body={"kyb_response_id": "69aeeb95febb0f1704042259"},
+            json_body={
+                "kyb_response_id": "69aeeb95febb0f1704042259",
+                "vendor_data": "company-1234",
+            },
             status=200,
             response_json={
                 "request_id": "9d4f2c7a-1b3e-4a5c-8d6f-0e9a8b7c6d5e",
@@ -217,22 +210,7 @@ def test_kyb_list_ubos() -> None:
                         "due_by_date": "26 August 2026",
                     },
                     "registry_data": {
-                        "name": "Tesco PLC",
-                        "registration_number": "00445790",
-                        "status": "active",
-                        "type": "Public Limited Company",
-                        "incorporation_date": "1947-11-27",
-                        "tax_number": "GB412 8925 93",
-                        "country_code": "GB",
-                        "fetch_status": "resolved",
-                        "industries_detail": [
-                            {
-                                "code": "47110",
-                                "name": "Retail Sale In Non-specialised Stores With Food, Beverages Or Tobacco Predominating",
-                                "description": None,
-                                "meta_detail": [],
-                            }
-                        ],
+                        "ubo_resolution": {"parent_chain": [], "subsidiaries": [], "unresolved": []}
                     },
                     "user_provided_data": None,
                     "confirmed_by_user_at": None,
@@ -244,8 +222,12 @@ def test_kyb_list_ubos() -> None:
                 "created_at": "2026-06-11T10:45:00.000000+00:00",
             },
         ),
-        lambda c: c.kyb.list_ubos(kyb_response_id="69aeeb95febb0f1704042259"),
-        lambda c: c.kyb.list_ubos(kyb_response_id="69aeeb95febb0f1704042259"),
+        lambda c: c.kyb.list_ubos(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
+        lambda c: c.kyb.list_ubos(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
         lambda r: (isinstance(r, KybListUbosResponse)) or (isinstance(r, KybListUbosResponse202)),
         lambda r: (isinstance(r, KybListUbosResponse)) or (isinstance(r, KybListUbosResponse202)),
     )
@@ -259,7 +241,12 @@ def test_kyb_search() -> None:
             path="/v3/kyb/search/",
             api="verification",
             auth="api_key",
-            json_body={"country_code": "GB"},
+            json_body={
+                "country_code": "GB",
+                "name": "Tesco",
+                "search_type": "contains",
+                "vendor_data": "company-1234",
+            },
             status=200,
             response_json={
                 "request_id": "0c7e9a40-3a13-4f7e-8a44-9d2e2f1c5b6a",
@@ -293,8 +280,12 @@ def test_kyb_search() -> None:
                 "created_at": "2026-06-11T10:40:00.000000+00:00",
             },
         ),
-        lambda c: c.kyb.search(country_code="GB"),
-        lambda c: c.kyb.search(country_code="GB"),
+        lambda c: c.kyb.search(
+            country_code="GB", name="Tesco", search_type="contains", vendor_data="company-1234"
+        ),
+        lambda c: c.kyb.search(
+            country_code="GB", name="Tesco", search_type="contains", vendor_data="company-1234"
+        ),
         lambda r: isinstance(r, KybSearchResponse),
         lambda r: isinstance(r, KybSearchResponse),
     )
@@ -308,7 +299,10 @@ def test_kyb_select() -> None:
             path="/v3/kyb/select/",
             api="verification",
             auth="api_key",
-            json_body={"kyb_response_id": "69aeeb95febb0f1704042259"},
+            json_body={
+                "kyb_response_id": "69aeeb95febb0f1704042259",
+                "vendor_data": "company-1234",
+            },
             status=200,
             response_json={
                 "request_id": "9d4f2c7a-1b3e-4a5c-8d6f-0e9a8b7c6d5e",
@@ -381,24 +375,7 @@ def test_kyb_select() -> None:
                         "next_account": "26 February 2026",
                         "due_by_date": "26 August 2026",
                     },
-                    "registry_data": {
-                        "name": "Tesco PLC",
-                        "registration_number": "00445790",
-                        "status": "active",
-                        "type": "Public Limited Company",
-                        "incorporation_date": "1947-11-27",
-                        "tax_number": "GB412 8925 93",
-                        "country_code": "GB",
-                        "fetch_status": "resolved",
-                        "industries_detail": [
-                            {
-                                "code": "47110",
-                                "name": "Retail Sale In Non-specialised Stores With Food, Beverages Or Tobacco Predominating",
-                                "description": None,
-                                "meta_detail": [],
-                            }
-                        ],
-                    },
+                    "registry_data": {},
                     "user_provided_data": None,
                     "confirmed_by_user_at": None,
                     "last_console_edit_at": None,
@@ -409,8 +386,12 @@ def test_kyb_select() -> None:
                 "created_at": "2026-06-11T10:45:00.000000+00:00",
             },
         ),
-        lambda c: c.kyb.select(kyb_response_id="69aeeb95febb0f1704042259"),
-        lambda c: c.kyb.select(kyb_response_id="69aeeb95febb0f1704042259"),
+        lambda c: c.kyb.select(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
+        lambda c: c.kyb.select(
+            kyb_response_id="69aeeb95febb0f1704042259", vendor_data="company-1234"
+        ),
         lambda r: isinstance(r, KybSelectResponse),
         lambda r: isinstance(r, KybSelectResponse),
     )

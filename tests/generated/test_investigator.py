@@ -33,7 +33,7 @@ def test_investigator_accept_run() -> None:
             path="/v3/investigator/runs/00000000-0000-4000-8000-000000000001/accept/",
             api="verification",
             auth="api_key",
-            json_body={"narrative": "sample"},
+            json_body={"send_email": False},
             status=200,
             response_json={
                 "outcome": "accepted",
@@ -69,10 +69,10 @@ def test_investigator_accept_run() -> None:
             strict_type=InvestigatorDecision,
         ),
         lambda c: c.investigator.accept_run(
-            "00000000-0000-4000-8000-000000000001", narrative="sample"
+            "00000000-0000-4000-8000-000000000001", send_email=False
         ),
         lambda c: c.investigator.accept_run(
-            "00000000-0000-4000-8000-000000000001", narrative="sample"
+            "00000000-0000-4000-8000-000000000001", send_email=False
         ),
         lambda r: isinstance(r, InvestigatorDecision),
         lambda r: isinstance(r, InvestigatorDecision),
@@ -319,7 +319,11 @@ def test_investigator_override_run() -> None:
             path="/v3/investigator/runs/00000000-0000-4000-8000-000000000001/override/",
             api="verification",
             auth="api_key",
-            json_body={"action": "approve", "category": "missing_context", "reason": "samplexxxx"},
+            json_body={
+                "action": "decline",
+                "category": "evidence_misread",
+                "reason": "The proof of address is older than three months.",
+            },
             status=200,
             response_json={
                 "outcome": "accepted",
@@ -356,15 +360,15 @@ def test_investigator_override_run() -> None:
         ),
         lambda c: c.investigator.override_run(
             "00000000-0000-4000-8000-000000000001",
-            action="approve",
-            category="missing_context",
-            reason="samplexxxx",
+            action="decline",
+            category="evidence_misread",
+            reason="The proof of address is older than three months.",
         ),
         lambda c: c.investigator.override_run(
             "00000000-0000-4000-8000-000000000001",
-            action="approve",
-            category="missing_context",
-            reason="samplexxxx",
+            action="decline",
+            category="evidence_misread",
+            reason="The proof of address is older than three months.",
         ),
         lambda r: isinstance(r, InvestigatorDecision),
         lambda r: isinstance(r, InvestigatorDecision),
@@ -636,7 +640,7 @@ def test_investigator_update_settings() -> None:
             path="/v3/investigator/settings/",
             api="verification",
             auth="api_key",
-            json_body={"stage": "none"},
+            json_body={"stage": "shadow", "monthly_spend_limit": "500.00"},
             status=200,
             response_json={
                 "stage": "none",
@@ -655,8 +659,8 @@ def test_investigator_update_settings() -> None:
             },
             strict_type=InvestigatorSettings,
         ),
-        lambda c: c.investigator.update_settings(stage="none"),
-        lambda c: c.investigator.update_settings(stage="none"),
+        lambda c: c.investigator.update_settings(stage="shadow", monthly_spend_limit="500.00"),
+        lambda c: c.investigator.update_settings(stage="shadow", monthly_spend_limit="500.00"),
         lambda r: isinstance(r, InvestigatorSettings),
         lambda r: isinstance(r, InvestigatorSettings),
     )
