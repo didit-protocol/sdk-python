@@ -200,8 +200,8 @@ def test_release_notes_are_capped(openapi: pathlib.Path) -> None:
 
 # Detection rules (DESIGN 3.1) -------------------------------------------------------------
 
-OBJ = {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"]}
-STATUS = {"type": "string", "enum": ["a", "b"]}
+OBJ: dict[str, Any] = {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"]}
+STATUS: dict[str, Any] = {"type": "string", "enum": ["a", "b"]}
 
 
 def _diff(old: Any, new: Any, *, request: bool = False) -> list[tuple[str, str, bool]]:
