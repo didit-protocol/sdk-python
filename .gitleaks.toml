@@ -21,6 +21,16 @@ paths = [
 ]
 
 [[allowlists]]
+description = "The public sdk-python commits those fixtures come from, named in the classification tests"
+condition = "AND"
+paths = [
+  '''^codegen/tests/test_spec_sync\.py$''',
+]
+regexes = [
+  '''^(9fe57fc69299601e59cc7a64c1db370fea5c7461|e002a815773bbd1599256e2774046ee76520c6c8|fe9f57a1dfb6374bfd391750d2044fc7a206e4ea|ccc799410f82eee1c25c7ce5abc6caa53846be6b)$''',
+]
+
+[[allowlists]]
 description = "Synthetic webhook secrets used by the test suite"
 regexes = [
   '''^whsec_test_[A-Za-z0-9_]+$''',
