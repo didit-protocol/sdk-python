@@ -16,7 +16,7 @@ import json
 import pathlib
 import re
 import urllib.parse
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -65,31 +65,16 @@ REPLIES: dict[str, object] = {
 }
 
 
-def _resolve(node: Any) -> Any:
-    while isinstance(node, dict) and "$ref" in node:
-        node = DOCUMENT
-        for part in node_ref(node_ref_value := _pending.pop()).split("/"):
-            node = node[part]
-        del node_ref_value
-    return node
-
-
-def node_ref(ref: str) -> str:
-    return ref.removeprefix("#/")
-
-
-_pending: list[str] = []
-
-
 def _schema(op: dict[str, Any]) -> dict[str, Any]:
-    content = (op.get("requestBody") or {}).get("content") or {}
-    for media in content.values():
-        schema = media.get("schema") or {}
+    """The request body schema of ``op`` (its first media type), references followed."""
+    for media in ((op.get("requestBody") or {}).get("content") or {}).values():
+        schema: dict[str, Any] = media.get("schema") or {}
         while "$ref" in schema:
-            schema = DOCUMENT
-            for part in media["schema"]["$ref"].removeprefix("#/").split("/"):
-                schema = schema[part]
-        return dict(schema)
+            target: Any = DOCUMENT
+            for part in schema["$ref"].removeprefix("#/").split("/"):
+                target = target[part]
+            schema = target
+        return schema
     return {}
 
 
@@ -134,14 +119,14 @@ def _hidden() -> set[str]:
 
 
 def _public(cls: type) -> set[str]:
-    return {name for name, value in inspect.getmembers(cls) if not name.startswith("_") and callable(value)}  # fmt: skip
+    return {n for n, value in inspect.getmembers(cls) if not n.startswith("_") and callable(value)}
 
 
 @pytest.mark.parametrize("cls", [Authentication, AsyncAuthentication])
 def test_document_operations_equal_module_methods(cls: type) -> None:
     documented = set(OPERATIONS)
     expected = documented - FETCHED_BY_VERIFICATION
-    if FETCHED_BY_VERIFICATION <= documented:
+    if documented >= FETCHED_BY_VERIFICATION:
         expected |= VERIFIERS
     methods = _public(cls) - HELPERS
     assert not expected - methods, f"operations without a method: {sorted(expected - methods)}"
@@ -203,7 +188,7 @@ def key() -> SigningKey:
 
 
 @pytest.fixture
-def issuer(key: SigningKey) -> Iterator[FakeIssuer]:
+def issuer(key: SigningKey) -> FakeIssuer:
     issuer = FakeIssuer([key])
     for method, operation in OPERATIONS.items():
         if method not in FETCHED_BY_VERIFICATION:
@@ -213,7 +198,7 @@ def issuer(key: SigningKey) -> Iterator[FakeIssuer]:
                 operation["status"],
                 REPLIES.get(method),
             )
-    yield issuer
+    return issuer
 
 
 @pytest.mark.parametrize("method", sorted(OPERATIONS))

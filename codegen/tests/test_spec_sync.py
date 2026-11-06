@@ -235,7 +235,10 @@ def test_counted_in_requests_and_responses(request_side: bool) -> None:
     assert diff(OBJ, {"type": "object", "properties": {}}) == [("a", "removed", True)]
     assert diff(STATUS, {**STATUS, "enum": ["a"]}) == [("", 'enum value "b" removed', True)]
     nested = {"type": "array", "items": {"type": "object", "properties": {"s": STATUS}}}
-    narrowed = {"type": "array", "items": {"type": "object", "properties": {"s": {**STATUS, "enum": ["b"]}}}}
+    narrowed = {
+        "type": "array",
+        "items": {"type": "object", "properties": {"s": {**STATUS, "enum": ["b"]}}},
+    }
     assert diff(nested, narrowed) == [("[].s", 'enum value "a" removed', True)]  # fmt: skip
     # A union that loses a variant.
     two = {"oneOf": [OBJ, {**OBJ, "properties": {"b": {"type": "string"}}}]}

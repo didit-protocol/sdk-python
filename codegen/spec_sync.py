@@ -259,9 +259,7 @@ def _nullable(schema: Json, depth: int = 0) -> bool:
     members = schema.get("allOf")
     if "type" not in schema and members and all(_nullable(m, depth + 1) for m in members):
         return True
-    return any(
-        _nullable(v, depth + 1) for k in ("oneOf", "anyOf") for v in schema.get(k) or []
-    )
+    return any(_nullable(v, depth + 1) for k in ("oneOf", "anyOf") for v in schema.get(k) or [])
 
 
 def _single(schema: Json, depth: int = 0) -> Json:
@@ -384,7 +382,9 @@ def diff_schema(
     elif _nullable(old) and not _nullable(new):
         note("no longer accepts null" if request else "can no longer be null")
     # A plain schema is a union of one variant: [X, null] against X loses no variant.
-    sizes = {k: (len(_variants(old, k)) or 1, len(_variants(new, k)) or 1) for k in ("oneOf", "anyOf")}
+    sizes = {
+        k: (len(_variants(old, k)) or 1, len(_variants(new, k)) or 1) for k in ("oneOf", "anyOf")
+    }
     raw_old, raw_new = old, new
     old, new = _single(old), _single(new)
     old_kinds, new_kinds = _kinds(old), _kinds(new)
