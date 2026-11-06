@@ -398,10 +398,10 @@ def diff_schema(
             note("added (required)" if required else "added", required, _join(path, name))
         for name in sorted(set(old_props) & set(new_props)):
             at = _join(path, name)
-            if request and name in new_req and name not in old_req:
-                note("now required", True, at)
-            if not request and name in old_req and name not in new_req:
-                note("no longer always present", False, at)
+            if name in new_req and name not in old_req:
+                note("now required" if request else "now always present", request, at)
+            elif name in old_req and name not in new_req:
+                note("no longer required" if request else "no longer always present", False, at)
             diff_schema(
                 old_props[name], new_props[name], where, at,
                 request=request, out=out, depth=depth + 1,
