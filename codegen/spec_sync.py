@@ -640,7 +640,7 @@ def _diff_statuses(
     found: list[Change] = []
 
     def bodies(responses: dict[str, dict[str, Json]]) -> list[Json]:
-        return [_shape(content) for content in responses.values() if content]
+        return [_shape(content, names=True) for content in responses.values() if content]
 
     def returns_null(responses: dict[str, dict[str, Json]]) -> bool:
         return any(not content for content in responses.values())
@@ -650,14 +650,14 @@ def _diff_statuses(
             found.append(
                 Change("response", "", f"can now be null (status {status} has no body)", True)
             )
-        elif new[status] and _shape(new[status]) not in bodies(old):
+        elif new[status] and _shape(new[status], names=True) not in bodies(old):
             found.append(Change("response", "", f"status {status} added with another body"))
         else:
             found.append(Change("response", "", f"status {status} added"))
     for status in sorted(set(old) - set(new)):
         if not old[status] and bodies(new) and not returns_null(new):
             found.append(Change("response", "", f"can no longer be null (status {status} removed)"))
-        elif old[status] and _shape(old[status]) not in bodies(new):
+        elif old[status] and _shape(old[status], names=True) not in bodies(new):
             kind = f"type changed: status {status} removed, and no other status returns its body"
             found.append(Change("response", "", kind, True))
         else:
