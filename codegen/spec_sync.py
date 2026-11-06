@@ -383,6 +383,9 @@ def diff_schema(
         note("can now be null", True)
     elif _nullable(old) and not _nullable(new):
         note("no longer accepts null" if request else "can no longer be null")
+    # A plain schema is a union of one variant: [X, null] against X loses no variant.
+    sizes = {k: (len(_variants(old, k)) or 1, len(_variants(new, k)) or 1) for k in ("oneOf", "anyOf")}
+    raw_old, raw_new = old, new
     old, new = _single(old), _single(new)
     old_kinds, new_kinds = _kinds(old), _kinds(new)
     if old_kinds and new_kinds and old_kinds != new_kinds:
@@ -430,13 +433,14 @@ def diff_schema(
                 new_sub if isinstance(new_sub, dict) else {},
                 where, path + suffix, request=request, out=out, depth=depth + 1,
             )  # fmt: skip
-    for keyword in ("oneOf", "anyOf"):
-        old_vars, new_vars = _variants(old, keyword), _variants(new, keyword)
-        if len(new_vars) < len(old_vars):
-            note(f"type changed: {len(old_vars) - len(new_vars)} {keyword} variant(s) removed", True)
-        elif len(new_vars) > len(old_vars):
-            note(f"{len(new_vars) - len(old_vars)} {keyword} variant(s) added")
-        else:
+    for keyword, (old_size, new_size) in sizes.items():
+        if new_size < old_size:
+            note(f"type changed: {old_size - new_size} {keyword} variant(s) removed", True)
+        elif new_size > old_size:
+            note(f"{new_size - old_size} {keyword} variant(s) added")
+        elif old_size > 1:
+            # One variant each was compared as the schema itself, above.
+            old_vars, new_vars = _variants(raw_old, keyword), _variants(raw_new, keyword)
             for index, (a, b) in enumerate(zip(old_vars, new_vars, strict=True)):
                 diff_schema(
                     a, b, where, f"{path}({keyword} {index + 1})",
