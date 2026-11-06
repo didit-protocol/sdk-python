@@ -671,16 +671,13 @@ class SyncResult:
 
     def commit_message(self) -> str:
         """What release-please reads (the pull request's ``BEGIN_COMMIT_OVERRIDE`` block):
-        the sync, then one nested ``api(spec):`` commit per breaking change. A type
-        outside release-please's own list only splits off in a nested block."""
-        lines = [f"api(spec): {c.describe()}" for c in self.breaking[:MAX_RELEASE_NOTES]]
-        if len(self.breaking) > MAX_RELEASE_NOTES:
-            more = len(self.breaking) - MAX_RELEASE_NOTES
-            lines.append(f"api(spec): {more} more, listed in the spec sync pull request")
+        the sync, then one nested ``api(spec):`` commit per breaking change, every one of
+        them. A type outside release-please's own list only splits off in a nested block."""
         message = f"{self.commit_type}(spec): sync API spec {self.date}\n"
-        if lines:
+        if self.breaking:
             message += "\n" + "".join(
-                f"BEGIN_NESTED_COMMIT\n{line}\nEND_NESTED_COMMIT\n" for line in lines
+                f"BEGIN_NESTED_COMMIT\napi(spec): {c.describe()}\nEND_NESTED_COMMIT\n"
+                for c in self.breaking
             )
         return message
 
