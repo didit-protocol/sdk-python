@@ -917,13 +917,12 @@ def sync(
     # feat when a caller can observe anything: the documents without documentation, or
     # the effective naming (upstream adopting an overlay entry unchanged is no change).
     breaking = list(dict.fromkeys(breaking))
-    observable_change = bool(added or removed) or any(
-        observable(old_docs[name]) != observable(new_docs[name]) for name in changed_files
+    observable_change = (
+        bool(breaking or added or removed)
+        or any(old_naming(key) != new_naming(key) for key in common)
+        or any(observable(old_docs[n]) != observable(new_docs[n]) for n in changed_files)
     )
-    observable_change = observable_change or any(
-        old_naming(key) != new_naming(key) for key in common
-    )
-    commit_type = "feat" if breaking or observable_change else "chore"
+    commit_type = "feat" if observable_change else "chore"
     if commit_type == "chore":
         release = (
             "`chore(spec)`: only descriptions, examples or other documentation changed, so this "
