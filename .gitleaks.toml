@@ -10,7 +10,14 @@ description = "Upstream copies, synced byte for byte by the spec sync workflow a
 paths = [
   '''^openapi/verification\.json$''',
   '''^openapi/account\.json$''',
+  '''^openapi/authentication\.json$''',
   '''^openapi/webhook-vectors\.json$''',
+]
+
+[[allowlists]]
+description = "Earlier upstream copies of openapi/verification.json, pinned by commit for the spec sync classification tests"
+paths = [
+  '''^codegen/tests/fixtures/verification-[0-9a-f]{40}\.json$''',
 ]
 
 [[allowlists]]
