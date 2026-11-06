@@ -77,6 +77,8 @@ include = [
   "/LICENSE",
   "/CHANGELOG.md",
 ]
+# Pinned copies of earlier upstream documents (23 MB) for the spec sync tests in the repository.
+exclude = ["/codegen/tests/fixtures"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "codegen/tests"]

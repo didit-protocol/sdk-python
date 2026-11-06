@@ -3,31 +3,43 @@
 
     uv run python codegen/spec_sync.py --summary spec-sync-summary.md
 
-Downloads https://docs.didit.me/openapi-25.json and openapi-auth.json, and when
-either changed:
+Downloads https://docs.didit.me/openapi-25.json, openapi-auth.json and
+openapi-authentication.json, and when any of them changed:
 
 - checks that each download is an OpenAPI 3 document with paths, and writes
   nothing otherwise;
-- writes them byte for byte to ``openapi/verification.json`` / ``account.json``
-  and records URL, SHA-256 and fetch time in ``openapi/SOURCE.json``;
+- writes them byte for byte to ``openapi/verification.json`` / ``account.json`` /
+  ``authentication.json`` and records URL, SHA-256 and fetch time in
+  ``openapi/SOURCE.json``;
 - drops ``overlay.json`` entries that upstream now carries as ``x-didit-sdk``;
 - never deletes a public method silently: a server method whose operation was
   removed, or whose naming changed upstream (a rename), is recorded, fully
   dereferenced, in ``openapi/deprecated-operations.json``, so the SDK keeps it
   as a deprecated method until the next minor version (``remove_in``). An
-  operation whose SDK name reappears on another path counts as moved, not removed;
-- writes a Markdown summary of added, removed, renamed and changed operations
-  and schemas. Changes are compared field by field, nested objects, arrays,
-  types, enums, nullability and required fields included, and every change
-  that can break code written against the SDK is listed under "Breaking changes".
+  operation whose SDK name reappears on another path counts as moved, not removed.
+  Nothing is generated or deprecated from ``authentication.json``: that module is
+  hand-written (DESIGN section 10) and a contract test holds it to the document;
+- picks the commit type (DESIGN sections 3.1 and 13): ``feat`` when anything a
+  caller can observe changed, ``chore`` when only documentation did. Never ``!``
+  or a ``BREAKING CHANGE:`` footer: a change that mirrors the API is a minor version;
+- writes a Markdown summary that opens with "Breaking changes", every change that
+  can break typed code (a field or parameter whose type changed or that can now be
+  null, a removed operation, field or enum value, a newly required parameter or
+  request field) in parameters, request bodies and 2xx responses, following
+  ``$ref``s and array items, then lists added, removed, renamed and changed
+  operations and schemas;
+- writes the commit message release-please reads (``--commit-message``): the sync
+  line, then one nested ``api(spec):`` commit per breaking change, which
+  ``release-please-config.json`` lists under "API changes that can break typed code".
 
-It prints ``changed=true|false`` to ``$GITHUB_OUTPUT`` when that is set. The
-generator, not this script, regenerates the code.
+It prints ``changed``, ``date`` and ``type`` (feat or chore) to ``$GITHUB_OUTPUT``
+when that is set. The generator, not this script, regenerates the code.
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime as dt
 import hashlib
 import json
@@ -42,12 +54,47 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 UPSTREAM = {
     "verification.json": "https://docs.didit.me/openapi-25.json",
     "account.json": "https://docs.didit.me/openapi-auth.json",
+    "authentication.json": "https://docs.didit.me/openapi-authentication.json",
 }
-PREFIXES = {"verification.json": "", "account.json": "account "}
+PREFIXES = {
+    "verification.json": "",
+    "account.json": "account ",
+    "authentication.json": "authentication ",
+}
+# Documents the generator never reads: their module is hand-written (DESIGN section 10).
+HAND_WRITTEN = frozenset({"authentication.json"})
 METHODS = ("get", "put", "post", "delete", "patch", "head", "options")
-# Keys that document a schema without changing what is sent or received.
-DOC_KEYS = frozenset({"description", "summary", "title", "example", "examples", "externalDocs"})
+# Keys that document without changing what is sent or received. In a map of names
+# (NAME_MAPS) a key is a name: a property called "description" is a field.
+DOC_KEYS = frozenset(
+    {"description", "summary", "title", "example", "examples", "externalDocs", "tags"}
+)
+NAME_MAPS = frozenset(
+    {
+        "properties",
+        "patternProperties",
+        "paths",
+        "schemas",
+        "responses",
+        "parameters",
+        "requestBodies",
+        "headers",
+        "securitySchemes",
+        "content",
+        "encoding",
+        "variables",
+        "mapping",
+        "x-webhooks",
+    }
+)
+# The extension a caller can observe (the webhook events). Every other x- key documents;
+# x-didit-sdk is compared as the effective naming, together with overlay.json.
+OBSERVABLE_EXTENSIONS = frozenset({"x-webhooks"})
 MAX_NOTES = 25
+MAX_DEPTH = 32
+# Lines a sync adds to the release notes; the pull request lists every breaking change.
+MAX_RELEASE_NOTES = 100
+NO_DIFFERENCE = "descriptions, examples or other details changed"
 Json = Any
 
 
@@ -121,31 +168,168 @@ def operations(doc: Json, prefix: str) -> dict[str, Json]:
     return out
 
 
-# Schema comparison ----------------------------------------------------------------------
+# What a caller can observe ----------------------------------------------------------------
 
 
-def _shape(node: Json) -> Json:
-    """``node`` without documentation, so that only what is sent or received compares."""
+def _shape(node: Json, names: bool = False) -> Json:
+    """``node`` without documentation, so that only what is sent or received compares.
+
+    ``names`` marks a map whose keys are names (properties, paths, status codes...),
+    which all stay. ``required`` and ``type`` lists compare in any order.
+    """
     if isinstance(node, dict):
-        return {
-            k: _shape(v)
-            for k, v in node.items()
-            if k not in DOC_KEYS and not str(k).startswith("x-")
-        }
+        out: dict[str, Json] = {}
+        for k, v in node.items():
+            if not names and (
+                k in DOC_KEYS or (str(k).startswith("x-") and k not in OBSERVABLE_EXTENSIONS)
+            ):
+                continue
+            if not names and k in ("required", "type") and isinstance(v, list):
+                out[k] = sorted(v, key=str)
+            else:
+                out[k] = _shape(v, not names and k in NAME_MAPS)
+        return out
     if isinstance(node, list):
         return [_shape(v) for v in node]
     return node
 
 
-def _types(schema: Json) -> set[str]:
+def observable(doc: Json) -> Json:
+    """What a caller can observe in a document: no documentation, no ``info`` and no
+    ``x-didit-sdk`` (the sync compares the effective naming instead)."""
+    return _shape({k: v for k, v in doc.items() if k != "info"})
+
+
+# Schema comparison ----------------------------------------------------------------------
+
+
+@dataclasses.dataclass(frozen=True)
+class Change:
+    """One difference of an operation; ``breaking`` when it is in the DESIGN 3.1 list."""
+
+    where: str  # "response", "request body", "parameter `limit` (query)", "operation"
+    path: str  # the field, for example "registry_checks[].company.registry_data"; "" for all
+    kind: str  # "can now be null", "type changed from string to object", "removed", ...
+    breaking: bool = False
+
+    def text(self) -> str:
+        target = f"{self.where} `{self.path}`" if self.path else self.where
+        return f"{target}: {self.kind}"
+
+
+@dataclasses.dataclass(frozen=True)
+class BreakingChange:
+    """A change that can break typed code, as the pull request and the release notes list it."""
+
+    operation: str
+    where: str
+    path: str
+    kind: str
+
+    def describe(self) -> str:
+        # No "<" or ">": release-please escapes them in the release notes.
+        target = " ".join(p for p in (self.where, f"`{self.path}`" if self.path else "") if p)
+        return f"`{self.operation}`{' ' + target if target else ''}: {self.kind}"
+
+
+def _null_only(schema: Json) -> bool:
+    return isinstance(schema, dict) and (
+        schema.get("type") == "null" or schema.get("enum") == [None]
+    )
+
+
+def _variants(schema: Json, keyword: str | None = None) -> list[Json]:
+    """The oneOf/anyOf variants other than null (of ``keyword``, or of both)."""
+    keywords = (keyword,) if keyword else ("oneOf", "anyOf")
+    return [v for k in keywords for v in schema.get(k) or [] if not _null_only(v)]
+
+
+def _nullable(schema: Json, depth: int = 0) -> bool:
+    """Whether ``schema`` accepts null: a null type, ``nullable``, null in its enum, or a
+    null or nullable oneOf/anyOf variant."""
+    if not isinstance(schema, dict) or depth > MAX_DEPTH:
+        return False
     raw = schema.get("type")
-    types = set(raw) if isinstance(raw, list) else ({raw} if isinstance(raw, str) else set())
+    if raw == "null" or (isinstance(raw, list) and "null" in raw):
+        return True
     if schema.get("nullable") is True:
-        types.add("null")
-    for variant in schema.get("anyOf", []) + schema.get("oneOf", []):
-        if isinstance(variant, dict) and variant.get("type") == "null":
-            types.add("null")
-    return types
+        return True
+    if isinstance(schema.get("enum"), list) and None in schema["enum"]:
+        return True
+    members = schema.get("allOf")
+    if "type" not in schema and members and all(_nullable(m, depth + 1) for m in members):
+        return True
+    return any(_nullable(v, depth + 1) for k in ("oneOf", "anyOf") for v in schema.get(k) or [])
+
+
+def _single(schema: Json, depth: int = 0) -> Json:
+    """``schema`` read as one type: ``allOf`` members merged into it, and a oneOf/anyOf
+    with a single non-null variant replaced by that variant, so that ``anyOf: [X, null]``
+    reads as a nullable X rather than as X's fields removed."""
+    if not isinstance(schema, dict) or depth > MAX_DEPTH:
+        return schema
+    members = schema.get("allOf")
+    if isinstance(members, list) and all(isinstance(m, dict) for m in members):
+        merged = {k: v for k, v in schema.items() if k != "allOf"}
+        for member in members:
+            for key, value in _single(member, depth + 1).items():
+                if key == "properties" and isinstance(value, dict):
+                    merged["properties"] = {**value, **(merged.get("properties") or {})}
+                elif key == "required" and isinstance(value, list):
+                    merged["required"] = sorted({*(merged.get("required") or []), *value})
+                else:
+                    merged.setdefault(key, value)
+        schema = merged
+    variants = _variants(schema)
+    if len(variants) != 1 or not isinstance(variants[0], dict):
+        return schema
+    rest = {k: v for k, v in schema.items() if k not in ("oneOf", "anyOf")}
+    return _single({**variants[0], **rest}, depth + 1)
+
+
+def _json_type(value: Json) -> str:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    return "array" if isinstance(value, list) else "object"
+
+
+def _kinds(schema: Json, depth: int = 0) -> frozenset[str]:
+    """The JSON types ``schema`` allows besides null, inferred when it has no ``type``
+    (a union allows its variants' types); empty when it does not say."""
+    if not isinstance(schema, dict) or depth > MAX_DEPTH:
+        return frozenset()
+    raw = schema.get("type")
+    kinds = set(raw) if isinstance(raw, list) else ({raw} if isinstance(raw, str) else set())
+    kinds.discard("null")
+    if kinds:
+        return frozenset(kinds)
+    if any(k in schema for k in ("properties", "additionalProperties", "patternProperties")):
+        return frozenset({"object"})
+    if "items" in schema:
+        return frozenset({"array"})
+    variants = _variants(schema)
+    if variants:
+        found = [_kinds(v, depth + 1) for v in variants]
+        return frozenset().union(*found) if all(found) else frozenset()
+    for member in schema.get("allOf") or []:
+        kinds |= _kinds(member, depth + 1)
+    if not kinds:
+        values = schema["enum"] if isinstance(schema.get("enum"), list) else []
+        if "const" in schema:
+            values = [schema["const"]]
+        kinds = {_json_type(v) for v in values if v is not None}
+    return frozenset(kinds)
+
+
+def _enum(schema: Json) -> list[Json] | None:
+    values = schema.get("enum")
+    return [v for v in values if v is not None] if isinstance(values, list) else None
 
 
 def _object_props(schema: Json) -> tuple[dict[str, Json], set[str]]:
@@ -157,189 +341,227 @@ def _object_props(schema: Json) -> tuple[dict[str, Json], set[str]]:
         if not isinstance(cur, dict):
             continue
         props.update(cur.get("properties") or {})
-        required |= set(cur.get("required") or [])
+        required |= {name for name in cur.get("required") or [] if isinstance(name, str)}
         stack.extend(cur.get("allOf") or [])
     return props, required
 
 
-def _variants(schema: Json, keyword: str) -> list[Json]:
-    return [
-        v
-        for v in schema.get(keyword) or []
-        if not (isinstance(v, dict) and v.get("type") == "null")
-    ]
+def _join(path: str, name: str) -> str:
+    return f"{path}.{name}" if path else name
 
 
 def diff_schema(
     old: Json,
     new: Json,
     where: str,
+    path: str = "",
     *,
     request: bool,
-    notes: list[tuple[str, bool]],
+    out: list[Change],
     depth: int = 0,
 ) -> None:
-    """Append ``(note, breaking)`` for every difference between two dereferenced schemas.
+    """Append a :class:`Change` for every difference between two dereferenced schemas.
 
-    ``request`` tells which side the schema is on: removing an enum value breaks
-    callers that send it, while a response enum is open (DESIGN 5.1) and gaining
-    or losing a value breaks nobody; a field that becomes required breaks callers,
-    a response field that is no longer always present breaks readers.
+    Breaking (DESIGN 3.1, the same in requests and responses): a type change in either
+    direction, a value that can now be null, a removed field, enum value or union
+    variant, and in a request (``request``) a field that is newly required. Everything
+    else is listed, not counted.
     """
-    if depth > 16 or _shape(old) == _shape(new):
+    if depth > MAX_DEPTH or _shape(old) == _shape(new):
         return
-    if not isinstance(old, dict) or not isinstance(new, dict):
-        notes.append((f"{where}: schema replaced", True))
-        return
-    old_types, new_types = _types(old), _types(new)
-    old_plain, new_plain = old_types - {"null"}, new_types - {"null"}
-    if old_plain and new_plain and old_plain != new_plain:
-        widened = old_plain == {"integer"} and new_plain == {"number"}
-        narrowed = old_plain == {"number"} and new_plain == {"integer"}
-        harmless = (request and widened) or (not request and narrowed)
-        notes.append(
-            (
-                f"{where}: type {'/'.join(sorted(old_plain))} -> {'/'.join(sorted(new_plain))}",
-                not harmless,
-            )
-        )
-        return
-    if "null" in new_types and "null" not in old_types and not request:
-        notes.append((f"{where}: can now be null", True))
-    if "null" in old_types and "null" not in new_types and request:
-        notes.append((f"{where}: no longer accepts null", True))
+    start = len(out)
 
-    old_enum, new_enum = old.get("enum"), new.get("enum")
-    if isinstance(old_enum, list) and isinstance(new_enum, list):
-        gone = [v for v in old_enum if v not in new_enum]
+    def note(kind: str, breaking: bool = False, at: str = path) -> None:
+        out.append(Change(where, at, kind, breaking))
+
+    if not isinstance(old, dict) or not isinstance(new, dict):
+        note("schema replaced", True)
+        return
+    if _nullable(new) and not _nullable(old):
+        note("can now be null", True)
+    elif _nullable(old) and not _nullable(new):
+        note("no longer accepts null" if request else "can no longer be null")
+    # A plain schema is a union of one variant: [X, null] against X loses no variant.
+    sizes = {
+        k: (len(_variants(old, k)) or 1, len(_variants(new, k)) or 1) for k in ("oneOf", "anyOf")
+    }
+    raw_old, raw_new = old, new
+    old, new = _single(old), _single(new)
+    old_kinds, new_kinds = _kinds(old), _kinds(new)
+    if old_kinds and new_kinds and old_kinds != new_kinds:
+        before, after = " or ".join(sorted(old_kinds)), " or ".join(sorted(new_kinds))
+        note(f"type changed from {before} to {after}", True)
+        return
+
+    old_enum, new_enum = _enum(old), _enum(new)
+    if old_enum is not None and new_enum is not None:
+        for value in old_enum:
+            if value not in new_enum:
+                note(f"enum value {json.dumps(value, ensure_ascii=False)} removed", True)
         added = [v for v in new_enum if v not in old_enum]
-        if gone:
-            notes.append((f"{where}: values removed {json.dumps(gone)}", request))
         if added:
-            notes.append((f"{where}: values added {json.dumps(added)}", False))
-    elif isinstance(new_enum, list) and not isinstance(old_enum, list):
-        notes.append((f"{where}: now limited to {json.dumps(new_enum)}", request))
-    elif isinstance(old_enum, list):
-        notes.append((f"{where}: no longer limited to fixed values", False))
+            note(f"enum values added {json.dumps(added, ensure_ascii=False)}")
+    elif new_enum is not None:
+        note(f"now limited to {json.dumps(new_enum, ensure_ascii=False)}")
+    elif old_enum is not None:
+        note("no longer limited to fixed values")
 
     old_props, old_req = _object_props(old)
     new_props, new_req = _object_props(new)
-    for name in sorted(set(old_props) - set(new_props)):
-        notes.append((f"{where}.{name}: removed", True))
-    for name in sorted(set(new_props) - set(old_props)):
-        required = request and name in new_req
-        notes.append((f"{where}.{name}: added{' (required)' if required else ''}", required))
-    for name in sorted(set(old_props) & set(new_props)):
-        if request and name in new_req and name not in old_req:
-            notes.append((f"{where}.{name}: now required", True))
-        if not request and name in old_req and name not in new_req:
-            notes.append((f"{where}.{name}: no longer always present", True))
-        diff_schema(
-            old_props[name], new_props[name], f"{where}.{name}",
-            request=request, notes=notes, depth=depth + 1,
-        )  # fmt: skip
-    for key, suffix in (("items", "[]"), ("additionalProperties", "{}")):
-        if isinstance(old.get(key), dict) or isinstance(new.get(key), dict):
+    # A union's fields live in its variants, compared below.
+    if (old_props and new_props) or not (_variants(old) or _variants(new)):
+        for name in sorted(set(old_props) - set(new_props)):
+            note("removed", True, _join(path, name))
+        for name in sorted(set(new_props) - set(old_props)):
+            required = request and name in new_req
+            note("added (required)" if required else "added", required, _join(path, name))
+        for name in sorted(set(old_props) & set(new_props)):
+            at = _join(path, name)
+            if name in new_req and name not in old_req:
+                note("now required" if request else "now always present", request, at)
+            elif name in old_req and name not in new_req:
+                note("no longer required" if request else "no longer always present", False, at)
             diff_schema(
-                old.get(key) or {}, new.get(key) or {}, f"{where}{suffix}",
-                request=request, notes=notes, depth=depth + 1,
+                old_props[name], new_props[name], where, at,
+                request=request, out=out, depth=depth + 1,
             )  # fmt: skip
-    for keyword in ("oneOf", "anyOf"):
-        old_vars, new_vars = _variants(old, keyword), _variants(new, keyword)
-        if len(new_vars) < len(old_vars):
-            notes.append(
-                (f"{where}: {len(old_vars) - len(new_vars)} {keyword} variant(s) removed", True)
-            )
-        elif len(new_vars) > len(old_vars):
-            notes.append(
-                (f"{where}: {len(new_vars) - len(old_vars)} {keyword} variant(s) added", False)
-            )
-        else:
+    for key, suffix in (("items", "[]"), ("additionalProperties", "{}")):
+        old_sub, new_sub = old.get(key), new.get(key)
+        if isinstance(old_sub, dict) or isinstance(new_sub, dict):
+            diff_schema(
+                old_sub if isinstance(old_sub, dict) else {},
+                new_sub if isinstance(new_sub, dict) else {},
+                where, path + suffix, request=request, out=out, depth=depth + 1,
+            )  # fmt: skip
+    for keyword, (old_size, new_size) in sizes.items():
+        if new_size < old_size:
+            note(f"type changed: {old_size - new_size} {keyword} variant(s) removed", True)
+        elif new_size > old_size:
+            note(f"{new_size - old_size} {keyword} variant(s) added")
+        elif old_size > 1:
+            # One variant each was compared as the schema itself, above.
+            old_vars, new_vars = _variants(raw_old, keyword), _variants(raw_new, keyword)
             for index, (a, b) in enumerate(zip(old_vars, new_vars, strict=True)):
                 diff_schema(
-                    a, b, f"{where}<{keyword} {index + 1}>",
-                    request=request, notes=notes, depth=depth + 1,
+                    a, b, where, f"{path}({keyword} {index + 1})",
+                    request=request, out=out, depth=depth + 1,
                 )  # fmt: skip
+    if len(out) == start:
+        note("other constraints changed (format, pattern, limits or default)")
 
 
-def _body(op: Json) -> tuple[set[str], Json]:
-    content = (op.get("requestBody") or {}).get("content") or {}
-    media = content.get("application/json") or content.get("multipart/form-data") or {}
-    return set(content), media.get("schema", {})
+def _parameter_where(key: tuple[str, str]) -> str:
+    return f"parameter `{key[1]}` ({key[0]})"
 
 
-def _success(op: Json) -> tuple[set[str], Json]:
-    for code, response in sorted((op.get("responses") or {}).items()):
-        if str(code).startswith("2"):
-            content = response.get("content") or {}
-            return set(content), (content.get("application/json") or {}).get("schema", {})
-    return set(), {}
+def _parameters(doc: Json, op: Json) -> dict[tuple[str, str], Json]:
+    found: dict[tuple[str, str], Json] = {}
+    for parameter in dereference(doc, op.get("parameters") or []):
+        if isinstance(parameter, dict):
+            found[(str(parameter.get("in", "")), str(parameter.get("name", "")))] = parameter
+    return found
 
 
-def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> tuple[list[str], bool]:
-    """Human-readable differences of one operation, and whether any is breaking."""
-    found: list[tuple[str, bool]] = []
-    old_params = {
-        (p.get("in"), p.get("name")): p for p in dereference(old_doc, old.get("parameters", []))
+def _content(doc: Json, node: Json) -> dict[str, Json]:
+    """The schema of each media type of a request body or response."""
+    node = dereference(doc, node)
+    content = node.get("content") if isinstance(node, dict) else None
+    if not isinstance(content, dict):
+        return {}
+    return {
+        media: entry.get("schema") or {}
+        for media, entry in content.items()
+        if isinstance(entry, dict)
     }
-    new_params = {
-        (p.get("in"), p.get("name")): p for p in dereference(new_doc, new.get("parameters", []))
+
+
+def _successes(doc: Json, op: Json) -> dict[str, dict[str, Json]]:
+    responses = op.get("responses") or {}
+    return {
+        str(status): _content(doc, responses[status])
+        for status in sorted(responses, key=str)
+        if str(status).startswith("2")
     }
-    for key in sorted(set(old_params) - set(new_params), key=str):
-        found.append((f"parameter removed: {key[1]} ({key[0]})", True))
-    for key in sorted(set(new_params) - set(old_params), key=str):
-        required = bool(new_params[key].get("required"))
-        found.append(
-            (f"parameter added: {key[1]} ({key[0]}{', required' if required else ''})", required)
+
+
+def _diff_content(
+    old: dict[str, Json], new: dict[str, Json], where: str, *, request: bool, out: list[Change]
+) -> None:
+    """Compare a body per media type; when none is shared, the first against the first,
+    so that a body that changes content type, appears or disappears is compared too."""
+    if old and new and set(old) != set(new):
+        out.append(
+            Change(where, "", f"content type {', '.join(sorted(old))} -> {', '.join(sorted(new))}")
         )
-    for key in sorted(set(old_params) & set(new_params), key=str):
-        if not old_params[key].get("required") and new_params[key].get("required"):
-            found.append((f"parameter now required: {key[1]}", True))
+    pairs = [(m, m) for m in sorted(set(old) & set(new))]
+    if not pairs and (old or new):
+        old = old or {"": {}}
+        new = new or {"": {}}
+        pairs = [(min(old), min(new))]
+    for before, after in pairs:
+        diff_schema(old[before], new[after], where, request=request, out=out)
+
+
+def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[Change]:
+    """Every difference of one operation (or of a method that moved to another one)."""
+    found: list[Change] = []
+    old_params, new_params = _parameters(old_doc, old), _parameters(new_doc, new)
+    for key in sorted(set(old_params) - set(new_params)):
+        found.append(Change(_parameter_where(key), "", "removed"))
+    for key in sorted(set(new_params) - set(old_params)):
+        required = new_params[key].get("required") is True
+        found.append(
+            Change(_parameter_where(key), "", "added (required)" if required else "added", required)
+        )
+    for key in sorted(set(old_params) & set(new_params)):
+        where = _parameter_where(key)
+        if old_params[key].get("required") is not True and new_params[key].get("required") is True:
+            found.append(Change(where, "", "now required", True))
         diff_schema(
-            old_params[key].get("schema") or {}, new_params[key].get("schema") or {},
-            f"parameter {key[1]}", request=True, notes=found,
+            old_params[key].get("schema") or {}, new_params[key].get("schema") or {}, where,
+            request=True, out=found,
         )  # fmt: skip
 
-    old_types, old_body = _body(old)
-    new_types, new_body = _body(new)
-    if old_types != new_types and old_types and new_types:
-        found.append(
-            (
-                f"request content type {sorted(old_types)} -> {sorted(new_types)}",
-                not old_types <= new_types,
-            )
-        )
-    if (old.get("requestBody") or {}).get("required") is not True and (
-        new.get("requestBody") or {}
-    ).get("required") is True:
-        found.append(("request body now required", True))
-    diff_schema(
-        dereference(old_doc, old_body), dereference(new_doc, new_body), "body",
-        request=True, notes=found,
+    old_body, new_body = old.get("requestBody") or {}, new.get("requestBody") or {}
+    if dereference(old_doc, old_body).get("required") is not True and (
+        dereference(new_doc, new_body).get("required") is True
+    ):
+        found.append(Change("request body", "", "now required"))
+    _diff_content(
+        _content(old_doc, old_body), _content(new_doc, new_body), "request body",
+        request=True, out=found,
     )  # fmt: skip
 
-    old_types, old_resp = _success(old)
-    new_types, new_resp = _success(new)
-    if old_types != new_types:
-        found.append((f"response content type {sorted(old_types)} -> {sorted(new_types)}", True))
-    diff_schema(
-        dereference(old_doc, old_resp), dereference(new_doc, new_resp), "response",
-        request=False, notes=found,
-    )  # fmt: skip
+    # Every 2xx response both have; when the only success status changed (200 to 201),
+    # the old body against the new one.
+    old_responses, new_responses = _successes(old_doc, old), _successes(new_doc, new)
+    statuses = [(s, s) for s in old_responses if s in new_responses]
+    if not statuses and len(old_responses) == 1 and len(new_responses) == 1:
+        statuses = [(next(iter(old_responses)), next(iter(new_responses)))]
+        found.append(Change("response", "", f"status {statuses[0][0]} -> {statuses[0][1]}"))
+    for before, after in statuses:
+        _diff_content(
+            old_responses[before], new_responses[after], "response", request=False, out=found
+        )
 
     if old.get("deprecated") is not True and new.get("deprecated") is True:
-        found.append(("marked deprecated upstream", False))
+        found.append(Change("operation", "", "marked deprecated upstream"))
     if old.get("x-didit-sdk") != new.get("x-didit-sdk") and new.get("x-didit-sdk") is not None:
-        found.append((f"x-didit-sdk now {json.dumps(new['x-didit-sdk'], sort_keys=True)}", False))
-    if not found:
-        return ["descriptions, examples or other details changed"], False
-    breaking = any(b for _, b in found)
-    # Breaking notes first, then the rest, capped so that one huge change stays readable.
-    ordered = [n for n, b in found if b] + [n for n, b in found if not b]
-    notes = [f"{n} (breaking)" if (n, True) in found else n for n in ordered]
-    if len(notes) > MAX_NOTES:
-        notes = [*notes[:MAX_NOTES], f"and {len(notes) - MAX_NOTES} more differences"]
-    return notes, breaking
+        naming = json.dumps(new["x-didit-sdk"], sort_keys=True)
+        found.append(Change("x-didit-sdk", "", f"now {naming}"))
+    # One entry per change, even when several responses or media types share it.
+    return list(dict.fromkeys(found))
+
+
+def notes(changes: list[Change]) -> list[str]:
+    """The summary's notes for one operation: breaking first, capped to stay readable."""
+    if not changes:
+        return [NO_DIFFERENCE]
+    ordered = [c for c in changes if c.breaking] + [c for c in changes if not c.breaking]
+    out = [c.text() + (" (breaking)" if c.breaking else "") for c in ordered]
+    if len(out) > MAX_NOTES:
+        out = [*out[:MAX_NOTES], f"and {len(out) - MAX_NOTES} more differences"]
+    return out
 
 
 # Versions -------------------------------------------------------------------------------
@@ -362,8 +584,40 @@ def next_minor(version: str) -> str:
 # The sync -------------------------------------------------------------------------------
 
 
+@dataclasses.dataclass
+class SyncResult:
+    changed: bool
+    summary: str
+    date: str = ""
+    commit_type: str = "chore"  # "feat" or "chore" (DESIGN 3.1)
+    breaking: list[BreakingChange] = dataclasses.field(default_factory=list)
+
+    def commit_message(self) -> str:
+        """What release-please reads (the pull request's ``BEGIN_COMMIT_OVERRIDE`` block):
+        the sync, then one nested ``api(spec):`` commit per breaking change. A type
+        outside release-please's own list only splits off in a nested block."""
+        lines = [f"api(spec): {c.describe()}" for c in self.breaking[:MAX_RELEASE_NOTES]]
+        if len(self.breaking) > MAX_RELEASE_NOTES:
+            more = len(self.breaking) - MAX_RELEASE_NOTES
+            lines.append(f"api(spec): {more} more, listed in the spec sync pull request")
+        message = f"{self.commit_type}(spec): sync API spec {self.date}\n"
+        if lines:
+            message += "\n" + "".join(
+                f"BEGIN_NESTED_COMMIT\n{line}\nEND_NESTED_COMMIT\n" for line in lines
+            )
+        return message
+
+
 def _name(naming: Json) -> str:
     return f"{naming['resource']}.{naming['method']}"
+
+
+def _hand_written_methods(naming: Json) -> set[str]:
+    """The methods a hand-written module has for one operation: its own and its variants'."""
+    if not naming or not naming.get("server"):
+        return set()
+    variants = [v["method"] for v in naming.get("variants") or [] if isinstance(v, dict)]
+    return {f"{naming['resource']}.{m}" for m in (naming["method"], *variants)}
 
 
 def sync(
@@ -373,8 +627,8 @@ def sync(
     today: dt.date,
     now: dt.datetime,
     version: str | None = None,
-) -> tuple[bool, str]:
-    """Apply ``downloads`` (file name -> bytes) to ``openapi_dir``; returns (changed, summary)."""
+) -> SyncResult:
+    """Apply ``downloads`` (file name -> bytes) to ``openapi_dir``."""
     old_docs: dict[str, Json] = {}
     new_docs: dict[str, Json] = {}
     changed_files: list[str] = []
@@ -386,7 +640,7 @@ def sync(
         if old_bytes != data:
             changed_files.append(name)
     if not changed_files:
-        return False, "No upstream change.\n"
+        return SyncResult(False, "No upstream change.\n", today.isoformat())
 
     version = version or _version()
     remove_in = next_minor(version)
@@ -407,6 +661,9 @@ def sync(
             old_ops[key] = (name, op)
         for key, op in operations(new_docs[name], PREFIXES[name]).items():
             new_ops[key] = (name, op)
+    hand_written = {
+        key for key, (name, _) in [*old_ops.items(), *new_ops.items()] if name in HAND_WRITTEN
+    }
 
     def old_naming(key: str) -> Json:
         return old_ops[key][1].get("x-didit-sdk") or old_overlay.get(key)
@@ -417,19 +674,23 @@ def sync(
     added = sorted(set(new_ops) - set(old_ops))
     removed = sorted(set(old_ops) - set(new_ops))
     common = sorted(set(old_ops) & set(new_ops))
-    # Server method name -> the operation that provides it after the sync.
+    # Generated server method name -> the operation that provides it after the sync.
     new_server_names = {
-        _name(n): key for key in new_ops if (n := new_naming(key)) and n.get("server")
+        _name(n): key
+        for key in new_ops
+        if key not in hand_written and (n := new_naming(key)) and n.get("server")
     }
     old_server_names = {
-        _name(n): key for key in old_ops if (n := old_naming(key)) and n.get("server")
+        _name(n): key
+        for key in old_ops
+        if key not in hand_written and (n := old_naming(key)) and n.get("server")
     }
 
     lines: list[str] = [
         f"Spec sync {today.isoformat()}. Upstream files changed: {', '.join(changed_files)}.",
         "",
     ]
-    breaking: list[str] = []
+    breaking: list[BreakingChange] = []
     kept: list[str] = []
 
     def keep(naming: Json, key: str, reason: str, replacement: str | None) -> None:
@@ -461,6 +722,9 @@ def sync(
         deprecated["methods"][method] = entry
         kept.append(method)
 
+    def removed_operation(key: str, detail: str) -> None:
+        breaking.append(BreakingChange(key, "", "", f"operation removed{detail}"))
+
     lines.append(f"## Added operations ({len(added)})")
     for key in added:
         n = new_naming(key)
@@ -481,18 +745,20 @@ def sync(
             lines.append(f"- `{key}`")
         elif not n.get("server"):
             lines.append(f"- `{key}` (not exposed by server SDKs)")
+        elif key in hand_written:
+            lines.append(f"- `{key}` (`{_name(n)}`, hand-written; see Authentication module)")
+            removed_operation(key, f" (`{_name(n)}`)")
         elif _name(n) in new_server_names:
             lines.append(
                 f"- `{key}` moved to `{new_server_names[_name(n)]}`; `{_name(n)}` keeps its name"
             )
         else:
-            breaking.append(
-                f"`{_name(n)}` was removed upstream ({key}); kept as a deprecated method until "
-                f"version {remove_in}"
-            )
             lines.append(
                 f"- `{key}` (`{_name(n)}`): kept as a deprecated method until version {remove_in}, "
                 "recorded in `openapi/deprecated-operations.json`"
+            )
+            removed_operation(
+                key, f"; `{_name(n)}` stays as a deprecated method until version {remove_in}"
             )
             keep(n, key, "removed", None)
         overlay["operations"].pop(key, None)
@@ -501,7 +767,7 @@ def sync(
     renames: list[str] = []
     for key in common:
         before, after = old_naming(key), new_naming(key)
-        if not before or not before.get("server"):
+        if key in hand_written or not before or not before.get("server"):
             continue
         if after and after.get("server") and _name(after) == _name(before):
             continue
@@ -514,7 +780,6 @@ def sync(
                 f"- `{key}` lost its SDK naming: add `{_name(before)}` back to "
                 "`openapi/overlay.json` (the generator fails until it is named)"
             )
-            breaking.append(f"`{_name(before)}` ({key}) has no SDK naming any more")
         elif not after.get("server"):
             # Server SDKs never expose device or end-user token operations (DESIGN 4),
             # and an API key could not call it any more, so the method goes now.
@@ -522,18 +787,15 @@ def sync(
                 f"- `{key}` (`{_name(before)}`) is no longer a server operation "
                 f"(auth {after.get('auth')}); the method is removed"
             )
-            breaking.append(
-                f"`{_name(before)}` ({key}) is removed: the operation now needs "
-                f"{after.get('auth')} and server SDKs do not expose it"
+            removed_operation(
+                key,
+                f" from server SDKs: it now needs {after.get('auth')}, "
+                f"and `{_name(before)}` is removed",
             )
         else:
             renames.append(
                 f"- `{key}`: `{_name(before)}` renamed to `{_name(after)}`; the old name stays "
                 f"as a deprecated alias until version {remove_in}"
-            )
-            breaking.append(
-                f"`{_name(before)}` was renamed upstream to `{_name(after)}` ({key}); the old "
-                f"name is a deprecated alias until version {remove_in}"
             )
             keep(before, key, "renamed", _name(after))
     lines.append(f"## Renamed methods ({len(renames)})")
@@ -550,26 +812,21 @@ def sync(
             continue
         old_name, old = old_ops[old_key]
         new_name, new = new_ops[new_key]
-        notes, is_breaking = describe_change(old_docs[old_name], old, new_docs[new_name], new)
-        if notes == ["descriptions, examples or other details changed"]:
-            notes = ["same parameters, body and response"]
-        detail = "; ".join(notes)
         if old_key in new_ops:
             moves.append(
-                f"- `{method}` **(breaking)** now calls `{new_key}` instead of `{old_key}` "
-                f"(which is still in the API): {detail}"
+                f"- `{method}` **(review)** now calls `{new_key}` instead of `{old_key}` "
+                "(which is still in the API): a different operation under the same name"
             )
-            breaking.append(
-                f"`{method}` now calls `{new_key}` instead of `{old_key}`, a different operation"
-            )
-        else:
-            marker = " **(breaking)**" if is_breaking else ""
-            moves.append(f"- `{method}`{marker} moved from `{old_key}` to `{new_key}`: {detail}")
-            if is_breaking:
-                breaking.append(
-                    f"`{method}` moved from `{old_key}` to `{new_key}`: "
-                    + "; ".join(n for n in notes if n.endswith("(breaking)"))
-                )
+            continue
+        changes = describe_change(old_docs[old_name], old, new_docs[new_name], new)
+        found = notes(changes) if changes else ["same parameters, body and response"]
+        marker = " **(breaking)**" if any(c.breaking for c in changes) else ""
+        moves.append(
+            f"- `{method}`{marker} moved from `{old_key}` to `{new_key}`: " + "; ".join(found)
+        )
+        breaking.extend(
+            BreakingChange(new_key, c.where, c.path, c.kind) for c in changes if c.breaking
+        )
     lines.append(f"## Moved or reassigned methods ({len(moves)})")
     lines.extend(moves)
     lines.append("")
@@ -582,7 +839,8 @@ def sync(
                 "its deprecation entry was dropped."
             )
 
-    changes: list[str] = []
+    changes_lines: list[str] = []
+    documentation_only: list[str] = []
     for key in common:
         old_name, old = old_ops[key]
         new_name, new = new_ops[key]
@@ -590,27 +848,45 @@ def sync(
             "components"
         ):
             continue
-        notes, is_breaking = describe_change(old_docs[old_name], old, new_docs[new_name], new)
-        if old == new and notes == ["descriptions, examples or other details changed"]:
+        changes = describe_change(old_docs[old_name], old, new_docs[new_name], new)
+        if not changes:
+            if old != new:
+                documentation_only.append(key)
             continue
-        marker = " **(breaking)**" if is_breaking else ""
-        changes.append(f"- `{key}`{marker}: " + "; ".join(notes))
-        if is_breaking:
-            breaking.append(f"`{key}`: " + "; ".join(n for n in notes if n.endswith("(breaking)")))
-    lines.append(f"## Changed operations ({len(changes)})")
-    lines.extend(changes)
+        marker = " **(breaking)**" if any(c.breaking for c in changes) else ""
+        changes_lines.append(f"- `{key}`{marker}: " + "; ".join(notes(changes)))
+        breaking.extend(BreakingChange(key, c.where, c.path, c.kind) for c in changes if c.breaking)
+    lines.append(f"## Changed operations ({len(changes_lines) + len(documentation_only)})")
+    lines.extend(changes_lines)
+    if documentation_only:
+        shown = ", ".join(f"`{key}`" for key in documentation_only[:MAX_NOTES])
+        more = len(documentation_only) - MAX_NOTES
+        lines.append(f"- {NO_DIFFERENCE}: {shown}" + (f" and {more} more" if more > 0 else ""))
     lines.append("")
+
+    old_hand = set().union(
+        *(_hand_written_methods(old_naming(k)) for k in old_ops if k in hand_written)
+    )
+    new_hand = set().union(
+        *(_hand_written_methods(new_naming(k)) for k in new_ops if k in hand_written)
+    )
+    if old_hand != new_hand:
+        lines.append("## Authentication module")
+        lines.append(
+            "The module is hand-written (DESIGN section 10); "
+            "`tests/test_authentication_contract.py` fails until it follows the document."
+        )
+        lines.extend(f"- `{m}` is new: add it" for m in sorted(new_hand - old_hand))
+        lines.extend(f"- `{m}` was removed: remove it" for m in sorted(old_hand - new_hand))
+        lines.append("")
 
     lines.append("## Schemas")
     for name in downloads:
         old_schemas = old_docs[name].get("components", {}).get("schemas", {})
         new_schemas = new_docs[name].get("components", {}).get("schemas", {})
-        gone = sorted(set(old_schemas) - set(new_schemas))
-        for schema in gone:
-            breaking.append(f"{name}: schema `{schema}` removed (its type leaves `didit.types`)")
         for label, names in (
             ("added", sorted(set(new_schemas) - set(old_schemas))),
-            ("removed", gone),
+            ("removed", sorted(set(old_schemas) - set(new_schemas))),
             (
                 "changed",
                 sorted(
@@ -638,9 +914,40 @@ def sync(
         lines.append(f"Dropped {len(dropped)} overlay entries that upstream now carries.")
         lines.append("")
 
-    lines.insert(2, "## Breaking changes")
-    lines.insert(3, "\n".join(f"- {b}" for b in breaking) if breaking else "None detected.")
-    lines.insert(4, "")
+    # feat when a caller can observe anything: the documents without documentation, or
+    # the effective naming (upstream adopting an overlay entry unchanged is no change).
+    breaking = list(dict.fromkeys(breaking))
+    observable_change = (
+        bool(breaking or added or removed)
+        or any(old_naming(key) != new_naming(key) for key in common)
+        or any(observable(old_docs[n]) != observable(new_docs[n]) for n in changed_files)
+    )
+    commit_type = "feat" if observable_change else "chore"
+    if commit_type == "chore":
+        release = (
+            "`chore(spec)`: only descriptions, examples or other documentation changed, so this "
+            "sync releases nothing on its own; it ships with the next release."
+        )
+    else:
+        release = (
+            "`feat(spec)`: this sync changes what a caller can observe, so merging it releases "
+            "a minor version, never a major one (DESIGN.md section 13). "
+            + (
+                'The release notes repeat the breaking changes above under "API changes that '
+                'can break typed code".'
+                if breaking
+                else "Nothing in it is on the list of changes that can break typed code."
+            )
+        )
+    head = [
+        "## Breaking changes",
+        "\n".join(f"- {b.describe()}" for b in breaking) if breaking else "None detected.",
+        "",
+        "## Release",
+        release,
+        "",
+    ]
+    lines[0:0] = head
 
     for name, data in downloads.items():
         (openapi_dir / name).write_bytes(data)
@@ -656,7 +963,8 @@ def sync(
     source_path.write_text(json.dumps(source, indent=1, ensure_ascii=False), "utf-8")
     overlay_path.write_text(json.dumps(overlay, indent=1, ensure_ascii=False), "utf-8")
     deprecated_path.write_text(json.dumps(deprecated, indent=1, ensure_ascii=False) + "\n", "utf-8")
-    return True, "\n".join(lines).rstrip() + "\n"
+    summary = "\n".join(lines).rstrip() + "\n"
+    return SyncResult(True, summary, today.isoformat(), commit_type, breaking)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -664,6 +972,11 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--summary", type=pathlib.Path, help="write the Markdown summary here")
+    parser.add_argument(
+        "--commit-message",
+        type=pathlib.Path,
+        help="write the commit message release-please reads here",
+    )
     parser.add_argument(
         "--from-dir", type=pathlib.Path, help="read the upstream files from a directory instead"
     )
@@ -674,18 +987,21 @@ def main(argv: list[str] | None = None) -> int:
         downloads = {name: fetch(url) for name, url in UPSTREAM.items()}
     now = dt.datetime.now(dt.timezone.utc)
     try:
-        changed, summary = sync(REPO / "openapi", downloads, today=now.date(), now=now)
+        result = sync(REPO / "openapi", downloads, today=now.date(), now=now)
     except SpecSyncError as exc:
         print(f"spec sync refused the download, nothing was written: {exc}", file=sys.stderr)
         return 1
     if args.summary:
-        args.summary.write_text(summary, "utf-8")
-    print(summary)
+        args.summary.write_text(result.summary, "utf-8")
+    if args.commit_message:
+        args.commit_message.write_text(result.commit_message(), "utf-8")
+    print(result.summary)
     output = os.environ.get("GITHUB_OUTPUT")
     if output:
         with open(output, "a", encoding="utf-8") as fh:
-            fh.write(f"changed={'true' if changed else 'false'}\n")
-            fh.write(f"date={now.date().isoformat()}\n")
+            fh.write(f"changed={'true' if result.changed else 'false'}\n")
+            fh.write(f"date={result.date}\n")
+            fh.write(f"type={result.commit_type}\n")
     return 0
 
 

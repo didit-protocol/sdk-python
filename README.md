@@ -272,7 +272,13 @@ CPython 3.10, 3.11, 3.12, 3.13 and 3.14 on Linux, macOS and Windows. Dependencie
 
 ## Versioning
 
-Semantic versioning. Until 1.0.0 the version stays `0.x` and minor versions may change the public API. Releases are cut by release-please from conventional commits; see [CHANGELOG.md](CHANGELOG.md) once the first release is out. When an endpoint is removed from the API, or its method is renamed, the old method stays for one more minor version, marked deprecated (it emits a `DeprecationWarning` and type checkers flag it); a renamed method's old name keeps working as an alias of the new one.
+Semantic versioning, with one rule for API changes:
+
+- A change that mirrors the Didit API is a minor version, even when it can break typed code (a field whose type changed or that can now be `None`, a removed field, endpoint or enum value). The API already behaves that way for every caller, so staying on an older SDK version does not protect you. The release notes list these changes under "API changes that can break typed code": read that section and run your type checker when you upgrade.
+- A major version is only for a change to the SDK's own design: renaming or removing a method or resource the API still has, changing client configuration, errors, retries, pagination or webhook verification behaviour, or dropping a supported Python version.
+- A sync that only changes the API documentation releases nothing on its own.
+
+Releases are cut by release-please from conventional commits; see [CHANGELOG.md](CHANGELOG.md). When an endpoint is removed from the API, or its method is renamed, the old method stays for one more minor version, marked deprecated (it emits a `DeprecationWarning` and type checkers flag it); a renamed method's old name keeps working as an alias of the new one.
 
 ## Contributing and security
 
