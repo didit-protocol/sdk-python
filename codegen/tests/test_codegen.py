@@ -284,6 +284,7 @@ def test_removed_operation_stays_as_a_deprecated_method(openapi: pathlib.Path) -
     del spec["paths"]["/v3/billing/balance/"]
     (upstream / "verification.json").write_text(json.dumps(spec), "utf-8")
     shutil.copy(openapi / "account.json", upstream / "account.json")
+    shutil.copy(openapi / "authentication.json", upstream / "authentication.json")
 
     downloads = {name: (upstream / name).read_bytes() for name in spec_sync.UPSTREAM}
     result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.4.2")
