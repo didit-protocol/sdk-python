@@ -156,6 +156,19 @@ jobs:
           # A pull request description holds 65536 characters: shorten the report, never the
           # checks or the block release-please reads. The full report is in the sync step's log.
           touch "$CHECKS"
+          # Hundreds of breaking changes do not fit at all. Then the description leaves the
+          # block out and release-please reads the squashed commit, whose message (the sync
+          # commit's) holds every line.
+          if [ "$(($(wc -c < "$override") + $(wc -c < "$CHECKS")))" -gt 60000 ]; then
+            count="$(grep -c '^BEGIN_NESTED_COMMIT$' "$COMMIT_MESSAGE")"
+            {
+              echo
+              echo "## Release notes"
+              echo
+              echo "The ${count} lines for \"API changes that can break typed code\" do not fit this description, so it has no BEGIN_COMMIT_OVERRIDE block and release-please reads the merged commit instead. Merge with **Squash and merge** and use the message of this branch's sync commit as the commit message: it holds every line, each in a BEGIN_NESTED_COMMIT block."
+            } > "$override"
+            echo "::warning::${count} breaking changes do not fit the pull request description; squash with the sync commit's message so that the release notes list them."
+          fi
           limit=$((65000 - $(wc -c < "$override") - $(wc -c < "$CHECKS")))
           if [ "$(wc -c < "$SUMMARY")" -gt "$limit" ]; then
             {

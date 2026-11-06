@@ -187,15 +187,13 @@ def test_release_please_config_keeps_chores_ci_and_tests_hidden() -> None:
         assert sections[kind]["hidden"] is True, kind
 
 
-def test_release_notes_are_capped(openapi: pathlib.Path) -> None:
+def test_release_notes_list_every_breaking_change() -> None:
     many = [
         spec_sync.BreakingChange(f"GET /v3/thing-{i}/", "response", "a", "removed")
-        for i in range(spec_sync.MAX_RELEASE_NOTES + 3)
+        for i in range(503)
     ]
     message = spec_sync.SyncResult(True, "", "2026-11-06", "feat", many).commit_message()
-    nested = _nested(message)
-    assert len(nested) == spec_sync.MAX_RELEASE_NOTES + 1
-    assert nested[-1] == "api(spec): 3 more, listed in the spec sync pull request"
+    assert _nested(message) == [f"api(spec): {b.describe()}" for b in many]
 
 
 # Detection rules (DESIGN 3.1) -------------------------------------------------------------
@@ -273,7 +271,7 @@ def test_listed_but_not_counted() -> None:
     assert _diff({"type": "string", "nullable": True}, {"type": "string"}, request=True) == [
         ("", "no longer accepts null", False)
     ]
-    assert _diff({"type": "string"}, {"type": "string", "format": "date-time"}) == [
+    assert _diff({"type": "string"}, {"type": "string", "format": "uuid"}) == [
         ("", "other constraints changed (format, pattern, limits or default)", False)
     ]
     assert _diff({"oneOf": [OBJ]}, {"oneOf": [OBJ, {**OBJ, "title": "B", "properties": {}}]}) == [
