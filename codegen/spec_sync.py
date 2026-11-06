@@ -477,10 +477,14 @@ def _pair_variants(
         return schema.get("title") if isinstance(schema, dict) else None
 
     old_shapes, new_shapes = [_shape(v) for v in old], [_shape(v) for v in new]
-    for same in (
-        lambda i, j: old_shapes[i] == new_shapes[j],
-        lambda i, j: title(old[i]) is not None and title(old[i]) == title(new[j]),
-    ):
+
+    def same_shape(i: int, j: int) -> bool:
+        return bool(old_shapes[i] == new_shapes[j])
+
+    def same_title(i: int, j: int) -> bool:
+        return title(old[i]) is not None and title(old[i]) == title(new[j])
+
+    for same in (same_shape, same_title):
         for i in list(left_old):
             j = next((j for j in left_new if same(i, j)), None)
             if j is not None:
@@ -518,9 +522,7 @@ def _diff_variants(
     pairs, removed, added = _pair_variants(old_vars, new_vars)
     for i, j in pairs:
         at = f"{path}({keyword} {j + 1})" if len(new_vars) > 1 else path
-        diff_schema(
-            old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1
-        )
+        diff_schema(old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1)
     if removed and not retyped:
         kind = f"type changed: {len(removed)} {keyword} variant(s) removed"
         out.append(Change(where, path, kind, True))

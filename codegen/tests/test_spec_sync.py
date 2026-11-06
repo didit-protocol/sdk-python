@@ -275,9 +275,12 @@ def test_a_string_format_with_its_own_type_is_a_type_change(request_side: bool) 
 
 
 def test_union_variants_are_compared_with_the_variant_they_became() -> None:
-    a = {"type": "object", "title": "A", "properties": {"id": {"type": "string"}, "kind": STATUS}}
-    b = {"type": "object", "properties": {"code": {"type": "string"}, "score": {"type": "number"}}}
-    c = {"type": "object", "properties": {"url": {"type": "string"}}}
+    a: dict[str, Any] = {"type": "object", "title": "A", "properties": {"kind": STATUS}}
+    b: dict[str, Any] = {
+        "type": "object",
+        "properties": {"code": {"type": "string"}, "score": {"type": "number"}},
+    }
+    c: dict[str, Any] = {"type": "object", "properties": {"url": {"type": "string"}}}
     b2 = {**b, "properties": {**b["properties"], "code": {"type": "integer"}}}
     retyped = "type changed from string to integer"
     added = ("", "1 oneOf variant(s) added", False)
