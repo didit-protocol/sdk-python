@@ -476,12 +476,13 @@ def _pair_variants(
     def title(schema: Json) -> Json:
         return schema.get("title") if isinstance(schema, dict) else None
 
+    old_shapes, new_shapes = [_shape(v) for v in old], [_shape(v) for v in new]
     for same in (
-        lambda a, b: _shape(a) == _shape(b),
-        lambda a, b: title(a) is not None and title(a) == title(b),
+        lambda i, j: old_shapes[i] == new_shapes[j],
+        lambda i, j: title(old[i]) is not None and title(old[i]) == title(new[j]),
     ):
         for i in list(left_old):
-            j = next((j for j in left_new if same(old[i], new[j])), None)
+            j = next((j for j in left_new if same(i, j)), None)
             if j is not None:
                 pair(i, j)
     candidates = sorted(
