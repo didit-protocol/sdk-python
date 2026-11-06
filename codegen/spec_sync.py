@@ -525,6 +525,9 @@ def _diff_variants(
         out.append(Change(where, path, kind, True))
     if added:
         out.append(Change(where, path, f"{len(added)} {keyword} variant(s) added"))
+    order = [j for _, j in sorted(pairs)]
+    if order != sorted(order):
+        out.append(Change(where, path, f"{keyword} variants reordered"))
 
 
 def _parameter_where(key: tuple[str, str]) -> str:

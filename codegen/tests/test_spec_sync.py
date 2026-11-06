@@ -249,6 +249,67 @@ def test_counted_in_requests_and_responses(request_side: bool) -> None:
     ]
 
 
+@pytest.mark.parametrize("request_side", [True, False], ids=["request", "response"])
+def test_a_string_format_with_its_own_type_is_a_type_change(request_side: bool) -> None:
+    # The generated code types these strings as datetime, date, and bytes or a file.
+    plain = {"type": "string"}
+    for fmt in ("date-time", "date", "binary"):
+        typed = {"type": "string", "format": fmt}
+        assert _diff(plain, typed, request=request_side) == [
+            ("", f"type changed from string to string ({fmt})", True)
+        ]
+        assert _diff(typed, plain, request=request_side) == [
+            ("", f"type changed from string ({fmt}) to string", True)
+        ]
+    date = {"type": "string", "format": "date"}
+    stamp = {"type": ["string", "null"], "format": "date-time"}
+    assert _diff(date, stamp, request=request_side) == [
+        ("", NULL, True),
+        ("", "type changed from string (date) to string (date-time)", True),
+    ]
+    listed = {"type": "array", "items": plain}
+    assert _diff(listed, {**listed, "items": stamp}, request=request_side) == [
+        ("[]", NULL, True),
+        ("[]", "type changed from string to string (date-time)", True),
+    ]
+
+
+def test_union_variants_are_compared_with_the_variant_they_became() -> None:
+    a = {"type": "object", "title": "A", "properties": {"id": {"type": "string"}, "kind": STATUS}}
+    b = {"type": "object", "properties": {"code": {"type": "string"}, "score": {"type": "number"}}}
+    c = {"type": "object", "properties": {"url": {"type": "string"}}}
+    b2 = {**b, "properties": {**b["properties"], "code": {"type": "integer"}}}
+    retyped = "type changed from string to integer"
+    added = ("", "1 oneOf variant(s) added", False)
+    # A variant added, wherever it goes, or removed hides no change in the others.
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [a, b2, c]}) == [
+        ("(oneOf 2).code", retyped, True),
+        added,
+    ]
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [c, a, b2]}) == [
+        ("(oneOf 3).code", retyped, True),
+        added,
+    ]
+    assert _diff({"oneOf": [a, b, c]}, {"oneOf": [a, b2]}) == [
+        ("(oneOf 2).code", retyped, True),
+        ("", "type changed: 1 oneOf variant(s) removed", True),
+    ]
+    # A schema that becomes a union is compared with the variant it became.
+    assert _diff(b, {"oneOf": [b2, c]}) == [("(oneOf 1).code", retyped, True), added]
+    assert _diff({"anyOf": [b, c]}, b2) == [
+        ("code", retyped, True),
+        ("", "type changed: 1 anyOf variant(s) removed", True),
+    ]
+    # A variant of a new type changes the union's type and still compares the others.
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [a, b2, {"type": "string"}]}) == [
+        ("", "type changed from object to object or string", True),
+        ("(oneOf 2).code", retyped, True),
+        added,
+    ]
+    # Variants in another order are the same union.
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [b, a]}) == [("", "oneOf variants reordered", False)]
+
+
 def test_newly_required_request_fields_count_and_response_requiredness_does_not() -> None:
     optional = {**OBJ, "required": []}
     assert _diff(optional, OBJ, request=True) == [("a", "now required", True)]
