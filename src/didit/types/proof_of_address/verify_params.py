@@ -42,7 +42,7 @@ class ProofOfAddressVerifyParams(TypedDict, total=False):
     """What to do on file-integrity problems - in practice only `DOCUMENT_METADATA_MISMATCH` is produced by this endpoint."""
 
     poa_document_authenticity_action: Literal["DECLINE", "NO_ACTION"] | str
-    """What to do when document manipulation is suspected (`SUSPECTED_DOCUMENT_MANIPULATION`) - e.g. the PDF was modified after digital signing, processed by a known PDF editor, shows overlay-text manipulation, or has inconsistent EXIF dates."""
+    """What to do when document manipulation is suspected (`SUSPECTED_DOCUMENT_MANIPULATION`) - e.g. the PDF was modified after digital signing, processed by a known PDF editor, shows overlay-text manipulation, or has inconsistent EXIF dates. Also governs `POA_DOCUMENT_UNPROVEN_TEXT_REPLACEMENT` (a re-typed text field the file cannot prove changed or unchanged): `DECLINE` declines it too, `NO_ACTION` keeps it as a warning."""
 
     poa_unsupported_language_action: Literal["DECLINE", "NO_ACTION"] | str
     """What to do when the document language is outside `poa_languages_allowed` (`UNSUPPORTED_DOCUMENT_LANGUAGE`)."""
