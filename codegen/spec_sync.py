@@ -476,8 +476,8 @@ def diff_schema(
         old_sub, new_sub = old.get(key), new.get(key)
         if isinstance(old_sub, dict) or isinstance(new_sub, dict):
             diff_schema(
-                old_sub if isinstance(old_sub, dict) else NO_SCHEMA,
-                new_sub if isinstance(new_sub, dict) else NO_SCHEMA,
+                old_sub if isinstance(old_sub, dict) else {},
+                new_sub if isinstance(new_sub, dict) else {},
                 where, path + suffix, request=request, out=out, depth=depth + 1,
             )  # fmt: skip
     _diff_variants(old, new, where, path, request=request, out=out, depth=depth, retyped=False)
@@ -563,10 +563,11 @@ def _diff_variants(
     for i, j in pairs:
         at = f"{path}({keyword} {j + 1})" if len(new_vars) > 1 else path
         diff_schema(old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1)
-        old_title, new_title = _variant_type_name(old_vars[i]), _variant_type_name(new_vars[j])
-        if old_title != new_title:
-            # The generated type of the variant gets another name.
-            out.append(Change(where, at, f"type renamed: title {old_title} -> {new_title}"))
+        before, after = _variant_type_name(old_vars[i]), _variant_type_name(new_vars[j])
+        if before != after:
+            # The variant's title names its generated type, which gets another name.
+            names = (name or "a numbered name" for name in (before, after))
+            out.append(Change(where, at, "variant type renamed from {} to {}".format(*names)))
     if removed and not retyped:
         kind = f"type changed: {len(removed)} {keyword} variant(s) removed"
         out.append(Change(where, path, kind, True))
