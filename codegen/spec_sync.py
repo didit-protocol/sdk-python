@@ -90,10 +90,11 @@ NAME_MAPS = frozenset(
 # The extension a caller can observe (the webhook events). Every other x- key documents;
 # x-didit-sdk is compared as the effective naming, together with overlay.json.
 OBSERVABLE_EXTENSIONS = frozenset({"x-webhooks"})
+# String formats with their own type in the generated code (datetime, date, bytes or a
+# file): adding, removing or changing one changes the field's type.
+TYPED_FORMATS = frozenset({"date-time", "date", "binary"})
 MAX_NOTES = 25
 MAX_DEPTH = 32
-# Lines a sync adds to the release notes; the pull request lists every breaking change.
-MAX_RELEASE_NOTES = 100
 NO_DIFFERENCE = "descriptions, examples or other details changed"
 Json = Any
 
@@ -327,6 +328,15 @@ def _kinds(schema: Json, depth: int = 0) -> frozenset[str]:
     return frozenset(kinds)
 
 
+def _type_names(schema: Json, kinds: frozenset[str]) -> str:
+    """``kinds`` as the summary names them; a string with a typed format is its own type."""
+    fmt = schema.get("format")
+    return " or ".join(
+        f"string ({fmt})" if kind == "string" and fmt in TYPED_FORMATS else kind
+        for kind in sorted(kinds)
+    )
+
+
 def _enum(schema: Json) -> list[Json] | None:
     values = schema.get("enum")
     return [v for v in values if v is not None] if isinstance(values, list) else None
@@ -381,16 +391,13 @@ def diff_schema(
         note("can now be null", True)
     elif _nullable(old) and not _nullable(new):
         note("no longer accepts null" if request else "can no longer be null")
-    # A plain schema is a union of one variant: [X, null] against X loses no variant.
-    sizes = {
-        k: (len(_variants(old, k)) or 1, len(_variants(new, k)) or 1) for k in ("oneOf", "anyOf")
-    }
-    raw_old, raw_new = old, new
     old, new = _single(old), _single(new)
     old_kinds, new_kinds = _kinds(old), _kinds(new)
-    if old_kinds and new_kinds and old_kinds != new_kinds:
-        before, after = " or ".join(sorted(old_kinds)), " or ".join(sorted(new_kinds))
+    before, after = _type_names(old, old_kinds), _type_names(new, new_kinds)
+    if old_kinds and new_kinds and before != after:
         note(f"type changed from {before} to {after}", True)
+        # A union's variants can change too; the type change already covers those removed.
+        _diff_variants(old, new, where, path, request=request, out=out, depth=depth, retyped=True)
         return
 
     old_enum, new_enum = _enum(old), _enum(new)
@@ -433,21 +440,97 @@ def diff_schema(
                 new_sub if isinstance(new_sub, dict) else {},
                 where, path + suffix, request=request, out=out, depth=depth + 1,
             )  # fmt: skip
-    for keyword, (old_size, new_size) in sizes.items():
-        if new_size < old_size:
-            note(f"type changed: {old_size - new_size} {keyword} variant(s) removed", True)
-        elif new_size > old_size:
-            note(f"{new_size - old_size} {keyword} variant(s) added")
-        elif old_size > 1:
-            # One variant each was compared as the schema itself, above.
-            old_vars, new_vars = _variants(raw_old, keyword), _variants(raw_new, keyword)
-            for index, (a, b) in enumerate(zip(old_vars, new_vars, strict=True)):
-                diff_schema(
-                    a, b, where, f"{path}({keyword} {index + 1})",
-                    request=request, out=out, depth=depth + 1,
-                )  # fmt: skip
+    _diff_variants(old, new, where, path, request=request, out=out, depth=depth, retyped=False)
     if len(out) == start:
         note("other constraints changed (format, pattern, limits or default)")
+
+
+def _union_keyword(schema: Json) -> str | None:
+    return next((k for k in ("oneOf", "anyOf") if _variants(schema, k)), None)
+
+
+def _compatible(old: Json, new: Json) -> bool:
+    old_kinds, new_kinds = _kinds(old), _kinds(new)
+    return not old_kinds or not new_kinds or old_kinds == new_kinds
+
+
+def _field_names(schema: Json) -> set[str]:
+    return set(_object_props(_single(schema))[0]) if isinstance(schema, dict) else set()
+
+
+def _pair_variants(
+    old: list[Json], new: list[Json]
+) -> tuple[list[tuple[int, int]], list[int], list[int]]:
+    """Pair each old union variant with the new one it became: an unchanged one first,
+    then one with the same title, then one of the same type with the most fields in common.
+    Returns the pairs (old and new position) and the positions left over on each side
+    (variants removed and added)."""
+    left_old, left_new = list(range(len(old))), list(range(len(new)))
+    pairs: list[tuple[int, int]] = []
+
+    def pair(i: int, j: int) -> None:
+        pairs.append((i, j))
+        left_old.remove(i)
+        left_new.remove(j)
+
+    def title(schema: Json) -> Json:
+        return schema.get("title") if isinstance(schema, dict) else None
+
+    old_shapes, new_shapes = [_shape(v) for v in old], [_shape(v) for v in new]
+
+    def same_shape(i: int, j: int) -> bool:
+        return bool(old_shapes[i] == new_shapes[j])
+
+    def same_title(i: int, j: int) -> bool:
+        return title(old[i]) is not None and title(old[i]) == title(new[j])
+
+    for same in (same_shape, same_title):
+        for i in list(left_old):
+            j = next((j for j in left_new if same(i, j)), None)
+            if j is not None:
+                pair(i, j)
+    candidates = sorted(
+        (-len(_field_names(old[i]) & _field_names(new[j])), i, j)
+        for i in left_old
+        for j in left_new
+        if _compatible(old[i], new[j])
+    )
+    for _, i, j in candidates:
+        if i in left_old and j in left_new:
+            pair(i, j)
+    return sorted(pairs, key=lambda p: p[1]), left_old, left_new
+
+
+def _diff_variants(
+    old: Json,
+    new: Json,
+    where: str,
+    path: str,
+    *,
+    request: bool,
+    out: list[Change],
+    depth: int,
+    retyped: bool,
+) -> None:
+    """Compare two unions variant by variant; a plain schema is a union of one, so that
+    ``[X, null]`` against X loses no variant and X against ``[X', Y]`` compares X with X'.
+    A variant added or removed never hides a change inside the others."""
+    old_vars, new_vars = _variants(old) or [old], _variants(new) or [new]
+    if len(old_vars) == 1 and len(new_vars) == 1:
+        return  # compared as the schema itself
+    keyword = _union_keyword(new) or _union_keyword(old)
+    pairs, removed, added = _pair_variants(old_vars, new_vars)
+    for i, j in pairs:
+        at = f"{path}({keyword} {j + 1})" if len(new_vars) > 1 else path
+        diff_schema(old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1)
+    if removed and not retyped:
+        kind = f"type changed: {len(removed)} {keyword} variant(s) removed"
+        out.append(Change(where, path, kind, True))
+    if added:
+        out.append(Change(where, path, f"{len(added)} {keyword} variant(s) added"))
+    order = [j for _, j in sorted(pairs)]
+    if order != sorted(order):
+        out.append(Change(where, path, f"{keyword} variants reordered"))
 
 
 def _parameter_where(key: tuple[str, str]) -> str:
@@ -594,16 +677,13 @@ class SyncResult:
 
     def commit_message(self) -> str:
         """What release-please reads (the pull request's ``BEGIN_COMMIT_OVERRIDE`` block):
-        the sync, then one nested ``api(spec):`` commit per breaking change. A type
-        outside release-please's own list only splits off in a nested block."""
-        lines = [f"api(spec): {c.describe()}" for c in self.breaking[:MAX_RELEASE_NOTES]]
-        if len(self.breaking) > MAX_RELEASE_NOTES:
-            more = len(self.breaking) - MAX_RELEASE_NOTES
-            lines.append(f"api(spec): {more} more, listed in the spec sync pull request")
+        the sync, then one nested ``api(spec):`` commit per breaking change, every one of
+        them. A type outside release-please's own list only splits off in a nested block."""
         message = f"{self.commit_type}(spec): sync API spec {self.date}\n"
-        if lines:
+        if self.breaking:
             message += "\n" + "".join(
-                f"BEGIN_NESTED_COMMIT\n{line}\nEND_NESTED_COMMIT\n" for line in lines
+                f"BEGIN_NESTED_COMMIT\napi(spec): {c.describe()}\nEND_NESTED_COMMIT\n"
+                for c in self.breaking
             )
         return message
 

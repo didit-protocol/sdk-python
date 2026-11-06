@@ -1,0 +1,4 @@
+# The upstream copies and the pinned fixtures are compared by SHA-256: check them out byte
+# for byte, without line-ending conversion (Windows runners convert text to CRLF).
+/openapi/*.json -text
+/codegen/tests/fixtures/*.json -text
