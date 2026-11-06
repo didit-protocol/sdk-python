@@ -933,10 +933,10 @@ def sync(
             "`feat(spec)`: this sync changes what a caller can observe, so merging it releases "
             "a minor version, never a major one (DESIGN.md section 13). "
             + (
-                f"The release notes list the {len(breaking)} breaking changes above under "
-                '"API changes that can break typed code".'
+                'The release notes repeat the breaking changes above under "API changes that '
+                'can break typed code".'
                 if breaking
-                else "None of it can break typed code."
+                else "Nothing in it is on the list of changes that can break typed code."
             )
         )
     head = [
