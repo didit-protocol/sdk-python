@@ -50,6 +50,8 @@ import sys
 import urllib.request
 from typing import Any
 
+from didit_codegen.naming import pascal
+
 REPO = pathlib.Path(__file__).resolve().parents[1]
 UPSTREAM = {
     "verification.json": "https://docs.didit.me/openapi-25.json",
@@ -97,6 +99,9 @@ MAX_NOTES = 25
 MAX_DEPTH = 32
 NO_DIFFERENCE = "descriptions, examples or other details changed"
 Json = Any
+# Where a request body or response has no content at all: nothing to compare with, unlike
+# ``{}``, which allows any value. Compared by identity.
+NO_SCHEMA: dict[str, Json] = {}
 
 
 class SpecSyncError(Exception):
@@ -137,8 +142,12 @@ def _pointer(doc: Json, ref: str) -> Json:
     return cur
 
 
-def dereference(doc: Json, node: Json, depth: int = 0) -> Json:
-    """``node`` with every local ``$ref`` inlined (self-contained for deprecated operations)."""
+def dereference(doc: Json, node: Json, depth: int = 0, *, ref_titles: bool = True) -> Json:
+    """``node`` with every local ``$ref`` inlined (self-contained for deprecated operations).
+
+    ``ref_titles=False`` drops the title of every referenced schema: the generated code
+    names it after its component, so only an inline union variant's title names a type.
+    """
     if depth > 64:
         return {}
     if isinstance(node, dict):
@@ -148,12 +157,17 @@ def dereference(doc: Json, node: Json, depth: int = 0) -> Json:
             except (KeyError, IndexError, TypeError):
                 # A dangling reference upstream: keep it visible; the generator reports it.
                 return {"x-unresolved-ref": node["$ref"]}
-            target = dereference(doc, found, depth + 1)
-            extra = {k: v for k, v in node.items() if k != "$ref"}
-            return {**target, **extra} if isinstance(target, dict) else target
-        return {k: dereference(doc, v, depth + 1) for k, v in node.items()}
+            target = dereference(doc, found, depth + 1, ref_titles=ref_titles)
+            dropped = ("$ref",) if ref_titles else ("$ref", "title")
+            extra = {k: v for k, v in node.items() if k not in dropped}
+            if not isinstance(target, dict):
+                return target
+            if not ref_titles:
+                target = {k: v for k, v in target.items() if k != "title"}
+            return {**target, **extra}
+        return {k: dereference(doc, v, depth + 1, ref_titles=ref_titles) for k, v in node.items()}
     if isinstance(node, list):
-        return [dereference(doc, v, depth + 1) for v in node]
+        return [dereference(doc, v, depth + 1, ref_titles=ref_titles) for v in node]
     return node
 
 
@@ -172,21 +186,38 @@ def operations(doc: Json, prefix: str) -> dict[str, Json]:
 # What a caller can observe ----------------------------------------------------------------
 
 
-def _shape(node: Json, names: bool = False) -> Json:
+def _variant_type_name(schema: Json) -> str | None:
+    """What an inline oneOf/anyOf variant's title adds to its generated type name
+    (``typegen._variant_name``); None without one, or for a ``$ref`` (named after its
+    component)."""
+    if not isinstance(schema, dict) or "$ref" in schema:
+        return None
+    title = schema.get("title")
+    return pascal(title) if isinstance(title, str) and title.strip() else None
+
+
+def _shape(node: Json, names: bool = False, variant: bool = False) -> Json:
     """``node`` without documentation, so that only what is sent or received compares.
 
     ``names`` marks a map whose keys are names (properties, paths, status codes...),
-    which all stay. ``required`` and ``type`` lists compare in any order.
+    which all stay. ``required`` and ``type`` lists compare in any order. ``variant``
+    marks a oneOf/anyOf variant, whose title names its generated type, so it stays.
     """
     if isinstance(node, dict):
         out: dict[str, Json] = {}
         for k, v in node.items():
+            if variant and k == "title":
+                if (name := _variant_type_name(node)) is not None:
+                    out[k] = name
+                continue
             if not names and (
                 k in DOC_KEYS or (str(k).startswith("x-") and k not in OBSERVABLE_EXTENSIONS)
             ):
                 continue
             if not names and k in ("required", "type") and isinstance(v, list):
                 out[k] = sorted(v, key=str)
+            elif not names and k in ("oneOf", "anyOf") and isinstance(v, list):
+                out[k] = [_shape(member, variant=True) for member in v]
             else:
                 out[k] = _shape(v, not names and k in NAME_MAPS)
         return out
@@ -329,7 +360,10 @@ def _kinds(schema: Json, depth: int = 0) -> frozenset[str]:
 
 
 def _type_names(schema: Json, kinds: frozenset[str]) -> str:
-    """``kinds`` as the summary names them; a string with a typed format is its own type."""
+    """``kinds`` as the summary names them; a string with a typed format is its own type,
+    and a schema that does not say allows any value."""
+    if not kinds:
+        return "any"
     fmt = schema.get("format")
     return " or ".join(
         f"string ({fmt})" if kind == "string" and fmt in TYPED_FORMATS else kind
@@ -380,6 +414,8 @@ def diff_schema(
     if depth > MAX_DEPTH or _shape(old) == _shape(new):
         return
     start = len(out)
+    # A body that appears or disappears is compared field by field, not as a type change.
+    present = old is not NO_SCHEMA and new is not NO_SCHEMA
 
     def note(kind: str, breaking: bool = False, at: str = path) -> None:
         out.append(Change(where, at, kind, breaking))
@@ -394,10 +430,14 @@ def diff_schema(
     old, new = _single(old), _single(new)
     old_kinds, new_kinds = _kinds(old), _kinds(new)
     before, after = _type_names(old, old_kinds), _type_names(new, new_kinds)
-    if old_kinds and new_kinds and before != after:
+    # "any" (a schema that does not say, typed ``object``) against a type counts too.
+    if present and (old_kinds or new_kinds) and before != after:
         note(f"type changed from {before} to {after}", True)
-        # A union's variants can change too; the type change already covers those removed.
-        _diff_variants(old, new, where, path, request=request, out=out, depth=depth, retyped=True)
+        if old_kinds and new_kinds:
+            # A union's variants can change too; the type change already covers those removed.
+            _diff_variants(
+                old, new, where, path, request=request, out=out, depth=depth, retyped=True
+            )
         return
 
     old_enum, new_enum = _enum(old), _enum(new)
@@ -436,8 +476,8 @@ def diff_schema(
         old_sub, new_sub = old.get(key), new.get(key)
         if isinstance(old_sub, dict) or isinstance(new_sub, dict):
             diff_schema(
-                old_sub if isinstance(old_sub, dict) else {},
-                new_sub if isinstance(new_sub, dict) else {},
+                old_sub if isinstance(old_sub, dict) else NO_SCHEMA,
+                new_sub if isinstance(new_sub, dict) else NO_SCHEMA,
                 where, path + suffix, request=request, out=out, depth=depth + 1,
             )  # fmt: skip
     _diff_variants(old, new, where, path, request=request, out=out, depth=depth, retyped=False)
@@ -523,6 +563,10 @@ def _diff_variants(
     for i, j in pairs:
         at = f"{path}({keyword} {j + 1})" if len(new_vars) > 1 else path
         diff_schema(old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1)
+        old_title, new_title = _variant_type_name(old_vars[i]), _variant_type_name(new_vars[j])
+        if old_title != new_title:
+            # The generated type of the variant gets another name.
+            out.append(Change(where, at, f"type renamed: title {old_title} -> {new_title}"))
     if removed and not retyped:
         kind = f"type changed: {len(removed)} {keyword} variant(s) removed"
         out.append(Change(where, path, kind, True))
@@ -539,7 +583,7 @@ def _parameter_where(key: tuple[str, str]) -> str:
 
 def _parameters(doc: Json, op: Json) -> dict[tuple[str, str], Json]:
     found: dict[tuple[str, str], Json] = {}
-    for parameter in dereference(doc, op.get("parameters") or []):
+    for parameter in dereference(doc, op.get("parameters") or [], ref_titles=False):
         if isinstance(parameter, dict):
             found[(str(parameter.get("in", "")), str(parameter.get("name", "")))] = parameter
     return found
@@ -547,7 +591,7 @@ def _parameters(doc: Json, op: Json) -> dict[tuple[str, str], Json]:
 
 def _content(doc: Json, node: Json) -> dict[str, Json]:
     """The schema of each media type of a request body or response."""
-    node = dereference(doc, node)
+    node = dereference(doc, node, ref_titles=False)
     content = node.get("content") if isinstance(node, dict) else None
     if not isinstance(content, dict):
         return {}
@@ -578,11 +622,45 @@ def _diff_content(
         )
     pairs = [(m, m) for m in sorted(set(old) & set(new))]
     if not pairs and (old or new):
-        old = old or {"": {}}
-        new = new or {"": {}}
+        old = old or {"": NO_SCHEMA}
+        new = new or {"": NO_SCHEMA}
         pairs = [(min(old), min(new))]
     for before, after in pairs:
         diff_schema(old[before], new[after], where, request=request, out=out)
+
+
+def _diff_statuses(
+    old: dict[str, dict[str, Json]], new: dict[str, dict[str, Json]]
+) -> list[Change]:
+    """The success statuses only one side has. The method returns a union of every 2xx
+    body, nullable when one has none: a status without a body makes it nullable, and a
+    removed status whose body no other one returns removes a variant of it (DESIGN 3.1)."""
+    found: list[Change] = []
+
+    def bodies(responses: dict[str, dict[str, Json]]) -> list[Json]:
+        return [_shape(content) for content in responses.values() if content]
+
+    def returns_null(responses: dict[str, dict[str, Json]]) -> bool:
+        return any(not content for content in responses.values())
+
+    for status in sorted(set(new) - set(old)):
+        if not new[status] and bodies(old) and not returns_null(old):
+            found.append(
+                Change("response", "", f"can now be null (status {status} has no body)", True)
+            )
+        elif new[status] and _shape(new[status]) not in bodies(old):
+            found.append(Change("response", "", f"status {status} added with another body"))
+        else:
+            found.append(Change("response", "", f"status {status} added"))
+    for status in sorted(set(old) - set(new)):
+        if not old[status] and bodies(new) and not returns_null(new):
+            found.append(Change("response", "", f"can no longer be null (status {status} removed)"))
+        elif old[status] and _shape(old[status]) not in bodies(new):
+            kind = f"type changed: status {status} removed, and no other status returns its body"
+            found.append(Change("response", "", kind, True))
+        else:
+            found.append(Change("response", "", f"status {status} removed"))
+    return found
 
 
 def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[Change]:
@@ -616,12 +694,14 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[
     )  # fmt: skip
 
     # Every 2xx response both have; when the only success status changed (200 to 201),
-    # the old body against the new one.
+    # the old body against the new one; otherwise the statuses only one side has.
     old_responses, new_responses = _successes(old_doc, old), _successes(new_doc, new)
     statuses = [(s, s) for s in old_responses if s in new_responses]
     if not statuses and len(old_responses) == 1 and len(new_responses) == 1:
         statuses = [(next(iter(old_responses)), next(iter(new_responses)))]
         found.append(Change("response", "", f"status {statuses[0][0]} -> {statuses[0][1]}"))
+    else:
+        found.extend(_diff_statuses(old_responses, new_responses))
     for before, after in statuses:
         _diff_content(
             old_responses[before], new_responses[after], "response", request=False, out=found
