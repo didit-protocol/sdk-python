@@ -77,7 +77,9 @@ def _sync_pair(openapi: pathlib.Path, before: str, after: str) -> spec_sync.Sync
 
 
 def _section(summary: str, title: str) -> str:
-    return summary.split(f"## {title}\n", 1)[1].split("\n## ", 1)[0]
+    """The text under the heading that starts with ``title`` (some headings add a count)."""
+    after = f"\n{summary}".split(f"\n## {title}", 1)[1]
+    return after.split("\n", 1)[1].split("\n## ", 1)[0]
 
 
 def _nested(message: str) -> list[str]:
@@ -508,6 +510,9 @@ def test_cli_writes_the_type_and_the_commit_message(
     del spec["paths"]["/v3/billing/balance/"]
     (upstream / "verification.json").write_text(json.dumps(spec), "utf-8")
     output, message = tmp_path / "github_output", tmp_path / "message.txt"
+    version = openapi.parent / "src" / "didit" / "_version.py"
+    version.parent.mkdir(parents=True)
+    version.write_text('__version__ = "1.1.0"\n', "utf-8")
     monkeypatch.setattr(spec_sync, "REPO", openapi.parent)
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     args = ["--from-dir", str(upstream), "--commit-message", str(message)]
@@ -518,6 +523,6 @@ def test_cli_writes_the_type_and_the_commit_message(
     assert message.read_text("utf-8") == (
         f"feat(spec): sync API spec {outputs['date']}\n\nBEGIN_NESTED_COMMIT\n"
         "api(spec): `GET /v3/billing/balance/`: operation removed; `billing.retrieve_balance` "
-        f"stays as a deprecated method until version {spec_sync.next_minor(spec_sync._version())}\n"
+        "stays as a deprecated method until version 1.2.0\n"
         "END_NESTED_COMMIT\n"
     )
