@@ -274,6 +274,26 @@ def test_a_string_format_with_its_own_type_is_a_type_change(request_side: bool) 
     ]
 
 
+@pytest.mark.parametrize("request_side", [True, False], ids=["request", "response"])
+def test_a_schema_that_allows_any_value_is_a_type_change(request_side: bool) -> None:
+    # Without a type the generated code types a value as ``object``.
+    uuid = {"type": "string", "format": "uuid"}
+    assert _diff(uuid, {"format": "uuid"}, request=request_side) == [
+        ("", "type changed from string to any", True)
+    ]
+    assert _diff({}, {"type": "integer"}, request=request_side) == [
+        ("", "type changed from any to integer", True)
+    ]
+    listed = {"type": "array", "items": uuid}
+    assert _diff(listed, {"type": "array"}, request=request_side) == [
+        ("[]", "type changed from string to any", True)
+    ]
+    either = {"oneOf": [{"type": "string"}, {"type": "integer"}]}
+    assert _diff(either, {"oneOf": [{"type": "string"}, {}]}, request=request_side) == [
+        ("", "type changed from integer or string to any", True)
+    ]
+
+
 def test_union_variants_are_compared_with_the_variant_they_became() -> None:
     a: dict[str, Any] = {"type": "object", "title": "A", "properties": {"kind": STATUS}}
     b: dict[str, Any] = {
@@ -311,6 +331,20 @@ def test_union_variants_are_compared_with_the_variant_they_became() -> None:
     ]
     # Variants in another order are the same union.
     assert _diff({"oneOf": [a, b]}, {"oneOf": [b, a]}) == [("", "oneOf variants reordered", False)]
+
+
+def test_a_variant_title_names_its_generated_type() -> None:
+    a: dict[str, Any] = {"type": "object", "title": "Selected items", "properties": {"s": STATUS}}
+    b: dict[str, Any] = {"type": "object", "title": "All items", "properties": {"all": {}}}
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [{**a, "title": "Chosen items"}, b]}) == [
+        ("(oneOf 1)", "variant type renamed from SelectedItems to ChosenItems", False)
+    ]
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [{**a, "title": None}, b]}) == [
+        ("(oneOf 1)", "variant type renamed from SelectedItems to a numbered name", False)
+    ]
+    # The same generated name, or a title outside a union, is documentation.
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [{**a, "title": "Selected Items"}, b]}) == []
+    assert _diff(a, {**a, "title": "Chosen items"}) == []
 
 
 def test_newly_required_request_fields_count_and_response_requiredness_does_not() -> None:
@@ -421,6 +455,38 @@ def test_every_success_response_is_compared_and_reported_once() -> None:
     assert [(c.path, c.kind) for c in found] == [("a", "removed")]
 
 
+def test_a_success_status_only_one_side_has_changes_the_result() -> None:
+    # The method returns every 2xx body, and None when a 2xx response has no body.
+    job = {"type": "object", "properties": {"job_id": {"type": "string"}}}
+    one = {"200": _json(OBJ)}
+    no_body = {"204": {"description": "No content"}}
+
+    def changes(old: Any, new: Any) -> list[tuple[str, bool]]:
+        found = spec_sync.describe_change({}, _op(responses=old), {}, _op(responses=new))
+        return [(c.kind, c.breaking) for c in found]
+
+    assert changes(one, {**one, **no_body}) == [("can now be null (status 204 has no body)", True)]
+    assert changes({**one, **no_body}, one) == [
+        ("can no longer be null (status 204 removed)", False)
+    ]
+    two = {**one, "202": _json(job)}
+    assert changes(one, two) == [("status 202 added with another body", False)]
+    removed = "type changed: status 202 removed, and no other status returns its body"
+    assert changes(two, one) == [(removed, True)]
+    # The same body under one more or one less status changes no type.
+    same = {**one, "202": _json(OBJ)}
+    assert changes(one, same) == [("status 202 added", False)]
+    assert changes(same, one) == [("status 202 removed", False)]
+
+
+def test_a_body_that_appears_is_compared_field_by_field() -> None:
+    optional = {**OBJ, "required": []}
+    found = spec_sync.describe_change({}, _op(), {}, _op(body=optional))
+    assert [(c.where, c.path, c.kind, c.breaking) for c in found] == [
+        ("request body", "a", "added", False)
+    ]
+
+
 def test_references_are_followed() -> None:
     doc = {"components": {"schemas": {"Obj": OBJ}}}
     new_doc = {"components": {"schemas": {"Obj": {**OBJ, "properties": {}}}}}
@@ -481,6 +547,41 @@ def test_feat_when_a_caller_can_observe_it_and_chore_for_documentation(
     assert result.commit_type == commit_type
     assert result.breaking == []
     assert result.commit_message() == f"{commit_type}(spec): sync API spec 2026-11-06\n"
+
+
+def _batch_delete_variant(spec: Any) -> Any:
+    """The inline oneOf variant named "Selected transactions" (its type is named after it)."""
+    path = "/v3/organization/{organization_id}/application/{application_id}/transactions/delete/"
+    body = spec["paths"][path]["delete"]["requestBody"]["content"]["application/json"]
+    variant = body["schema"]["oneOf"][0]
+    assert variant["title"] == "Selected transactions"
+    return variant
+
+
+@pytest.mark.parametrize(
+    ("change", "commit_type"),
+    [
+        (lambda s: _batch_delete_variant(s).update(title="Selected entries"), "feat"),
+        (lambda s: _batch_delete_variant(s).update(title="Selected Transactions"), "chore"),
+        (
+            lambda s: s["components"]["schemas"]["TransactionVerificationSessionAction"].update(
+                title="Renamed"
+            ),
+            "chore",
+        ),
+    ],
+    ids=["renames the type", "same type name", "component title"],
+)
+def test_a_variant_title_that_names_a_type_is_feat(
+    openapi: pathlib.Path, change: Any, commit_type: str
+) -> None:
+    spec = json.loads((openapi / "verification.json").read_text("utf-8"))
+    change(spec)
+    result = _sync(openapi, {"verification.json": json.dumps(spec).encode()})
+    assert result.commit_type == commit_type
+    assert result.breaking == []
+    renamed = "variant type renamed from SelectedTransactions to SelectedEntries"
+    assert (renamed in result.summary) == (commit_type == "feat")
 
 
 def test_a_new_webhook_event_is_feat(openapi: pathlib.Path) -> None:
