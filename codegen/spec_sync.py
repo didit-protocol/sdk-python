@@ -256,16 +256,32 @@ def _nullable(schema: Json, depth: int = 0) -> bool:
         return True
     if isinstance(schema.get("enum"), list) and None in schema["enum"]:
         return True
+    members = schema.get("allOf")
+    if "type" not in schema and members and all(_nullable(m, depth + 1) for m in members):
+        return True
     return any(
         _nullable(v, depth + 1) for k in ("oneOf", "anyOf") for v in schema.get(k) or []
     )
 
 
 def _single(schema: Json, depth: int = 0) -> Json:
-    """The one type a oneOf/anyOf with a single non-null variant stands for, so that
-    ``anyOf: [X, null]`` reads as a nullable X rather than as X's fields removed."""
+    """``schema`` read as one type: ``allOf`` members merged into it, and a oneOf/anyOf
+    with a single non-null variant replaced by that variant, so that ``anyOf: [X, null]``
+    reads as a nullable X rather than as X's fields removed."""
     if not isinstance(schema, dict) or depth > MAX_DEPTH:
         return schema
+    members = schema.get("allOf")
+    if isinstance(members, list) and all(isinstance(m, dict) for m in members):
+        merged = {k: v for k, v in schema.items() if k != "allOf"}
+        for member in members:
+            for key, value in _single(member, depth + 1).items():
+                if key == "properties" and isinstance(value, dict):
+                    merged["properties"] = {**value, **(merged.get("properties") or {})}
+                elif key == "required" and isinstance(value, list):
+                    merged["required"] = sorted({*(merged.get("required") or []), *value})
+                else:
+                    merged.setdefault(key, value)
+        schema = merged
     variants = _variants(schema)
     if len(variants) != 1 or not isinstance(variants[0], dict):
         return schema
@@ -820,6 +836,7 @@ def sync(
             )
 
     changes_lines: list[str] = []
+    documentation_only: list[str] = []
     for key in common:
         old_name, old = old_ops[key]
         new_name, new = new_ops[key]
@@ -828,13 +845,19 @@ def sync(
         ):
             continue
         changes = describe_change(old_docs[old_name], old, new_docs[new_name], new)
-        if old == new and not changes:
+        if not changes:
+            if old != new:
+                documentation_only.append(key)
             continue
         marker = " **(breaking)**" if any(c.breaking for c in changes) else ""
         changes_lines.append(f"- `{key}`{marker}: " + "; ".join(notes(changes)))
         breaking.extend(BreakingChange(key, c.where, c.path, c.kind) for c in changes if c.breaking)
-    lines.append(f"## Changed operations ({len(changes_lines)})")
+    lines.append(f"## Changed operations ({len(changes_lines) + len(documentation_only)})")
     lines.extend(changes_lines)
+    if documentation_only:
+        shown = ", ".join(f"`{key}`" for key in documentation_only[:MAX_NOTES])
+        more = len(documentation_only) - MAX_NOTES
+        lines.append(f"- {NO_DIFFERENCE}: {shown}" + (f" and {more} more" if more > 0 else ""))
     lines.append("")
 
     old_hand = set().union(
