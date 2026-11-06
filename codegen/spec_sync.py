@@ -1040,9 +1040,14 @@ def sync(
             "fetched_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
     # Same layout as the seeded files (one-space indent, no trailing newline), so diffs stay small.
-    source_path.write_text(json.dumps(source, indent=1, ensure_ascii=False), "utf-8")
-    overlay_path.write_text(json.dumps(overlay, indent=1, ensure_ascii=False), "utf-8")
-    deprecated_path.write_text(json.dumps(deprecated, indent=1, ensure_ascii=False) + "\n", "utf-8")
+    # LF on every platform: .gitattributes checks openapi/*.json out byte for byte.
+    source_path.write_text(json.dumps(source, indent=1, ensure_ascii=False), "utf-8", newline="\n")
+    overlay_path.write_text(
+        json.dumps(overlay, indent=1, ensure_ascii=False), "utf-8", newline="\n"
+    )
+    deprecated_path.write_text(
+        json.dumps(deprecated, indent=1, ensure_ascii=False) + "\n", "utf-8", newline="\n"
+    )
     summary = "\n".join(lines).rstrip() + "\n"
     return SyncResult(True, summary, today.isoformat(), commit_type, breaking)
 
