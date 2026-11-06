@@ -284,14 +284,17 @@ def test_removed_operation_stays_as_a_deprecated_method(openapi: pathlib.Path) -
     del spec["paths"]["/v3/billing/balance/"]
     (upstream / "verification.json").write_text(json.dumps(spec), "utf-8")
     shutil.copy(openapi / "account.json", upstream / "account.json")
+    shutil.copy(openapi / "authentication.json", upstream / "authentication.json")
 
     downloads = {name: (upstream / name).read_bytes() for name in spec_sync.UPSTREAM}
-    changed, summary = spec_sync.sync(
-        openapi, downloads, today=NOW.date(), now=NOW, version="0.4.2"
+    result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.4.2")
+    assert result.changed
+    assert result.commit_type == "feat"
+    assert result.summary.startswith("## Breaking changes\n")
+    assert _breaking(result.summary).strip() == (
+        "- `GET /v3/billing/balance/`: operation removed; `billing.retrieve_balance` stays as "
+        "a deprecated method until version 0.5.0"
     )
-    assert changed
-    assert "billing.retrieve_balance` was removed upstream" in summary
-    assert "## Breaking changes" in summary
     deprecated = _read(openapi / "deprecated-operations.json")["methods"]
     entry = deprecated["billing.retrieve_balance"]
     assert entry["reason"] == "removed"
@@ -319,13 +322,14 @@ def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> No
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
     }
-    changed, summary = spec_sync.sync(
-        openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0"
-    )
-    assert changed
-    breaking = summary.split("## Breaking changes", 1)[1].split("##", 1)[0]
-    assert "`billing.retrieve_balance` was renamed upstream to `billing.get_balance`" in breaking
-    assert "until version 0.2.0" in breaking
+    result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
+    assert result.changed
+    # A rename keeps the old name, so nothing breaks yet; the new name is a feature.
+    assert result.commit_type == "feat"
+    assert _breaking(result.summary).strip() == "None detected."
+    renamed = _section(result.summary, "Renamed methods")
+    assert "`billing.retrieve_balance` renamed to `billing.get_balance`" in renamed
+    assert "until version 0.2.0" in renamed
     entry = _read(openapi / "deprecated-operations.json")["methods"]["billing.retrieve_balance"]
     assert entry["reason"] == "renamed"
     assert entry["replacement"] == "billing.get_balance"
@@ -344,7 +348,7 @@ def test_renamed_method_stays_as_a_deprecated_alias(openapi: pathlib.Path) -> No
     # interim name it shipped under becomes the deprecated alias in turn.
     spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"]["method"] = "retrieve_balance"
     downloads["verification.json"] = json.dumps(spec).encode()
-    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.1")
+    summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.1").summary
     assert "`billing.retrieve_balance` is provided again" in summary
     methods = _read(openapi / "deprecated-operations.json")["methods"]
     assert list(methods) == ["billing.get_balance"]
@@ -357,12 +361,15 @@ def _sync(openapi: pathlib.Path, spec: Any) -> str:
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
     }
-    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
-    return summary
+    return spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0").summary
+
+
+def _section(summary: str, title: str) -> str:
+    return summary.split(f"## {title}", 1)[1].split("\n## ", 1)[0]
 
 
 def _breaking(summary: str) -> str:
-    return summary.split("## Breaking changes", 1)[1].split("\n## ", 1)[0]
+    return _section(summary, "Breaking changes")
 
 
 def _name_op(openapi: pathlib.Path, spec: Any, path: str, http_method: str, **naming: Any) -> None:
@@ -370,17 +377,17 @@ def _name_op(openapi: pathlib.Path, spec: Any, path: str, http_method: str, **na
     spec["paths"][path][http_method]["x-didit-sdk"] = {**_naming(openapi, key), **naming}
 
 
-def test_swapped_names_are_breaking(openapi: pathlib.Path) -> None:
+def test_swapped_names_are_called_out_for_review(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
     _name_op(openapi, spec, "/v3/billing/balance/", "get", method="top_up")
     _name_op(openapi, spec, "/v3/billing/top-up/", "post", method="retrieve_balance")
-    breaking = _breaking(_sync(openapi, spec))
-    assert "`billing.top_up` now calls `GET /v3/billing/balance/` instead of" in breaking
-    assert "`billing.retrieve_balance` now calls `POST /v3/billing/top-up/`" in breaking
+    moved = _section(_sync(openapi, spec), "Moved or reassigned methods")
+    assert "`billing.top_up` **(review)** now calls `GET /v3/billing/balance/` instead of" in moved
+    assert "`billing.retrieve_balance` **(review)** now calls `POST /v3/billing/top-up/`" in moved
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
 
 
-def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -> None:
+def test_a_name_reused_by_another_operation_is_called_out(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
     _name_op(openapi, spec, "/v3/billing/balance/", "get", method="current_balance")
     spec["paths"]["/v3/billing/balance-v2/"] = {
@@ -389,10 +396,10 @@ def test_a_name_reused_by_another_operation_is_breaking(openapi: pathlib.Path) -
             "x-didit-sdk": {**_naming(openapi, "GET /v3/billing/balance/")},
         }
     }
-    breaking = _breaking(_sync(openapi, spec))
+    moved = _section(_sync(openapi, spec), "Moved or reassigned methods")
     assert (
-        "`billing.retrieve_balance` now calls `GET /v3/billing/balance-v2/` instead of "
-        "`GET /v3/billing/balance/`" in breaking
+        "`billing.retrieve_balance` **(review)** now calls `GET /v3/billing/balance-v2/` "
+        "instead of `GET /v3/billing/balance/`" in moved
     )
 
 
@@ -409,10 +416,13 @@ def test_a_moved_operation_reports_what_changed(openapi: pathlib.Path) -> None:
     }
     spec["paths"]["/v4/billing/balance/"] = item
     summary = _sync(openapi, spec)
-    breaking = _breaking(summary)
-    assert "`billing.retrieve_balance` moved from `GET /v3/billing/balance/`" in breaking
-    assert "parameter added: currency (query, required)" in breaking
-    assert "response: type object -> array" in breaking
+    assert "`billing.retrieve_balance` **(breaking)** moved from `GET /v3/billing/balance/`" in (
+        _section(summary, "Moved or reassigned methods")
+    )
+    assert _breaking(summary).strip().splitlines() == [
+        "- `GET /v4/billing/balance/` parameter `currency` (query): added (required)",
+        "- `GET /v4/billing/balance/` response: type changed from object to array",
+    ]
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
 
 
@@ -422,7 +432,10 @@ def test_an_operation_that_stops_being_a_server_operation_is_removed(
     spec = _read(openapi / "verification.json")
     _name_op(openapi, spec, "/v3/billing/balance/", "get", auth="device_token", server=False)
     breaking = _breaking(_sync(openapi, spec))
-    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) is removed" in breaking
+    assert breaking.strip() == (
+        "- `GET /v3/billing/balance/`: operation removed from server SDKs: it now needs "
+        "device_token, and `billing.retrieve_balance` is removed"
+    )
     # Never kept: server SDKs do not expose device-token operations (DESIGN 4).
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
     files = generate(openapi)
@@ -441,10 +454,9 @@ def test_an_operation_that_loses_its_naming_is_called_out(openapi: pathlib.Path)
     spec = _read(openapi / "verification.json")
     del spec["paths"]["/v3/billing/balance/"]["get"]["x-didit-sdk"]
     summary = _sync(openapi, spec)
-    assert "lost its SDK naming" in summary
-    assert "`billing.retrieve_balance` (GET /v3/billing/balance/) has no SDK naming" in _breaking(
-        summary
-    )
+    # A sync failure for a person to fix, not an API change.
+    assert "`GET /v3/billing/balance/` lost its SDK naming" in _section(summary, "Renamed methods")
+    assert _breaking(summary).strip() == "None detected."
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
     with pytest.raises(CodegenError, match="no SDK naming"):
         load(openapi)
@@ -464,45 +476,11 @@ def test_nested_type_and_enum_changes_are_breaking(openapi: pathlib.Path) -> Non
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
     }
-    _, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0")
-    breaking = summary.split("## Breaking changes", 1)[1].split("## ", 1)[0]
-    assert f".{prop}: type string -> integer (breaking)" in breaking
-    assert "schema `LegacyUnusedThing` removed" in breaking
-
-
-def test_schema_diff_rules() -> None:
-    def diff(old: Any, new: Any, *, request: bool) -> list[tuple[str, bool]]:
-        notes: list[tuple[str, bool]] = []
-        spec_sync.diff_schema(old, new, "x", request=request, notes=notes)
-        return notes
-
-    status = {"type": "string", "enum": ["a", "b"]}
-    assert diff(status, {**status, "enum": ["a"]}, request=True) == [
-        ('x: values removed ["b"]', True)
-    ]
-    assert diff(status, {**status, "enum": ["a"]}, request=False) == [
-        ('x: values removed ["b"]', False)
-    ]
-    obj = {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"]}
-    assert diff(obj, {**obj, "required": []}, request=False) == [
-        ("x.a: no longer always present", True)
-    ]
-    assert diff({**obj, "required": []}, obj, request=True) == [("x.a: now required", True)]
-    assert diff({"type": "integer"}, {"type": "number"}, request=True) == [
-        ("x: type integer -> number", False)
-    ]
-    assert diff({"type": "string"}, {"type": "string", "nullable": True}, request=False) == [
-        ("x: can now be null", True)
-    ]
-    nested = {"type": "array", "items": obj}
-    assert diff(
-        nested, {"type": "array", "items": {"type": "object", "properties": {}}}, request=False
-    ) == [("x[].a: removed", True)]
-    assert diff({"oneOf": [obj, status]}, {"oneOf": [obj]}, request=False) == [
-        ("x: 1 oneOf variant(s) removed", True)
-    ]
-    documented = {**obj, "description": "now documented", "example": {"a": "z"}}
-    assert diff(obj, documented, request=False) == []
+    summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW, version="0.1.0").summary
+    breaking = _breaking(summary)
+    assert f".{prop}`: type changed from string to integer" in breaking
+    assert "LegacyUnusedThing" not in breaking
+    assert "verification.json removed: `LegacyUnusedThing`" in _section(summary, "Schemas")
 
 
 @pytest.mark.parametrize(
@@ -556,9 +534,10 @@ def test_moved_operation_is_not_deprecated(openapi: pathlib.Path) -> None:
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
     }
-    changed, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
-    assert changed
-    assert "moved to `GET /v3/billing/balance-v2/`" in summary
+    result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
+    assert result.changed
+    assert "moved to `GET /v3/billing/balance-v2/`" in result.summary
+    assert _breaking(result.summary).strip() == "None detected."
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
     load(openapi)
 
@@ -583,11 +562,16 @@ def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -
         "verification.json": json.dumps(spec).encode(),
         "account.json": (openapi / "account.json").read_bytes(),
     }
-    changed, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
-    assert changed
+    result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
+    summary = result.summary
+    assert result.changed
     assert "`GET /v3/new-thing/`: **no SDK naming**" in summary
-    assert "parameter added: dry_run (query, required)" in summary
-    assert "**(breaking)**" in summary
+    assert "`POST /v3/session/` **(breaking)**: parameter `dry_run` (query): added (required)" in (
+        summary
+    )
+    assert _breaking(summary).strip() == (
+        "- `POST /v3/session/` parameter `dry_run` (query): added (required)"
+    )
     assert "Dropped 1 overlay entries" in summary
     assert "POST /v3/session/" not in _read(openapi / "overlay.json")["operations"]
     source = _read(openapi / "SOURCE.json")
@@ -599,9 +583,9 @@ def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -
 def test_sync_without_changes_touches_nothing(openapi: pathlib.Path) -> None:
     before = {p.name: p.read_bytes() for p in openapi.iterdir()}
     downloads = {name: (openapi / name).read_bytes() for name in spec_sync.UPSTREAM}
-    changed, summary = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
-    assert not changed
-    assert summary == "No upstream change.\n"
+    result = spec_sync.sync(openapi, downloads, today=NOW.date(), now=NOW)
+    assert not result.changed
+    assert result.summary == "No upstream change.\n"
     assert {p.name: p.read_bytes() for p in openapi.iterdir()} == before
 
 

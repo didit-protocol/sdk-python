@@ -36,7 +36,7 @@ uv for environments and locking, hatchling for the build, pytest, mypy --strict,
 ## Rules
 
 - Generated code is never edited by hand. Change the generator in `codegen/` or `openapi/overlay.json`, then regenerate; CI fails when the committed generated code is stale.
-- `openapi/verification.json`, `openapi/account.json` and `openapi/webhook-vectors.json` are upstream copies; never edit them by hand. Only the spec sync workflow updates them.
+- `openapi/verification.json`, `openapi/account.json`, `openapi/authentication.json` and `openapi/webhook-vectors.json` are upstream copies; never edit them by hand. Only the spec sync workflow updates them. `authentication.json` is never generated from: `tests/test_authentication_contract.py` holds the hand-written `authentication` module to it.
 - Keep the SDKs in sync (HARD RULE). Any public API change in `service-didit-verification` or `service-didit-auth` must reach the OpenAPI documents in mintlify-docs, and from there every server SDK through the spec sync pull request. A change to hand-written core behaviour that DESIGN.md describes (client options, errors, retries, pagination, webhooks, Authentication) is made in all seven SDK repositories, one pull request each, and DESIGN.md is updated in all seven in the same words.
 - Feature parity across languages: a capability shipped in one server SDK ships in the other six.
 - Releases publish straight from this repository (Alex, 2026-10-29): merging the release-please pull request is the release approval, and the release workflow then creates the vX.Y.Z tag and publishes to the registry. Never push a release tag, create a release or publish by hand outside that flow, and never store a registry token where trusted publishing works.

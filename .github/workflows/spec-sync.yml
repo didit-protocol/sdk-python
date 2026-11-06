@@ -2,7 +2,17 @@
 #
 # Downloads the upstream OpenAPI documents into openapi/, regenerates the SDK, runs the
 # checks and opens (or updates) one pull request titled
-# "chore(spec): sync API spec YYYY-MM-DD" on the branch chore/spec-sync.
+# "<type>(spec): sync API spec YYYY-MM-DD" on the branch chore/spec-sync.
+#
+# The type comes from codegen/spec_sync.py (DESIGN.md sections 3.1 and 13): feat(spec) when
+# a caller can observe the change, a minor release even when it can break typed code;
+# chore(spec) when only documentation changed, which releases nothing on its own. Never "!"
+# or a BREAKING CHANGE footer. The body opens with "Breaking changes" and ends with a
+# BEGIN_COMMIT_OVERRIDE block that release-please reads instead of the merged commit: the
+# sync line plus one nested api(spec) commit per breaking change, which
+# release-please-config.json lists under "API changes that can break typed code". Merge
+# with "Squash and merge": after a merge commit release-please reads the block once per
+# commit, and every line would appear twice in the release notes.
 #
 # Token: pull requests opened with the default GITHUB_TOKEN do not trigger CI (GitHub does
 # not start workflows from events caused by GITHUB_TOKEN). To get CI on the sync pull
@@ -48,11 +58,12 @@ jobs:
       UV_FROZEN: "1"
     steps:
       - name: Prepare
-        id: prepare
-        # The summary lives outside the checkout so that it is never committed.
+        # The summary, the checks and the commit message live outside the checkout so that
+        # they are never committed.
         run: |
           echo "SUMMARY=$RUNNER_TEMP/spec-sync-summary.md" >> "$GITHUB_ENV"
-          echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "CHECKS=$RUNNER_TEMP/checks.md" >> "$GITHUB_ENV"
+          echo "COMMIT_MESSAGE=$RUNNER_TEMP/commit-message.txt" >> "$GITHUB_ENV"
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -86,9 +97,9 @@ jobs:
       - name: Download the upstream OpenAPI documents
         id: sync
         if: steps.guard.outputs.skip != 'true'
-        # Writes changed=true|false to $GITHUB_OUTPUT and a markdown summary of the added,
-        # removed and changed operations to $SUMMARY.
-        run: uv run python codegen/spec_sync.py --summary "$SUMMARY"
+        # Writes changed=true|false, date and type=feat|chore to $GITHUB_OUTPUT, a markdown
+        # summary (breaking changes first) to $SUMMARY and the commit message to $COMMIT_MESSAGE.
+        run: uv run python codegen/spec_sync.py --summary "$SUMMARY" --commit-message "$COMMIT_MESSAGE"
       - name: Regenerate the SDK and run the checks
         id: checks
         if: steps.sync.outputs.changed == 'true'
@@ -98,15 +109,15 @@ jobs:
             echo
             echo "## Checks"
             echo
-          } >> "$SUMMARY"
+          } >> "$CHECKS"
           run_check() {
             name="$1"
             shift
             echo "::group::$name"
             if "$@"; then
-              echo "- [x] $name" >> "$SUMMARY"
+              echo "- [x] $name" >> "$CHECKS"
             else
-              echo "- [ ] $name: **failed**, see the workflow run" >> "$SUMMARY"
+              echo "- [ ] $name: **failed**, see the workflow run" >> "$CHECKS"
               echo "::error::$name failed"
               failed=true
             fi
@@ -122,8 +133,59 @@ jobs:
             echo
             echo "Opened by [spec sync run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
             echo "Generated code comes from codegen/ and openapi/; do not edit it by hand."
-          } >> "$SUMMARY"
+          } >> "$CHECKS"
           echo "failed=$failed" >> "$GITHUB_OUTPUT"
+      - name: Write the pull request body and the commit message
+        id: body
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          TYPE: ${{ steps.sync.outputs.type }}
+        run: |
+          body="$RUNNER_TEMP/pull-request-body.md"
+          override="$RUNNER_TEMP/commit-override.md"
+          {
+            echo
+            echo "## Release notes"
+            echo
+            echo "release-please reads the block below instead of the merged commit, so the release type (\`${TYPE}(spec)\`, never a major version) and the lines under \"API changes that can break typed code\" do not depend on how the commit is titled. Merge with **Squash and merge** and keep the block when you edit this description: after a merge commit release-please reads the block once per commit, and every line would appear twice."
+            echo
+            echo "BEGIN_COMMIT_OVERRIDE"
+            cat "$COMMIT_MESSAGE"
+            echo "END_COMMIT_OVERRIDE"
+          } > "$override"
+          # A pull request description holds 65536 characters: shorten the report, never the
+          # checks or the block release-please reads. The full report is in the sync step's log.
+          touch "$CHECKS"
+          # Hundreds of breaking changes do not fit at all. Then the description leaves the
+          # block out and release-please reads the squashed commit, whose message (the sync
+          # commit's) holds every line.
+          if [ "$(($(wc -c < "$override") + $(wc -c < "$CHECKS")))" -gt 60000 ]; then
+            count="$(grep -c '^BEGIN_NESTED_COMMIT$' "$COMMIT_MESSAGE")"
+            {
+              echo
+              echo "## Release notes"
+              echo
+              echo "The ${count} lines for \"API changes that can break typed code\" do not fit this description, so it has no override block and release-please reads the merged commit instead. Merge with **Squash and merge** and use the message of this branch's sync commit as the commit message: it holds every line, each as its own nested commit."
+            } > "$override"
+            echo "::warning::${count} breaking changes do not fit the pull request description; squash with the sync commit's message so that the release notes list them."
+          fi
+          limit=$((65000 - $(wc -c < "$override") - $(wc -c < "$CHECKS")))
+          if [ "$(wc -c < "$SUMMARY")" -gt "$limit" ]; then
+            {
+              head -c "$((limit - 200))" "$SUMMARY" | sed '$d'
+              echo
+              echo "_Shortened to fit the pull request description; the full report is in the log of this run's sync step._"
+            } > "$body"
+          else
+            cp "$SUMMARY" "$body"
+          fi
+          cat "$CHECKS" "$override" >> "$body"
+          delimiter="EOF_$(openssl rand -hex 16)"
+          {
+            echo "message<<$delimiter"
+            cat "$COMMIT_MESSAGE"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
       - name: Open or update the spec sync pull request
         if: steps.sync.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
@@ -131,9 +193,9 @@ jobs:
           token: ${{ secrets.SPEC_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
           branch: chore/spec-sync
           delete-branch: true
-          title: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
-          commit-message: "chore(spec): sync API spec ${{ steps.prepare.outputs.today }}"
-          body-path: ${{ env.SUMMARY }}
+          title: "${{ steps.sync.outputs.type }}(spec): sync API spec ${{ steps.sync.outputs.date }}"
+          commit-message: ${{ steps.body.outputs.message }}
+          body-path: ${{ runner.temp }}/pull-request-body.md
           # A sync that fails a check still opens the pull request, as a draft, so the fix
           # (usually an openapi/overlay.json entry) can be pushed to the same branch.
           draft: ${{ steps.checks.outputs.failed == 'true' }}
