@@ -16879,7 +16879,7 @@
     "/v3/bank/account-check/": {
       "post": {
         "summary": "Check a bank account",
-        "description": "**Not available in production yet.** Bank Verification is switched off in production, so until it is switched on this endpoint answers `404` with `bank_verification_not_available`. Do not build on it yet. The rest of this description is what the endpoint does once it is available.\n\nCheck that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.\n\n**What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.\n\n**What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.\n\n**Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.\n\n**Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.\n\n**Sandbox.** Where Bank Verification is available, a sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.\n\n**API keys.** A scoped API key needs write access to sessions.",
+        "description": "Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.\n\n**What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.\n\n**What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.\n\n**Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.\n\n**Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.\n\n**Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.\n\n**API keys.** A scoped API key needs write access to sessions.",
         "operationId": "post_v3_bank_account_check",
         "tags": [
           "Standalone APIs"
@@ -16906,13 +16906,13 @@
                 "$ref": "#/components/schemas/BankAccountCheckRequest"
               },
               "examples": {
-                "Person, United Kingdom": {
-                  "summary": "A sort code and account number, checked against a person's name",
+                "Person, Nigeria": {
+                  "summary": "A bank code and account number, checked against a person's name",
                   "value": {
-                    "country": "GBR",
+                    "country": "NGA",
                     "account": {
-                      "sort_code": "20-45-67",
-                      "account_number": "31926819"
+                      "bank_code": "000014",
+                      "account_number": "0123450001"
                     },
                     "holder": {
                       "full_name": "Maria Oliveira"
@@ -16920,15 +16920,16 @@
                     "vendor_data": "payout_20481"
                   }
                 },
-                "Company, IBAN": {
-                  "summary": "An IBAN, checked against a company's name",
+                "Company, Nigeria": {
+                  "summary": "A bank code and account number, checked against a company's name",
                   "value": {
-                    "country": "DEU",
+                    "country": "NGA",
                     "account": {
-                      "iban": "DE89 3704 0044 0532 0130 00"
+                      "bank_code": "000014",
+                      "account_number": "0123456789"
                     },
                     "holder": {
-                      "business_name": "Northwind Trading GmbH"
+                      "business_name": "Northwind Trading Ltd"
                     }
                   }
                 }
@@ -16951,7 +16952,7 @@
                       "request_id": "c2f4a9e0-7b1d-4c3a-9e55-1d0a6b8f2a47",
                       "result": "close_match",
                       "holder_name": "MARIA R OLIVEIRA",
-                      "account": "****6819",
+                      "account": "****0001",
                       "vendor_data": "payout_20481",
                       "created_at": "2026-10-21T14:32:08Z"
                     }
@@ -16962,7 +16963,7 @@
                       "request_id": "5b0e2d7c-41a8-4f6e-9c3b-8e7d1a2f6c90",
                       "result": "match",
                       "holder_name": null,
-                      "account": "****3000",
+                      "account": "****6789",
                       "vendor_data": null,
                       "created_at": "2026-10-21T14:35:41Z"
                     }
@@ -16980,11 +16981,11 @@
                 },
                 "examples": {
                   "Missing field": {
-                    "summary": "The country's check needs a sort code",
+                    "summary": "The country's check needs a bank code",
                     "value": {
-                      "detail": "The sort code is not valid (required).",
+                      "detail": "The bank code is not valid (required).",
                       "code": "invalid_account_input",
-                      "field": "account.sort_code",
+                      "field": "account.bank_code",
                       "reason": "required"
                     }
                   },
@@ -17097,7 +17098,7 @@
             }
           },
           "404": {
-            "description": "No account check serves this account yet, so nothing was checked or billed. `country_not_covered`: none serves its country, or its kind of account (person or business) there. `bank_not_covered`: none serves its bank. `bank_verification_not_available`: Bank Verification is not enabled in production yet, which is the answer for every request there until it is switched on.",
+            "description": "No account check serves this account yet, so nothing was checked or billed. `country_not_covered`: none serves its country, or its kind of account (person or business) there. `bank_not_covered`: none serves its bank.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17149,42 +17150,42 @@
           {
             "lang": "curl",
             "label": "curl",
-            "source": "curl -X POST https://verification.didit.me/v3/bank/account-check/ \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"country\": \"GBR\",\n    \"account\": {\"sort_code\": \"20-45-67\", \"account_number\": \"31926819\"},\n    \"holder\": {\"full_name\": \"Maria Oliveira\"},\n    \"vendor_data\": \"payout_20481\"\n  }'"
+            "source": "curl -X POST https://verification.didit.me/v3/bank/account-check/ \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"country\": \"NGA\",\n    \"account\": {\"bank_code\": \"000014\", \"account_number\": \"0123450001\"},\n    \"holder\": {\"full_name\": \"Maria Oliveira\"},\n    \"vendor_data\": \"payout_20481\"\n  }'"
           },
           {
             "lang": "python",
             "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.bank.account_check(\n    country=\"GBR\",\n    account={\n        \"account_number\": \"31926819\",\n        \"sort_code\": \"20-45-67\",\n    },\n    holder={\n        \"full_name\": \"Maria Oliveira\",\n    },\n    vendor_data=\"payout_20481\",\n)\nprint(result)"
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.bank.account_check(\n    country=\"NGA\",\n    account={\n        \"account_number\": \"0123450001\",\n        \"bank_code\": \"000014\",\n    },\n    holder={\n        \"full_name\": \"Maria Oliveira\",\n    },\n    vendor_data=\"payout_20481\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
             "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.bank.accountCheck({\n  country: \"GBR\",\n  account: {\n    account_number: \"31926819\",\n    sort_code: \"20-45-67\",\n  },\n  holder: {\n    full_name: \"Maria Oliveira\",\n  },\n  vendor_data: \"payout_20481\",\n});\nconsole.log(result);"
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.bank.accountCheck({\n  country: \"NGA\",\n  account: {\n    account_number: \"0123450001\",\n    bank_code: \"000014\",\n  },\n  holder: {\n    full_name: \"Maria Oliveira\",\n  },\n  vendor_data: \"payout_20481\",\n});\nconsole.log(result);"
           },
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Bank.AccountCheck(ctx, didit.BankAccountCheckRequest{\n\tCountry: \"GBR\",\n\tAccount: didit.BankAccountCheckRequestAccount{\n\t\tAccountNumber: didit.String(\"31926819\"),\n\t\tSortCode:      didit.String(\"20-45-67\"),\n\t},\n\tHolder: didit.BankAccountCheckHolder{\n\t\tFullName: didit.String(\"Maria Oliveira\"),\n\t},\n\tVendorData: didit.String(\"payout_20481\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Bank.AccountCheck(ctx, didit.BankAccountCheckRequest{\n\tCountry: \"NGA\",\n\tAccount: didit.BankAccountCheckRequestAccount{\n\t\tAccountNumber: didit.String(\"0123450001\"),\n\t\tBankCode:      didit.String(\"000014\"),\n\t},\n\tHolder: didit.BankAccountCheckHolder{\n\t\tFullName: didit.String(\"Maria Oliveira\"),\n\t},\n\tVendorData: didit.String(\"payout_20481\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
             "label": "Java",
-            "source": "import me.didit.Didit;\nimport me.didit.types.BankAccountCheckHolder;\nimport me.didit.types.BankAccountCheckPersonHolder;\nimport me.didit.types.BankAccountCheckRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.bank().accountCheck(BankAccountCheckRequest.builder()\n        .country(\"GBR\")\n        .account(BankAccountCheckRequest.Account.builder()\n                .accountNumber(\"31926819\")\n                .sortCode(\"20-45-67\")\n                .build())\n        .holder(BankAccountCheckHolder.ofBankAccountCheckPersonHolder(BankAccountCheckPersonHolder.builder()\n                .fullName(\"Maria Oliveira\")\n                .build()))\n        .vendorData(\"payout_20481\")\n        .build());\nSystem.out.println(result);"
+            "source": "import me.didit.Didit;\nimport me.didit.types.BankAccountCheckHolder;\nimport me.didit.types.BankAccountCheckPersonHolder;\nimport me.didit.types.BankAccountCheckRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.bank().accountCheck(BankAccountCheckRequest.builder()\n        .country(\"NGA\")\n        .account(BankAccountCheckRequest.Account.builder()\n                .accountNumber(\"0123450001\")\n                .bankCode(\"000014\")\n                .build())\n        .holder(BankAccountCheckHolder.ofBankAccountCheckPersonHolder(BankAccountCheckPersonHolder.builder()\n                .fullName(\"Maria Oliveira\")\n                .build()))\n        .vendorData(\"payout_20481\")\n        .build());\nSystem.out.println(result);"
           },
           {
             "lang": "php",
             "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->bank->accountCheck([\n    'country' => 'GBR',\n    'account' => [\n        'account_number' => '31926819',\n        'sort_code' => '20-45-67',\n    ],\n    'holder' => [\n        'full_name' => 'Maria Oliveira',\n    ],\n    'vendor_data' => 'payout_20481',\n]);\nprint_r($result->toArray());"
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->bank->accountCheck([\n    'country' => 'NGA',\n    'account' => [\n        'account_number' => '0123450001',\n        'bank_code' => '000014',\n    ],\n    'holder' => [\n        'full_name' => 'Maria Oliveira',\n    ],\n    'vendor_data' => 'payout_20481',\n]);\nprint_r($result->toArray());"
           },
           {
             "lang": "ruby",
             "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.bank.account_check(\n  country: \"GBR\",\n  account: {\n    account_number: \"31926819\",\n    sort_code: \"20-45-67\",\n  },\n  holder: {\n    full_name: \"Maria Oliveira\",\n  },\n  vendor_data: \"payout_20481\"\n)\nputs result.to_h"
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.bank.account_check(\n  country: \"NGA\",\n  account: {\n    account_number: \"0123450001\",\n    bank_code: \"000014\",\n  },\n  holder: {\n    full_name: \"Maria Oliveira\",\n  },\n  vendor_data: \"payout_20481\"\n)\nputs result.to_h"
           },
           {
             "lang": "csharp",
             "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Bank.AccountCheckAsync(new BankAccountCheckRequest\n{\n    Country = \"GBR\",\n    Account = new()\n    {\n        AccountNumber = \"31926819\",\n        SortCode = \"20-45-67\",\n    },\n    Holder = new()\n    {\n        FullName = \"Maria Oliveira\",\n    },\n    VendorData = \"payout_20481\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Bank.AccountCheckAsync(new BankAccountCheckRequest\n{\n    Country = \"NGA\",\n    Account = new()\n    {\n        AccountNumber = \"0123450001\",\n        BankCode = \"000014\",\n    },\n    Holder = new()\n    {\n        FullName = \"Maria Oliveira\",\n    },\n    VendorData = \"payout_20481\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -17192,7 +17193,7 @@
     "/v3/email/send/": {
       "post": {
         "summary": "Send Email Code",
-        "description": "Send a one-time passcode (OTP) to an email address, then verify it with [`POST /v3/email/check/`](/standalone-apis/email-check).\n\n**How send and check pair up.** Verification state is keyed by your application plus the `email` address — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: \"Retry\"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.\n\n**Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: \"Undeliverable\"` and `reason: \"email_can_not_be_delivered\"` — no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A downstream send failure reports the same way.\n\n**Code format and branding.** Codes are 4–8 characters (`options.code_size`, default 6), numeric by default; set `options.alphanumeric_code: true` for uppercase letters and digits (the check comparison is case-insensitive). The email template is localized via `options.locale` (54 supported languages) and can use your application's white-label branding via `options.use_white_label_customization`.\n\n**Billing.** One Email Verification API credit per successful send (`status: \"Success\"`), charged at send time. `Retry` and `Undeliverable` sends are free, and checks are free.\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no email is sent and nothing is persisted. Use code `123456` on the sandbox check.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.",
+        "description": "Send a one-time passcode (OTP) to an email address, then verify it with [`POST /v3/email/check/`](/standalone-apis/email-check).\n\n**How send and check pair up.** Verification state is keyed by your application plus the `email` address — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same address and the code the user received before the window closes. Calling send again for the same address while a verification is pending generates a fresh code for that same verification (`status: \"Retry\"`, same `request_id`); the previous code stops working. At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.\n\n**Deliverability pre-check.** Before anything is sent, the address goes through syntax and DNS/MX validation. Addresses that cannot receive mail return `200` with `status: \"Undeliverable\"` and `reason: \"email_can_not_be_delivered\"` — no email is sent, nothing is billed, and the verification is immediately finalized as `Declined` (a follow-up check returns `Expired or Not Found`). A send that fails for a reason that is not the address (the email could not be handed over for delivery) returns `503` instead: no code is sent, nothing is billed, the verification stays open and the same request can be repeated.\n\n**Code format and branding.** Codes are 4–8 characters (`options.code_size`, default 6), numeric by default; set `options.alphanumeric_code: true` for uppercase letters and digits (the check comparison is case-insensitive). The email template is localized via `options.locale` (54 supported languages) and can use your application's white-label branding via `options.use_white_label_customization`.\n\n**Billing.** One Email Verification API credit per successful send (`status: \"Success\"`), charged at send time. `Retry` and `Undeliverable` sends are free, and checks are free.\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no email is sent and nothing is persisted. Use code `123456` on the sandbox check.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints; exceeding it returns `429`.",
         "operationId": "post_v3email_send",
         "x-didit-sdk": {
           "resource": "email",
@@ -17571,7 +17572,7 @@
             }
           },
           "503": {
-            "description": "The email provider could not be reached (an outage or a timeout), so no code was sent and nothing was billed or counted as a send attempt. Repeat the same request.",
+            "description": "The email could not be sent for a reason unrelated to the address (the email provider could not be reached, timed out or refused the send itself), so no code was sent and nothing was billed or counted as a send attempt. Repeat the same request.",
             "content": {
               "application/json": {
                 "examples": {
@@ -79536,7 +79537,7 @@
     "/v3/organization/bank-verification-pricing/": {
       "get": {
         "summary": "Get bank verification prices (public, unauthenticated)",
-        "description": "Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. Bank Verification is not enabled in production yet, so a bank step is refused on production workflows until it is; treat these prices as a list price, not as an offer you can buy today. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.\n\nPublic: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.\n\nA method is `available` only where Didit serves it in production today, and its `price_usd` is `null` everywhere else, so the feed never shows a price you cannot buy. `available: false` covers a country with no approved price, a method the country does not support, and a route that is not switched on yet.\n\nThese are list prices before your plan discount. Your plan discount applies to the whole bank price, and a negotiated or contract price replaces the list price for your organization.",
+        "description": "Returns the list price of each Bank Verification method in every country: bank sign-in with its balance and transactions add-ons, and the account check. A method a country does not offer today shows as not available, with no price. Use it to quote a bank step before you build a workflow, or to show bank prices in your own product.\n\nPublic: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.\n\nA method is `available` only where Didit serves it in production today, and its `price_usd` is `null` everywhere else, so the feed never shows a price you cannot buy. `available: false` covers a country with no approved price, a method the country does not support, and a route that is not switched on yet.\n\nThese are list prices before your plan discount. Your plan discount applies to the whole bank price, and a negotiated or contract price replaces the list price for your organization.",
         "operationId": "get_v3_bank_verification_pricing",
         "tags": [
           "Pricing"
@@ -112016,7 +112017,7 @@
           "bank_verifications": {
             "type": "array",
             "nullable": true,
-            "description": "Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `statement` or `microdeposits` fallback, and `none` when the person continued without a bank before any attempt was evaluated (`continued_without_bank`). See [Bank verification methods](/core-technology/bank-verification/verification-methods). Bank Verification is not enabled in production yet, so this stays `null` on production sessions until it is.",
+            "description": "Bank Verification results, one item per Bank Verification step, for User and Business Verification. `null` until a step produces one. Each item's `method` says how the account was verified: `open_banking` (bank sign-in) or `account_lookup` (account check), or a `statement` or `microdeposits` fallback, and `none` when the person continued without a bank before any attempt was evaluated (`continued_without_bank`). See [Bank verification methods](/core-technology/bank-verification/verification-methods).",
             "items": {
               "$ref": "#/components/schemas/BankVerificationResult"
             }
@@ -124275,8 +124276,8 @@
             "type": "string",
             "minLength": 3,
             "maxLength": 3,
-            "description": "The account's country, as an ISO 3166-1 alpha-3 code, for example `GBR`. Lowercase is accepted.",
-            "example": "GBR"
+            "description": "The account's country, as an ISO 3166-1 alpha-3 code, for example `NGA`. Lowercase is accepted.",
+            "example": "NGA"
           },
           "account": {
             "type": "object",
@@ -124348,8 +124349,8 @@
               "maxLength": 64
             },
             "example": {
-              "sort_code": "20-45-67",
-              "account_number": "31926819"
+              "bank_code": "000014",
+              "account_number": "0123450001"
             }
           },
           "holder": {
