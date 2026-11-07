@@ -702,30 +702,27 @@ def _diff_statuses(
         return _union_names(list(distinct.values())) or "null"
 
     for status in added:
-        # A status both sides have whose body appeared or disappeared.
-        label = f"status {status} {'now has' if new[status] else 'has'}"
         if not new[status] and bodies(old) and not returns_null(old):
-            kind = f"can now be null ({label} no body)"
+            label = "lost its body" if status in old else "has no body"
+            kind = f"can now be null (status {status} {label})"
             found.append(Change("response", "", kind, True, "can now be null"))
         elif status in old:
-            continue  # said once, under its old side below
+            continue  # a body that appeared or disappeared: said with the old side below
         elif new[status] and _shape(new[status], names=True) not in bodies(old):
             found.append(Change("response", "", f"status {status} added with another body"))
         else:
             found.append(Change("response", "", f"status {status} added"))
     for status in removed:
-        gone = f"status {status} {'removed' if status not in new else 'lost its body'}"
+        change = "removed"
+        if status in new:
+            change = "lost its body" if old[status] else "now has a body"
         if not old[status] and bodies(new) and not returns_null(new):
-            note = "now has a body" if status in new else "removed"
-            found.append(Change("response", "", f"can no longer be null (status {status} {note})"))
+            found.append(Change("response", "", f"can no longer be null (status {status} {change})"))
         elif old[status] and _shape(old[status], names=True) not in bodies(new):
-            kind = f"type changed: {gone}, and no other status returns its body"
-            code = f"type {types(old)} -> {types(new)}"
-            found.append(Change("response", "", kind, True, code))
-        elif status in new:
-            found.append(Change("response", "", f"status {status} {'now has a body' if new[status] else 'lost its body'}"))
+            kind = f"type changed: status {status} {change}, and no other status returns its body"
+            found.append(Change("response", "", kind, True, f"type {types(old)} -> {types(new)}"))
         else:
-            found.append(Change("response", "", f"status {status} removed"))
+            found.append(Change("response", "", f"status {status} {change}"))
     return found
 
 
@@ -765,15 +762,35 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[
         request=True, out=found,
     )  # fmt: skip
 
-    # Every 2xx response both have; when the only success status changed (200 to 201),
-    # the old body against the new one; otherwise the statuses only one side has.
+    # Every 2xx response both have with a body on both sides or on neither; when the only
+    # success status changed (200 to 201), the old body against the new one. The other
+    # statuses, and a body that appeared or disappeared, change what the method returns.
     old_responses, new_responses = _successes(old_doc, old), _successes(new_doc, new)
-    statuses = [(s, s) for s in old_responses if s in new_responses]
-    if not statuses and len(old_responses) == 1 and len(new_responses) == 1:
-        statuses = [(next(iter(old_responses)), next(iter(new_responses)))]
-        found.append(Change("response", "", f"status {statuses[0][0]} -> {statuses[0][1]}"))
+    statuses = [
+        (s, s)
+        for s in old_responses
+        if s in new_responses and bool(old_responses[s]) == bool(new_responses[s])
+    ]
+    (old_status, old_content), *old_more = old_responses.items() or [("", {})]
+    (new_status, new_content), *new_more = new_responses.items() or [("", {})]
+    if (
+        not statuses
+        and old_status != new_status
+        and not old_more + new_more
+        and bool(old_content) == bool(new_content)
+    ):
+        statuses = [(old_status, new_status)]
+        found.append(Change("response", "", f"status {old_status} -> {new_status}"))
     else:
-        found.extend(_diff_statuses(old_responses, new_responses))
+        compared = {s for s, _ in statuses}
+        found.extend(
+            _diff_statuses(
+                old_responses,
+                new_responses,
+                [s for s in old_responses if s not in compared],
+                [s for s in new_responses if s not in compared],
+            )
+        )
     for before, after in statuses:
         _diff_content(
             old_responses[before], new_responses[after], "response", request=False, out=found
