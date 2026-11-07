@@ -6,6 +6,7 @@
 #   bot-pull-request.sh spec-sync <head branch> [passed|failed]
 #   bot-pull-request.sh release
 #   bot-pull-request.sh catch-up [<head branch>]
+#   bot-pull-request.sh report <result of the CI passed job>
 #
 # spec-sync without passed|failed reads the conclusion of the latest finished Spec sync run on
 # main. catch-up starts every workflow that runs release-please (.github/workflows/*.yml using
@@ -15,9 +16,11 @@
 #
 # A pull request opened with GITHUB_TOKEN gets its pull_request CI run only after a maintainer
 # approves it (this repository is public). workflow_dispatch is exempt, so the script starts
-# ci.yml on the pull request's branch: its checks land on the head commit, which is what the
-# required "CI passed" check on main reads. It then turns on auto-merge (squash), so GitHub
-# merges only once the required checks pass.
+# ci.yml on the pull request's branch. GitHub leaves the check runs of a manual run off the pull
+# request, so ci.yml's report job (mode report, in that run) sets a commit status "CI passed" on
+# the head commit, which the pull request shows and main's required check reads, and then runs
+# catch-up for the merge. The script turns on auto-merge (squash), so GitHub merges only once
+# the required check passes.
 #
 # A pull request waits for a person (label needs-alex, one comment, auto-merge off) when:
 # - a spec sync failed a check (usually a missing openapi/overlay.json entry), is a draft, or
@@ -29,12 +32,12 @@
 # request labelled do-not-merge, one a person labelled needs-alex, and one whose auto-merge a
 # person turned off.
 #
-# Needs GH_TOKEN (the workflow token with actions, contents, issues and pull-requests write),
-# GITHUB_REPOSITORY, gh and jq.
+# Needs GH_TOKEN (the workflow token with actions, contents, issues and pull-requests write;
+# statuses write for report), GITHUB_REPOSITORY, gh and jq.
 set -euo pipefail
 
 usage() {
-  echo "usage: bot-pull-request.sh spec-sync <head branch> [passed|failed] | release | catch-up [<head branch>]" >&2
+  echo "usage: bot-pull-request.sh spec-sync <head branch> [passed|failed] | release | catch-up [<head branch>] | report <result>" >&2
   exit 2
 }
 
@@ -44,6 +47,31 @@ base="main"
 hold_label="needs-alex"
 person_hold_label="do-not-merge"
 bot_email="41898282+github-actions[bot]@users.noreply.github.com"
+
+# Starts the release workflows on main for a newest commit that has no run of them, after
+# waiting (at most three minutes) for the auto-merge of the open pull request from <branch>.
+catch_up() {
+  local branch="$1" waiting sha
+  if [ -n "$branch" ]; then
+    for _ in $(seq 1 18); do
+      waiting="$(gh pr list --repo "$repo" --base "$base" --head "$branch" --state open \
+        --json autoMergeRequest --jq '[.[] | select(.autoMergeRequest != null)] | length')"
+      [ "$waiting" -eq 0 ] && break
+      sleep 10
+    done
+  fi
+  sha="$(gh api "repos/${repo}/commits/${base}" --jq '.sha')"
+  grep -l 'googleapis/release-please-action' .github/workflows/*.yml | while read -r file; do
+    workflow="$(basename "$file")"
+    runs="$(gh api "repos/${repo}/actions/workflows/${workflow}/runs?head_sha=${sha}&per_page=1" --jq '.total_count')"
+    if [ "$runs" -eq 0 ]; then
+      gh workflow run "$workflow" --repo "$repo" --ref "$base"
+      echo "Started ${workflow} on ${base} (${sha:0:10}): no run of it had started for that commit."
+    else
+      echo "${workflow} already ran on ${base} (${sha:0:10})."
+    fi
+  done
+}
 
 case "$kind" in
   spec-sync)
@@ -68,26 +96,29 @@ case "$kind" in
       --json number,headRefName --jq '.[] | select(.headRefName | startswith("release-please--")) | .number')"
     ;;
   catch-up)
-    branch="${2:-}"
-    if [ -n "$branch" ]; then
-      for _ in $(seq 1 18); do
-        waiting="$(gh pr list --repo "$repo" --base "$base" --head "$branch" --state open \
-          --json autoMergeRequest --jq '[.[] | select(.autoMergeRequest != null)] | length')"
-        [ "$waiting" -eq 0 ] && break
-        sleep 10
-      done
+    catch_up "${2:-}"
+    exit 0
+    ;;
+  report)
+    result="${2:-}"
+    sha="${GITHUB_SHA:?GITHUB_SHA is not set}"
+    ref="${GITHUB_REF_NAME:?GITHUB_REF_NAME is not set}"
+    case "$result" in
+      success | failure) ;;
+      *)
+        echo "The CI passed job ended with '${result}'; no status reported."
+        exit 0
+        ;;
+    esac
+    gh api "repos/${repo}/statuses/${sha}" -f state="$result" -f context="CI passed" \
+      -f description="ci.yml run ${GITHUB_RUN_ID:-} (workflow_dispatch): ${result}" \
+      -f target_url="${GITHUB_SERVER_URL:-https://github.com}/${repo}/actions/runs/${GITHUB_RUN_ID:-}" > /dev/null
+    echo "Set the commit status CI passed=${result} on ${sha:0:10} (${ref})."
+    if [ "$result" = success ]; then
+      case "$ref" in
+        chore/spec-sync | release-please--*) catch_up "$ref" ;;
+      esac
     fi
-    sha="$(gh api "repos/${repo}/commits/${base}" --jq '.sha')"
-    grep -l 'googleapis/release-please-action' .github/workflows/*.yml | while read -r file; do
-      workflow="$(basename "$file")"
-      runs="$(gh api "repos/${repo}/actions/workflows/${workflow}/runs?head_sha=${sha}&per_page=1" --jq '.total_count')"
-      if [ "$runs" -eq 0 ]; then
-        gh workflow run "$workflow" --repo "$repo" --ref "$base"
-        echo "Started ${workflow} on ${base} (${sha:0:10}): no run of it had started for that commit."
-      else
-        echo "${workflow} already ran on ${base} (${sha:0:10})."
-      fi
-    done
     exit 0
     ;;
   *) usage ;;

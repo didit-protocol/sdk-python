@@ -240,3 +240,31 @@ jobs:
             fi
           done
           echo "Every CI job passed."
+
+  # A pull request of the automation gets its CI from a manual run (bot-pull-requests.yml), and
+  # GitHub leaves a manual run's check runs off the pull request. This job sets the result as
+  # the commit status "CI passed" on the commit, which the pull request shows and main's
+  # required check reads, then starts the release workflows once auto-merge has merged it.
+  report:
+    name: Report CI passed as a commit status
+    if: always() && github.event_name == 'workflow_dispatch'
+    needs: ci-passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write # start the release workflows after the merge
+      contents: read
+      pull-requests: read
+      statuses: write # the CI passed commit status
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the scripts and workflows
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github
+      - name: Set the commit status
+        env:
+          RESULT: ${{ needs.ci-passed.result }}
+        run: bash .github/scripts/bot-pull-request.sh report "$RESULT"
