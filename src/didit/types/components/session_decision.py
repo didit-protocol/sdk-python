@@ -600,6 +600,9 @@ class SessionDecisionDocumentVerificationsItemsDocumentMetadataOverlayManipulati
     analyzed: bool | None = None
     """Whether the PDF could be analyzed."""
 
+    analysis_incomplete: bool | None = None
+    """Present and true only when the file could not be checked in full. What was checked keeps its findings where it can, and the document raises the unproven text replacement warning."""
+
     signals: list[str] | None = None
     """Forensic signals that fired, such as duplicate_font_subset or glyph_fragmentation."""
 
@@ -3161,6 +3164,9 @@ class SessionDecisionPoaVerificationsDocumentMetadataOverlayManipulation(BaseMod
 
     analyzed: bool | None = None
     """Whether the PDF could be analyzed."""
+
+    analysis_incomplete: bool | None = None
+    """Present and true only when the file could not be checked in full. What was checked keeps its findings where it can, and the document raises the unproven text replacement warning."""
 
     signals: list[str] | None = None
     """Forensic signals that fired, such as duplicate_font_subset or glyph_fragmentation."""

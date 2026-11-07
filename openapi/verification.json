@@ -111362,6 +111362,10 @@
                           "type": "boolean",
                           "description": "Whether the PDF could be analyzed."
                         },
+                        "analysis_incomplete": {
+                          "type": "boolean",
+                          "description": "Present and true only when the file could not be checked in full. What was checked keeps its findings where it can, and the document raises the unproven text replacement warning."
+                        },
                         "signals": {
                           "type": "array",
                           "items": {
@@ -114278,6 +114282,10 @@
                               "analyzed": {
                                 "type": "boolean",
                                 "description": "Whether the PDF could be analyzed."
+                              },
+                              "analysis_incomplete": {
+                                "type": "boolean",
+                                "description": "Present and true only when the file could not be checked in full. What was checked keeps its findings where it can, and the document raises the unproven text replacement warning."
                               },
                               "signals": {
                                 "type": "array",
