@@ -741,7 +741,10 @@ def _unions() -> list[Json]:
             rule,
             get_payment({"anyOf": [CARD, BANK]}),
             get_payment({"anyOf": [edit(CARD, last4=INTEGER), BANK, {"description": "Other."}]}),
-            [f"{payment} (anyOf 1).last4: type string -> integer", f"{payment}: type object -> any"],
+            [
+                f"{payment} (anyOf 1).last4: type string -> integer",
+                f"{payment}: type object -> any",
+            ],
         ),
         case(
             "union-variant-removed",

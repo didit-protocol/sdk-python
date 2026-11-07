@@ -718,7 +718,9 @@ def _diff_statuses(
         if status in new:
             change = "lost its body" if old[status] else "now has a body"
         if not old[status] and bodies(new) and not returns_null(new):
-            found.append(Change("response", "", f"can no longer be null (status {status} {change})"))
+            found.append(
+                Change("response", "", f"can no longer be null (status {status} {change})")
+            )
         elif old[status] and _shape(old[status], names=True) not in bodies(new):
             kind = f"type changed: status {status} {change}, and no other status returns its body"
             found.append(Change("response", "", kind, True, f"type {types(old)} -> {types(new)}"))
