@@ -472,8 +472,9 @@ def diff_schema(
             _type_names(old, old_kinds, "|"), _type_names(new, new_kinds, "|")
         )
         note(f"type changed from {before} to {after}", True, code=code)
-        if old_kinds and new_kinds:
-            # A union's variants can change too; the type change already covers those removed.
+        # A union's variants can change too, also when an untyped variant made it "any"; the
+        # type change already covers those removed. A schema untyped as a whole has none.
+        if (old_kinds or _variants(old)) and (new_kinds or _variants(new)):
             _diff_variants(
                 old, new, where, path, request=request, out=out, depth=depth, retyped=True
             )
@@ -674,11 +675,16 @@ def _diff_content(
 
 
 def _diff_statuses(
-    old: dict[str, dict[str, Json]], new: dict[str, dict[str, Json]]
+    old: dict[str, dict[str, Json]],
+    new: dict[str, dict[str, Json]],
+    removed: list[str],
+    added: list[str],
 ) -> list[Change]:
-    """The success statuses only one side has. The method returns a union of every 2xx
-    body, nullable when one has none: a status without a body makes it nullable, and a
-    removed status whose body no other one returns removes a variant of it (DESIGN 3.1)."""
+    """The success statuses not compared body by body: ``removed`` (only ``old`` has them,
+    or their body disappeared) and ``added`` (only ``new`` has them, or their body appeared).
+    The method returns a union of every 2xx body, nullable when one has none: a status
+    without a body makes it nullable, and a removed status whose body no other one returns
+    removes a variant of it, ``null`` when no body is left (DESIGN 3.1)."""
     found: list[Change] = []
 
     def bodies(responses: dict[str, dict[str, Json]]) -> list[Json]:
@@ -693,23 +699,31 @@ def _diff_statuses(
             if content:
                 main = content.get("application/json", content[min(content)])
                 distinct.setdefault(json.dumps(_shape(content, names=True), sort_keys=True), main)
-        return _union_names(list(distinct.values()))
+        return _union_names(list(distinct.values())) or "null"
 
-    for status in sorted(set(new) - set(old)):
+    for status in added:
+        # A status both sides have whose body appeared or disappeared.
+        label = f"status {status} {'now has' if new[status] else 'has'}"
         if not new[status] and bodies(old) and not returns_null(old):
-            kind = f"can now be null (status {status} has no body)"
+            kind = f"can now be null ({label} no body)"
             found.append(Change("response", "", kind, True, "can now be null"))
+        elif status in old:
+            continue  # said once, under its old side below
         elif new[status] and _shape(new[status], names=True) not in bodies(old):
             found.append(Change("response", "", f"status {status} added with another body"))
         else:
             found.append(Change("response", "", f"status {status} added"))
-    for status in sorted(set(old) - set(new)):
+    for status in removed:
+        gone = f"status {status} {'removed' if status not in new else 'lost its body'}"
         if not old[status] and bodies(new) and not returns_null(new):
-            found.append(Change("response", "", f"can no longer be null (status {status} removed)"))
+            note = "now has a body" if status in new else "removed"
+            found.append(Change("response", "", f"can no longer be null (status {status} {note})"))
         elif old[status] and _shape(old[status], names=True) not in bodies(new):
-            kind = f"type changed: status {status} removed, and no other status returns its body"
+            kind = f"type changed: {gone}, and no other status returns its body"
             code = f"type {types(old)} -> {types(new)}"
             found.append(Change("response", "", kind, True, code))
+        elif status in new:
+            found.append(Change("response", "", f"status {status} {'now has a body' if new[status] else 'lost its body'}"))
         else:
             found.append(Change("response", "", f"status {status} removed"))
     return found
