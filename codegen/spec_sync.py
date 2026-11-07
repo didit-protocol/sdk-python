@@ -1211,8 +1211,8 @@ def classify(before: Json, after: Json) -> tuple[str, list[str]]:
     now = dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc)
     with tempfile.TemporaryDirectory() as tmp:
         openapi_dir = pathlib.Path(tmp)
-        (openapi_dir / "verification.json").write_text(json.dumps(before), "utf-8")
-        (openapi_dir / "overlay.json").write_text(json.dumps({"operations": {}}), "utf-8")
+        (openapi_dir / "verification.json").write_bytes(json.dumps(before).encode())
+        (openapi_dir / "overlay.json").write_bytes(json.dumps({"operations": {}}).encode())
         downloads = {"verification.json": json.dumps(after).encode()}
         result = sync(openapi_dir, downloads, today=now.date(), now=now, version="1.0.0")
     return f"{result.commit_type}(spec)", sorted({b.normalized() for b in result.breaking})

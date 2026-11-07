@@ -20,6 +20,7 @@ uv for environments and locking, hatchling for the build, pytest, mypy --strict,
 | Generate `src/didit/types`, `src/didit/resources`, `tests/generated` from `openapi/` | `uv run python codegen/generate.py` |
 | Check the committed generated code is current (CI) | `uv run python codegen/generate.py --check` |
 | Sync `openapi/` with docs.didit.me (spec-sync workflow) | `uv run python codegen/spec_sync.py --summary spec-sync-summary.md` |
+| Regenerate `openapi/breaking-vectors.json` (the shared breaking-change cases, DESIGN.md 3.1) | `uv run python codegen/breaking_vectors.py` |
 | Test (unit, generated, contract, webhooks, Authentication, codegen) | `uv run pytest` |
 | Test with the core coverage gate | `uv run pytest --cov --cov-report=term-missing --cov-fail-under=90` |
 | Live sandbox smoke tests (only with `DIDIT_SANDBOX_API_KEY`) | `uv run pytest -m live` |
@@ -31,6 +32,7 @@ uv for environments and locking, hatchling for the build, pytest, mypy --strict,
 
 - Generated (never edit by hand): `src/didit/types/`, `src/didit/resources/`, `tests/generated/`. The generator is `codegen/didit_codegen/`; its tests are in `codegen/tests/`.
 - Core (hand-written): everything else in `src/didit/` (`_base_client.py` transport and retries, `_client.py` options, `_exceptions.py`, `_pagination.py`, `_files.py`, `_response.py`, `_models.py`), `src/didit/webhooks/` and `src/didit/authentication/`.
+- `openapi/breaking-vectors.json` (written by `codegen/breaking_vectors.py`, never by hand) holds the breaking-change rules of DESIGN.md 3.1 as cases. The other six server SDKs copy it byte for byte, so a rule change lands here first: change DESIGN.md 3.1, `codegen/spec_sync.py` and the cases together, regenerate, then copy the file to the other six.
 - `openapi/deprecated-operations.json` (written by `codegen/spec_sync.py`) keeps methods whose operation was removed or renamed upstream as deprecated methods until `remove_in` (the next minor version); `tests/test_contract.py` fails once that version is reached, and the entry is then deleted.
 
 ## Rules
