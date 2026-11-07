@@ -43,7 +43,10 @@ A counted change is one line, ``<METHOD> <path> <where> <field>: <kind>``:
   (binary)`` for the typed formats, or ``any`` for a schema without a type. Several types
   are joined with ``|`` in sorted order. A union's variants, or a method's 2xx bodies,
   give one type each, so ``type object|object -> object`` is an object variant (or the only
-  body of a removed status) that went away.
+  body of a removed status) that went away, and ``null`` is a method whose 2xx statuses
+  have no body any more (``type string -> null``).
+- A 2xx status that keeps its code but loses or gains its body is read as that status
+  removed with its body and added without one (or the reverse).
 """
 
 from __future__ import annotations
@@ -734,6 +737,13 @@ def _unions() -> list[Json]:
             [f"{payment} (oneOf 1).iban: type string -> integer"],
         ),
         case(
+            "union-untyped-variant-added-and-paired-variant-changed",
+            rule,
+            get_payment({"anyOf": [CARD, BANK]}),
+            get_payment({"anyOf": [edit(CARD, last4=INTEGER), BANK, {"description": "Other."}]}),
+            [f"{payment} (anyOf 1).last4: type string -> integer", f"{payment}: type object -> any"],
+        ),
+        case(
             "union-variant-removed",
             rule,
             get_payment({"oneOf": [CARD, BANK]}),
@@ -808,6 +818,27 @@ def _statuses() -> list[Json]:
             [f"{create} name: removed"],
         ),
         case(
+            "only-success-status-replaced-by-one-without-body",
+            rule,
+            create_with_statuses({"200": STRING}),
+            create_with_statuses({"204": None}),
+            [f"{create}: can now be null", f"{create}: type string -> null"],
+        ),
+        case(
+            "removed-status-leaves-only-statuses-without-body",
+            rule,
+            create_with_statuses({"200": STRING, "204": None}),
+            create_with_statuses({"204": None}),
+            [f"{create}: type string -> null"],
+        ),
+        case(
+            "status-loses-its-body",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"200": None}),
+            [f"{create}: can now be null", f"{create}: type object -> null"],
+        ),
+        case(
             "added-status-with-another-body-is-listed",
             rule,
             create_with_statuses({"200": THING}),
@@ -830,6 +861,12 @@ def _statuses() -> list[Json]:
             rule,
             create_with_statuses({"200": THING, "204": None}),
             create_with_statuses({"200": THING}),
+        ),
+        case(
+            "status-gains-a-body-is-listed",
+            rule,
+            create_with_statuses({"204": None}),
+            create_with_statuses({"204": THING}),
         ),
         case(
             "only-success-status-changed-is-listed",
