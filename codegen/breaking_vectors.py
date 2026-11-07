@@ -935,7 +935,7 @@ def render() -> str:
         "generator": GENERATOR,
         "cases": found,
     }
-    return json.dumps(data, indent=2) + "\n"
+    return json.dumps(data, indent=1) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
