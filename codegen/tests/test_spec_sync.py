@@ -221,7 +221,8 @@ def test_counted_in_requests_and_responses(request_side: bool) -> None:
         ("", "type changed from number to integer", True)
     ]
     assert diff({"type": "string"}, {"type": "object", "properties": {}}) == [("", OBJECT, True)]
-    # A value that can now be null, however the document says it.
+    # A value that can now be null, however the document says it: counted in a response,
+    # listed in a request (it only widens what a caller may send).
     for nullable in (
         {"type": "string", "nullable": True},
         {"type": ["string", "null"]},
@@ -229,8 +230,8 @@ def test_counted_in_requests_and_responses(request_side: bool) -> None:
         {"oneOf": [{"type": "string"}, {"enum": [None]}]},
         {"allOf": [{"type": "string"}], "nullable": True},
     ):
-        assert diff({"type": "string"}, nullable) == [("", NULL, True)], nullable
-    assert diff(STATUS, {**STATUS, "enum": ["a", "b", None]}) == [("", NULL, True)]
+        assert diff({"type": "string"}, nullable) == [("", NULL, not request_side)], nullable
+    assert diff(STATUS, {**STATUS, "enum": ["a", "b", None]}) == [("", NULL, not request_side)]
     # A removed field or enum value, nested in objects and array items.
     assert diff(OBJ, {"type": "object", "properties": {}}) == [("a", "removed", True)]
     assert diff(STATUS, {**STATUS, "enum": ["a"]}) == [("", 'enum value "b" removed', True)]
@@ -264,12 +265,12 @@ def test_a_string_format_with_its_own_type_is_a_type_change(request_side: bool) 
     date = {"type": "string", "format": "date"}
     stamp = {"type": ["string", "null"], "format": "date-time"}
     assert _diff(date, stamp, request=request_side) == [
-        ("", NULL, True),
+        ("", NULL, not request_side),
         ("", "type changed from string (date) to string (date-time)", True),
     ]
     listed = {"type": "array", "items": plain}
     assert _diff(listed, {**listed, "items": stamp}, request=request_side) == [
-        ("[]", NULL, True),
+        ("[]", NULL, not request_side),
         ("[]", "type changed from string to string (date-time)", True),
     ]
 
@@ -347,17 +348,19 @@ def test_a_variant_title_names_its_generated_type() -> None:
     assert _diff(a, {**a, "title": "Chosen items"}) == []
 
 
-def test_newly_required_request_fields_count_and_response_requiredness_does_not() -> None:
+def test_required_counts_where_it_narrows_what_a_caller_sends_or_gets() -> None:
     optional = {**OBJ, "required": []}
+    # A request field that is newly required, or new and required, counts.
     assert _diff(optional, OBJ, request=True) == [("a", "now required", True)]
     added = {"type": "object", "properties": {**OBJ["properties"], "b": {"type": "string"}}}
     assert _diff(optional, {**added, "required": ["b"]}, request=True) == [
         ("b", "added (required)", True)
     ]
     assert _diff(optional, added, request=True) == [("b", "added", False)]
-    assert _diff(optional, OBJ) == [("a", "now always present", False)]
-    assert _diff(OBJ, optional) == [("a", "no longer always present", False)]
     assert _diff(OBJ, optional, request=True) == [("a", "no longer required", False)]
+    # A response field that may now be missing counts; one always present is listed.
+    assert _diff(OBJ, optional) == [("a", "no longer always present", True)]
+    assert _diff(optional, OBJ) == [("a", "now always present", False)]
 
 
 def test_listed_but_not_counted() -> None:
@@ -423,25 +426,35 @@ def _json(schema: Any) -> dict[str, Any]:
 
 def test_parameters() -> None:
     limit = {"name": "limit", "in": "query", "schema": {"type": "integer"}}
-    where = "parameter `limit` (query)"
 
-    def changes(old: Any, new: Any) -> list[tuple[str, str, bool]]:
+    def changes(old: Any, new: Any) -> list[tuple[str, str, str, bool]]:
         found = spec_sync.describe_change({}, old, {}, new)
-        return [(c.where, c.kind, c.breaking) for c in found]
+        return [(c.where, c.path, c.kind, c.breaking) for c in found]
 
     required_null = {**limit, "required": True, "schema": {"type": "integer", "nullable": True}}
     assert changes(_op(limit), _op(required_null)) == [
-        (where, "now required", True),
-        (where, NULL, True),
+        ("query", "limit", "now required", True),
+        ("query", "limit", NULL, False),
+    ]
+    assert changes(_op({**limit, "required": True}), _op(limit)) == [
+        ("query", "limit", "no longer required", False)
     ]
     assert changes(_op(limit), _op({**limit, "schema": {"type": "string"}})) == [
-        (where, "type changed from integer to string", True)
+        ("query", "limit", "type changed from integer to string", True)
     ]
     assert changes(_op(limit), _op({**limit, "name": "page"})) == [
-        (where, "removed", False),
-        ("parameter `page` (query)", "added", False),
+        ("query", "limit", "removed", True),
+        ("query", "page", "added", False),
     ]
-    assert changes(_op(), _op({**limit, "required": True})) == [(where, "added (required)", True)]
+    assert changes(_op(), _op({**limit, "required": True})) == [
+        ("query", "limit", "added (required)", True)
+    ]
+    ids = {"name": "ids", "in": "query", "schema": {"type": "array", "items": STATUS}}
+    narrowed = {**ids, "schema": {"type": "array", "items": {**STATUS, "enum": ["a"]}}}
+    assert changes(_op(ids), _op(narrowed)) == [("query", "ids[]", 'enum value "b" removed', True)]
+    # The summary and the release notes name the parameter and its location.
+    removed = spec_sync.describe_change({}, _op(limit), {}, _op())
+    assert [c.text() for c in removed] == ["query parameter `limit`: removed"]
 
 
 def test_every_success_response_is_compared_and_reported_once() -> None:
@@ -484,6 +497,15 @@ def test_a_body_that_appears_is_compared_field_by_field() -> None:
     found = spec_sync.describe_change({}, _op(), {}, _op(body=optional))
     assert [(c.where, c.path, c.kind, c.breaking) for c in found] == [
         ("request body", "a", "added", False)
+    ]
+
+
+def test_a_request_body_that_becomes_required_counts() -> None:
+    old = _op(body=OBJ)
+    new = {**old, "requestBody": {**old["requestBody"], "required": True}}
+    found = spec_sync.describe_change({}, old, {}, new)
+    assert [(c.text(), c.breaking, c.code) for c in found] == [
+        ("request body: now required", True, "body now required")
     ]
 
 
