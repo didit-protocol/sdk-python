@@ -289,9 +289,11 @@ def test_a_schema_that_allows_any_value_is_a_type_change(request_side: bool) -> 
     assert _diff(listed, {"type": "array"}, request=request_side) == [
         ("[]", "type changed from string to any", True)
     ]
+    # An untyped variant makes the union "any", and the variant it replaced is compared too.
     either = {"oneOf": [{"type": "string"}, {"type": "integer"}]}
     assert _diff(either, {"oneOf": [{"type": "string"}, {}]}, request=request_side) == [
-        ("", "type changed from integer or string to any", True)
+        ("", "type changed from integer or string to any", True),
+        ("(oneOf 2)", "type changed from integer to any", True),
     ]
 
 
