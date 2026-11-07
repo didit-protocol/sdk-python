@@ -71,15 +71,17 @@ RULES = {
     "Release notes": "- Every counted change reaches the release notes",
 }
 NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+# A field: names, ".", "[]", "{}" and "(oneOf N)" / "(anyOf N)".
+FIELD = r"(?:[^\s:()]+|\((?:oneOf|anyOf) [1-9][0-9]*\))+"
 KIND = (
     r"(?:removed|type \S.* -> \S.*|can now be null|no longer required|now required"
     r"|enum value .+ removed)"
 )
 BREAKING = re.compile(
     r"(?:GET|PUT|POST|DELETE|PATCH|HEAD|OPTIONS) /\S*"
-    rf"(?:: (?:body now required|operation removed)"
-    rf"|(?: response| request body)(?: \S+)?: {KIND}"
-    rf"| (?:query|path|header) \S+: {KIND})"
+    r"(?:: (?:body now required|operation removed)"
+    rf"|(?: response| request body)(?: {FIELD})?: {KIND}"
+    rf"| (?:query|path|header) {FIELD}: {KIND})"
 )
 Json = Any
 
@@ -187,19 +189,27 @@ def get_thing(response: Json = None, **options: Json) -> Json:
     """``GET /things/{id}/``, method ``things.retrieve``, returning ``response``."""
     parameters = [ID, *options.pop("parameters", [])]
     return document(
-        {"/things/{id}/": {"get": operation("retrieve", parameters=parameters, response=response, **options)}}
+        {
+            "/things/{id}/": {
+                "get": operation("retrieve", parameters=parameters, response=response, **options)
+            }
+        }
     )
 
 
 def list_things(*parameters: Json) -> Json:
     """``GET /things/``, method ``things.list``, with these query parameters."""
     response = obj({"results": {"type": "array", "items": THING}})
-    return document({"/things/": {"get": operation("list", parameters=list(parameters), response=response)}})
+    return document(
+        {"/things/": {"get": operation("list", parameters=list(parameters), response=response)}}
+    )
 
 
 def create_thing(body: Json = None, *, body_required: bool = False, **options: Json) -> Json:
     """``POST /things/``, method ``things.create``, sending ``body``."""
-    op = operation("create", body=NEW_THING if body is None else body, body_required=body_required, **options)
+    op = operation(
+        "create", body=NEW_THING if body is None else body, body_required=body_required, **options
+    )
     return document({"/things/": {"post": op}})
 
 
@@ -256,36 +266,65 @@ def _responses() -> list[Json]:
     get["summary"] = "Retrieve a thing"
     get["description"] = "Returns one thing."
     get["responses"]["200"] = ok(
-        {**edit(THING, name={**STRING, "description": "The name.", "example": "Box"}), "title": "Thing"},
+        {
+            **edit(THING, name={**STRING, "description": "The name.", "example": "Box"}),
+            "title": "Thing",
+        },
         description="The thing",
     )
     return [
-        case("response-field-removed", rule, get_thing(), get_thing(edit(THING, name=None)), [f"{thing} name: removed"]),
         case(
-            "response-field-type-changed", rule, get_thing(), get_thing(edit(THING, id=INTEGER)),
+            "response-field-removed",
+            rule,
+            get_thing(),
+            get_thing(edit(THING, name=None)),
+            [f"{thing} name: removed"],
+        ),
+        case(
+            "response-field-type-changed",
+            rule,
+            get_thing(),
+            get_thing(edit(THING, id=INTEGER)),
             [f"{thing} id: type string -> integer"],
         ),
         case(
-            "response-field-can-now-be-null", rule, get_thing(), get_thing(edit(THING, name={"type": ["string", "null"]})),
+            "response-field-can-now-be-null",
+            rule,
+            get_thing(),
+            get_thing(edit(THING, name={"type": ["string", "null"]})),
             [f"{thing} name: can now be null"],
         ),
         case(
-            "response-nested-field-can-now-be-null", rule,
-            get_thing(owned), get_thing(edit(owned, owner=obj({"email": nullable_email}))),
+            "response-nested-field-can-now-be-null",
+            rule,
+            get_thing(owned),
+            get_thing(edit(owned, owner=obj({"email": nullable_email}))),
             [f"{thing} owner.email: can now be null"],
         ),
         case(
-            "response-field-no-longer-required", rule, get_thing(), get_thing(requiring(THING, "id", "status")),
+            "response-field-no-longer-required",
+            rule,
+            get_thing(),
+            get_thing(requiring(THING, "id", "status")),
             [f"{thing} name: no longer required"],
         ),
         case(
-            "response-enum-value-removed", rule, get_thing(), get_thing(edit(THING, status=enum("active"))),
+            "response-enum-value-removed",
+            rule,
+            get_thing(),
+            get_thing(edit(THING, status=enum("active"))),
             [f'{thing} status: enum value "closed" removed'],
         ),
         case(
-            "response-typed-format-gained-and-changed", rule, get_thing(dated),
+            "response-typed-format-gained-and-changed",
+            rule,
+            get_thing(dated),
             get_thing(
-                edit(dated, created_at={"type": "string", "format": "date-time"}, born_on={"type": "string", "format": "date-time"})
+                edit(
+                    dated,
+                    created_at={"type": "string", "format": "date-time"},
+                    born_on={"type": "string", "format": "date-time"},
+                )
             ),
             [
                 f"{thing} born_on: type string (date) -> string (date-time)",
@@ -293,48 +332,86 @@ def _responses() -> list[Json]:
             ],
         ),
         case(
-            "response-typed-format-lost", rule, get_thing(files), get_thing(edit(files, file=STRING)),
+            "response-typed-format-lost",
+            rule,
+            get_thing(files),
+            get_thing(edit(files, file=STRING)),
             [f"{thing} file: type string (binary) -> string"],
         ),
         case(
-            "response-value-becomes-untyped-or-typed", rule, get_thing(scored),
-            get_thing(edit(scored, score={"description": "Any score."}, metadata=obj({"source": STRING}))),
+            "response-value-becomes-untyped-or-typed",
+            rule,
+            get_thing(scored),
+            get_thing(
+                edit(scored, score={"description": "Any score."}, metadata=obj({"source": STRING}))
+            ),
             [f"{thing} metadata: type any -> object", f"{thing} score: type number -> any"],
         ),
         case(
-            "response-map-value-type-changed", rule, get_thing(counted),
+            "response-map-value-type-changed",
+            rule,
+            get_thing(counted),
             get_thing(edit(counted, counts={"type": "object", "additionalProperties": STRING})),
             [f"{thing} counts{{}}: type integer -> string"],
         ),
         case(
-            "response-ref-and-array-items", rule,
+            "response-ref-and-array-items",
+            rule,
             document({"/things/": {"get": operation("list", response=listed)}}, {"Thing": THING}),
-            document({"/things/": {"get": operation("list", response=listed)}}, {"Thing": edit(THING, name=None)}),
+            document(
+                {"/things/": {"get": operation("list", response=listed)}},
+                {"Thing": edit(THING, name=None)},
+            ),
             ["GET /things/ response results[].name: removed"],
         ),
         case(
-            "response-all-of", rule,
-            document({"/things/{id}/": {"get": operation("retrieve", parameters=[ID], response=extended)}}, {"Base": base}),
+            "response-all-of",
+            rule,
             document(
-                {"/things/{id}/": {"get": operation("retrieve", parameters=[ID], response=extended)}},
+                {
+                    "/things/{id}/": {
+                        "get": operation("retrieve", parameters=[ID], response=extended)
+                    }
+                },
+                {"Base": base},
+            ),
+            document(
+                {
+                    "/things/{id}/": {
+                        "get": operation("retrieve", parameters=[ID], response=extended)
+                    }
+                },
                 {"Base": edit(base, id=INTEGER, created_at=None)},
             ),
             [f"{thing} created_at: removed", f"{thing} id: type string -> integer"],
         ),
-        case("response-field-added-is-listed", rule, get_thing(), get_thing(edit(THING, color=STRING))),
         case(
-            "response-enum-value-added-is-listed", rule, get_thing(),
+            "response-field-added-is-listed",
+            rule,
+            get_thing(),
+            get_thing(edit(THING, color=STRING)),
+        ),
+        case(
+            "response-enum-value-added-is-listed",
+            rule,
+            get_thing(),
             get_thing(edit(THING, status=enum("active", "closed", "archived"))),
         ),
         case(
-            "response-field-now-always-present-is-listed", rule,
-            get_thing(requiring(THING, "id", "status")), get_thing(),
+            "response-field-now-always-present-is-listed",
+            rule,
+            get_thing(requiring(THING, "id", "status")),
+            get_thing(),
         ),
         case(
-            "response-value-no-longer-null-is-listed", rule,
-            get_thing(edit(THING, name={"type": ["string", "null"]})), get_thing(),
+            "response-value-no-longer-null-is-listed",
+            rule,
+            get_thing(edit(THING, name={"type": ["string", "null"]})),
+            get_thing(),
         ),
-        case("response-documentation-only", rule, get_thing(), documented, commit_type="chore(spec)"),
+        case(
+            "response-documentation-only", rule, get_thing(), documented, commit_type="chore(spec)"
+        ),
     ]
 
 
@@ -348,96 +425,191 @@ def _requests() -> list[Json]:
     tagged = edit(NEW_THING, tags=tags)
     archive = operation("archive", parameters=[ID], response=JOB)
     reason = obj({"reason": STRING}, required=("reason",))
-    archive_with_body = operation("archive", parameters=[ID], response=JOB, body=reason, body_required=True)
+    archive_with_body = operation(
+        "archive", parameters=[ID], response=JOB, body=reason, body_required=True
+    )
     documented = copy.deepcopy(list_things(limit))
     documented["paths"]["/things/"]["get"]["parameters"][0].update(
         description="How many things to return.", example=10
     )
     return [
-        case("query-parameter-removed", rule, list_things(limit), list_things(), [f"{things} query limit: removed"]),
         case(
-            "header-parameter-removed", rule, create_thing(parameters=[key]), create_thing(),
+            "query-parameter-removed",
+            rule,
+            list_things(limit),
+            list_things(),
+            [f"{things} query limit: removed"],
+        ),
+        case(
+            "header-parameter-removed",
+            rule,
+            create_thing(parameters=[key]),
+            create_thing(),
             [f"{create} header Idempotency-Key: removed"],
         ),
         case(
-            "request-body-field-removed", rule, create_thing(), create_thing(edit(NEW_THING, note=None)),
+            "request-body-field-removed",
+            rule,
+            create_thing(),
+            create_thing(edit(NEW_THING, note=None)),
             [f"{create} request body note: removed"],
         ),
         case(
-            "query-parameter-type-changed", rule, list_things(limit), list_things(param("limit", schema=STRING)),
+            "query-parameter-type-changed",
+            rule,
+            list_things(limit),
+            list_things(param("limit", schema=STRING)),
             [f"{things} query limit: type integer -> string"],
         ),
         case(
-            "path-parameter-type-changed", rule, get_thing(), document(
-                {"/things/{id}/": {"get": operation("retrieve", parameters=[param("id", "path", INTEGER)])}}
+            "path-parameter-type-changed",
+            rule,
+            get_thing(),
+            document(
+                {
+                    "/things/{id}/": {
+                        "get": operation("retrieve", parameters=[param("id", "path", INTEGER)])
+                    }
+                }
             ),
             ["GET /things/{id}/ path id: type string -> integer"],
         ),
         case(
-            "request-body-field-type-changed", rule, create_thing(),
-            create_thing(edit(NEW_THING, amount={"type": "number"}, note={"type": "string", "format": "date"})),
-            [f"{create} request body amount: type integer -> number", f"{create} request body note: type string -> string (date)"],
+            "request-body-field-type-changed",
+            rule,
+            create_thing(),
+            create_thing(
+                edit(
+                    NEW_THING, amount={"type": "number"}, note={"type": "string", "format": "date"}
+                )
+            ),
+            [
+                f"{create} request body amount: type integer -> number",
+                f"{create} request body note: type string -> string (date)",
+            ],
         ),
         case(
-            "new-required-parameter", rule, list_things(), list_things(param("cursor", required=True)),
+            "new-required-parameter",
+            rule,
+            list_things(),
+            list_things(param("cursor", required=True)),
             [f"{things} query cursor: now required"],
         ),
         case(
-            "new-required-body-field", rule, create_thing(),
+            "new-required-body-field",
+            rule,
+            create_thing(),
             create_thing(requiring(edit(NEW_THING, currency=STRING), "name", "currency")),
             [f"{create} request body currency: now required"],
         ),
         case(
-            "optional-parameter-becomes-required", rule, list_things(limit),
-            list_things(param("limit", schema=INTEGER, required=True)), [f"{things} query limit: now required"],
+            "optional-parameter-becomes-required",
+            rule,
+            list_things(limit),
+            list_things(param("limit", schema=INTEGER, required=True)),
+            [f"{things} query limit: now required"],
         ),
         case(
-            "optional-body-field-becomes-required", rule, create_thing(),
-            create_thing(requiring(NEW_THING, "name", "note")), [f"{create} request body note: now required"],
+            "optional-body-field-becomes-required",
+            rule,
+            create_thing(),
+            create_thing(requiring(NEW_THING, "name", "note")),
+            [f"{create} request body note: now required"],
         ),
-        case("body-becomes-required", rule, create_thing(), create_thing(body_required=True), [f"{create}: body now required"]),
         case(
-            "new-required-body", rule,
+            "body-becomes-required",
+            rule,
+            create_thing(),
+            create_thing(body_required=True),
+            [f"{create}: body now required"],
+        ),
+        case(
+            "new-required-body",
+            rule,
             document({"/things/{id}/archive/": {"post": archive}}),
             document({"/things/{id}/archive/": {"post": archive_with_body}}),
-            ["POST /things/{id}/archive/ request body reason: now required", "POST /things/{id}/archive/: body now required"],
+            [
+                "POST /things/{id}/archive/ request body reason: now required",
+                "POST /things/{id}/archive/: body now required",
+            ],
         ),
         case(
-            "query-enum-value-removed", rule, list_things(status), list_things(param("status", schema=enum("active"))),
+            "query-enum-value-removed",
+            rule,
+            list_things(status),
+            list_things(param("status", schema=enum("active"))),
             [f'{things} query status: enum value "closed" removed'],
         ),
         case(
-            "request-body-array-item-enum-value-removed", rule, create_thing(tagged),
+            "request-body-array-item-enum-value-removed",
+            rule,
+            create_thing(tagged),
             create_thing(edit(tagged, tags={"type": "array", "items": enum("a")})),
             [f'{create} request body tags[]: enum value "b" removed'],
         ),
         case(
-            "request-body-ref-field-removed", rule,
-            document({"/things/": {"post": operation("create", body=ref("NewThing"))}}, {"NewThing": NEW_THING}),
-            document({"/things/": {"post": operation("create", body=ref("NewThing"))}}, {"NewThing": edit(NEW_THING, note=None)}),
+            "request-body-ref-field-removed",
+            rule,
+            document(
+                {"/things/": {"post": operation("create", body=ref("NewThing"))}},
+                {"NewThing": NEW_THING},
+            ),
+            document(
+                {"/things/": {"post": operation("create", body=ref("NewThing"))}},
+                {"NewThing": edit(NEW_THING, note=None)},
+            ),
             [f"{create} request body note: removed"],
         ),
         case(
-            "parameter-can-now-be-null-is-listed", rule, list_things(limit),
+            "parameter-can-now-be-null-is-listed",
+            rule,
+            list_things(limit),
             list_things(param("limit", schema={"type": ["integer", "null"]})),
         ),
         case(
-            "body-field-can-now-be-null-is-listed", rule, create_thing(),
+            "body-field-can-now-be-null-is-listed",
+            rule,
+            create_thing(),
             create_thing(edit(NEW_THING, note={"anyOf": [STRING, {"type": "null"}]})),
         ),
         case(
-            "parameter-no-longer-required-is-listed", rule,
-            list_things(param("limit", schema=INTEGER, required=True)), list_things(limit),
+            "parameter-no-longer-required-is-listed",
+            rule,
+            list_things(param("limit", schema=INTEGER, required=True)),
+            list_things(limit),
         ),
-        case("body-field-no-longer-required-is-listed", rule, create_thing(), create_thing(requiring(NEW_THING))),
-        case("body-no-longer-required-is-listed", rule, create_thing(body_required=True), create_thing()),
-        case("optional-parameter-added-is-listed", rule, list_things(), list_things(limit)),
-        case("optional-body-field-added-is-listed", rule, create_thing(), create_thing(edit(NEW_THING, color=STRING))),
         case(
-            "request-enum-value-added-is-listed", rule, list_things(status),
+            "body-field-no-longer-required-is-listed",
+            rule,
+            create_thing(),
+            create_thing(requiring(NEW_THING)),
+        ),
+        case(
+            "body-no-longer-required-is-listed",
+            rule,
+            create_thing(body_required=True),
+            create_thing(),
+        ),
+        case("optional-parameter-added-is-listed", rule, list_things(), list_things(limit)),
+        case(
+            "optional-body-field-added-is-listed",
+            rule,
+            create_thing(),
+            create_thing(edit(NEW_THING, color=STRING)),
+        ),
+        case(
+            "request-enum-value-added-is-listed",
+            rule,
+            list_things(status),
             list_things(param("status", schema=enum("active", "closed", "archived"))),
         ),
-        case("request-documentation-only", rule, list_things(limit), documented, commit_type="chore(spec)"),
+        case(
+            "request-documentation-only",
+            rule,
+            list_things(limit),
+            documented,
+            commit_type="chore(spec)",
+        ),
     ]
 
 
@@ -445,52 +617,74 @@ def _operations() -> list[Json]:
     rule = "Operations"
     retrieve = operation("retrieve", parameters=[ID])
     delete = operation("delete", parameters=[ID], response=JOB)
-    device = operation("retrieve", server=False, parameters=[ID, param("fields")])
-    device_after = operation("retrieve", server=False, parameters=[ID], response=edit(THING, name=None))
+    device = operation(
+        "retrieve", resource="devices", server=False, parameters=[ID, param("fields")]
+    )
+    device_after = operation(
+        "retrieve",
+        resource="devices",
+        server=False,
+        parameters=[ID],
+        response=edit(THING, name=None),
+    )
     renamed = copy.deepcopy(retrieve)
     renamed["x-didit-sdk"]["method"] = "get"
     gone = operation("retrieve", parameters=[ID], response=edit(THING, name=None))
     return [
         case(
-            "operation-removed", rule,
+            "operation-removed",
+            rule,
             document({"/things/{id}/": {"get": retrieve, "delete": delete}}),
             document({"/things/{id}/": {"get": retrieve}}),
             ["DELETE /things/{id}/: operation removed"],
         ),
         case(
-            "operation-no-longer-on-server-sdks", rule,
+            "operation-no-longer-on-server-sdks",
+            rule,
             document({"/things/{id}/": {"get": retrieve}}),
-            document({"/things/{id}/": {"get": {**retrieve, "x-didit-sdk": naming("retrieve", server=False)}}}),
+            document(
+                {
+                    "/things/{id}/": {
+                        "get": {**retrieve, "x-didit-sdk": naming("retrieve", server=False)}
+                    }
+                }
+            ),
             ["GET /things/{id}/: operation removed"],
         ),
         case(
-            "server-false-operation-removed-is-listed", rule,
+            "server-false-operation-removed-is-listed",
+            rule,
             document({"/things/{id}/": {"get": retrieve}, "/device/things/{id}/": {"get": device}}),
             document({"/things/{id}/": {"get": retrieve}}),
         ),
         case(
-            "server-false-operation-changes-are-listed", rule,
+            "server-false-operation-changes-are-listed",
+            rule,
             document({"/device/things/{id}/": {"get": device}}),
             document({"/device/things/{id}/": {"get": device_after}}),
         ),
         case(
-            "operation-added-is-listed", rule,
+            "operation-added-is-listed",
+            rule,
             document({"/things/{id}/": {"get": retrieve}}),
             document({"/things/{id}/": {"get": retrieve, "delete": delete}}),
         ),
         case(
-            "moved-operation-changes-count-under-its-new-path", rule,
+            "moved-operation-changes-count-under-its-new-path",
+            rule,
             document({"/things/{id}/": {"get": retrieve}}),
             document({"/items/{id}/": {"get": gone}}),
             ["GET /items/{id}/ response name: removed"],
         ),
         case(
-            "moved-operation-unchanged-is-listed", rule,
+            "moved-operation-unchanged-is-listed",
+            rule,
             document({"/things/{id}/": {"get": retrieve}}),
             document({"/items/{id}/": {"get": retrieve}}),
         ),
         case(
-            "renamed-method-is-listed", rule,
+            "renamed-method-is-listed",
+            rule,
             document({"/things/{id}/": {"get": retrieve}}),
             document({"/things/{id}/": {"get": renamed}}),
         ),
@@ -504,46 +698,79 @@ def _unions() -> list[Json]:
     titled = {**CARD, "title": "Card payment"}
     by_email = obj({"email": STRING}, required=("email",))
     by_phone = obj({"phone": STRING, "country_code": STRING}, required=("phone",))
-    contact = document({"/contacts/": {"post": operation("create", resource="contacts", body={"anyOf": [by_email, by_phone]})}})
+    contact = document(
+        {
+            "/contacts/": {
+                "post": operation(
+                    "create", resource="contacts", body={"anyOf": [by_email, by_phone]}
+                )
+            }
+        }
+    )
     contact_after = document(
-        {"/contacts/": {"post": operation("create", resource="contacts", body={"anyOf": [by_email, edit(by_phone, country_code=None)]})}}
+        {
+            "/contacts/": {
+                "post": operation(
+                    "create",
+                    resource="contacts",
+                    body={"anyOf": [by_email, edit(by_phone, country_code=None)]},
+                )
+            }
+        }
     )
     return [
         case(
-            "union-variant-added-and-paired-variant-changed", rule,
-            get_payment({"oneOf": [CARD, BANK]}), get_payment({"oneOf": [CARD, bank, WALLET]}),
+            "union-variant-added-and-paired-variant-changed",
+            rule,
+            get_payment({"oneOf": [CARD, BANK]}),
+            get_payment({"oneOf": [CARD, bank, WALLET]}),
             [f"{payment} (oneOf 2).iban: type string -> integer"],
         ),
         case(
-            "union-variants-reordered-and-paired-variant-changed", rule,
-            get_payment({"oneOf": [CARD, BANK]}), get_payment({"oneOf": [bank, CARD]}),
+            "union-variants-reordered-and-paired-variant-changed",
+            rule,
+            get_payment({"oneOf": [CARD, BANK]}),
+            get_payment({"oneOf": [bank, CARD]}),
             [f"{payment} (oneOf 1).iban: type string -> integer"],
         ),
         case(
-            "union-variant-removed", rule,
-            get_payment({"oneOf": [CARD, BANK]}), get_payment({"oneOf": [CARD]}),
+            "union-variant-removed",
+            rule,
+            get_payment({"oneOf": [CARD, BANK]}),
+            get_payment({"oneOf": [CARD]}),
             [f"{payment}: type object|object -> object"],
         ),
         case(
-            "schema-becomes-union-compared-with-its-variant", rule,
-            get_payment(CARD), get_payment({"oneOf": [edit(CARD, last4=None), BANK]}),
-            [f"{payment} (oneOf 1).last4: removed"],
+            "schema-becomes-union-compared-with-its-variant",
+            rule,
+            get_payment(CARD),
+            get_payment({"oneOf": [edit(CARD, last4=INTEGER), BANK]}),
+            [f"{payment} (oneOf 1).last4: type string -> integer"],
         ),
         case(
-            "request-union-variant-field-removed", rule, contact, contact_after,
+            "request-union-variant-field-removed",
+            rule,
+            contact,
+            contact_after,
             ["POST /contacts/ request body (anyOf 2).country_code: removed"],
         ),
         case(
-            "union-variant-added-is-listed", rule,
-            get_payment({"oneOf": [CARD, BANK]}), get_payment({"oneOf": [CARD, BANK, WALLET]}),
+            "union-variant-added-is-listed",
+            rule,
+            get_payment({"oneOf": [CARD, BANK]}),
+            get_payment({"oneOf": [CARD, BANK, WALLET]}),
         ),
         case(
-            "union-variants-reordered-is-listed", rule,
-            get_payment({"oneOf": [CARD, BANK]}), get_payment({"oneOf": [BANK, CARD]}),
+            "union-variants-reordered-is-listed",
+            rule,
+            get_payment({"oneOf": [CARD, BANK]}),
+            get_payment({"oneOf": [BANK, CARD]}),
         ),
         case(
-            "union-variant-title-renamed-is-listed", rule,
-            get_payment({"oneOf": [titled, BANK]}), get_payment({"oneOf": [{**titled, "title": "Card charge"}, BANK]}),
+            "union-variant-title-renamed-is-listed",
+            rule,
+            get_payment({"oneOf": [titled, BANK]}),
+            get_payment({"oneOf": [{**titled, "title": "Card charge"}, BANK]}),
         ),
     ]
 
@@ -553,44 +780,62 @@ def _statuses() -> list[Json]:
     create = "POST /things/ response"
     return [
         case(
-            "added-status-without-body", rule,
-            create_with_statuses({"200": THING}), create_with_statuses({"200": THING, "204": None}),
+            "added-status-without-body",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"200": THING, "204": None}),
             [f"{create}: can now be null"],
         ),
         case(
-            "removed-status-whose-body-no-other-returns", rule,
-            create_with_statuses({"200": THING, "202": JOB}), create_with_statuses({"200": THING}),
+            "removed-status-whose-body-no-other-returns",
+            rule,
+            create_with_statuses({"200": THING, "202": JOB}),
+            create_with_statuses({"200": THING}),
             [f"{create}: type object|object -> object"],
         ),
         case(
-            "removed-status-whose-body-has-another-type", rule,
-            create_with_statuses({"200": STRING, "202": INTEGER}), create_with_statuses({"200": STRING}),
+            "removed-status-whose-body-has-another-type",
+            rule,
+            create_with_statuses({"200": STRING, "202": INTEGER}),
+            create_with_statuses({"200": STRING}),
             [f"{create}: type integer|string -> string"],
         ),
         case(
-            "only-success-status-changed-compares-the-bodies", rule,
-            create_with_statuses({"200": THING}), create_with_statuses({"201": edit(THING, name=None)}),
+            "only-success-status-changed-compares-the-bodies",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"201": edit(THING, name=None)}),
             [f"{create} name: removed"],
         ),
         case(
-            "added-status-with-another-body-is-listed", rule,
-            create_with_statuses({"200": THING}), create_with_statuses({"200": THING, "202": JOB}),
+            "added-status-with-another-body-is-listed",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"200": THING, "202": JOB}),
         ),
         case(
-            "added-status-with-the-same-body-is-listed", rule,
-            create_with_statuses({"200": THING}), create_with_statuses({"200": THING, "201": THING}),
+            "added-status-with-the-same-body-is-listed",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"200": THING, "201": THING}),
         ),
         case(
-            "removed-status-whose-body-another-returns-is-listed", rule,
-            create_with_statuses({"200": THING, "201": THING}), create_with_statuses({"200": THING}),
+            "removed-status-whose-body-another-returns-is-listed",
+            rule,
+            create_with_statuses({"200": THING, "201": THING}),
+            create_with_statuses({"200": THING}),
         ),
         case(
-            "removed-status-without-body-is-listed", rule,
-            create_with_statuses({"200": THING, "204": None}), create_with_statuses({"200": THING}),
+            "removed-status-without-body-is-listed",
+            rule,
+            create_with_statuses({"200": THING, "204": None}),
+            create_with_statuses({"200": THING}),
         ),
         case(
-            "only-success-status-changed-is-listed", rule,
-            create_with_statuses({"200": THING}), create_with_statuses({"201": THING}),
+            "only-success-status-changed-is-listed",
+            rule,
+            create_with_statuses({"200": THING}),
+            create_with_statuses({"201": THING}),
         ),
     ]
 
@@ -601,17 +846,29 @@ def _release_notes() -> list[Json]:
     retrieve = operation("retrieve", parameters=[ID, param("expand")])
     delete = operation("delete", parameters=[ID], response=JOB)
     create = operation("create", body=NEW_THING)
-    after_retrieve = operation("retrieve", parameters=[ID], response=edit(THING, id=INTEGER, color=STRING))
-    after_create = operation("create", body=edit(NEW_THING, note={"type": ["string", "null"]}, amount=None))
+    after_retrieve = operation(
+        "retrieve", parameters=[ID], response=edit(THING, id=INTEGER, color=STRING)
+    )
+    after_create = operation(
+        "create", body=edit(NEW_THING, note={"type": ["string", "null"]}, amount=None)
+    )
     return [
         case(
-            "every-counted-change-is-listed", rule, get_thing(wide), get_thing(obj({})),
+            "every-counted-change-is-listed",
+            rule,
+            get_thing(wide),
+            get_thing(obj({})),
             [f"GET /things/{{id}}/ response field_{i:02d}: removed" for i in range(30)],
         ),
         case(
-            "counted-changes-of-every-operation-are-listed", rule,
-            document({"/things/": {"post": create}, "/things/{id}/": {"get": retrieve, "delete": delete}}),
-            document({"/things/": {"post": after_create}, "/things/{id}/": {"get": after_retrieve}}),
+            "counted-changes-of-every-operation-are-listed",
+            rule,
+            document(
+                {"/things/": {"post": create}, "/things/{id}/": {"get": retrieve, "delete": delete}}
+            ),
+            document(
+                {"/things/": {"post": after_create}, "/things/{id}/": {"get": after_retrieve}}
+            ),
             [
                 "DELETE /things/{id}/: operation removed",
                 "GET /things/{id}/ query expand: removed",
@@ -623,7 +880,14 @@ def _release_notes() -> list[Json]:
 
 
 def cases() -> list[Json]:
-    return [*_responses(), *_requests(), *_operations(), *_unions(), *_statuses(), *_release_notes()]
+    return [
+        *_responses(),
+        *_requests(),
+        *_operations(),
+        *_unions(),
+        *_statuses(),
+        *_release_notes(),
+    ]
 
 
 # The file -----------------------------------------------------------------------------------
@@ -633,7 +897,9 @@ def _check(found: list[Json]) -> list[str]:
     """Every problem with the cases: their form, and each result the detector disagrees with."""
     problems: list[str] = []
     names = [c["name"] for c in found]
-    problems += [f"{n}: the name is used twice" for n in sorted({n for n in names if names.count(n) > 1})]
+    problems += [
+        f"{n}: the name is used twice" for n in sorted({n for n in names if names.count(n) > 1})
+    ]
     for rule in RULES:
         if sum(c["rule"] == rule for c in found) < 2:
             problems.append(f"rule {rule!r} has fewer than two cases")
@@ -673,14 +939,21 @@ def render() -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--check", action="store_true", help="fail when the committed file is not current")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="fail when the committed file is not current"
+    )
     args = parser.parse_args(argv)
     text = render()
     if args.check:
         current = OUTPUT.read_bytes() if OUTPUT.exists() else b""
         if current != text.encode():
-            print(f"{OUTPUT.relative_to(REPO)} is not current: run uv run python {GENERATOR}", file=sys.stderr)
+            print(
+                f"{OUTPUT.relative_to(REPO)} is not current: run uv run python {GENERATOR}",
+                file=sys.stderr,
+            )
             return 1
         return 0
     # LF on every platform: .gitattributes checks openapi/*.json out byte for byte.

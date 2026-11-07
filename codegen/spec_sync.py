@@ -738,10 +738,14 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[
         )  # fmt: skip
 
     old_body, new_body = old.get("requestBody") or {}, new.get("requestBody") or {}
-    if dereference(old_doc, old_body).get("required") is not True and (
-        dereference(new_doc, new_body).get("required") is True
-    ):
+    was, now = (
+        dereference(d, b).get("required") is True
+        for d, b in ((old_doc, old_body), (new_doc, new_body))
+    )
+    if now and not was:
         found.append(Change("request body", "", "now required", True, "body now required"))
+    elif was and not now:
+        found.append(Change("request body", "", "no longer required"))
     _diff_content(
         _content(old_doc, old_body), _content(new_doc, new_body), "request body",
         request=True, out=found,
