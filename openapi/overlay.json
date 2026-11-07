@@ -1,0 +1,5 @@
+{
+ "description": "SDK naming (x-didit-sdk) for operations whose upstream OpenAPI definition does not carry it yet. Keys: \"<METHOD> <path>\" for verification.json, \"account <METHOD> <path>\" for account.json. Upstream x-didit-sdk wins; delete an entry once upstream carries the same value. See docs/DESIGN.md section 4.",
+ "version": 1,
+ "operations": {}
+}
