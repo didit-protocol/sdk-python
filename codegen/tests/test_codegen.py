@@ -420,7 +420,7 @@ def test_a_moved_operation_reports_what_changed(openapi: pathlib.Path) -> None:
         _section(summary, "Moved or reassigned methods")
     )
     assert _breaking(summary).strip().splitlines() == [
-        "- `GET /v4/billing/balance/` parameter `currency` (query): added (required)",
+        "- `GET /v4/billing/balance/` query parameter `currency`: added (required)",
         "- `GET /v4/billing/balance/` response: type changed from object to array",
     ]
     assert _read(openapi / "deprecated-operations.json")["methods"] == {}
@@ -566,11 +566,11 @@ def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -
     summary = result.summary
     assert result.changed
     assert "`GET /v3/new-thing/`: **no SDK naming**" in summary
-    assert "`POST /v3/session/` **(breaking)**: parameter `dry_run` (query): added (required)" in (
+    assert "`POST /v3/session/` **(breaking)**: query parameter `dry_run`: added (required)" in (
         summary
     )
     assert _breaking(summary).strip() == (
-        "- `POST /v3/session/` parameter `dry_run` (query): added (required)"
+        "- `POST /v3/session/` query parameter `dry_run`: added (required)"
     )
     assert "Dropped 1 overlay entries" in summary
     assert "POST /v3/session/" not in _read(openapi / "overlay.json")["operations"]

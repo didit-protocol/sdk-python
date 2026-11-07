@@ -7521,6 +7521,176 @@
    }
   },
   {
+   "name": "union-untyped-variant-added-and-paired-variant-changed",
+   "rule": "Unions",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "anyOf": [
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "iban"
+              ]
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "anyOf": [
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "integer"
+               }
+              },
+              "required": [
+               "kind",
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "iban"
+              ]
+             },
+             {
+              "description": "Other."
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "GET /payments/{id}/ response (anyOf 1).last4: type string -> integer",
+     "GET /payments/{id}/ response: type object -> any"
+    ]
+   }
+  },
+  {
    "name": "union-variant-removed",
    "rule": "Unions",
    "before": {
@@ -9123,6 +9293,364 @@
    }
   },
   {
+   "name": "only-success-status-replaced-by-one-without-body",
+   "rule": "Success statuses",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "204": {
+         "description": "No content"
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "POST /things/ response: can now be null",
+     "POST /things/ response: type string -> null"
+    ]
+   }
+  },
+  {
+   "name": "removed-status-leaves-only-statuses-without-body",
+   "rule": "Success statuses",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "204": {
+         "description": "No content"
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "204": {
+         "description": "No content"
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "POST /things/ response: type string -> null"
+    ]
+   }
+  },
+  {
+   "name": "status-loses-its-body",
+   "rule": "Success statuses",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "name": {
+              "type": "string"
+             },
+             "status": {
+              "type": "string",
+              "enum": [
+               "active",
+               "closed"
+              ]
+             }
+            },
+            "required": [
+             "id",
+             "name",
+             "status"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "200": {
+         "description": "No content"
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "POST /things/ response: can now be null",
+     "POST /things/ response: type object -> null"
+    ]
+   }
+  },
+  {
    "name": "added-status-with-another-body-is-listed",
    "rule": "Success statuses",
    "before": {
@@ -9788,6 +10316,135 @@
        },
        "responses": {
         "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "name": {
+              "type": "string"
+             },
+             "status": {
+              "type": "string",
+              "enum": [
+               "active",
+               "closed"
+              ]
+             }
+            },
+            "required": [
+             "id",
+             "name",
+             "status"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": []
+   }
+  },
+  {
+   "name": "status-gains-a-body-is-listed",
+   "rule": "Success statuses",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "204": {
+         "description": "No content"
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/things/": {
+      "post": {
+       "x-didit-sdk": {
+        "resource": "things",
+        "method": "create",
+        "auth": "api_key",
+        "server": true
+       },
+       "requestBody": {
+        "content": {
+         "application/json": {
+          "schema": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string"
+            },
+            "note": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "name"
+           ]
+          }
+         }
+        }
+       },
+       "responses": {
+        "204": {
          "description": "OK",
          "content": {
           "application/json": {

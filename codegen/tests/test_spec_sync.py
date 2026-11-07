@@ -289,9 +289,11 @@ def test_a_schema_that_allows_any_value_is_a_type_change(request_side: bool) -> 
     assert _diff(listed, {"type": "array"}, request=request_side) == [
         ("[]", "type changed from string to any", True)
     ]
+    # An untyped variant makes the union "any", and the variant it replaced is compared too.
     either = {"oneOf": [{"type": "string"}, {"type": "integer"}]}
     assert _diff(either, {"oneOf": [{"type": "string"}, {}]}, request=request_side) == [
-        ("", "type changed from integer or string to any", True)
+        ("", "type changed from integer or string to any", True),
+        ("(oneOf 2)", "type changed from integer to any", True),
     ]
 
 
@@ -490,6 +492,16 @@ def test_a_success_status_only_one_side_has_changes_the_result() -> None:
     same = {**one, "202": _json(OBJ)}
     assert changes(one, same) == [("status 202 added", False)]
     assert changes(same, one) == [("status 202 removed", False)]
+    # A status that loses its body is removed with it and added without one, and the
+    # reverse; with no body left, the method returns None.
+    empty = {"200": no_body["204"]}
+    assert changes(one, empty) == [
+        ("can now be null (status 200 lost its body)", True),
+        ("type changed: status 200 lost its body, and no other status returns its body", True),
+    ]
+    assert changes(empty, one) == [("can no longer be null (status 200 now has a body)", False)]
+    found = spec_sync.describe_change({}, _op(responses=one), {}, _op(responses=no_body))
+    assert [c.code for c in found] == ["can now be null", "type object -> null"]
 
 
 def test_a_body_that_appears_is_compared_field_by_field() -> None:
