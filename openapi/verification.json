@@ -7121,6 +7121,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/DocumentProcessingBusy"
           }
         },
         "security": [
@@ -9018,6 +9021,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/DocumentProcessingBusy"
           }
         },
         "security": [
@@ -9741,6 +9747,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/DocumentProcessingBusy"
           }
         },
         "x-codeSamples": [
@@ -78986,6 +78995,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/DocumentProcessingBusy"
           }
         },
         "security": [
@@ -88365,6 +88377,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/DocumentProcessingBusy"
           }
         },
         "x-codeSamples": [
@@ -127668,6 +127683,44 @@
                   "code": "insufficient_credits"
                 }
               }
+            }
+          }
+        }
+      },
+      "DocumentProcessingBusy": {
+        "description": "Too many documents are being processed right now, so this upload was not processed: nothing was stored and no attempt was used. Send the same file again after the number of seconds in `Retry-After`. Branch on `code`, not on the message text.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before sending the same request again.",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "detail",
+                "code"
+              ],
+              "properties": {
+                "detail": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "document_processing_busy"
+                  ]
+                }
+              }
+            },
+            "example": {
+              "detail": "We are busy processing documents. Please try again in a moment.",
+              "code": "document_processing_busy"
             }
           }
         }
