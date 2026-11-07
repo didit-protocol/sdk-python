@@ -1,0 +1,59 @@
+# Takes the pull requests this repository's automation opens, the spec sync (chore/spec-sync)
+# and release-please (release-please--*), to a merge without a person (docs/DESIGN.md sections
+# 3.1 and 13). Identical in all seven server SDK repositories.
+#
+# For each such pull request .github/scripts/bot-pull-request.sh starts ci.yml on its branch
+# (a pull request opened with GITHUB_TOKEN gets its pull_request run only after a maintainer
+# approves it; workflow_dispatch needs no approval) and turns on auto-merge with squash, so
+# GitHub merges once the required "CI passed" check on main passes. A spec sync that failed a
+# check, anything that asks for a major version, and commits from people wait for a person
+# (label needs-alex). Then it starts the release workflows on main when the newest commit has
+# no run of them: a merge made by that auto-merge starts no push workflow.
+#
+# Runs when a spec sync, release or CI run finishes, every 30 minutes as a safety net, and by
+# hand.
+name: Bot pull requests
+
+on:
+  workflow_run:
+    workflows: ["Spec sync", "Release Please", "Release", "Publish", "CI"]
+    types: [completed]
+    branches: [main, chore/spec-sync, "release-please--**"]
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bot-pull-requests
+  cancel-in-progress: false
+
+jobs:
+  bot-pull-requests:
+    name: CI and auto-merge for the automation's pull requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write # start ci.yml and the release workflows
+      contents: write # auto-merge
+      issues: write # the needs-alex label
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the scripts and workflows
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github
+      - name: The spec sync pull request
+        run: bash .github/scripts/bot-pull-request.sh spec-sync chore/spec-sync
+      - name: The release pull request
+        run: bash .github/scripts/bot-pull-request.sh release
+      - name: Release workflows for a merge that started none
+        env:
+          # After a CI run on a bot branch, wait for the merge its auto-merge is about to make.
+          HEAD_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'CI' && github.event.workflow_run.head_branch != 'main' && github.event.workflow_run.head_branch || '' }}
+        run: bash .github/scripts/bot-pull-request.sh catch-up "$HEAD_BRANCH"
