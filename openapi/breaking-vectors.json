@@ -8162,6 +8162,344 @@
    }
   },
   {
+   "name": "union-required-field-no-longer-required",
+   "rule": "Unions",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "oneOf": [
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "iban"
+              ]
+             }
+            ],
+            "required": [
+             "kind"
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "oneOf": [
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "iban"
+              ]
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "GET /payments/{id}/ response (oneOf 1).kind: no longer required",
+     "GET /payments/{id}/ response (oneOf 2).kind: no longer required"
+    ]
+   }
+  },
+  {
+   "name": "union-variant-numbered-with-its-null-variant",
+   "rule": "Unions",
+   "before": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "anyOf": [
+             {
+              "type": "null"
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "iban"
+              ]
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "after": {
+    "openapi": "3.1.0",
+    "info": {
+     "title": "Breaking-change vectors",
+     "version": "1.0.0"
+    },
+    "paths": {
+     "/payments/{id}/": {
+      "get": {
+       "x-didit-sdk": {
+        "resource": "payments",
+        "method": "retrieve",
+        "auth": "api_key",
+        "server": true
+       },
+       "parameters": [
+        {
+         "name": "id",
+         "in": "path",
+         "schema": {
+          "type": "string"
+         },
+         "required": true
+        }
+       ],
+       "responses": {
+        "200": {
+         "description": "OK",
+         "content": {
+          "application/json": {
+           "schema": {
+            "anyOf": [
+             {
+              "type": "null"
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "card"
+                ]
+               },
+               "last4": {
+                "type": "integer"
+               }
+              },
+              "required": [
+               "kind",
+               "last4"
+              ]
+             },
+             {
+              "type": "object",
+              "properties": {
+               "kind": {
+                "type": "string",
+                "enum": [
+                 "bank"
+                ]
+               },
+               "iban": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "kind",
+               "iban"
+              ]
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "expect": {
+    "type": "feat(spec)",
+    "breaking": [
+     "GET /payments/{id}/ response (anyOf 2).last4: type string -> integer"
+    ]
+   }
+  },
+  {
    "name": "union-variant-added-is-listed",
    "rule": "Unions",
    "before": {
