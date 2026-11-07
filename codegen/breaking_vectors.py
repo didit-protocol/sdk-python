@@ -31,7 +31,8 @@ A counted change is one line, ``<METHOD> <path> <where> <field>: <kind>``:
 - ``<where>``: ``response`` (any 2xx body), ``request body``, ``query``, ``path`` or
   ``header``.
 - ``<field>``: a dotted path; ``[]`` is an array's items, ``{}`` a map's values, and
-  ``(oneOf N)`` or ``(anyOf N)`` the Nth variant (from 1) of the union after the change.
+  ``(oneOf N)`` or ``(anyOf N)`` the Nth variant (from 1, a ``null`` variant counted) of
+  the union after the change. A field the union itself requires is required in each variant.
   A parameter's field starts with its name (``ids[]``). A whole body has no ``<field>``
   (``GET /things/ response: can now be null``).
 - ``<kind>``: ``removed``, ``type <old> -> <new>``, ``can now be null``, ``no longer
@@ -92,6 +93,7 @@ Json = Any
 
 STRING: Json = {"type": "string"}
 INTEGER: Json = {"type": "integer"}
+NULL: Json = {"type": "null"}
 
 
 def document(paths: Json, schemas: Json = None) -> Json:
@@ -699,6 +701,8 @@ def _unions() -> list[Json]:
     payment = "GET /payments/{id}/ response"
     bank = edit(BANK, iban=INTEGER)
     titled = {**CARD, "title": "Card payment"}
+    # Each variant leaves ``kind`` to the union, which requires it.
+    loose = {"oneOf": [requiring(CARD, "last4"), requiring(BANK, "iban")]}
     by_email = obj({"email": STRING}, required=("email",))
     by_phone = obj({"phone": STRING, "country_code": STRING}, required=("phone",))
     contact = document(
@@ -766,6 +770,23 @@ def _unions() -> list[Json]:
             contact,
             contact_after,
             ["POST /contacts/ request body (anyOf 2).country_code: removed"],
+        ),
+        case(
+            "union-required-field-no-longer-required",
+            rule,
+            get_payment({**loose, "required": ["kind"]}),
+            get_payment(loose),
+            [
+                f"{payment} (oneOf 1).kind: no longer required",
+                f"{payment} (oneOf 2).kind: no longer required",
+            ],
+        ),
+        case(
+            "union-variant-numbered-with-its-null-variant",
+            rule,
+            get_payment({"anyOf": [NULL, CARD, BANK]}),
+            get_payment({"anyOf": [NULL, edit(CARD, last4=INTEGER), BANK]}),
+            [f"{payment} (anyOf 2).last4: type string -> integer"],
         ),
         case(
             "union-variant-added-is-listed",

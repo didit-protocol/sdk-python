@@ -300,6 +300,27 @@ def _variants(schema: Json, keyword: str | None = None) -> list[Json]:
     return [v for k in keywords for v in schema.get(k) or [] if not _null_only(v)]
 
 
+def _positions(schema: Json) -> list[str]:
+    """Each of ``_variants(schema)`` as the vectors number it: its keyword and its position
+    from 1 in that keyword's list, a null variant included (``anyOf 2`` in ``[null, X, Y]``)."""
+    return [
+        f"{k} {n}"
+        for k in ("oneOf", "anyOf")
+        for n, v in enumerate(schema.get(k) or [], 1)
+        if not _null_only(v)
+    ]
+
+
+def _with_required(variant: Json, union: Json) -> Json:
+    """A union's variant with the fields the union itself requires, which JSON Schema
+    applies to every variant: dropping one from the union drops it from each variant."""
+    inherited = {name for name in union.get("required") or [] if isinstance(name, str)}
+    if not inherited or not isinstance(variant, dict):
+        return variant
+    own = {name for name in variant.get("required") or [] if isinstance(name, str)}
+    return {**variant, "required": sorted(own | inherited)}
+
+
 def _nullable(schema: Json, depth: int = 0) -> bool:
     """Whether ``schema`` accepts null: a null type, ``nullable``, null in its enum, or a
     null or nullable oneOf/anyOf variant."""
@@ -339,8 +360,8 @@ def _single(schema: Json, depth: int = 0) -> Json:
     variants = _variants(schema)
     if len(variants) != 1 or not isinstance(variants[0], dict):
         return schema
-    rest = {k: v for k, v in schema.items() if k not in ("oneOf", "anyOf")}
-    return _single({**variants[0], **rest}, depth + 1)
+    rest = {k: v for k, v in schema.items() if k not in ("oneOf", "anyOf", "required")}
+    return _single({**_with_required(variants[0], schema), **rest}, depth + 1)
 
 
 def _json_type(value: Json) -> str:
@@ -608,8 +629,12 @@ def _diff_variants(
     keyword = _union_keyword(new) or _union_keyword(old)
     pairs, removed, added = _pair_variants(old_vars, new_vars)
     for i, j in pairs:
-        at = f"{path}({keyword} {j + 1})" if len(new_vars) > 1 else path
-        diff_schema(old_vars[i], new_vars[j], where, at, request=request, out=out, depth=depth + 1)
+        at = f"{path}({_positions(new)[j]})" if len(new_vars) > 1 else path
+        # The fields the union requires are required in each variant too.
+        diff_schema(
+            _with_required(old_vars[i], old), _with_required(new_vars[j], new), where, at,
+            request=request, out=out, depth=depth + 1,
+        )  # fmt: skip
         before, after = (
             _variant_type_name(v) or "a numbered name" for v in (old_vars[i], new_vars[j])
         )
