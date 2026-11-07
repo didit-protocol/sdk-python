@@ -63,6 +63,14 @@ The commit never carries `!` or a `BREAKING CHANGE:` footer: a change that mirro
 The pull request body opens with a "Breaking changes" section, then lists added, removed and changed operations and schemas.
 "Breaking changes" lists every change that can break typed code, or says "None detected": a field or parameter whose type changed, a field that can now be null, a removed operation, field or enum value, and a newly required parameter or request field.
 Every repository detects exactly that list, so the seven pull requests for one upstream change report the same breaking changes.
+The rules, checked in every repository by the shared vectors in `openapi/breaking-vectors.json` (generated in sdk-python and copied byte for byte into the other six; a rule change lands there first):
+
+- Responses (the body of every 2xx status): a removed field, a field whose type changed, a field that can now be null or is no longer required, and a removed enum value count. A typed string format (`date`, `date-time`, `binary`) gained, lost or changed, and a typed value becoming untyped or the reverse, are type changes. An added field or enum value is listed, not counted: enums are open and unknown values must be accepted.
+- Requests (path, query and header parameters, and the body): a removed parameter or field, a parameter or field whose type changed, a new required parameter or field, an optional one becoming required, a body becoming required, and a removed enum value count. A parameter or field that can now be null or stops being required is listed, not counted, because it only widens what a caller may send.
+- Operations: a removed operation counts when its SDK method goes; a moved operation's changes count under its new path; an added operation is listed. Operations with `server: false` are listed and never counted.
+- Unions (`oneOf`, `anyOf`): each old variant is paired with the variant it became, and changes inside a paired variant follow the rules above even when other variants are added, removed or reordered. A renamed variant title is listed, not counted.
+- Success statuses: a method returns every 2xx body. An added 2xx status without a body counts as "can now be null"; a removed status whose body no other 2xx status returns counts as a type change; any other status change is listed.
+- Every counted change reaches the release notes, with no cap.
 The release notes repeat that list under "API changes that can break typed code".
 A new server operation without SDK naming fails the generator with a message that names the operation; the fix is an entry in `overlay.json` (or upstream).
 The sync never deletes a public SDK method silently: a removed operation is marked deprecated for one minor version first, and the pull request says so.
