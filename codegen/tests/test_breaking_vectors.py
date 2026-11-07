@@ -141,22 +141,24 @@ def test_the_file_covers(item: str) -> None:
         elif item == "documentation only":
             assert (case["expect"]["type"], breaking) == ("chore(spec)", []), name
         elif item == "$ref":
-            assert '"$ref"' in documents and breaking, name
+            assert '"$ref"' in documents, name
+            assert breaking, name
         elif item == "array items":
             assert any("[]" in line for line in breaking), name
         elif item == "allOf":
-            assert '"allOf"' in documents and breaking, name
+            assert '"allOf"' in documents, name
+            assert breaking, name
         elif item.startswith("union"):
             assert any("(oneOf " in line for line in breaking), name
         elif item == "server: false":
-            assert '"server": false' in documents and not breaking, name
+            assert '"server": false' in documents, name
+            assert not breaking, name
         else:
-            assert set(case["before"]["paths"]).isdisjoint(case["after"]["paths"]) and breaking
+            assert set(case["before"]["paths"]).isdisjoint(case["after"]["paths"]), name
+            assert breaking, name
 
 
-def test_the_real_api_change_of_2026_11_04_gives_the_same_list_in_vector_form(
-    tmp_path: pathlib.Path,
-) -> None:
+def test_the_real_api_change_of_2026_11_04_gives_the_same_list_in_vector_form() -> None:
     # The first-round fixtures, normalized the way the vectors spell them.
     fixtures = CODEGEN / "tests" / "fixtures"
     before = json.loads((fixtures / "verification-9fe57fc69299601e59cc7a64c1db370fea5c7461.json").read_bytes())  # fmt: skip
