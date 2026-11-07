@@ -218,3 +218,25 @@ jobs:
             export DIDIT_SANDBOX_BASE_URL="$SANDBOX_BASE_URL"
           fi
           uv run pytest -m live
+
+  # The one check main requires (docs/DESIGN.md section 13): auto-merge of the spec sync and
+  # release pull requests waits for it. It passes only when every job above passed; the live
+  # sandbox tests are not part of it.
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [lint, typecheck, codegen, test, build, secret-scan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "::error::A CI job ended with '${result}'; see the jobs above."
+              exit 1
+            fi
+          done
+          echo "Every CI job passed."
