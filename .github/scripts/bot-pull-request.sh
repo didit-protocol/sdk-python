@@ -158,12 +158,13 @@ handle() {
       }
     }' --jq '.data.repository.pullRequest.timelineItems.nodes')"
 
-  # A person who turned auto-merge off keeps it off.
+  # A person who turned auto-merge off keeps it off. Any disable by a person counts, whatever
+  # its reasonCode says; one with no actor (GitHub itself) or by the automation does not.
+  local disabler
   last_auto="$(jq -c '[.[] | select(.__typename != "LabeledEvent")] | last // {}' <<< "$events")"
-  if [ "$(jq -r '.__typename // ""' <<< "$last_auto")" = AutoMergeDisabledEvent ] \
-    && ! is_bot "$(jq -r '.actor.login // ""' <<< "$last_auto")" \
-    && jq -r '.reasonCode // ""' <<< "$last_auto" | grep -qi manual; then
-    echo "#${number}: a person turned auto-merge off; left alone."
+  disabler="$(jq -r 'select(.__typename == "AutoMergeDisabledEvent") | .actor.login // ""' <<< "$last_auto")"
+  if [ -n "$disabler" ] && ! is_bot "$disabler"; then
+    echo "#${number}: ${disabler} turned auto-merge off; left alone."
     return 0
   fi
 
