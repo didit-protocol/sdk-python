@@ -450,7 +450,8 @@ def diff_schema(
     if depth > MAX_DEPTH or _shape(old) == _shape(new):
         return
     start = len(out)
-    # A body that appears or disappears is compared field by field, not as a type change.
+    # A request body that appears or disappears is compared field by field, not as a type
+    # change (a response's is a success-status change, _diff_statuses).
     present = old is not NO_SCHEMA and new is not NO_SCHEMA
 
     def note(kind: str, breaking: bool = False, at: str = path, code: str = "") -> None:
@@ -771,16 +772,13 @@ def describe_change(old_doc: Json, old: Json, new_doc: Json, new: Json) -> list[
         for s in old_responses
         if s in new_responses and bool(old_responses[s]) == bool(new_responses[s])
     ]
-    (old_status, old_content), *old_more = old_responses.items() or [("", {})]
-    (new_status, new_content), *new_more = new_responses.items() or [("", {})]
     if (
         not statuses
-        and old_status != new_status
-        and not old_more + new_more
-        and bool(old_content) == bool(new_content)
+        and len(old_responses) == 1 == len(new_responses)
+        and bool(next(iter(old_responses.values()))) == bool(next(iter(new_responses.values())))
     ):
-        statuses = [(old_status, new_status)]
-        found.append(Change("response", "", f"status {old_status} -> {new_status}"))
+        statuses = [(next(iter(old_responses)), next(iter(new_responses)))]
+        found.append(Change("response", "", f"status {statuses[0][0]} -> {statuses[0][1]}"))
     else:
         compared = {s for s, _ in statuses}
         found.extend(
