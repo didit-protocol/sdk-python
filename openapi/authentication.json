@@ -1,0 +1,2634 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Didit Authentication API",
+    "version": "1.0.0",
+    "description": "The server-facing endpoints of Didit Authentication, the sign-in product for your application's end users. Authentication is **new** and reaches production in the 2026-11-01 release.\n\n## Base URL\n\nEvery application is its own OpenID Connect issuer, and every endpoint below is served at the root of that issuer:\n\n- `https://<name>.auth.didit.me` for a live application, or `https://<name>.sandbox.auth.didit.me` for a sandbox application.\n- Your own custom domain, once it is active. It then replaces the default host as the issuer: new tokens name it in `iss`, discovery points at it and the publishable key changes. Access tokens issued under the default host fail `/session/`, `/step-up/` and `/monitoring-token/` until they are refreshed.\n\nLive and sandbox are separate applications, so they are separate issuers with separate keys. The publishable key is `pk_live_` (live) or `pk_test_` (sandbox) followed by the unpadded base64url encoding of the issuer, without a trailing slash: decode it to find the issuer. It is a public identifier, not a credential.\n\nThe same JSON endpoints are also served under `https://apx.didit.me/auth/v2/authentication/{application_id}/`. Tokens always name the issuer above, whichever address issued them.\n\n## Credentials\n\nThese endpoints never take your Didit API key or a console token.\n\n- Discovery, the JWKS and `POST /token/` take no credential. Clients are public: there is no client secret, and an authorization code is bound to its PKCE verifier (`S256`). `client_id` is your application ID.\n- `/session/`, `/step-up/` and `/monitoring-token/` take the person's access token: `Authorization: Bearer <access_token>`. Each successful call counts as activity on the session, so it restarts the session's idle timeout.\n\n## Request bodies\n\nEvery endpoint that takes a body accepts JSON, form-encoded and multipart bodies. This document lists JSON, plus form-encoded for `POST /token/` as OAuth clients send it. A field the endpoint does not accept gets `400 {\"<field>\": \"unknown_field\"}`.\n\n## Tokens\n\n- **Access token**: an ES256 JWT with header `typ: at+jwt`, valid for at most 5 minutes and never longer than its session. Claims: `AccessTokenClaims`.\n- **ID token**: an ES256 JWT with header `typ: JWT`. Claims: `IDTokenClaims`. It is never accepted as an access token.\n- **Refresh token**: a random string that rotates on every use. Sending a used refresh token again revokes the session.\n\nVerify a token with the keys from `GET /.well-known/jwks.json`: the algorithm must be `ES256`, `typ` must match the token type, `iss` must equal the issuer you configured and `aud` your application ID. Offline verification sees a revoked session only once its access token expires; `GET /session/` is the instant check.\n\n## Errors\n\n| Body | When |\n| --- | --- |\n| `{\"error\": \"<code>\"}` | Errors from `POST /token/`, all with status `400`, in the body shape of [RFC 6749 section 5.2](https://www.rfc-editor.org/rfc/rfc6749#section-5.2): `invalid_grant`, `invalid_client` and Didit's `mfa_required`. Service errors: `temporarily_unavailable`, `monitoring_unavailable`, `monitoring_disabled`. |\n| `{\"<field>\": [\"<message>\"]}` or `{\"<field>\": \"<code>\"}` | A request field failed validation. `non_field_errors` names a rule across fields, and `unknown_field` a field the endpoint does not accept. |\n| `{\"detail\": \"<message>\"}` | `401` (`invalid_token`), `403` (`origin_not_allowed`), `404` (unknown application or step-up) and `429` (rate limit). Also `400` for a body that cannot be parsed (`JSON parse error - ...`), `405` for a method the endpoint does not serve and `415` for an unsupported `Content-Type`. |\n\nA `401` also carries `WWW-Authenticate: Bearer`, and a `429` carries `Retry-After` in seconds.\n\nTwo refusals are not JSON. An address that is not an issuer is refused before it reaches these endpoints, for example with an empty `404` for an unused `*.auth.didit.me` name. A `step_up_id` that is not a UUID gets a `404` page.\n\n## Rate limits\n\nA request has to pass two layers.\n\n**Endpoint limits**, counted per client IP address, per application and per endpoint:\n\n- Discovery and the JWKS: 1,200 requests a minute and 12,000 an hour.\n- Every other endpoint: 30 requests a minute and 300 an hour. `GET` and `DELETE /session/` share one count.\n\nOver a limit: `429 {\"detail\": \"Too many requests from this IP address. Please wait before trying again. Expected available in 60 seconds.\"}`, or `3600 seconds` for the hourly limit.\n\n**Bot protection**, on every `POST` and `DELETE`. Its buckets are shared by all of the application's `POST` and `DELETE` requests, the hosted sign-in steps included, and refill continuously:\n\n- 60 requests a minute per client IP address.\n- 30 requests a minute per device, for requests that identify their device, as the browser and native SDKs do.\n- 3,000 requests a minute for the whole application, across every IP address. Token refreshes (`POST /token/` with `grant_type=refresh_token`) draw on a bucket of their own instead: 6,000 a minute for the whole application.\n\nOver a bucket: `429 {\"detail\": \"rate_limited Expected available in N seconds.\"}` (`1 second.` when N is 1). The per-IP bucket spans endpoints, so one address that mixes token, step-up and sign-out calls can empty it before it reaches any endpoint limit. The application bucket counts every client of the application, browsers included.\n\nBoth layers answer before the endpoint runs, so a request that got `429` did not run: retry it after `Retry-After`, a refresh included.\n\n## Browser requests\n\nA request that carries an `Origin` header must come from one of the application's own origins or its allowed origins, or it gets `403 origin_not_allowed`. Server-to-server requests send no `Origin`.\n\n## Not covered here\n\nThese routes serve the hosted pages, the browser and native SDKs, and AI agents. They are not part of the server contract, and server SDKs do not call them:\n\n- Sign-in steps: `POST /authorize/`, `POST /password/`, `/email/*`, `/phone/*`, `/password-reset/*`, `/passkeys/*`, `/mfa/*`, `/social/*` and `/protection/complete/`.\n- Hosted pages and callbacks: `/sign-in`, `/magic`, `/invite`, `/reset`, `/verify/`, `/sso/*`, `/wallet/callback/`, `/logo/` and the native app association files under `/.well-known/`.\n- Agent access: `/agents/*` and `/grants/`, including `GET /agents/session/`, the live check for an AI agent's access token. Agent access is not part of this version of the contract.\n- The console management API for Authentication, which takes console sessions.\n\nAuthentication events are not delivered as webhooks yet, so this document defines no webhook."
+  },
+  "servers": [
+    {
+      "url": "https://{issuer}",
+      "description": "Your application's issuer: its sign-in origin.",
+      "variables": {
+        "issuer": {
+          "default": "your-app.auth.didit.me",
+          "description": "The issuer's host: `<name>.auth.didit.me` (live), `<name>.sandbox.auth.didit.me` (sandbox) or your active custom domain."
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "Issuer",
+      "description": "Discovery and signing keys, to verify tokens."
+    },
+    {
+      "name": "Tokens",
+      "description": "The authorization code and refresh grants."
+    },
+    {
+      "name": "Sessions",
+      "description": "Check and end the session behind an access token."
+    },
+    {
+      "name": "Step-ups",
+      "description": "Verification before a sensitive action."
+    },
+    {
+      "name": "Monitoring",
+      "description": "Device credentials for transaction monitoring events."
+    }
+  ],
+  "paths": {
+    "/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "Issuer"
+        ],
+        "summary": "Get the OpenID configuration",
+        "operationId": "authentication_get_openid_configuration",
+        "description": "The issuer's discovery document: its endpoints, grants, signing algorithm and claims. Fetch it from the issuer you configured, never from a URL found in a token. Cache it for up to 5 minutes, as `Cache-Control` says.",
+        "security": [
+          {}
+        ],
+        "x-mint": {
+          "metadata": {
+            "authMethod": "none"
+          }
+        },
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "get_openid_configuration",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "The discovery document.",
+            "headers": {
+              "Cache-Control": {
+                "description": "`public, max-age=300`: you and shared caches may keep a successful response for 5 minutes, one access token lifetime.",
+                "schema": {
+                  "type": "string",
+                  "example": "public, max-age=300"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenIDConfiguration"
+                },
+                "examples": {
+                  "Discovery": {
+                    "summary": "A live application",
+                    "value": {
+                      "issuer": "https://your-app.auth.didit.me",
+                      "authorization_endpoint": "https://your-app.auth.didit.me/sign-in",
+                      "token_endpoint": "https://your-app.auth.didit.me/token/",
+                      "jwks_uri": "https://your-app.auth.didit.me/.well-known/jwks.json",
+                      "response_types_supported": [
+                        "code"
+                      ],
+                      "response_modes_supported": [
+                        "query"
+                      ],
+                      "grant_types_supported": [
+                        "authorization_code",
+                        "refresh_token"
+                      ],
+                      "subject_types_supported": [
+                        "public"
+                      ],
+                      "id_token_signing_alg_values_supported": [
+                        "ES256"
+                      ],
+                      "token_endpoint_auth_methods_supported": [
+                        "none"
+                      ],
+                      "code_challenge_methods_supported": [
+                        "S256"
+                      ],
+                      "scopes_supported": [
+                        "openid",
+                        "email",
+                        "phone",
+                        "profile",
+                        "offline_access"
+                      ],
+                      "claims_supported": [
+                        "iss",
+                        "aud",
+                        "sub",
+                        "sid",
+                        "auth_time",
+                        "nonce",
+                        "vendor_data",
+                        "amr",
+                        "org",
+                        "verified",
+                        "act",
+                        "email",
+                        "email_verified",
+                        "name",
+                        "phone_number"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "Issuer"
+        ],
+        "summary": "Get the signing keys",
+        "operationId": "authentication_get_jwks",
+        "description": "The application's public ES256 keys. Every token names its key in the `kid` header.\n\nKeys rotate every 30 days. The next key is published a day before it starts signing, and the previous key stays published for a day after it stops, so a JWKS cached for up to 5 minutes keeps verifying across a rotation. Cache keys by `kid` and fetch the JWKS again when a token names a `kid` you do not have, at most once a minute. When Didit revokes a compromised key, the key leaves this document at once and `GET /session/` rejects every token it signed. A replacement key starts signing immediately, without the day of advance publication, so a JWKS cached up to 5 minutes earlier still accepts the revoked key and does not know the replacement yet.",
+        "security": [
+          {}
+        ],
+        "x-mint": {
+          "metadata": {
+            "authMethod": "none"
+          }
+        },
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "get_jwks",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "The published keys.",
+            "headers": {
+              "Cache-Control": {
+                "description": "`public, max-age=300`: you and shared caches may keep a successful response for 5 minutes, one access token lifetime.",
+                "schema": {
+                  "type": "string",
+                  "example": "public, max-age=300"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JSONWebKeySet"
+                },
+                "examples": {
+                  "Keys": {
+                    "summary": "One signing key",
+                    "value": {
+                      "keys": [
+                        {
+                          "kty": "EC",
+                          "crv": "P-256",
+                          "x": "ZDN2unLMultuZwNY_ZKMvsKLRrlC_usPFZyK77cnDO8",
+                          "y": "CfLKoaJNvhFpDWqG56H8dD_j0f1c93RdR63bhIdTh3I",
+                          "kid": "k_8sJ2dQvX0nLr5TfYb3HkPw",
+                          "use": "sig",
+                          "alg": "ES256"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/token/": {
+      "post": {
+        "tags": [
+          "Tokens"
+        ],
+        "summary": "Exchange a code or refresh tokens",
+        "operationId": "authentication_token",
+        "description": "The token endpoint, for both grants.\n\n- `authorization_code` exchanges the code your `redirect_uri` received for an access, ID and refresh token. The code works once, within 60 seconds, with the PKCE verifier and the exact `redirect_uri` of its sign-in. When the application allows one session per person, the exchange ends the person's other sessions.\n- `refresh_token` returns a new access, ID and refresh token, and the refresh token you sent stops working. **Sending a used refresh token again revokes the session** and returns `invalid_grant`, so run one refresh at a time for a session and replace all three tokens together. After a refresh fails with `400`, or gets no answer, start sign-in again rather than retrying: a retry after a refresh that did succeed is a reuse. A `429` is answered before the refresh runs, so it is safe to retry after `Retry-After`. A `503` means the refresh did not happen and the refresh token still works: retry it with backoff.\n\nThe body can be JSON or form-encoded.",
+        "security": [
+          {}
+        ],
+        "x-mint": {
+          "metadata": {
+            "authMethod": "none"
+          }
+        },
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "exchange_code",
+          "auth": "none",
+          "server": true,
+          "variants": [
+            {
+              "method": "exchange_code",
+              "discriminator": "authorization_code"
+            },
+            {
+              "method": "refresh",
+              "discriminator": "refresh_token"
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              },
+              "examples": {
+                "AuthorizationCode": {
+                  "summary": "Exchange the authorization code",
+                  "value": {
+                    "grant_type": "authorization_code",
+                    "code": "Vb0bVt4CLlr8ZL0kE5mAxv8gS6R0rW3hYqC1pN7dJ2s",
+                    "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+                    "redirect_uri": "https://app.example.com/auth/callback"
+                  }
+                },
+                "RefreshToken": {
+                  "summary": "Refresh the tokens",
+                  "value": {
+                    "grant_type": "refresh_token",
+                    "refresh_token": "N4yZTl6y24YKYq77X_SOrBn1q2Lit81WBQMOay7dq_IVfTnxyY8ZGcJk-6-fcmWW"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New tokens for the session.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "Tokens": {
+                    "summary": "Tokens for a new session",
+                    "value": {
+                      "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImtfOHNKMmRRdlgwbkxyNVRmWWIzSGtQdyIsInR5cCI6ImF0K2p3dCJ9.eyJpc3MiOiJodHRwczovL3lvdXItYXBwLmF1dGguZGlkaXQubWUiLCJhdWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQiLCJzdWIiOiIxYzlkOGI4OC0xYmZmLTQzZDEtYWQ3YS04OGIyYmMwMDI0ZTkiLCJzaWQiOiJjOWFiZjZjYy0yZDY0LTRiZjItYjMxZS1hNGQwOWEwNzBhYjEiLCJqdGkiOiJSZ3F1NzE3OWUtbGhKMGJ2VmVELVlnIiwiaWF0IjoxNzkyMjMzNjc0LCJleHAiOjE3OTIyMzM5NzQsInZlbmRvcl9kYXRhIjoidXNlci00MiIsIm9yZyI6bnVsbCwidmVyaWZpZWQiOnt9LCJhbXIiOlsicGFzc3dvcmQiXSwiYWN0IjpudWxsLCJjbGllbnRfaWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQifQ.AxrqN8Pm-Op-3OayZk8HcvlFQZhozRiOvQ0SgQsGgrz4UNeJlUEeSlq9B8WcYUuM8naRaY5kQt_TUofnsYcyYQ",
+                      "id_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImtfOHNKMmRRdlgwbkxyNVRmWWIzSGtQdyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3lvdXItYXBwLmF1dGguZGlkaXQubWUiLCJhdWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQiLCJzdWIiOiIxYzlkOGI4OC0xYmZmLTQzZDEtYWQ3YS04OGIyYmMwMDI0ZTkiLCJzaWQiOiJjOWFiZjZjYy0yZDY0LTRiZjItYjMxZS1hNGQwOWEwNzBhYjEiLCJqdGkiOiJNTHRPNHM4SHItQnJrcDd2NTlPV0Z3IiwiaWF0IjoxNzkyMjMzNjc0LCJleHAiOjE3OTIyMzM5NzQsInZlbmRvcl9kYXRhIjoidXNlci00MiIsIm9yZyI6bnVsbCwidmVyaWZpZWQiOnt9LCJhbXIiOlsicGFzc3dvcmQiXSwiYWN0IjpudWxsLCJhdXRoX3RpbWUiOjE3OTIyMzM2NzQsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJlbWFpbCI6InBlcnNvbkBleGFtcGxlLmNvbSIsIm5vbmNlIjoibi0wUzZfV3pBMk1qIn0.avhfDFp_aUV5_1ssYzwDcIA7H6Waf19P0bn5GCg25FhLIZBGIlwc8HiUPGj1j26r21OkP4FQnS_jM1Ho3dHtKQ",
+                      "refresh_token": "N4yZTl6y24YKYq77X_SOrBn1q2Lit81WBQMOay7dq_IVfTnxyY8ZGcJk-6-fcmWW",
+                      "token_type": "Bearer",
+                      "expires_in": 299,
+                      "session_id": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The grant failed. `invalid_grant`: the code or refresh token is unknown, used or expired; the PKCE verifier or `redirect_uri` does not match, or the `redirect_uri` is no longer registered; the person was blocked or their email is no longer verified; the session ended or no longer meets your MFA policy; or, for a code, you turned off the sign-in method it came from. Turning a method off does not stop the refresh of sessions it already started. `invalid_client`: `client_id` is not your application ID. `mfa_required`: the sign-in did not meet your MFA policy. Field errors name a missing or invalid field. A body that cannot be parsed gets a `detail` message.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OAuthError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FieldErrors"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Detail"
+                    }
+                  ]
+                },
+                "examples": {
+                  "InvalidGrant": {
+                    "summary": "Code or refresh token rejected",
+                    "value": {
+                      "error": "invalid_grant"
+                    }
+                  },
+                  "InvalidClient": {
+                    "summary": "Wrong client_id",
+                    "value": {
+                      "error": "invalid_client"
+                    }
+                  },
+                  "MfaRequired": {
+                    "summary": "MFA policy not met",
+                    "value": {
+                      "error": "mfa_required"
+                    }
+                  },
+                  "MissingFields": {
+                    "summary": "A grant without its required fields",
+                    "value": {
+                      "non_field_errors": [
+                        "invalid_request"
+                      ]
+                    }
+                  },
+                  "UnknownGrant": {
+                    "summary": "Unsupported grant_type",
+                    "value": {
+                      "grant_type": [
+                        "\"password\" is not a valid choice."
+                      ]
+                    }
+                  },
+                  "UnknownField": {
+                    "summary": "A field the endpoint does not accept",
+                    "value": {
+                      "foo": "unknown_field"
+                    }
+                  },
+                  "MalformedBody": {
+                    "summary": "A JSON body that cannot be parsed",
+                    "value": {
+                      "detail": "JSON parse error - Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/session/": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get the session",
+        "operationId": "authentication_get_session",
+        "description": "Checks the access token against the live session and returns it. Stricter than verifying the JWT yourself: it also fails at once when the session was revoked, went idle or passed its lifetime, when the person was blocked or their email is no longer verified, when the session no longer meets your MFA policy (for example after the person added an authenticator app or became an organization admin), or when the token was replaced by a refresh. Use it before a sensitive action, for example a payout. A successful check counts as activity, so it restarts the session's idle timeout.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "get_session",
+          "auth": "access_token",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "The session is live.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                },
+                "examples": {
+                  "Session": {
+                    "summary": "A password session",
+                    "value": {
+                      "sub": "1c9d8b88-1bff-43d1-ad7a-88b2bc0024e9",
+                      "sid": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1",
+                      "application_id": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d",
+                      "vendor_data": "user-42",
+                      "amr": [
+                        "password"
+                      ],
+                      "mfa_verified": false,
+                      "email": "person@example.com",
+                      "email_verified": true,
+                      "phone": null,
+                      "verified_identity": null,
+                      "verified": null,
+                      "expires_at": "2026-11-16T10:41:14.347557Z",
+                      "post_logout_redirect_uri": "",
+                      "organizations": []
+                    }
+                  },
+                  "VerifiedMember": {
+                    "summary": "A verified organization member",
+                    "value": {
+                      "sub": "1c9d8b88-1bff-43d1-ad7a-88b2bc0024e9",
+                      "sid": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1",
+                      "application_id": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d",
+                      "vendor_data": "user-42",
+                      "amr": [
+                        "passkey"
+                      ],
+                      "mfa_verified": true,
+                      "email": "person@example.com",
+                      "email_verified": true,
+                      "phone": "+34600000000",
+                      "verified_identity": null,
+                      "verified": {
+                        "level": "full_id",
+                        "over_18": true,
+                        "given_name": "Alex",
+                        "country": "ES"
+                      },
+                      "expires_at": "2026-11-16T10:41:14.347557Z",
+                      "post_logout_redirect_uri": "https://app.example.com/",
+                      "organizations": [
+                        {
+                          "organization_id": "3e9a1f0b-5c2d-4e7f-8a6b-9c0d1e2f3a4b",
+                          "organization__name": "Northwind",
+                          "role": "admin",
+                          "custom_role": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Revoke the session",
+        "operationId": "authentication_revoke_session",
+        "description": "Signs the person out: ends the session behind the access token. Its access tokens fail `GET /session/` at once, and its refresh token stops working.\n\nSend the current access token: one that has not expired and has not been replaced by a refresh. Any other token gets `401` and the session does not end, so refresh and sign out again with the new access token. A monitoring token issued earlier is not tied to the session and stays usable until it expires, within 15 minutes. Tokens you verify offline stay valid until they expire, within 5 minutes. Then send the person to your `post_logout_redirect_uri`, if you set one.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "revoke_session",
+          "auth": "access_token",
+          "server": true
+        },
+        "responses": {
+          "204": {
+            "description": "The session ended.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/step-up/": {
+      "post": {
+        "tags": [
+          "Step-ups"
+        ],
+        "summary": "Create a step-up",
+        "operationId": "authentication_create_step_up",
+        "description": "Asks whether the person has to verify before a sensitive action, using the step-up rules you set for the application.\n\n- `200 {\"required\": false}`: no rule applies, go ahead.\n- `201`: send the person to `verification_url`. They come back to `return_to` with `step_up=<id>&status=approved`, but that query proves nothing: read the step-up with `GET /step-up/{step_up_id}/` and act only on `approved`.\n\nA step-up never fails open: when verification is unavailable, the action stays blocked.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "create_step_up",
+          "auth": "access_token",
+          "server": true
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              },
+              "examples": {
+                "Payout": {
+                  "summary": "Before a payout",
+                  "value": {
+                    "action": "payout",
+                    "amount": "900.00",
+                    "currency": "USD",
+                    "return_to": "https://app.example.com/payouts/confirm"
+                  }
+                },
+                "Bank": {
+                  "summary": "Before changing a bank account",
+                  "value": {
+                    "action": "bank",
+                    "return_to": "https://app.example.com/settings/bank"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "No rule applies.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpNotRequired"
+                },
+                "examples": {
+                  "NotRequired": {
+                    "summary": "Go ahead",
+                    "value": {
+                      "required": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The person has to verify first.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpRequired"
+                },
+                "examples": {
+                  "Required": {
+                    "summary": "A selfie before a payout",
+                    "value": {
+                      "id": "94efc2c3-ca84-42fe-900b-6fb61669a7a1",
+                      "rule": "payout",
+                      "method": "selfie",
+                      "status": "pending",
+                      "level": null,
+                      "amount": "900.00",
+                      "currency": "USD",
+                      "created_at": "2026-10-17T10:41:14.894632Z",
+                      "completed_at": null,
+                      "expires_at": "2026-10-17T11:11:14.894581Z",
+                      "required": true,
+                      "verification_url": "https://your-app.auth.didit.me/verify/?verification=1nSX7HJCXAP9XPA9AeJfQxIuPk2GkG0dGSOzCA2Zpww",
+                      "expires_in": 1800
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A field is missing or invalid. `return_to: invalid_redirect_uri` means a rule applies and `return_to` is not one of the application's redirect URIs.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldErrors"
+                },
+                "examples": {
+                  "MissingAmount": {
+                    "summary": "A payout without amount",
+                    "value": {
+                      "amount": [
+                        "required"
+                      ]
+                    }
+                  },
+                  "InvalidReturnTo": {
+                    "summary": "Unregistered return_to",
+                    "value": {
+                      "return_to": "invalid_redirect_uri"
+                    }
+                  },
+                  "UnknownAction": {
+                    "summary": "Unsupported action",
+                    "value": {
+                      "action": [
+                        "\"withdraw\" is not a valid choice."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/step-up/{step_up_id}/": {
+      "get": {
+        "tags": [
+          "Step-ups"
+        ],
+        "summary": "Get a step-up",
+        "operationId": "authentication_retrieve_step_up",
+        "description": "The step-up's current status. Call it with an access token of the same session that created the step-up, and act only when `status` is `approved`.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "retrieve_step_up",
+          "auth": "access_token",
+          "server": true
+        },
+        "parameters": [
+          {
+            "name": "step_up_id",
+            "in": "path",
+            "required": true,
+            "description": "The `id` from `POST /step-up/`, also the `step_up` query parameter on your `return_to`. A value that is not a UUID gets a `404` page, not JSON.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "94efc2c3-ca84-42fe-900b-6fb61669a7a1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The step-up.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUp"
+                },
+                "examples": {
+                  "Approved": {
+                    "summary": "Approved: go ahead",
+                    "value": {
+                      "id": "94efc2c3-ca84-42fe-900b-6fb61669a7a1",
+                      "rule": "payout",
+                      "method": "selfie",
+                      "status": "approved",
+                      "level": "liveness_face_match",
+                      "amount": "900.00",
+                      "currency": "USD",
+                      "created_at": "2026-10-17T10:41:14.894632Z",
+                      "completed_at": "2026-10-17T10:43:02.118204Z",
+                      "expires_at": "2026-10-17T11:11:14.894581Z"
+                    }
+                  },
+                  "Pending": {
+                    "summary": "Not finished yet",
+                    "value": {
+                      "id": "94efc2c3-ca84-42fe-900b-6fb61669a7a1",
+                      "rule": "payout",
+                      "method": "selfie",
+                      "status": "pending",
+                      "level": null,
+                      "amount": "900.00",
+                      "currency": "USD",
+                      "created_at": "2026-10-17T10:41:14.894632Z",
+                      "completed_at": null,
+                      "expires_at": "2026-10-17T11:11:14.894581Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "description": "No step-up with this ID belongs to this session, or the application is unknown.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                },
+                "examples": {
+                  "StepUpNotFound": {
+                    "summary": "Unknown step-up",
+                    "value": {
+                      "detail": "No VerificationCheck matches the given query."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/monitoring-token/": {
+      "post": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Create a monitoring token",
+        "operationId": "authentication_create_monitoring_token",
+        "description": "Swaps the person's access token for a short-lived device credential, so the person's browser or app can send activity events to transaction monitoring without your backend. The credential is bound to the person's `vendor_data` and to the request's `Origin`.\n\nThe browser and native SDKs call this endpoint; server SDKs do not. It is off until Didit turns it on, and answers `503 monitoring_unavailable` until then.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "create_monitoring_token",
+          "auth": "access_token",
+          "server": false
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitoringTokenRequest"
+              },
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "A device credential for the person.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringToken"
+                },
+                "examples": {
+                  "MonitoringToken": {
+                    "summary": "A credential for the person's browser",
+                    "value": {
+                      "monitoring_token": "mt_2f8c1d9e7b6a5f4e3d2c1b0a",
+                      "expires_at": "2026-10-17T10:56:14Z",
+                      "allowed_event_categories": [
+                        "session",
+                        "gameplay",
+                        "bonus",
+                        "affiliate",
+                        "payment",
+                        "dispute",
+                        "responsible_gambling",
+                        "custom"
+                      ],
+                      "max_uses": 1000,
+                      "bind_to_origin": "https://app.example.com",
+                      "vendor_data": "user-42"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body carried a field. Send an empty object.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldErrors"
+                },
+                "examples": {
+                  "UnknownField": {
+                    "summary": "A field in the body",
+                    "value": {
+                      "vendor_data": "unknown_field"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowed"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "409": {
+            "description": "Event monitoring is turned off for the application. Turn on event ingestion in the transaction monitoring settings.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                },
+                "examples": {
+                  "MonitoringDisabled": {
+                    "summary": "Event ingestion off",
+                    "value": {
+                      "error": "monitoring_disabled"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Monitoring tokens are not enabled, or monitoring could not issue one (`monitoring_unavailable`), or a service the request depends on is briefly unavailable (`temporarily_unavailable`). Retry later.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                },
+                "examples": {
+                  "MonitoringUnavailable": {
+                    "summary": "Not available",
+                    "value": {
+                      "error": "monitoring_unavailable"
+                    }
+                  },
+                  "TemporarilyUnavailable": {
+                    "summary": "Retry later",
+                    "value": {
+                      "error": "temporarily_unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AccessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "The person's access token from `POST /token/`: an ES256 JWT with header `typ: at+jwt`, valid for at most 5 minutes. Not your Didit API key."
+      }
+    },
+    "responses": {
+      "InvalidToken": {
+        "description": "The access token is missing, malformed, expired, signed by another issuer or key, an ID token, an agent token, or replaced by a refresh; or its session was revoked, idled out, passed its lifetime or no longer meets your MFA policy, or its person was blocked or their email is no longer verified. Send the person through sign-in again.",
+        "headers": {
+          "WWW-Authenticate": {
+            "description": "`Bearer`.",
+            "schema": {
+              "type": "string",
+              "example": "Bearer"
+            }
+          },
+          "Cache-Control": {
+            "description": "Always `no-store`: never cache this response.",
+            "schema": {
+              "type": "string",
+              "example": "no-store"
+            }
+          },
+          "Pragma": {
+            "description": "Always `no-cache`.",
+            "schema": {
+              "type": "string",
+              "example": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Detail"
+            },
+            "examples": {
+              "InvalidToken": {
+                "summary": "Rejected access token",
+                "value": {
+                  "detail": "invalid_token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "OriginNotAllowed": {
+        "description": "The request carried an `Origin` that is neither the application's own nor in its allowed origins. Server requests send no `Origin`.",
+        "headers": {
+          "Cache-Control": {
+            "description": "Always `no-store`: never cache this response.",
+            "schema": {
+              "type": "string",
+              "example": "no-store"
+            }
+          },
+          "Pragma": {
+            "description": "Always `no-cache`.",
+            "schema": {
+              "type": "string",
+              "example": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Detail"
+            },
+            "examples": {
+              "OriginNotAllowed": {
+                "summary": "Origin not allowed",
+                "value": {
+                  "detail": "origin_not_allowed"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ApplicationNotFound": {
+        "description": "The address belongs to an application, but Authentication is not active for it; on the `apx.didit.me` address, the application ID is unknown. An address that belongs to no application is refused before it reaches the endpoint, and that response is not JSON.",
+        "headers": {
+          "Cache-Control": {
+            "description": "Always `no-store`: never cache this response.",
+            "schema": {
+              "type": "string",
+              "example": "no-store"
+            }
+          },
+          "Pragma": {
+            "description": "Always `no-cache`.",
+            "schema": {
+              "type": "string",
+              "example": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Detail"
+            },
+            "examples": {
+              "ApplicationNotFound": {
+                "summary": "Unknown application",
+                "value": {
+                  "detail": "No Configuration matches the given query."
+                }
+              }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests from this IP address for this endpoint, or, on a `POST` or `DELETE`, a bot protection bucket is empty. Nothing ran: wait `Retry-After` seconds, then retry.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "integer",
+              "example": 60
+            }
+          },
+          "Cache-Control": {
+            "description": "Always `no-store`: never cache this response.",
+            "schema": {
+              "type": "string",
+              "example": "no-store"
+            }
+          },
+          "Pragma": {
+            "description": "Always `no-cache`.",
+            "schema": {
+              "type": "string",
+              "example": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Detail"
+            },
+            "examples": {
+              "RateLimited": {
+                "summary": "Endpoint limit",
+                "value": {
+                  "detail": "Too many requests from this IP address. Please wait before trying again. Expected available in 60 seconds."
+                }
+              },
+              "BotProtection": {
+                "summary": "Bot protection limit (POST and DELETE)",
+                "value": {
+                  "detail": "rate_limited Expected available in 2 seconds."
+                }
+              }
+            }
+          }
+        }
+      },
+      "TemporarilyUnavailable": {
+        "description": "A service the request depends on is briefly unavailable. Retry with backoff.",
+        "headers": {
+          "Cache-Control": {
+            "description": "Always `no-store`: never cache this response.",
+            "schema": {
+              "type": "string",
+              "example": "no-store"
+            }
+          },
+          "Pragma": {
+            "description": "Always `no-cache`.",
+            "schema": {
+              "type": "string",
+              "example": "no-cache"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OAuthError"
+            },
+            "examples": {
+              "TemporarilyUnavailable": {
+                "summary": "Retry later",
+                "value": {
+                  "error": "temporarily_unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "OpenIDConfiguration": {
+        "type": "object",
+        "description": "The issuer's OpenID Connect discovery document. Read endpoints from here rather than building them.",
+        "required": [
+          "issuer",
+          "authorization_endpoint",
+          "token_endpoint",
+          "jwks_uri",
+          "response_types_supported",
+          "response_modes_supported",
+          "grant_types_supported",
+          "subject_types_supported",
+          "id_token_signing_alg_values_supported",
+          "token_endpoint_auth_methods_supported",
+          "code_challenge_methods_supported",
+          "scopes_supported",
+          "claims_supported"
+        ],
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "The issuer: the application's sign-in origin, without a trailing slash. Every token's `iss` equals it.",
+            "example": "https://your-app.auth.didit.me"
+          },
+          "authorization_endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "The hosted sign-in page (`/sign-in`).",
+            "example": "https://your-app.auth.didit.me/sign-in"
+          },
+          "token_endpoint": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://your-app.auth.didit.me/token/"
+          },
+          "jwks_uri": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://your-app.auth.didit.me/.well-known/jwks.json"
+          },
+          "response_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "code"
+            ]
+          },
+          "response_modes_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "query"
+            ]
+          },
+          "grant_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "authorization_code",
+              "refresh_token"
+            ]
+          },
+          "subject_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "public"
+            ]
+          },
+          "id_token_signing_alg_values_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "ES256"
+            ]
+          },
+          "token_endpoint_auth_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`none`: clients are public and send no secret.",
+            "example": [
+              "none"
+            ]
+          },
+          "code_challenge_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "S256"
+            ]
+          },
+          "scopes_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "openid",
+              "email",
+              "phone",
+              "profile",
+              "offline_access"
+            ]
+          },
+          "claims_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "iss",
+              "aud",
+              "sub",
+              "sid",
+              "auth_time",
+              "nonce",
+              "vendor_data",
+              "amr",
+              "org",
+              "verified",
+              "act",
+              "email",
+              "email_verified",
+              "name",
+              "phone_number"
+            ]
+          }
+        }
+      },
+      "JSONWebKeySet": {
+        "type": "object",
+        "description": "The application's published public signing keys. Usually one key; two around a rotation, when the next key is published a day before it signs and the previous key stays a day after it stops.",
+        "required": [
+          "keys"
+        ],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JSONWebKey"
+            }
+          }
+        }
+      },
+      "JSONWebKey": {
+        "type": "object",
+        "description": "A P-256 public key in JWK form (RFC 7517).",
+        "required": [
+          "kty",
+          "crv",
+          "x",
+          "y",
+          "kid",
+          "use",
+          "alg"
+        ],
+        "properties": {
+          "kty": {
+            "type": "string",
+            "enum": [
+              "EC"
+            ]
+          },
+          "crv": {
+            "type": "string",
+            "enum": [
+              "P-256"
+            ]
+          },
+          "x": {
+            "type": "string",
+            "description": "The public point's x coordinate, base64url.",
+            "example": "ZDN2unLMultuZwNY_ZKMvsKLRrlC_usPFZyK77cnDO8"
+          },
+          "y": {
+            "type": "string",
+            "description": "The public point's y coordinate, base64url.",
+            "example": "CfLKoaJNvhFpDWqG56H8dD_j0f1c93RdR63bhIdTh3I"
+          },
+          "kid": {
+            "type": "string",
+            "description": "Key ID, the `kid` in the header of every token this key signs. New key IDs start with `k_`.",
+            "example": "k_8sJ2dQvX0nLr5TfYb3HkPw"
+          },
+          "use": {
+            "type": "string",
+            "enum": [
+              "sig"
+            ]
+          },
+          "alg": {
+            "type": "string",
+            "enum": [
+              "ES256"
+            ]
+          }
+        }
+      },
+      "TokenRequest": {
+        "description": "One of the two grants, chosen by `grant_type`. The endpoint accepts the fields of both grants and validates every field it receives, so a refresh that also carries a malformed `code_verifier` gets a field error. Send only your grant's fields; any other field gets `unknown_field`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AuthorizationCodeGrantRequest"
+          },
+          {
+            "$ref": "#/components/schemas/RefreshTokenGrantRequest"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "grant_type",
+          "mapping": {
+            "authorization_code": "#/components/schemas/AuthorizationCodeGrantRequest",
+            "refresh_token": "#/components/schemas/RefreshTokenGrantRequest"
+          }
+        }
+      },
+      "AuthorizationCodeGrantRequest": {
+        "title": "Authorization code grant",
+        "type": "object",
+        "description": "Exchange the authorization code from your redirect for tokens. The code works once, for 60 seconds.",
+        "required": [
+          "grant_type",
+          "code",
+          "code_verifier",
+          "redirect_uri"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": [
+              "authorization_code"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "The `code` query parameter your `redirect_uri` received. Check the callback's `state` before you exchange it.",
+            "example": "Vb0bVt4CLlr8ZL0kE5mAxv8gS6R0rW3hYqC1pN7dJ2s"
+          },
+          "code_verifier": {
+            "type": "string",
+            "minLength": 43,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._~-]{43,128}$",
+            "description": "The PKCE verifier whose S256 hash was the sign-in's `code_challenge`.",
+            "example": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "The exact `redirect_uri` the sign-in started with. It must still be one of the application's redirect URIs.",
+            "example": "https://app.example.com/auth/callback"
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional. When sent, it must equal your application ID, or the request fails with `invalid_client`.",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Optional and accepted from standard OpenID Connect clients. It never widens what the sign-in granted.",
+            "example": "openid email"
+          }
+        }
+      },
+      "RefreshTokenGrantRequest": {
+        "title": "Refresh token grant",
+        "type": "object",
+        "description": "Swap a refresh token for a new access, ID and refresh token. The refresh token works once: sending it again revokes the session, so run one refresh at a time for a session.",
+        "required": [
+          "grant_type",
+          "refresh_token"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": [
+              "refresh_token"
+            ]
+          },
+          "refresh_token": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "The `refresh_token` from the previous token response.",
+            "example": "N4yZTl6y24YKYq77X_SOrBn1q2Lit81WBQMOay7dq_IVfTnxyY8ZGcJk-6-fcmWW"
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional. When sent, it must equal your application ID, or the request fails with `invalid_client`.",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Optional and accepted from standard OpenID Connect clients. A refresh never widens what the session holds.",
+            "example": "openid email"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "description": "Tokens for one session. Replace all three together after a refresh.",
+        "required": [
+          "access_token",
+          "id_token",
+          "refresh_token",
+          "token_type",
+          "expires_in",
+          "session_id"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "ES256 JWT, header `typ: at+jwt`. Send it as `Authorization: Bearer <access_token>`. Claims: `AccessTokenClaims`.",
+            "example": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImtfOHNKMmRRdlgwbkxyNVRmWWIzSGtQdyIsInR5cCI6ImF0K2p3dCJ9.eyJpc3MiOiJodHRwczovL3lvdXItYXBwLmF1dGguZGlkaXQubWUiLCJhdWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQiLCJzdWIiOiIxYzlkOGI4OC0xYmZmLTQzZDEtYWQ3YS04OGIyYmMwMDI0ZTkiLCJzaWQiOiJjOWFiZjZjYy0yZDY0LTRiZjItYjMxZS1hNGQwOWEwNzBhYjEiLCJqdGkiOiJSZ3F1NzE3OWUtbGhKMGJ2VmVELVlnIiwiaWF0IjoxNzkyMjMzNjc0LCJleHAiOjE3OTIyMzM5NzQsInZlbmRvcl9kYXRhIjoidXNlci00MiIsIm9yZyI6bnVsbCwidmVyaWZpZWQiOnt9LCJhbXIiOlsicGFzc3dvcmQiXSwiYWN0IjpudWxsLCJjbGllbnRfaWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQifQ.AxrqN8Pm-Op-3OayZk8HcvlFQZhozRiOvQ0SgQsGgrz4UNeJlUEeSlq9B8WcYUuM8naRaY5kQt_TUofnsYcyYQ",
+            "x-didit-jwt": {
+              "header": "#/components/schemas/AccessTokenHeader",
+              "claims": "#/components/schemas/AccessTokenClaims"
+            }
+          },
+          "id_token": {
+            "type": "string",
+            "description": "ES256 JWT, header `typ: JWT`, for your application to read who signed in. Never send it as an access token. Claims: `IDTokenClaims`.",
+            "example": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImtfOHNKMmRRdlgwbkxyNVRmWWIzSGtQdyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3lvdXItYXBwLmF1dGguZGlkaXQubWUiLCJhdWQiOiI3YjBhNmMyZS0zZjQxLTRjOWEtOGQ1NS0xZTJmM2E0YjVjNmQiLCJzdWIiOiIxYzlkOGI4OC0xYmZmLTQzZDEtYWQ3YS04OGIyYmMwMDI0ZTkiLCJzaWQiOiJjOWFiZjZjYy0yZDY0LTRiZjItYjMxZS1hNGQwOWEwNzBhYjEiLCJqdGkiOiJNTHRPNHM4SHItQnJrcDd2NTlPV0Z3IiwiaWF0IjoxNzkyMjMzNjc0LCJleHAiOjE3OTIyMzM5NzQsInZlbmRvcl9kYXRhIjoidXNlci00MiIsIm9yZyI6bnVsbCwidmVyaWZpZWQiOnt9LCJhbXIiOlsicGFzc3dvcmQiXSwiYWN0IjpudWxsLCJhdXRoX3RpbWUiOjE3OTIyMzM2NzQsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJlbWFpbCI6InBlcnNvbkBleGFtcGxlLmNvbSIsIm5vbmNlIjoibi0wUzZfV3pBMk1qIn0.avhfDFp_aUV5_1ssYzwDcIA7H6Waf19P0bn5GCg25FhLIZBGIlwc8HiUPGj1j26r21OkP4FQnS_jM1Ho3dHtKQ",
+            "x-didit-jwt": {
+              "header": "#/components/schemas/IDTokenHeader",
+              "claims": "#/components/schemas/IDTokenClaims"
+            }
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Single-use. It is valid until the session ends, and each refresh returns a new one.",
+            "example": "N4yZTl6y24YKYq77X_SOrBn1q2Lit81WBQMOay7dq_IVfTnxyY8ZGcJk-6-fcmWW"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expires_in": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 300,
+            "description": "Seconds until the access token expires: at most 300, less when the session ends sooner.",
+            "example": 299
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The session these tokens belong to, the same value as the `sid` claim.",
+            "example": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1"
+          }
+        }
+      },
+      "AccessTokenHeader": {
+        "type": "object",
+        "description": "The JOSE header of an access token.",
+        "required": [
+          "alg",
+          "kid",
+          "typ"
+        ],
+        "properties": {
+          "alg": {
+            "type": "string",
+            "enum": [
+              "ES256"
+            ]
+          },
+          "kid": {
+            "type": "string",
+            "description": "The signing key, one of the `kid` values in the JWKS.",
+            "example": "k_8sJ2dQvX0nLr5TfYb3HkPw"
+          },
+          "typ": {
+            "type": "string",
+            "enum": [
+              "at+jwt"
+            ]
+          }
+        }
+      },
+      "IDTokenHeader": {
+        "type": "object",
+        "description": "The JOSE header of an ID token.",
+        "required": [
+          "alg",
+          "kid",
+          "typ"
+        ],
+        "properties": {
+          "alg": {
+            "type": "string",
+            "enum": [
+              "ES256"
+            ]
+          },
+          "kid": {
+            "type": "string",
+            "description": "The signing key, one of the `kid` values in the JWKS.",
+            "example": "k_8sJ2dQvX0nLr5TfYb3HkPw"
+          },
+          "typ": {
+            "type": "string",
+            "enum": [
+              "JWT"
+            ]
+          }
+        }
+      },
+      "AccessTokenClaims": {
+        "type": "object",
+        "description": "The payload of an access token. Accept it only after checking the signature, `alg`, `typ`, `iss`, `aud` and `exp`.",
+        "required": [
+          "iss",
+          "aud",
+          "client_id",
+          "sub",
+          "sid",
+          "jti",
+          "iat",
+          "exp",
+          "vendor_data",
+          "amr",
+          "org",
+          "verified",
+          "act"
+        ],
+        "properties": {
+          "iss": {
+            "type": "string",
+            "format": "uri",
+            "description": "The issuer. Compare it with the issuer you configured, never with a value read from the token.",
+            "example": "https://your-app.auth.didit.me"
+          },
+          "aud": {
+            "type": "string",
+            "description": "Your application ID.",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "Your application ID.",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "sub": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The person's identity ID in this application.",
+            "example": "1c9d8b88-1bff-43d1-ad7a-88b2bc0024e9"
+          },
+          "sid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The session ID. For an agent token (`act` is not `null`), the agent's grant ID.",
+            "example": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1"
+          },
+          "jti": {
+            "type": "string",
+            "description": "This token's unique ID.",
+            "example": "Rgqu7179e-lhJ0bvVeD-Yg"
+          },
+          "iat": {
+            "type": "integer",
+            "description": "Issue time, in seconds since the Unix epoch.",
+            "example": 1792233674
+          },
+          "exp": {
+            "type": "integer",
+            "description": "Expiry, in seconds since the Unix epoch: at most 5 minutes after `iat`.",
+            "example": 1792233974
+          },
+          "vendor_data": {
+            "type": "string",
+            "description": "The person's reference across Didit products: the same value links their verification sessions and transactions. Your external ID when you imported the person, otherwise the identity ID.",
+            "example": "user-42"
+          },
+          "amr": {
+            "$ref": "#/components/schemas/AuthenticationMethods"
+          },
+          "org": {
+            "$ref": "#/components/schemas/OrganizationClaim"
+          },
+          "verified": {
+            "$ref": "#/components/schemas/VerifiedClaims"
+          },
+          "act": {
+            "$ref": "#/components/schemas/ActorClaim"
+          }
+        }
+      },
+      "IDTokenClaims": {
+        "type": "object",
+        "description": "The payload of an ID token: the access token's claims except `client_id`, plus when and who signed in. Unset `email`, `name` and `phone_number` are left out, and so is `nonce` after a refresh.",
+        "required": [
+          "iss",
+          "aud",
+          "sub",
+          "sid",
+          "jti",
+          "iat",
+          "exp",
+          "vendor_data",
+          "amr",
+          "org",
+          "verified",
+          "act",
+          "auth_time",
+          "email_verified"
+        ],
+        "properties": {
+          "iss": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://your-app.auth.didit.me"
+          },
+          "aud": {
+            "type": "string",
+            "description": "Your application ID.",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "sub": {
+            "type": "string",
+            "format": "uuid",
+            "example": "1c9d8b88-1bff-43d1-ad7a-88b2bc0024e9"
+          },
+          "sid": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1"
+          },
+          "jti": {
+            "type": "string",
+            "description": "This token's unique ID, different from the access token's.",
+            "example": "MLtO4s8Hr-Brkp7v59OWFw"
+          },
+          "iat": {
+            "type": "integer",
+            "example": 1792233674
+          },
+          "exp": {
+            "type": "integer",
+            "example": 1792233974
+          },
+          "vendor_data": {
+            "type": "string",
+            "example": "user-42"
+          },
+          "amr": {
+            "$ref": "#/components/schemas/AuthenticationMethods"
+          },
+          "org": {
+            "$ref": "#/components/schemas/OrganizationClaim"
+          },
+          "verified": {
+            "$ref": "#/components/schemas/VerifiedClaims"
+          },
+          "act": {
+            "type": "object",
+            "nullable": true,
+            "description": "Always `null` in an ID token.",
+            "example": null
+          },
+          "auth_time": {
+            "type": "integer",
+            "description": "When the session started, in seconds since the Unix epoch.",
+            "example": 1792233674
+          },
+          "nonce": {
+            "type": "string",
+            "description": "The `nonce` the sign-in started with. Only the ID token from the code exchange carries it, when the sign-in had one: check that it matches there. ID tokens from a refresh never carry it.",
+            "example": "n-0S6_WzA2Mj"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "person@example.com"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "description": "Whether the person proved the email address. Present even when `false`.",
+            "example": true
+          },
+          "name": {
+            "type": "string",
+            "example": "Alex Doe"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "E.164 phone number, present once the person proved it.",
+            "example": "+34600000000"
+          }
+        }
+      },
+      "AuthenticationMethods": {
+        "type": "array",
+        "description": "How the session signed in, as one value: for example `password`, `code` (email code), `magic` (magic link), `passkey`, `phone`, `sso`, `wallet` (Didit ID Wallet) or the name of a social sign-in method. Empty for an agent token.",
+        "items": {
+          "type": "string"
+        },
+        "example": [
+          "password"
+        ]
+      },
+      "OrganizationClaim": {
+        "type": "object",
+        "description": "The person's earliest membership in one of your customer organizations, when organizations are on. `null` otherwise.",
+        "nullable": true,
+        "required": [
+          "id",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "3e9a1f0b-5c2d-4e7f-8a6b-9c0d1e2f3a4b"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "member",
+              "billing"
+            ],
+            "example": "member"
+          }
+        }
+      },
+      "ActorClaim": {
+        "type": "object",
+        "description": "Set when an AI agent acts for the person under a grant the person approved. `null` for the person's own sessions.",
+        "nullable": true,
+        "required": [
+          "sub",
+          "agent",
+          "scopes"
+        ],
+        "properties": {
+          "sub": {
+            "type": "string",
+            "description": "The agent's ID.",
+            "example": "0f6e5d4c-3b2a-4190-8f7e-6d5c4b3a2918"
+          },
+          "agent": {
+            "type": "string",
+            "description": "The agent's name.",
+            "example": "Expense assistant"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What the person allowed the agent to do.",
+            "example": [
+              "read"
+            ]
+          }
+        }
+      },
+      "VerifiedClaims": {
+        "type": "object",
+        "description": "Identity verification the person passed, with the claims your application selected. In tokens it is `{}` when there is none; `GET /session/` returns `null` instead. A check approved during a session reaches the tokens at the next refresh.",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "liveness",
+              "liveness_face_match",
+              "full_id"
+            ],
+            "description": "The highest level passed. From weakest to strongest: `liveness`, `liveness_face_match`, `full_id`.",
+            "example": "full_id"
+          },
+          "over_18": {
+            "type": "boolean",
+            "example": true
+          },
+          "over_21": {
+            "type": "boolean",
+            "example": true
+          },
+          "given_name": {
+            "type": "string",
+            "example": "Alex"
+          },
+          "family_name": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "birthdate": {
+            "type": "string",
+            "description": "Date of birth from the document, `YYYY-MM-DD`.",
+            "example": "1990-04-12"
+          },
+          "nationality": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code.",
+            "example": "ES"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 code of the document's country.",
+            "example": "ES"
+          },
+          "document_verified": {
+            "type": "boolean",
+            "example": true
+          },
+          "liveness": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "description": "The live session behind an access token.",
+        "required": [
+          "sub",
+          "sid",
+          "application_id",
+          "vendor_data",
+          "amr",
+          "mfa_verified",
+          "email",
+          "email_verified",
+          "phone",
+          "verified_identity",
+          "verified",
+          "expires_at",
+          "post_logout_redirect_uri",
+          "organizations"
+        ],
+        "properties": {
+          "sub": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The identity ID.",
+            "example": "1c9d8b88-1bff-43d1-ad7a-88b2bc0024e9"
+          },
+          "sid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The session ID.",
+            "example": "c9abf6cc-2d64-4bf2-b31e-a4d09a070ab1"
+          },
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d"
+          },
+          "vendor_data": {
+            "type": "string",
+            "description": "The person's reference across Didit products, as in the tokens.",
+            "example": "user-42"
+          },
+          "amr": {
+            "$ref": "#/components/schemas/AuthenticationMethods"
+          },
+          "mfa_verified": {
+            "type": "boolean",
+            "description": "Whether the session passed a second factor. Always `true` for a passkey sign-in.",
+            "example": false
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": "person@example.com"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "example": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "E.164 phone number, or `null`.",
+            "example": null
+          },
+          "verified_identity": {
+            "$ref": "#/components/schemas/WalletVerification"
+          },
+          "verified": {
+            "type": "object",
+            "nullable": true,
+            "description": "Verification level and selected claims, the same object the tokens carry as `verified`, or `null` when there is none. Read this, not `email_verified`, to know whether the person verified their identity.",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": [
+                  "liveness",
+                  "liveness_face_match",
+                  "full_id"
+                ],
+                "description": "The highest level passed. From weakest to strongest: `liveness`, `liveness_face_match`, `full_id`.",
+                "example": "full_id"
+              },
+              "over_18": {
+                "type": "boolean",
+                "example": true
+              },
+              "over_21": {
+                "type": "boolean",
+                "example": true
+              },
+              "given_name": {
+                "type": "string",
+                "example": "Alex"
+              },
+              "family_name": {
+                "type": "string",
+                "example": "Doe"
+              },
+              "birthdate": {
+                "type": "string",
+                "description": "Date of birth from the document, `YYYY-MM-DD`.",
+                "example": "1990-04-12"
+              },
+              "nationality": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "example": "ES"
+              },
+              "country": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2 code of the document's country.",
+                "example": "ES"
+              },
+              "document_verified": {
+                "type": "boolean",
+                "example": true
+              },
+              "liveness": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the session ends at the latest. Idle timeout can end it sooner.",
+            "example": "2026-11-16T10:41:14.347557Z"
+          },
+          "post_logout_redirect_uri": {
+            "type": "string",
+            "description": "Where your application sends the person after sign-out. Empty string when not set.",
+            "example": "https://app.example.com/"
+          },
+          "organizations": {
+            "type": "array",
+            "description": "Every customer organization the person belongs to, when organizations are on. Empty otherwise.",
+            "items": {
+              "$ref": "#/components/schemas/SessionOrganization"
+            }
+          }
+        }
+      },
+      "SessionOrganization": {
+        "type": "object",
+        "required": [
+          "organization_id",
+          "organization__name",
+          "role",
+          "custom_role"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "3e9a1f0b-5c2d-4e7f-8a6b-9c0d1e2f3a4b"
+          },
+          "organization__name": {
+            "type": "string",
+            "description": "The organization's name.",
+            "example": "Northwind"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "member",
+              "billing"
+            ],
+            "example": "admin"
+          },
+          "custom_role": {
+            "type": "object",
+            "nullable": true,
+            "description": "The custom role assigned to the member, or `null`.",
+            "required": [
+              "key",
+              "permissions"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "example": "approver"
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "payouts.approve"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "WalletVerification": {
+        "type": "object",
+        "description": "What the Didit ID Wallet shared at sign-in. `null` when the person signed in another way.",
+        "nullable": true,
+        "required": [
+          "issuer",
+          "subject"
+        ],
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "description": "The wallet's issuer.",
+            "example": "https://apx.didit.me/auth/idv"
+          },
+          "subject": {
+            "type": "string",
+            "description": "The person's ID at the wallet.",
+            "example": "8b7f5c1e-2d3a-4b5c-9e8f-7a6b5c4d3e2f"
+          },
+          "shared_session": {
+            "type": "object",
+            "description": "A verification the person chose to share, which you redeem with your own API key.",
+            "properties": {
+              "share_token": {
+                "type": "string"
+              },
+              "session_id": {
+                "type": "string"
+              },
+              "from_application_id": {
+                "type": "string"
+              }
+            }
+          },
+          "claims": {
+            "type": "object",
+            "description": "The verified facts the person agreed to share, limited to what your application asked for.",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "example": {
+              "over_18": true,
+              "given_name": "Alex"
+            }
+          }
+        }
+      },
+      "StepUpRequest": {
+        "type": "object",
+        "description": "The sensitive action the person is about to take.",
+        "required": [
+          "action",
+          "return_to"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "payout",
+              "bank",
+              "contact"
+            ],
+            "description": "`payout` (a withdrawal or transfer), `bank` (adding or changing a bank account) or `contact` (changing an email or phone number). A payout also applies the new-device rule."
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^[0-9]{1,16}(\\.[0-9]{1,2})?$",
+            "description": "Required for `payout`: the amount, up to two decimals. A JSON number is accepted too.",
+            "example": "900.00"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "description": "ISO 4217 code of `amount`. Defaults to the payout rule's currency; a payout in another currency is always checked.",
+            "example": "USD"
+          },
+          "return_to": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Where the person returns after verifying, with `step_up=<id>&status=approved` added. When a rule applies, it must be one of the application's redirect URIs; when none applies, it is not checked.",
+            "example": "https://app.example.com/payouts/confirm"
+          }
+        }
+      },
+      "StepUpNotRequired": {
+        "type": "object",
+        "description": "No rule applies: go ahead with the action.",
+        "required": [
+          "required"
+        ],
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "StepUp": {
+        "type": "object",
+        "description": "A verification the person has to pass before the action.",
+        "required": [
+          "id",
+          "rule",
+          "method",
+          "status",
+          "level",
+          "amount",
+          "currency",
+          "created_at",
+          "completed_at",
+          "expires_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "94efc2c3-ca84-42fe-900b-6fb61669a7a1"
+          },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "payout",
+              "device",
+              "bank",
+              "contact"
+            ],
+            "description": "The rule that asked for it. When several apply, the one with the strongest method.",
+            "example": "payout"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "liveness",
+              "selfie",
+              "full_id"
+            ],
+            "description": "What the person does: `liveness`, `selfie` (liveness matched to the face Didit already holds) or `full_id` (document and selfie). When Didit holds no face for the person yet, `selfie` becomes `full_id` once they open `verification_url`.",
+            "example": "selfie"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "review",
+              "approved",
+              "declined",
+              "expired",
+              "superseded"
+            ],
+            "description": "Act only on `approved`. `review` waits for your team's review. `declined` is not final while `verification_url` works: the person can try again, and the step-up returns to `pending`. `superseded` means another check took over its verification, or the result was not for this step-up: create a new one.",
+            "example": "pending"
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "liveness",
+              "liveness_face_match",
+              "full_id",
+              null
+            ],
+            "description": "The level the verification reached, once approved.",
+            "example": null
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payout amount, two decimals.",
+            "example": "900.00"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "USD"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-17T10:41:14.894632Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "30 minutes after creation. Reading a step-up first collects any result its verification reached, so it can still read `approved`, `review` or `declined` after this time; one still `pending` reads `expired`.",
+            "example": "2026-10-17T11:11:14.894581Z"
+          }
+        }
+      },
+      "StepUpRequired": {
+        "description": "A new step-up. Send the person to `verification_url`.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StepUp"
+          },
+          {
+            "type": "object",
+            "required": [
+              "required",
+              "verification_url",
+              "expires_in"
+            ],
+            "properties": {
+              "required": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "verification_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "The hosted page where the person verifies; open it in the person's browser. It works until the step-up is approved or expires, so a person who was declined can try again from it.",
+                "example": "https://your-app.auth.didit.me/verify/?verification=1nSX7HJCXAP9XPA9AeJfQxIuPk2GkG0dGSOzCA2Zpww"
+              },
+              "expires_in": {
+                "type": "integer",
+                "description": "Seconds the step-up stays open: 1800.",
+                "example": 1800
+              }
+            }
+          }
+        ]
+      },
+      "MonitoringTokenRequest": {
+        "type": "object",
+        "description": "Empty: the access token names the person.",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "MonitoringToken": {
+        "type": "object",
+        "description": "A short-lived device credential for sending the person's activity events to transaction monitoring from their device. It is not tied to the session: it stays usable until `expires_at`, even after sign-out.",
+        "required": [
+          "monitoring_token",
+          "expires_at",
+          "allowed_event_categories",
+          "max_uses",
+          "bind_to_origin",
+          "vendor_data"
+        ],
+        "properties": {
+          "monitoring_token": {
+            "type": "string",
+            "description": "The device credential. Treat it as a secret.",
+            "example": "mt_2f8c1d9e7b6a5f4e3d2c1b0a"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "At most 15 minutes after it was issued.",
+            "example": "2026-10-17T10:56:14Z"
+          },
+          "allowed_event_categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The event categories it may send. Authentication and security events always come from Didit, never from the device.",
+            "example": [
+              "session",
+              "gameplay",
+              "bonus",
+              "affiliate",
+              "payment",
+              "dispute",
+              "responsible_gambling",
+              "custom"
+            ]
+          },
+          "max_uses": {
+            "type": "integer",
+            "example": 1000
+          },
+          "bind_to_origin": {
+            "type": "string",
+            "nullable": true,
+            "description": "The browser origin the credential works from: the request's `Origin`, or `null` when there was none.",
+            "example": "https://app.example.com"
+          },
+          "vendor_data": {
+            "type": "string",
+            "description": "The person every event is recorded for, whatever the device sends.",
+            "example": "user-42"
+          }
+        }
+      },
+      "OAuthError": {
+        "title": "OAuth error",
+        "type": "object",
+        "description": "An OAuth error (RFC 6749 section 5.2) or a service error.",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "invalid_grant"
+          }
+        }
+      },
+      "FieldErrors": {
+        "title": "Field errors",
+        "type": "object",
+        "description": "Validation errors by field. A value is a list of messages, or a single code (`unknown_field`, `invalid_redirect_uri`). `non_field_errors` holds rules across fields.",
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "Detail": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "invalid_token"
+          }
+        }
+      }
+    }
+  }
+}

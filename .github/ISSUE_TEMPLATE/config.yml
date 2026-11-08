@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Didit documentation
+    url: https://docs.didit.me
+    about: API reference, guides and quickstarts.
+  - name: Report a security vulnerability
+    url: https://github.com/didit-protocol/sdk-python/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue. See SECURITY.md.
