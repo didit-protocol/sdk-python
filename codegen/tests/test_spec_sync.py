@@ -334,6 +334,27 @@ def test_union_variants_are_compared_with_the_variant_they_became() -> None:
     ]
     # Variants in another order are the same union.
     assert _diff({"oneOf": [a, b]}, {"oneOf": [b, a]}) == [("", "oneOf variants reordered", False)]
+    # A variant keeps its position when a null variant comes before it.
+    assert _diff({"anyOf": [{"type": "null"}, a, b]}, {"anyOf": [{"type": "null"}, a, b2]}) == [
+        ("(anyOf 3).code", retyped, True)
+    ]
+
+
+def test_a_field_the_union_requires_is_required_in_each_variant() -> None:
+    a: dict[str, Any] = {"type": "object", "properties": {"kind": STATUS, "code": STATUS}}
+    b: dict[str, Any] = {"type": "object", "properties": {"kind": STATUS, "url": STATUS}}
+    gone = "no longer always present"
+    assert _diff({"oneOf": [a, b], "required": ["kind"]}, {"oneOf": [a, b]}) == [
+        ("(oneOf 1).kind", gone, True),
+        ("(oneOf 2).kind", gone, True),
+    ]
+    assert _diff({"oneOf": [a, b]}, {"oneOf": [a, b], "required": ["kind"]}, request=True) == [
+        ("(oneOf 1).kind", "now required", True),
+        ("(oneOf 2).kind", "now required", True),
+    ]
+    # One variant and null: the union's list adds to the variant's own, never replaces it.
+    optional = {"anyOf": [{**a, "required": ["code"]}, {"type": "null"}], "required": ["kind"]}
+    assert _diff(optional, {**optional, "anyOf": [a, {"type": "null"}]}) == [("code", gone, True)]
 
 
 def test_a_variant_title_names_its_generated_type() -> None:
