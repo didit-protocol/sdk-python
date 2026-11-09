@@ -248,7 +248,7 @@
     "/programmatic/verify-email/": {
       "post": {
         "summary": "Verify Email and Issue Credentials",
-        "description": "Step 2 of onboarding. Exchanges the 6-char code for a verified account, a default org+app, and a JWT pair. Persist the returned `api_key`.",
+        "description": "Step 2 of onboarding. Exchanges the 6-char code for a verified account, a default org+app, and a JWT pair. Persist the returned `api_key`. An account that already has an authenticator app or a passkey gets the same second-factor step as the login instead: `2fa_required: true` and a `temp_token`, with no tokens and no application keys.",
         "operationId": "programmatic_verify_email",
         "x-didit-sdk": {
           "resource": "account",
@@ -280,7 +280,7 @@
         },
         "responses": {
           "200": {
-            "description": "Email verified. The response contains tokens for this auth API plus the brand-new application's `client_id` and `api_key`. Persist the `api_key` securely — it is the long-lived credential used by every verification API call.",
+            "description": "Email verified. The response contains tokens for this auth API plus the brand-new application's `client_id` and `api_key`. Persist the `api_key` securely — it is the long-lived credential used by every verification API call. When the account already has an authenticator app or a passkey, the response carries `2fa_required: true`, a `temp_token`, `has_authenticator` and `has_passkeys` instead of tokens and application keys: finish the sign-in with the second factor, then read the organization and its applications from `/organizations/me/`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -303,6 +303,15 @@
                         "api_key": "sk_live_example_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
                         "data_location": "eu"
                       }
+                    }
+                  },
+                  "SecondFactorRequired": {
+                    "summary": "The account already has an authenticator app or a passkey",
+                    "value": {
+                      "2fa_required": true,
+                      "temp_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "has_passkeys": false,
+                      "has_authenticator": true
                     }
                   }
                 }
@@ -354,6 +363,27 @@
                     "summary": "No pending account for that email",
                     "value": {
                       "detail": "User not found."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The account was recovered and must set up a new sign-in method first. No tokens are issued; a link to do that was emailed to the account's address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                },
+                "examples": {
+                  "RecoverySetupRequired": {
+                    "summary": "Recovered account with no sign-in method yet",
+                    "value": {
+                      "recovery_setup_required": true,
+                      "setup_link_sent": true,
+                      "message": "You recovered your account. Open the link we emailed you to set up a new sign-in method.",
+                      "code": "recovery_setup_required"
                     }
                   }
                 }
@@ -2160,6 +2190,23 @@
           },
           "application": {
             "$ref": "#/components/schemas/ApplicationCredentialsSummary"
+          },
+          "2fa_required": {
+            "type": "boolean",
+            "description": "Present and `true` when the account already has an authenticator app or a passkey. The response then carries `temp_token` instead of tokens and application keys.",
+            "example": true
+          },
+          "temp_token": {
+            "type": "string",
+            "description": "Short-lived token for the second-factor step, sent only with `2fa_required`. It is not an access token."
+          },
+          "has_authenticator": {
+            "type": "boolean",
+            "description": "With `2fa_required`: whether the account has an authenticator app."
+          },
+          "has_passkeys": {
+            "type": "boolean",
+            "description": "With `2fa_required`: whether the account has a passkey."
           }
         }
       },
