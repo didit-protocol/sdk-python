@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/didit-protocol/sdk-python/compare/v1.3.0...v1.4.0) (2026-11-09)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-09 ([02e68b7](https://github.com/didit-protocol/sdk-python/commit/02e68b7f2de08dd562268776e5da31dd519057f6))
+
 ## [1.3.0](https://github.com/didit-protocol/sdk-python/compare/v1.2.0...v1.3.0) (2026-11-07)
 
 
