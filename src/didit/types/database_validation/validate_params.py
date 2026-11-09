@@ -254,7 +254,7 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """Email address for identity-verification services."""
 
     country_of_residence: str
-    """ISO 3166-1 alpha-2 country of residence. Used by global identity-enrichment services (e.g. `glb_identity_enrichment`) to focus the lookup."""
+    """ISO 3166-1 alpha-2 country of residence. It was used only by the retired global identity-enrichment service (`glb_identity_enrichment`), which Didit no longer offers."""
 
     partial_match_action: Literal["DECLINE", "NO_ACTION"] | str
     """What a `partial_match` does to `database_validation.status`. Defaults to `NO_ACTION` (status stays `Approved`, with a warning)."""
