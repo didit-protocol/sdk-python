@@ -14718,7 +14718,7 @@
                   },
                   "country_of_residence": {
                     "type": "string",
-                    "description": "ISO 3166-1 alpha-2 country of residence. Used by global identity-enrichment services (e.g. `glb_identity_enrichment`) to focus the lookup.",
+                    "description": "ISO 3166-1 alpha-2 country of residence. It was used only by the retired global identity-enrichment service (`glb_identity_enrichment`), which Didit no longer offers.",
                     "example": "US"
                   },
                   "partial_match_action": {
@@ -15144,7 +15144,7 @@
                   },
                   "country_of_residence": {
                     "type": "string",
-                    "description": "ISO 3166-1 alpha-2 country of residence. Used by global identity-enrichment services (e.g. `glb_identity_enrichment`) to focus the lookup.",
+                    "description": "ISO 3166-1 alpha-2 country of residence. It was used only by the retired global identity-enrichment service (`glb_identity_enrichment`), which Didit no longer offers.",
                     "example": "US"
                   },
                   "partial_match_action": {
