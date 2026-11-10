@@ -36,7 +36,7 @@ class PhoneVerificationCheckResponsePhoneLifecycle(BaseModel):
     """When the event happened."""
 
     details: dict[str, object] | None = None
-    """Event-specific payload. Send events: `{status, reason, channel, actual_channel}` (`actual_channel` is filled once delivery is confirmed). Delivery events: `{channel, status}`. Code-entry events: `{code_tried, status}`. Final-status events: `null`, or `{reason}` when declined or in review."""
+    """Event-specific payload. Send events: `{status, reason, channel, actual_channel, attempt, delivery_status}` - `actual_channel` is filled once delivery is confirmed, `attempt` is the 0-based index of the send (the order of the send events), and `delivery_status` is `delivered`, `undeliverable` or `unknown` (no report arrived before the verification ended); it is absent while a report can still arrive. Delivery events: `{channel, status, attempt, reason}` - `attempt` is the send it belongs to, and `reason` (on `PHONE_DELIVERY_UNDELIVERABLE` only) is `expired`, `rejected`, `unreachable`, `blocked` or `unknown` for a message, and `unreachable_number`, `no_answer`, `busy` or `undeliverable` for a call. Code-entry events: `{code_tried, status}`. Final-status events: `null`, or `{reason}` when declined or in review."""
 
     fee: float | None = None
     """USD amount billed for this event. Non-zero only on send events (the delivery price); 0 for code entries, delivery confirmations, and status events."""

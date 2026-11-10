@@ -1813,6 +1813,7 @@ def test_sessions_retrieve_decision() -> None:
                                     "reason": None,
                                     "channel": "sms",
                                     "actual_channel": "sms",
+                                    "attempt": 0,
                                 },
                                 "fee": 0.1,
                             },

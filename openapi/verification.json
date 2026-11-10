@@ -3055,7 +3055,8 @@
                                 "status": "Success",
                                 "reason": null,
                                 "channel": "sms",
-                                "actual_channel": "sms"
+                                "actual_channel": "sms",
+                                "attempt": 0
                               },
                               "fee": 0.1
                             },
@@ -16531,7 +16532,9 @@
                               "status": "Success",
                               "reason": null,
                               "channel": "whatsapp",
-                              "actual_channel": "whatsapp"
+                              "actual_channel": "whatsapp",
+                              "attempt": 0,
+                              "delivery_status": "delivered"
                             },
                             "fee": 0.0509
                           },
@@ -16540,7 +16543,8 @@
                             "timestamp": "2026-06-12T01:23:43.118220+00:00",
                             "details": {
                               "channel": "whatsapp",
-                              "status": "delivered"
+                              "status": "delivered",
+                              "attempt": 0
                             },
                             "fee": 0
                           },
@@ -16619,7 +16623,8 @@
                               "status": "Success",
                               "reason": null,
                               "channel": "whatsapp",
-                              "actual_channel": "whatsapp"
+                              "actual_channel": "whatsapp",
+                              "attempt": 0
                             },
                             "fee": 0.0509
                           },
@@ -16706,7 +16711,8 @@
                               "status": "Success",
                               "reason": null,
                               "channel": "whatsapp",
-                              "actual_channel": "sms"
+                              "actual_channel": "sms",
+                              "attempt": 0
                             },
                             "fee": 0.0509
                           },
@@ -92261,7 +92267,7 @@
                     "details": {
                       "type": "object",
                       "nullable": true,
-                      "description": "Event-specific payload. Send events: `{status, reason, channel, actual_channel}` (`actual_channel` is filled once delivery is confirmed). Delivery events: `{channel, status}`. Code-entry events: `{code_tried, status}`. Final-status events: `null`, or `{reason}` when declined or in review."
+                      "description": "Event-specific payload. Send events: `{status, reason, channel, actual_channel, attempt, delivery_status}` — `actual_channel` is filled once delivery is confirmed, `attempt` is the 0-based index of the send (the order of the send events), and `delivery_status` is `delivered`, `undeliverable` or `unknown` (no report arrived before the verification ended); it is absent while a report can still arrive. Delivery events: `{channel, status, attempt, reason}` — `attempt` is the send it belongs to, and `reason` (on `PHONE_DELIVERY_UNDELIVERABLE` only) is `expired`, `rejected`, `unreachable`, `blocked` or `unknown` for a message, and `unreachable_number`, `no_answer`, `busy` or `undeliverable` for a call. Code-entry events: `{code_tried, status}`. Final-status events: `null`, or `{reason}` when declined or in review."
                     },
                     "fee": {
                       "type": "number",
@@ -110902,14 +110908,15 @@
                       "details": {
                         "type": "object",
                         "nullable": true,
-                        "description": "Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`; delivery events carry `channel`, `status`; code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`).",
+                        "description": "Event-specific payload. Send events carry `status`, `reason`, `channel`, `actual_channel`, `attempt` (the send's 0-based index, matching the order of the send events) and `delivery_status` (`delivered`, `undeliverable`, or `unknown` once no report can still arrive; absent while one can); delivery events carry `channel`, `status`, `attempt` and, on `PHONE_DELIVERY_UNDELIVERABLE`, `reason` (`expired`, `rejected`, `unreachable`, `blocked` or `unknown` for a message; `unreachable_number`, `no_answer`, `busy` or `undeliverable` for a call — always a fixed word, never a provider status or error code); code-check events carry `code_tried`, `status`; final status events carry `reason` — or `null` when there is no reason to report (e.g. `PHONE_VERIFICATION_APPROVED`).",
                         "properties": {
                           "status": {
                             "type": "string"
                           },
                           "reason": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "description": "Send events: why the send was blocked (`invalid_phone_number`, `repeated_attempts`, `suspicious`, `spam`, `unknown`), `null` otherwise. Delivery events on `PHONE_DELIVERY_UNDELIVERABLE`: `expired`, `rejected`, `unreachable`, `blocked` or `unknown` for a message, and `unreachable_number`, `no_answer`, `busy` or `undeliverable` for a call — a fixed customer-safe word, never the provider's status or error code."
                           },
                           "channel": {
                             "type": "string",
@@ -110918,6 +110925,21 @@
                           "actual_channel": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Send events and delivery events: the 0-based index of the send attempt the event belongs to, in the order of the send events."
+                          },
+                          "delivery_status": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "delivered",
+                              "undeliverable",
+                              "unknown"
+                            ],
+                            "description": "Send events: how the send ended. `unknown` once no delivery report can still arrive (the verification finished without one); absent while one can."
                           },
                           "code_tried": {
                             "type": "string"
