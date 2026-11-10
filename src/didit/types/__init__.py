@@ -311,6 +311,12 @@ if TYPE_CHECKING:
     from didit.types.components.address_validation_result import (
         AddressValidationResultAddress as AddressValidationResultAddress,
     )
+    from didit.types.components.agent_identity import AgentIdentity as AgentIdentity
+    from didit.types.components.agent_top_up import AgentTopUp as AgentTopUp
+    from didit.types.components.agent_top_up import AgentTopUpCard as AgentTopUpCard
+    from didit.types.components.agent_top_up_settings import (
+        AgentTopUpSettings as AgentTopUpSettings,
+    )
     from didit.types.components.aml_dataset_freshness import (
         AMLDatasetFreshness as AMLDatasetFreshness,
     )
@@ -567,6 +573,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.bank_verification_result import (
         BankVerificationResultRoute as BankVerificationResultRoute,
+    )
+    from didit.types.components.billing_top_up_charge import (
+        BillingTopUpCharge as BillingTopUpCharge,
     )
     from didit.types.components.biometric_retention import BiometricRetention as BiometricRetention
     from didit.types.components.blocklisted_item import BlocklistedItem as BlocklistedItem
@@ -3436,6 +3445,10 @@ _MODULES: dict[str, str] = {
     "AgeEstimationEstimateResponseAgeEstimationUserImage": "age_estimation.estimate_response",
     "AgeEstimationEstimateResponseAgeEstimationUserImageEntities": "age_estimation.estimate_response",
     "AgeEstimationEstimateResponseAgeEstimationWarnings": "age_estimation.estimate_response",
+    "AgentIdentity": "components.agent_identity",
+    "AgentTopUp": "components.agent_top_up",
+    "AgentTopUpCard": "components.agent_top_up",
+    "AgentTopUpSettings": "components.agent_top_up_settings",
     "AmlMonitoringRetrieveJobResponse": "aml_monitoring.retrieve_job_response",
     "AmlMonitoringRetrieveJobResponseOutcomes": "aml_monitoring.retrieve_job_response",
     "AmlMonitoringRetrieveJobResponseResults": "aml_monitoring.retrieve_job_response",
@@ -3511,6 +3524,7 @@ _MODULES: dict[str, str] = {
     "BankVerificationResultOwnership": "components.bank_verification_result",
     "BankVerificationResultRoute": "components.bank_verification_result",
     "BillingRetrieveBalanceResponse": "billing.retrieve_balance_response",
+    "BillingTopUpCharge": "components.billing_top_up_charge",
     "BillingTopUpParams": "billing.top_up_params",
     "BillingTopUpResponse": "billing.top_up_response",
     "BiometricRetention": "components.biometric_retention",
@@ -4670,6 +4684,10 @@ __all__ = [
     "AgeEstimationEstimateResponseAgeEstimationUserImage",
     "AgeEstimationEstimateResponseAgeEstimationUserImageEntities",
     "AgeEstimationEstimateResponseAgeEstimationWarnings",
+    "AgentIdentity",
+    "AgentTopUp",
+    "AgentTopUpCard",
+    "AgentTopUpSettings",
     "AmlMonitoringRetrieveJobResponse",
     "AmlMonitoringRetrieveJobResponseOutcomes",
     "AmlMonitoringRetrieveJobResponseResults",
@@ -4745,6 +4763,7 @@ __all__ = [
     "BankVerificationResultOwnership",
     "BankVerificationResultRoute",
     "BillingRetrieveBalanceResponse",
+    "BillingTopUpCharge",
     "BillingTopUpParams",
     "BillingTopUpResponse",
     "BiometricRetention",

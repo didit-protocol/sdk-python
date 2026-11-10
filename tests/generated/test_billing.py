@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from didit.types.billing.retrieve_balance_response import BillingRetrieveBalanceResponse
 from didit.types.billing.top_up_response import BillingTopUpResponse
+from didit.types.components.billing_top_up_charge import BillingTopUpCharge
 from tests.harness import Expect, check_operation
 
 
@@ -22,6 +23,7 @@ def test_billing_retrieve_balance() -> None:
                 "auto_refill_enabled": True,
                 "auto_refill_amount": "500.00",
                 "auto_refill_threshold": "100.00",
+                "agent_top_up": {"enabled": True},
             },
         ),
         lambda c: c.billing.retrieve_balance(),
@@ -48,6 +50,6 @@ def test_billing_top_up() -> None:
         ),
         lambda c: c.billing.top_up(amount_in_dollars=50),
         lambda c: c.billing.top_up(amount_in_dollars=50),
-        lambda r: isinstance(r, BillingTopUpResponse),
-        lambda r: isinstance(r, BillingTopUpResponse),
+        lambda r: (isinstance(r, BillingTopUpResponse)) or (isinstance(r, BillingTopUpCharge)),
+        lambda r: (isinstance(r, BillingTopUpResponse)) or (isinstance(r, BillingTopUpCharge)),
     )

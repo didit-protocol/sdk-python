@@ -17,7 +17,9 @@ class ReportTemplateDetail(BaseModel):
     jurisdiction: str | None = None
     """ISO 3166-1 alpha-2 country code."""
 
-    report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str | None = None
+    report_type: (
+        Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"] | str | None
+    ) = None
 
     report_type_display: str | None = None
 

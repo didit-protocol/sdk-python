@@ -14,7 +14,9 @@ class ReportTemplatesUpdateParams(TypedDict, total=False):
     jurisdiction: str
     """ISO 3166-1 alpha-2 country code, upper-cased on save."""
 
-    report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str
+    report_type: (
+        Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"] | str
+    )
 
     field_config: Mapping[str, object]
     """Reusable goAML header defaults. Template-level obligatory fields: rentity_id, submission_code, and currency_code_local (3-letter). Optional: enabled_fields (which optional report blocks to include) plus reporting_person, location, reason, and action defaults. Per-filing header fields (action, submission_date, transactions, jurisdiction) are enforced when the report is validated or finalized, not on the template."""

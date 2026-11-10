@@ -59,7 +59,7 @@ class RegulatoryReports(SyncAPIResource):
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         status: Literal["DRAFT", "VALIDATED", "FINALIZED"] | str | NotGiven = NOT_GIVEN,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         case: str | NotGiven = NOT_GIVEN,
@@ -113,7 +113,7 @@ class RegulatoryReports(SyncAPIResource):
         *,
         case: str,
         template: str,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
@@ -149,7 +149,7 @@ class RegulatoryReports(SyncAPIResource):
           template
           report_type: Required unless a template is given; the template's report_type is used otherwise.
           jurisdiction: Required unless a template is given.
-          transactions: Transactions to attach; defaults to the case's linked transactions.
+          transactions: Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required.
           rentity_id
           rentity_branch
           submission_code
@@ -387,7 +387,7 @@ class RegulatoryReports(SyncAPIResource):
     ) -> RegulatoryReportsValidateResponse:
         """Validate report.
 
-        Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).
+        Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. For jurisdiction AE, once those pass, the report's goAML XML is also checked against the UAE FIU's goAML XML schema and each problem is returned as a field and a message; finalize refuses a report that fails. FFR and PNMR reports need no attached transaction: they require the case to have a subject, otherwise validation_errors contains an error with field `subject`. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/validate/``
 
@@ -425,7 +425,7 @@ class RegulatoryReports(SyncAPIResource):
     ) -> RegulatoryReportDetail:
         """Finalize report.
 
-        Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed.
+        Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed. FFR and PNMR reports do not move alerts.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/finalize/``
 
@@ -516,7 +516,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
         status: Literal["DRAFT", "VALIDATED", "FINALIZED"] | str | NotGiven = NOT_GIVEN,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         case: str | NotGiven = NOT_GIVEN,
@@ -570,7 +570,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         *,
         case: str,
         template: str,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
@@ -606,7 +606,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
           template
           report_type: Required unless a template is given; the template's report_type is used otherwise.
           jurisdiction: Required unless a template is given.
-          transactions: Transactions to attach; defaults to the case's linked transactions.
+          transactions: Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required.
           rentity_id
           rentity_branch
           submission_code
@@ -844,7 +844,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
     ) -> RegulatoryReportsValidateResponse:
         """Validate report.
 
-        Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).
+        Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. For jurisdiction AE, once those pass, the report's goAML XML is also checked against the UAE FIU's goAML XML schema and each problem is returned as a field and a message; finalize refuses a report that fails. FFR and PNMR reports need no attached transaction: they require the case to have a subject, otherwise validation_errors contains an error with field `subject`. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/validate/``
 
@@ -882,7 +882,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
     ) -> RegulatoryReportDetail:
         """Finalize report.
 
-        Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed.
+        Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed. FFR and PNMR reports do not move alerts.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/finalize/``
 

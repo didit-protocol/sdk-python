@@ -42,12 +42,14 @@ class RegulatoryReportDetail(BaseModel):
 
     case_number: str | None = None
 
-    report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str | None = None
+    report_type: (
+        Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"] | str | None
+    ) = None
 
     report_type_display: str | None = None
 
     report_code: str | None = None
-    """goAML report code derived from report_type, e.g. STR, CTR, BCR."""
+    """goAML report code derived from report_type and jurisdiction, e.g. STR, CTR, BCR, FFR, PNMR. For jurisdiction AE, the UAE FIU's codes: STR, SAR, CNMRA for FFR and PNMRA for PNMR."""
 
     report_number: str | None = None
 
