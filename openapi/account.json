@@ -994,7 +994,7 @@
             }
           },
           "400": {
-            "description": "Validation error in the request body: for example a malformed redirect URI, a `data_location` that is not available yet (`au`, `mx`) or one that does not exist. Nothing is created.",
+            "description": "Validation error in the request body: for example a malformed redirect URI, a `data_location` that is not available yet (`au`, `mx`, `ae`) or one that does not exist. Nothing is created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2553,9 +2553,10 @@
         "enum": [
           "eu",
           "au",
-          "mx"
+          "mx",
+          "ae"
         ],
-        "description": "Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney) and `mx` (Mexico) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.",
+        "description": "Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.",
         "example": "eu"
       },
       "ValidationError": {
