@@ -2148,6 +2148,21 @@
               }
             }
           },
+          "400": {
+            "description": "`import_type` is not one of the documented values. Nothing is downloaded.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Unknown import type": {
+                    "summary": "Unknown import type",
+                    "value": {
+                      "import_type": "Unknown import_type. Use one of: user_verification, business_verification, status_rules, transactions."
+                    }
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Missing, invalid, or revoked API key, or the key cannot download import templates. A missing key returns `403`; a wrong, revoked or expired key returns `401`.",
             "content": {
