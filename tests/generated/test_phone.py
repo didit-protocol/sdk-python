@@ -110,13 +110,15 @@ def test_phone_check_code() -> None:
                                 "reason": None,
                                 "channel": "whatsapp",
                                 "actual_channel": "whatsapp",
+                                "attempt": 0,
+                                "delivery_status": "delivered",
                             },
                             "fee": 0.0509,
                         },
                         {
                             "type": "PHONE_DELIVERY_DELIVERED",
                             "timestamp": "2026-06-12T01:23:43.118220+00:00",
-                            "details": {"channel": "whatsapp", "status": "delivered"},
+                            "details": {"channel": "whatsapp", "status": "delivered", "attempt": 0},
                             "fee": 0,
                         },
                         {
