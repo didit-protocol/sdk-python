@@ -53983,6 +53983,46 @@
               }
             },
             "description": "error not_found: no wallet verification of this application has this request_id."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationError"
+                },
+                "example": {
+                  "error": "rate_limited",
+                  "detail": "Too many ConnectID requests. You can make up to 120 of these per minute."
+                }
+              }
+            },
+            "description": "error rate_limited: applies only to ConnectID verifications, never to other wallets or sandbox applications. Too many requests for this verification (120 per minute), from this client address (3,000 per minute) or for your application (60,000 per minute) in the last minute; `detail` states the limit that was reached. Nothing changed. Wait the number of seconds in `Retry-After` (at most 60), then retry. `X-RateLimit-Scope`, `X-RateLimit-Limit` and `X-RateLimit-Remaining` describe the limit that was reached.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the one-minute window ends (1 to 60).",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Scope": {
+                "description": "The limit that was reached.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per minute for that limit.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window; 0 on a 429.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "x-codeSamples": [
@@ -54136,6 +54176,46 @@
               }
             },
             "description": "error wallet_not_configured: this environment cannot reach the wallet."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationError"
+                },
+                "example": {
+                  "error": "rate_limited",
+                  "detail": "Too many ConnectID requests. You can make up to 120 of these per minute."
+                }
+              }
+            },
+            "description": "error rate_limited: applies only to ConnectID verifications, never to other wallets or sandbox applications. Too many requests for this verification (120 per minute), from this client address (3,000 per minute) or for your application (60,000 per minute) in the last minute; `detail` states the limit that was reached. Nothing changed. Wait the number of seconds in `Retry-After` (at most 60), then retry. `X-RateLimit-Scope`, `X-RateLimit-Limit` and `X-RateLimit-Remaining` describe the limit that was reached.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the one-minute window ends (1 to 60).",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Scope": {
+                "description": "The limit that was reached.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per minute for that limit.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window; 0 on a 429.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "x-codeSamples": [
@@ -54285,6 +54365,46 @@
               }
             },
             "description": "error verification_in_progress: the user is completing this sign-in right now. The Retry-After header says when to retry; the retry returns the decided verification."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationError"
+                },
+                "example": {
+                  "error": "rate_limited",
+                  "detail": "Too many ConnectID requests. You can make up to 120 of these per minute."
+                }
+              }
+            },
+            "description": "error rate_limited: applies only to ConnectID verifications, never to other wallets or sandbox applications. Too many requests for this verification (120 per minute), from this client address (3,000 per minute) or for your application (60,000 per minute) in the last minute; `detail` states the limit that was reached. Nothing changed. Wait the number of seconds in `Retry-After` (at most 60), then retry. `X-RateLimit-Scope`, `X-RateLimit-Limit` and `X-RateLimit-Remaining` describe the limit that was reached.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the one-minute window ends (1 to 60).",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Scope": {
+                "description": "The limit that was reached.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per minute for that limit.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window; 0 on a 429.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "x-codeSamples": [
@@ -59043,6 +59163,46 @@
               }
             },
             "description": "error idempotency_key_reused or idempotency_key_in_progress (with Retry-After)."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationError"
+                },
+                "example": {
+                  "error": "rate_limited",
+                  "detail": "Too many ConnectID requests. You can make up to 600 of these per minute."
+                }
+              }
+            },
+            "description": "error rate_limited: this client address or your application started too many ConnectID verifications in the last minute (up to 600 per minute for each). Nothing was created. Wait the number of seconds in `Retry-After` (at most 60), then retry. `X-RateLimit-Scope`, `X-RateLimit-Limit` and `X-RateLimit-Remaining` describe the limit that was reached.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the one-minute window ends (1 to 60).",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Scope": {
+                "description": "The limit that was reached.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per minute for that limit.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window; 0 on a 429.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           },
           "502": {
             "content": {
@@ -87906,6 +88066,46 @@
               }
             },
             "description": "error wallet_not_configured: this environment cannot verify the wallet."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationError"
+                },
+                "example": {
+                  "error": "rate_limited",
+                  "detail": "Too many ConnectID requests. You can make up to 120 of these per minute."
+                }
+              }
+            },
+            "description": "error rate_limited: applies only to ConnectID verifications, never to other wallets or sandbox applications. Too many requests for this verification (120 per minute), from this client address (3,000 per minute) or for your application (60,000 per minute) in the last minute; `detail` states the limit that was reached. Nothing changed. Wait the number of seconds in `Retry-After` (at most 60), then retry. `X-RateLimit-Scope`, `X-RateLimit-Limit` and `X-RateLimit-Remaining` describe the limit that was reached.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the one-minute window ends (1 to 60).",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Scope": {
+                "description": "The limit that was reached.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per minute for that limit.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window; 0 on a 429.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "x-codeSamples": [
