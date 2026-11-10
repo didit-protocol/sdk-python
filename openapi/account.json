@@ -1051,7 +1051,7 @@
             }
           },
           "403": {
-            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` For 72 hours after you recovered your account the request is refused with `code` `recovery_hold` and `until`, the time the hold ends.",
+            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` For 72 hours after you recovered your account the request is refused with `code` `recovery_hold` and `until`, the time the hold ends. A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1089,6 +1089,12 @@
                       "detail": "This action is on hold because you recovered your account.",
                       "code": "recovery_hold",
                       "until": "2026-11-04T10:15:00+00:00"
+                    }
+                  },
+                  "McpScope": {
+                    "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
                     }
                   }
                 }
@@ -1348,7 +1354,7 @@
             }
           },
           "403": {
-            "description": "You cannot list this organization's applications. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.`",
+            "description": "You cannot list this organization's applications. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1371,6 +1377,12 @@
                     "summary": "No Authorization header",
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "McpScope": {
+                    "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
                     }
                   }
                 }
@@ -1560,7 +1572,7 @@
             }
           },
           "403": {
-            "description": "You cannot read this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.`",
+            "description": "You cannot read this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1583,6 +1595,12 @@
                     "summary": "No Authorization header",
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "McpScope": {
+                    "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
                     }
                   }
                 }
@@ -1847,7 +1865,7 @@
             }
           },
           "403": {
-            "description": "You cannot update this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.`",
+            "description": "You cannot update this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1870,6 +1888,12 @@
                     "summary": "No Authorization header",
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "McpScope": {
+                    "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
                     }
                   }
                 }
