@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.agent_top_up_settings import AgentTopUpSettings
 
 __all__ = ["BillingRetrieveBalanceResponse"]
 
@@ -18,3 +19,6 @@ class BillingRetrieveBalanceResponse(BaseModel):
 
     auto_refill_threshold: str | None = None
     """Trigger threshold in USD. Auto-refill fires when `balance` falls below this value. `null` when auto-refill is disabled or unset."""
+
+    agent_top_up: AgentTopUpSettings | None = None
+    """Whether agents can top up this organization with its saved card. Off by default; a person signed in to the console turns on "Connected AI agents can top up with your saved card" in Billing > Payment methods."""

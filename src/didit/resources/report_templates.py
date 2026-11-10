@@ -92,7 +92,8 @@ class ReportTemplates(SyncAPIResource):
         *,
         name: str,
         jurisdiction: str,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str,
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
+        | str,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -218,7 +219,7 @@ class ReportTemplates(SyncAPIResource):
         *,
         name: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
@@ -329,7 +330,8 @@ class AsyncReportTemplates(AsyncAPIResource):
         *,
         name: str,
         jurisdiction: str,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str,
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
+        | str,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -455,7 +457,7 @@ class AsyncReportTemplates(AsyncAPIResource):
         *,
         name: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,

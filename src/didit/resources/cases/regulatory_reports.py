@@ -98,7 +98,7 @@ class CasesRegulatoryReports(SyncAPIResource):
         self,
         case_uuid: str,
         *,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
@@ -126,7 +126,7 @@ class CasesRegulatoryReports(SyncAPIResource):
     ) -> RegulatoryReportDetail:
         """Create report from case.
 
-        Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF.
+        Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF. FFR (Confirmed Name Match Report, formerly the Funds Freeze Report) and PNMR (Partial Name Match Report) are activity reports: they report the case's subject, not transactions, so a draft links no transactions by default and the narrative, reason and action are written from the sanctions matches on the case's AML screenings.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/regulatory-reports/``
 
@@ -135,7 +135,7 @@ class CasesRegulatoryReports(SyncAPIResource):
           report_type: Required unless a template is given; the template's report_type is used otherwise.
           jurisdiction: Required unless a template is given.
           template: Report template UUID; its field_config seeds the draft before case-derived data is merged in.
-          transactions: Transactions to attach; defaults to the case's linked transactions.
+          transactions: Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required.
           rentity_id
           rentity_branch
           submission_code
@@ -258,7 +258,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
-        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"]
+        report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str
         | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
@@ -286,7 +286,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
     ) -> RegulatoryReportDetail:
         """Create report from case.
 
-        Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF.
+        Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF. FFR (Confirmed Name Match Report, formerly the Funds Freeze Report) and PNMR (Partial Name Match Report) are activity reports: they report the case's subject, not transactions, so a draft links no transactions by default and the narrative, reason and action are written from the sanctions matches on the case's AML screenings.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/regulatory-reports/``
 
@@ -295,7 +295,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
           report_type: Required unless a template is given; the template's report_type is used otherwise.
           jurisdiction: Required unless a template is given.
           template: Report template UUID; its field_config seeds the draft before case-derived data is merged in.
-          transactions: Transactions to attach; defaults to the case's linked transactions.
+          transactions: Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required.
           rentity_id
           rentity_branch
           submission_code

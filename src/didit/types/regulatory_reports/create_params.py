@@ -28,14 +28,16 @@ class RegulatoryReportsCreateParams(TypedDict, total=False):
 
     template: Required[str]
 
-    report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR"] | str
+    report_type: (
+        Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"] | str
+    )
     """Required unless a template is given; the template's report_type is used otherwise."""
 
     jurisdiction: str
     """Required unless a template is given."""
 
     transactions: Sequence[str] | None
-    """Transactions to attach; defaults to the case's linked transactions."""
+    """Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required."""
 
     rentity_id: str | None
 

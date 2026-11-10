@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import cast
+from typing import Literal, cast
 
 import httpx
 
@@ -18,6 +18,7 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.billing.retrieve_balance_response import BillingRetrieveBalanceResponse
 from didit.types.billing.top_up_response import BillingTopUpResponse
+from didit.types.components.billing_top_up_charge import BillingTopUpCharge
 
 __all__ = [
     "Billing",
@@ -85,38 +86,61 @@ class Billing(SyncAPIResource):
         amount_in_dollars: float,
         success_url: str | NotGiven = NOT_GIVEN,
         cancel_url: str | NotGiven = NOT_GIVEN,
+        payment_method: Literal["checkout", "saved_card"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BillingTopUpResponse:
+    ) -> BillingTopUpResponse | BillingTopUpCharge:
         """Top up credits.
 
-        Add credits via a hosted Stripe Checkout session (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.
+        Add credits to the organization's balance (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up.
+
+        Two payment methods, chosen with `payment_method`:
+
+        - `checkout` (default): creates a hosted Stripe Checkout session. Redirect the customer to the returned `checkout_session_url` (`200`).
+        - `saved_card`: charges the organization's saved primary card off-session, now, at the normal self-serve amounts. Send an `Idempotency-Key` header (required for this method). It answers `201` when the card was charged, and `202` when a request with the same key is still being processed.
+
+        **Agent top-ups (`saved_card`).** One switch controls them: "Connected AI agents can top up with your saved card". It is off by default and only a person signed in to the console can turn it on (Billing > Payment methods), never an API key or an agent. While it is on, agents and API keys can top up with the primary saved card. When it is off, the request returns `403` `agent_top_up_not_enabled` with a link a person can use to top up in the console.
+
+        The balance is credited once the payment is confirmed, usually within seconds, and tax is added to the amount charged when it applies, so `total` can be higher than `credit_amount`. Read `GET /v3/billing/balance/` to confirm.
+
+        **Idempotency.** Retrying with the same `Idempotency-Key` and the same amount returns the same top-up and never charges twice. The same key with another amount returns `409` `idempotency_key_conflict`.
+
+        Every error of a `saved_card` request carries a `code` and a `detail`, and most also a `next_step` (read it only when it is present). When the step needs a person (for example `authentication_required`, where the card's bank asks the cardholder to approve and nothing is charged), `next_step.url` is a signed link to the console that opens the Top up dialog with the amount filled in and says which agent asked; nothing is charged until the person pays. Each top-up is marked with the agent's name in billing history and in the ordinary receipt email.
 
         ``POST /v3/billing/top-up/``
 
         Args:
-          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address.
-          success_url: URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
-          cancel_url: URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
+          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically, at checkout or to the saved card charge, based on the customer's billing address.
+          success_url: Checkout only. URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
+          cancel_url: Checkout only. URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
+          payment_method: How the top-up is paid. `checkout` (default) creates a hosted Checkout session and answers `200`. `saved_card` charges the organization's saved primary card off-session, requires the `Idempotency-Key` header and "Connected AI agents can top up with your saved card" to be on, and answers `201` or `202`. `success_url` and `cancel_url` apply to `checkout` only.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BillingTopUpResponse",
+            "BillingTopUpResponse | BillingTopUpCharge",
             self._client.request(
                 "post",
                 "/v3/billing/top-up/",
-                cast_to=BillingTopUpResponse,
+                cast_to={
+                    200: BillingTopUpResponse,
+                    201: BillingTopUpCharge,
+                    202: BillingTopUpCharge,
+                },
                 auth="api_key",
                 body={
                     "amount_in_dollars": amount_in_dollars,
                     "success_url": success_url,
                     "cancel_url": cancel_url,
+                    "payment_method": payment_method,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -181,38 +205,61 @@ class AsyncBilling(AsyncAPIResource):
         amount_in_dollars: float,
         success_url: str | NotGiven = NOT_GIVEN,
         cancel_url: str | NotGiven = NOT_GIVEN,
+        payment_method: Literal["checkout", "saved_card"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> BillingTopUpResponse:
+    ) -> BillingTopUpResponse | BillingTopUpCharge:
         """Top up credits.
 
-        Add credits via a hosted Stripe Checkout session (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.
+        Add credits to the organization's balance (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up.
+
+        Two payment methods, chosen with `payment_method`:
+
+        - `checkout` (default): creates a hosted Stripe Checkout session. Redirect the customer to the returned `checkout_session_url` (`200`).
+        - `saved_card`: charges the organization's saved primary card off-session, now, at the normal self-serve amounts. Send an `Idempotency-Key` header (required for this method). It answers `201` when the card was charged, and `202` when a request with the same key is still being processed.
+
+        **Agent top-ups (`saved_card`).** One switch controls them: "Connected AI agents can top up with your saved card". It is off by default and only a person signed in to the console can turn it on (Billing > Payment methods), never an API key or an agent. While it is on, agents and API keys can top up with the primary saved card. When it is off, the request returns `403` `agent_top_up_not_enabled` with a link a person can use to top up in the console.
+
+        The balance is credited once the payment is confirmed, usually within seconds, and tax is added to the amount charged when it applies, so `total` can be higher than `credit_amount`. Read `GET /v3/billing/balance/` to confirm.
+
+        **Idempotency.** Retrying with the same `Idempotency-Key` and the same amount returns the same top-up and never charges twice. The same key with another amount returns `409` `idempotency_key_conflict`.
+
+        Every error of a `saved_card` request carries a `code` and a `detail`, and most also a `next_step` (read it only when it is present). When the step needs a person (for example `authentication_required`, where the card's bank asks the cardholder to approve and nothing is charged), `next_step.url` is a signed link to the console that opens the Top up dialog with the amount filled in and says which agent asked; nothing is charged until the person pays. Each top-up is marked with the agent's name in billing history and in the ordinary receipt email.
 
         ``POST /v3/billing/top-up/``
 
         Args:
-          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address.
-          success_url: URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
-          cancel_url: URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
+          amount_in_dollars: Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically, at checkout or to the saved card charge, based on the customer's billing address.
+          success_url: Checkout only. URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID.
+          cancel_url: Checkout only. URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable.
+          payment_method: How the top-up is paid. `checkout` (default) creates a hosted Checkout session and answers `200`. `saved_card` charges the organization's saved primary card off-session, requires the `Idempotency-Key` header and "Connected AI agents can top up with your saved card" to be on, and answers `201` or `202`. `success_url` and `cancel_url` apply to `checkout` only.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "BillingTopUpResponse",
+            "BillingTopUpResponse | BillingTopUpCharge",
             await self._client.request(
                 "post",
                 "/v3/billing/top-up/",
-                cast_to=BillingTopUpResponse,
+                cast_to={
+                    200: BillingTopUpResponse,
+                    201: BillingTopUpCharge,
+                    202: BillingTopUpCharge,
+                },
                 auth="api_key",
                 body={
                     "amount_in_dollars": amount_in_dollars,
                     "success_url": success_url,
                     "cancel_url": cancel_url,
+                    "payment_method": payment_method,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

@@ -22770,6 +22770,14 @@
                       "type": "string",
                       "nullable": true,
                       "description": "Trigger threshold in USD. Auto-refill fires when `balance` falls below this value. `null` when auto-refill is disabled or unset."
+                    },
+                    "agent_top_up": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/AgentTopUpSettings"
+                        }
+                      ],
+                      "description": "Whether agents can top up this organization with its saved card. Off by default; a person signed in to the console turns on \"Connected AI agents can top up with your saved card\" in Billing > Payment methods."
                     }
                   }
                 },
@@ -22779,7 +22787,10 @@
                       "balance": "1234.5600",
                       "auto_refill_enabled": true,
                       "auto_refill_amount": "500.00",
-                      "auto_refill_threshold": "100.00"
+                      "auto_refill_threshold": "100.00",
+                      "agent_top_up": {
+                        "enabled": true
+                      }
                     }
                   },
                   "Low balance, manual top-up only": {
@@ -22787,7 +22798,10 @@
                       "balance": "12.0000",
                       "auto_refill_enabled": false,
                       "auto_refill_amount": null,
-                      "auto_refill_threshold": null
+                      "auto_refill_threshold": null,
+                      "agent_top_up": {
+                        "enabled": false
+                      }
                     }
                   }
                 }
@@ -22833,7 +22847,7 @@
     "/v3/billing/top-up/": {
       "post": {
         "summary": "Top up credits",
-        "description": "Add credits via a hosted Stripe Checkout session (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up. Redirect the customer to the returned `checkout_session_url`.",
+        "description": "Add credits to the organization's balance (**\\$50 to \\$20,000** per top-up). Top-ups are available on the Free, Growth and Scale plans, added at face value with no discount or bonus, and last 12 months; Enterprise annual contracts cannot top up.\n\nTwo payment methods, chosen with `payment_method`:\n\n- `checkout` (default): creates a hosted Stripe Checkout session. Redirect the customer to the returned `checkout_session_url` (`200`).\n- `saved_card`: charges the organization's saved primary card off-session, now, at the normal self-serve amounts. Send an `Idempotency-Key` header (required for this method). It answers `201` when the card was charged, and `202` when a request with the same key is still being processed.\n\n**Agent top-ups (`saved_card`).** One switch controls them: \"Connected AI agents can top up with your saved card\". It is off by default and only a person signed in to the console can turn it on (Billing > Payment methods), never an API key or an agent. While it is on, agents and API keys can top up with the primary saved card. When it is off, the request returns `403` `agent_top_up_not_enabled` with a link a person can use to top up in the console.\n\nThe balance is credited once the payment is confirmed, usually within seconds, and tax is added to the amount charged when it applies, so `total` can be higher than `credit_amount`. Read `GET /v3/billing/balance/` to confirm.\n\n**Idempotency.** Retrying with the same `Idempotency-Key` and the same amount returns the same top-up and never charges twice. The same key with another amount returns `409` `idempotency_key_conflict`.\n\nEvery error of a `saved_card` request carries a `code` and a `detail`, and most also a `next_step` (read it only when it is present). When the step needs a person (for example `authentication_required`, where the card's bank asks the cardholder to approve and nothing is charged), `next_step.url` is a signed link to the console that opens the Top up dialog with the amount filled in and says which agent asked; nothing is charged until the person pays. Each top-up is marked with the agent's name in billing history and in the ordinary receipt email.",
         "operationId": "billing_top_up",
         "x-didit-sdk": {
           "resource": "billing",
@@ -22858,17 +22872,26 @@
                     "type": "number",
                     "minimum": 50,
                     "maximum": 20000,
-                    "description": "Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically at checkout based on the customer's billing address."
+                    "description": "Amount to charge, in USD. **Must be from 50 to 20,000.** The balance receives the same amount, with no discount or bonus. Tax is added automatically, at checkout or to the saved card charge, based on the customer's billing address."
                   },
                   "success_url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID."
+                    "description": "Checkout only. URL the hosted checkout redirects the customer to after a successful payment. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable. Append the literal placeholder `{CHECKOUT_SESSION_ID}` if you want the hosted checkout to substitute the session ID."
                   },
                   "cancel_url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable."
+                    "description": "Checkout only. URL the hosted checkout redirects the customer to when they abort or close the Checkout window. Currently defaults to `https://console.didit.me`. Pass a working URL explicitly; the default host is unavailable."
+                  },
+                  "payment_method": {
+                    "type": "string",
+                    "enum": [
+                      "checkout",
+                      "saved_card"
+                    ],
+                    "default": "checkout",
+                    "description": "How the top-up is paid. `checkout` (default) creates a hosted Checkout session and answers `200`. `saved_card` charges the organization's saved primary card off-session, requires the `Idempotency-Key` header and \"Connected AI agents can top up with your saved card\" to be on, and answers `201` or `202`. `success_url` and `cancel_url` apply to `checkout` only."
                   }
                 }
               },
@@ -22884,6 +22907,12 @@
                     "success_url": "https://yourapp.com/billing/top-up/success",
                     "cancel_url": "https://yourapp.com/billing/top-up/cancel"
                   }
+                },
+                "Saved card (agent)": {
+                  "value": {
+                    "amount_in_dollars": 100,
+                    "payment_method": "saved_card"
+                  }
                 }
               }
             }
@@ -22894,6 +22923,11 @@
             "lang": "curl",
             "label": "curl",
             "source": "curl -X POST 'https://verification.didit.me/v3/billing/top-up/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"amount_in_dollars\": 500,\n    \"success_url\": \"https://yourapp.com/billing/success\",\n    \"cancel_url\": \"https://yourapp.com/billing/cancel\"\n  }'"
+          },
+          {
+            "lang": "curl",
+            "label": "curl (saved card)",
+            "source": "curl -X POST 'https://verification.didit.me/v3/billing/top-up/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Idempotency-Key: 6f1c2a9e-0b7d-4c55-8a2e-3d9f1e4b7a10' \\\n  -d '{\n    \"amount_in_dollars\": 100,\n    \"payment_method\": \"saved_card\"\n  }'"
           },
           {
             "lang": "python",
@@ -22965,8 +22999,80 @@
               }
             }
           },
+          "201": {
+            "description": "Saved card top-up (`payment_method` `saved_card`): the card was charged. The balance is credited once the payment is confirmed, usually within seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingTopUpCharge"
+                },
+                "examples": {
+                  "Paid": {
+                    "value": {
+                      "outcome": "paid",
+                      "top_up": {
+                        "id": "6d3c1a0e-5f6b-4b8e-9b51-2f0f6d1d2a77",
+                        "status": "paid",
+                        "credit_amount": "100.00",
+                        "subtotal": "100.00",
+                        "tax": "0.00",
+                        "total": "100.00",
+                        "currency": "usd",
+                        "card": {
+                          "brand": "visa",
+                          "last4": "4242"
+                        },
+                        "agent": {
+                          "type": "api_key",
+                          "id": "3b1f0c52-7d1e-4a1c-9d0a-5e8f2a6b9c11",
+                          "label": "Production key"
+                        },
+                        "created_at": "2026-11-09T12:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Saved card top-up: a request with the same `Idempotency-Key` is still being processed. Retry with the same key; nothing is charged twice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingTopUpCharge"
+                },
+                "examples": {
+                  "Still processing": {
+                    "value": {
+                      "outcome": "processing",
+                      "top_up": {
+                        "id": "6d3c1a0e-5f6b-4b8e-9b51-2f0f6d1d2a77",
+                        "status": "open",
+                        "credit_amount": "100.00",
+                        "subtotal": "100.00",
+                        "tax": "0.00",
+                        "total": "100.00",
+                        "currency": "usd",
+                        "card": {
+                          "brand": "visa",
+                          "last4": "4242"
+                        },
+                        "agent": {
+                          "type": "api_key",
+                          "id": "3b1f0c52-7d1e-4a1c-9d0a-5e8f2a6b9c11",
+                          "label": "Production key"
+                        },
+                        "created_at": "2026-11-09T12:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "400": {
-            "description": "Invalid payload: the amount is missing, not a number, below the \\$50 minimum or above the \\$20,000 maximum, or the organization is on an Enterprise annual contract. The error body is a JSON array.",
+            "description": "Invalid payload: the amount is missing, not a number, below the \\$50 minimum or above the \\$20,000 maximum, or the organization is on an Enterprise annual contract (these field errors are a JSON array). A `saved_card` request can also return an object with a `code`: `idempotency_key_required` (no `Idempotency-Key` header) or `billing_address_required` (tax cannot be calculated). An unknown `payment_method` is refused with a field error.",
             "content": {
               "application/json": {
                 "examples": {
@@ -22994,19 +23100,196 @@
                     "value": [
                       "You have an annual plan. Contact your account manager to top up."
                     ]
+                  },
+                  "Idempotency key required": {
+                    "value": {
+                      "code": "idempotency_key_required",
+                      "detail": "The Idempotency-Key header is required when payment_method is saved_card.",
+                      "next_step": {
+                        "action": "retry_with_idempotency_key",
+                        "description": "Retry with an Idempotency-Key header of 1 to 255 characters."
+                      }
+                    }
+                  },
+                  "Billing address required": {
+                    "value": {
+                      "code": "billing_address_required",
+                      "detail": "Tax cannot be calculated without a billing address.",
+                      "next_step": {
+                        "action": "add_billing_address",
+                        "url": "https://business.didit.me/console/ORG_ID/settings/billing",
+                        "description": "Ask an Owner or Admin to add the organization's billing address in the console."
+                      }
+                    }
+                  },
+                  "Unknown payment method": {
+                    "value": {
+                      "payment_method": [
+                        "Must be \"checkout\" or \"saved_card\"."
+                      ]
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/AgentTopUpError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Saved card top-up: nothing was charged. `authentication_required` means the card's bank asks the cardholder to approve the payment (SCA, 3-D Secure), so a person must top up in the console from `next_step.url`. `card_declined` means the card was declined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTopUpError"
+                },
+                "examples": {
+                  "Authentication required": {
+                    "value": {
+                      "code": "authentication_required",
+                      "detail": "The card's bank needs the cardholder to approve this payment. Nothing was charged.",
+                      "next_step": {
+                        "action": "top_up_in_console",
+                        "url": "https://business.didit.me/console/<org>/settings/billing?top_up_amount=100&top_up_request=<signed token>",
+                        "description": "A person tops up in the console from this link, which opens the Top up dialog with the amount filled in. Nothing is charged until they pay."
+                      },
+                      "top_up": {
+                        "id": "6d3c1a0e-5f6b-4b8e-9b51-2f0f6d1d2a77",
+                        "status": "declined",
+                        "credit_amount": "100.00",
+                        "subtotal": "100.00",
+                        "tax": "0.00",
+                        "total": "100.00",
+                        "currency": "usd",
+                        "card": {
+                          "brand": "visa",
+                          "last4": "4242"
+                        },
+                        "agent": {
+                          "type": "api_key",
+                          "id": "3b1f0c52-7d1e-4a1c-9d0a-5e8f2a6b9c11",
+                          "label": "Production key"
+                        },
+                        "created_at": "2026-11-09T12:00:00Z"
+                      }
+                    }
+                  },
+                  "Card declined": {
+                    "value": {
+                      "code": "card_declined",
+                      "detail": "The card was declined. Nothing was charged.",
+                      "decline_code": "insufficient_funds",
+                      "next_step": {
+                        "action": "top_up_in_console",
+                        "url": "https://business.didit.me/console/<org>/settings/billing?top_up_amount=100&top_up_request=<signed token>",
+                        "description": "A person tops up in the console from this link, which opens the Top up dialog with the amount filled in. Nothing is charged until they pay."
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "403": {
-            "description": "Missing, invalid, or revoked API key, or the key cannot create top-up sessions for this organization. A missing key returns `403`; a wrong, revoked or expired key returns `401`.",
+            "description": "Missing, invalid, or revoked API key, or the key cannot create top-up sessions for this organization. A missing key returns `403`; a wrong, revoked or expired key returns `401`. A `saved_card` request can also return an object with the `code` `agent_top_up_not_enabled`: the switch \"Connected AI agents can top up with your saved card\" is off.",
             "content": {
               "application/json": {
                 "examples": {
                   "Forbidden": {
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Agent top-ups not enabled": {
+                    "value": {
+                      "code": "agent_top_up_not_enabled",
+                      "detail": "Agent top-ups are not enabled for this organization.",
+                      "next_step": {
+                        "action": "top_up_in_console",
+                        "url": "https://business.didit.me/console/<org>/settings/billing?top_up_amount=100&top_up_request=<signed token>",
+                        "description": "A person tops up in the console, or turns on \"Connected AI agents can top up with your saved card\" in Billing > Payment methods."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "detail": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/AgentTopUpError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Saved card top-up conflict: `payment_method_required` (no saved primary card), `top_up_in_progress` (another top-up of the organization is still being paid), `idempotency_key_conflict` (the key was used with another amount, or by another agent) or `top_up_not_allowed` (annual Enterprise contract). `top_up_not_completed`: an earlier request with this `Idempotency-Key` failed before anything could be charged; start a new top-up with a new key. `billing_customer_missing`: the organization has no billing account yet; a person saves a card in the console.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTopUpError"
+                },
+                "examples": {
+                  "Payment method required": {
+                    "value": {
+                      "code": "payment_method_required",
+                      "detail": "The organization has no saved primary card.",
+                      "next_step": {
+                        "action": "add_card",
+                        "url": "https://business.didit.me/console/ORG_ID/settings/billing/payment-methods",
+                        "description": "A person can add a card in the console under Billing > Payment methods."
+                      }
+                    }
+                  },
+                  "Top-up in progress": {
+                    "value": {
+                      "code": "top_up_in_progress",
+                      "detail": "Another top-up of this organization is still being paid.",
+                      "next_step": {
+                        "action": "retry_later",
+                        "description": "Wait a few seconds and retry with the same Idempotency-Key."
+                      }
+                    }
+                  },
+                  "Idempotency key conflict": {
+                    "value": {
+                      "code": "idempotency_key_conflict",
+                      "detail": "This Idempotency-Key was already used with another amount."
+                    }
+                  },
+                  "Top-up not allowed": {
+                    "value": {
+                      "code": "top_up_not_allowed",
+                      "detail": "Organizations on an annual Enterprise contract cannot top up."
+                    }
+                  },
+                  "Top-up not completed": {
+                    "value": {
+                      "code": "top_up_not_completed",
+                      "detail": "This top-up did not go through and you were not charged. Pay again to top up.",
+                      "next_step": {
+                        "action": "retry_with_new_idempotency_key",
+                        "url": null,
+                        "description": "Nothing was charged. Start a new top-up with a new Idempotency-Key."
+                      }
                     }
                   }
                 }
@@ -23026,11 +23309,46 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "Saved card top-up: the payment provider failed. Retry with the same `Idempotency-Key`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTopUpError"
+                },
+                "examples": {
+                  "Payment provider error": {
+                    "value": {
+                      "code": "payment_provider_error",
+                      "detail": "The payment provider could not complete the request.",
+                      "next_step": {
+                        "action": "retry_later",
+                        "description": "Retry with the same Idempotency-Key."
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
           {
             "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safety key, 1 to 255 characters. **Required when `payment_method` is `saved_card`** (a request without it returns `400` `idempotency_key_required`); ignored for `checkout`. Reusing the same key with the same amount returns the original top-up and never charges twice. Reusing the key with another amount returns `409` `idempotency_key_conflict`.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
           }
         ]
       }
@@ -44794,7 +45112,9 @@
                       "UTR",
                       "IFT",
                       "CBR",
-                      "TFR"
+                      "TFR",
+                      "FFR",
+                      "PNMR"
                     ]
                   },
                   "field_config": {
@@ -45076,7 +45396,9 @@
                       "UTR",
                       "IFT",
                       "CBR",
-                      "TFR"
+                      "TFR",
+                      "FFR",
+                      "PNMR"
                     ]
                   },
                   "field_config": {
@@ -45384,7 +45706,7 @@
       },
       "post": {
         "summary": "Create report from case",
-        "description": "Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF.",
+        "description": "Create a draft FIU report for the case: DRAFT status, auto-populated from the optional template plus the case's subject, linked transactions, and narrative. Validate then finalize to produce the goAML XML and PDF. FFR (Confirmed Name Match Report, formerly the Funds Freeze Report) and PNMR (Partial Name Match Report) are activity reports: they report the case's subject, not transactions, so a draft links no transactions by default and the narrative, reason and action are written from the sanctions matches on the case's AML screenings.",
         "operationId": "create_case_regulatory_report",
         "x-didit-sdk": {
           "resource": "cases.regulatory_reports",
@@ -45446,7 +45768,9 @@
                       "UTR",
                       "IFT",
                       "CBR",
-                      "TFR"
+                      "TFR",
+                      "FFR",
+                      "PNMR"
                     ],
                     "description": "Required unless a template is given; the template's report_type is used otherwise."
                   },
@@ -45469,7 +45793,7 @@
                       "format": "uuid"
                     },
                     "nullable": true,
-                    "description": "Transactions to attach; defaults to the case's linked transactions."
+                    "description": "Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required."
                   },
                   "rentity_id": {
                     "type": "string",
@@ -45725,7 +46049,9 @@
                 "UTR",
                 "IFT",
                 "CBR",
-                "TFR"
+                "TFR",
+                "FFR",
+                "PNMR"
               ]
             },
             "description": "Filter by report type."
@@ -45865,7 +46191,9 @@
                       "UTR",
                       "IFT",
                       "CBR",
-                      "TFR"
+                      "TFR",
+                      "FFR",
+                      "PNMR"
                     ],
                     "description": "Required unless a template is given; the template's report_type is used otherwise."
                   },
@@ -45882,7 +46210,7 @@
                       "format": "uuid"
                     },
                     "nullable": true,
-                    "description": "Transactions to attach; defaults to the case's linked transactions."
+                    "description": "Transactions to attach; defaults to the case's linked transactions. For FFR and PNMR reports it defaults to none and none are required."
                   },
                   "rentity_id": {
                     "type": "string",
@@ -46620,7 +46948,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/validate/": {
       "post": {
         "summary": "Validate report",
-        "description": "Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).",
+        "description": "Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. For jurisdiction AE, once those pass, the report's goAML XML is also checked against the UAE FIU's goAML XML schema and each problem is returned as a field and a message; finalize refuses a report that fails. FFR and PNMR reports need no attached transaction: they require the case to have a subject, otherwise validation_errors contains an error with field `subject`. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).",
         "operationId": "validate_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -46757,7 +47085,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/finalize/": {
       "post": {
         "summary": "Finalize report",
-        "description": "Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed.",
+        "description": "Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed. FFR and PNMR reports do not move alerts.",
         "operationId": "finalize_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -98186,7 +98514,9 @@
               "UTR",
               "IFT",
               "CBR",
-              "TFR"
+              "TFR",
+              "FFR",
+              "PNMR"
             ]
           },
           "report_type_display": {
@@ -98231,7 +98561,9 @@
               "UTR",
               "IFT",
               "CBR",
-              "TFR"
+              "TFR",
+              "FFR",
+              "PNMR"
             ]
           },
           "report_type_display": {
@@ -98239,7 +98571,7 @@
           },
           "report_code": {
             "type": "string",
-            "description": "goAML report code derived from report_type, e.g. STR, CTR, BCR."
+            "description": "goAML report code derived from report_type and jurisdiction, e.g. STR, CTR, BCR, FFR, PNMR. For jurisdiction AE, the UAE FIU's codes: STR, SAR, CNMRA for FFR and PNMRA for PNMR."
           },
           "report_number": {
             "type": "string",
@@ -125699,7 +126031,9 @@
               "UTR",
               "IFT",
               "CBR",
-              "TFR"
+              "TFR",
+              "FFR",
+              "PNMR"
             ],
             "description": "Regulatory report type."
           },
@@ -127644,6 +127978,236 @@
           },
           "message": {
             "$ref": "#/components/schemas/TravelRuleTransferRow"
+          }
+        }
+      },
+      "AgentIdentity": {
+        "type": "object",
+        "description": "The agent that made a top-up, derived by Didit from the credential used and never from the request body.",
+        "required": [
+          "type",
+          "id",
+          "label"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "mcp_connection",
+              "member_token"
+            ],
+            "description": "`api_key` is a full-access API key, `mcp_connection` is an MCP client signed in with Log in with Didit, and `member_token` is a member's programmatic token (used by the local MCP server)."
+          },
+          "id": {
+            "type": "string",
+            "description": "For `api_key`, the key's uuid, or `primary:<application uuid>` for an application's primary secret. For `mcp_connection`, the grant id. For `member_token`, the member's email."
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable name shown in billing history, for example the key's label (`Primary` for the primary secret) or the member's email."
+          }
+        }
+      },
+      "AgentTopUp": {
+        "type": "object",
+        "description": "A top-up made with the organization's saved card.",
+        "required": [
+          "id",
+          "status",
+          "credit_amount",
+          "subtotal",
+          "tax",
+          "total",
+          "currency",
+          "card",
+          "agent",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Top-up identifier."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "paid",
+              "open",
+              "declined"
+            ],
+            "description": "`paid`: the card was charged. `open`: the payment is still being confirmed. `declined`: nothing was charged."
+          },
+          "credit_amount": {
+            "type": "string",
+            "description": "USD added to the balance once the payment is confirmed, as a decimal string."
+          },
+          "subtotal": {
+            "type": "string",
+            "description": "USD amount before tax, as a decimal string. `null` until the invoice exists.",
+            "nullable": true
+          },
+          "tax": {
+            "type": "string",
+            "description": "USD tax added when it applies, as a decimal string. `0.00` when no tax applies.",
+            "nullable": true
+          },
+          "total": {
+            "type": "string",
+            "description": "USD charged to the card, tax included, as a decimal string.",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "Lowercase ISO 4217 currency code, `usd`.",
+            "nullable": true
+          },
+          "card": {
+            "type": "object",
+            "description": "The saved card that was charged.",
+            "required": [
+              "brand",
+              "last4"
+            ],
+            "properties": {
+              "brand": {
+                "type": "string",
+                "description": "Card brand, for example `visa`."
+              },
+              "last4": {
+                "type": "string",
+                "description": "Last four digits of the card number."
+              }
+            },
+            "nullable": true
+          },
+          "agent": {
+            "$ref": "#/components/schemas/AgentIdentity"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the top-up was requested (UTC, ISO 8601)."
+          }
+        }
+      },
+      "BillingTopUpCharge": {
+        "type": "object",
+        "description": "Result of a top-up charged to the organization's saved card.",
+        "required": [
+          "outcome",
+          "top_up"
+        ],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "paid",
+              "processing"
+            ],
+            "description": "`paid`: the card was charged and the credit follows within seconds. `processing`: a request with the same `Idempotency-Key` is still being processed; retry with the same key."
+          },
+          "top_up": {
+            "$ref": "#/components/schemas/AgentTopUp"
+          },
+          "detail": {
+            "type": "string",
+            "description": "On a 202: why the top-up is still being processed. Retry with the same `Idempotency-Key`."
+          }
+        }
+      },
+      "AgentTopUpNextStep": {
+        "type": "object",
+        "description": "What to do next. Some steps need a person: `url` is a console page where a person finishes the action.",
+        "required": [
+          "action",
+          "description"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "retry_with_idempotency_key",
+              "retry_with_new_idempotency_key",
+              "top_up_in_console",
+              "add_card",
+              "add_billing_address",
+              "retry_later"
+            ],
+            "description": "Machine-readable next step."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Console page where a person completes the step. For `top_up_in_console` it is a signed top-up link that opens the Top up dialog with the amount filled in and says which agent asked. `null` for `retry_with_idempotency_key`, `retry_with_new_idempotency_key` and `retry_later`, which need no person."
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain-language instruction an agent can relay to the person."
+          }
+        }
+      },
+      "AgentTopUpError": {
+        "type": "object",
+        "description": "Error body of a saved card top-up.",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "idempotency_key_required",
+              "idempotency_key_conflict",
+              "agent_top_up_not_enabled",
+              "payment_method_required",
+              "authentication_required",
+              "card_declined",
+              "top_up_in_progress",
+              "top_up_not_allowed",
+              "billing_address_required",
+              "payment_provider_error",
+              "top_up_not_completed",
+              "billing_customer_missing"
+            ],
+            "description": "Stable error code."
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation."
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/AgentTopUpNextStep"
+          },
+          "top_up": {
+            "$ref": "#/components/schemas/AgentTopUp"
+          },
+          "decline_code": {
+            "type": "string",
+            "description": "The card issuer's decline reason, when it gave one. Only on `card_declined`."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "declined"
+            ],
+            "description": "`declined` on a 402: the top-up was attempted and nothing was charged."
+          }
+        }
+      },
+      "AgentTopUpSettings": {
+        "type": "object",
+        "description": "Whether agents can top up this organization with its saved card. One switch, \"Connected AI agents can top up with your saved card\", off by default.",
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "`true` once a person signed in to the console turned on \"Connected AI agents can top up with your saved card\" in Billing > Payment methods. Off by default."
           }
         }
       }
