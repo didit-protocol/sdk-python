@@ -370,11 +370,18 @@
             }
           },
           "403": {
-            "description": "The account was recovered and must set up a new sign-in method first. No tokens are issued; a link to do that was emailed to the account's address.",
+            "description": "The account was recovered and must set up a new sign-in method first. No tokens are issued; a link to do that was emailed to the account's address. An account whose organization enforces SSO gets `403` with `error: sso_required`, `organization_name`, `organization_slug` and `sso_url`, with no tokens and no new organization.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SsoRequiredError"
+                    }
+                  ]
                 },
                 "examples": {
                   "RecoverySetupRequired": {
@@ -384,6 +391,16 @@
                       "setup_link_sent": true,
                       "message": "You recovered your account. Open the link we emailed you to set up a new sign-in method.",
                       "code": "recovery_setup_required"
+                    }
+                  },
+                  "SSORequired": {
+                    "summary": "The account belongs to an organization that requires SSO",
+                    "value": {
+                      "error": "sso_required",
+                      "message": "Your organization 'Acme Corp' requires SSO login.",
+                      "organization_name": "Acme Corp",
+                      "organization_slug": "acme-corp",
+                      "sso_url": "/sso/acme-corp"
                     }
                   }
                 }
@@ -560,18 +577,6 @@
                     "value": {
                       "detail": "Please verify your email address before logging in."
                     }
-                  },
-                  "SSORequired": {
-                    "summary": "The account belongs to an organization that requires SSO",
-                    "value": {
-                      "detail": {
-                        "error": "sso_required",
-                        "message": "Your organization 'Acme Corp' requires SSO login.",
-                        "organization_name": "Acme Corp",
-                        "organization_slug": "acme-corp",
-                        "sso_url": "/sso/acme-corp"
-                      }
-                    }
                   }
                 }
               }
@@ -582,7 +587,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RecoverySetupRequiredError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SsoRequiredError"
+                    }
+                  ]
                 },
                 "examples": {
                   "RecoverySetupRequired": {
@@ -592,6 +604,16 @@
                       "setup_link_sent": true,
                       "message": "You recovered your account. Open the link we emailed you to set up a new sign-in method.",
                       "code": "recovery_setup_required"
+                    }
+                  },
+                  "SSORequired": {
+                    "summary": "The account belongs to an organization that requires SSO",
+                    "value": {
+                      "error": "sso_required",
+                      "message": "Your organization 'Acme Corp' requires SSO login.",
+                      "organization_name": "Acme Corp",
+                      "organization_slug": "acme-corp",
+                      "sso_url": "/sso/acme-corp"
                     }
                   }
                 }
@@ -2745,6 +2767,43 @@
             "format": "date-time",
             "description": "When the hold ends (ISO 8601). Retry the request after this time.",
             "example": "2026-11-04T10:15:00+00:00"
+          }
+        }
+      },
+      "SsoRequiredError": {
+        "type": "object",
+        "description": "The account belongs to an organization that requires SSO sign-in. No tokens, API keys or organizations are issued; sign in through the organization's SSO in a browser instead.",
+        "required": [
+          "error",
+          "message",
+          "organization_name",
+          "organization_slug",
+          "sso_url"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "sso_required"
+            ],
+            "example": "sso_required"
+          },
+          "message": {
+            "type": "string",
+            "example": "Your organization 'Acme Corp' requires SSO login."
+          },
+          "organization_name": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "organization_slug": {
+            "type": "string",
+            "example": "acme-corp"
+          },
+          "sso_url": {
+            "type": "string",
+            "description": "Path of the organization's SSO sign-in page, relative to the console.",
+            "example": "/sso/acme-corp"
           }
         }
       },
