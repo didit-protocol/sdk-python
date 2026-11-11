@@ -1915,6 +1915,27 @@ def test_agent_consent_debug_log_never_records_a_raw_request_id(
     assert result is not None
 
 
+def test_agent_consent_content_type_echo_stays_out_of_a_malformed_2xx_message(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200, content=b"not json", headers={"content-type": f"text/{credential}"}
+        ),
+    )
+    with pytest.raises(APIResponseValidationError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in str(info.value)
+
+
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
     credential = 'cred"ential\\string-0123456789'
 

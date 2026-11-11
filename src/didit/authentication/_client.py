@@ -482,11 +482,12 @@ class _AuthenticationBase:
         try:
             return response.json()
         except ValueError as exc:
+            kept = _error_response(call, response)
             raise APIResponseValidationError(
-                response=_error_response(call, response),
+                response=kept,
                 message=(
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
-                    f"got {response.headers.get('content-type', 'no content type')}."
+                    f"got {kept.headers.get('content-type', 'no content type')}."
                 ),
             ) from exc
 
