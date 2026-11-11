@@ -1519,6 +1519,41 @@ def test_agent_consent_echoed_secrets_are_redacted(
     assert "SYNTHETIC_SIGNATURE" not in message
 
 
+def test_agent_consent_redacts_every_string_of_the_assertion(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    assertion = {
+        **AGENT_ASSERTION,
+        "id": "SYNTHETIC_TOP_LEVEL_ID",
+        "rawId": "SYNTHETIC_TOP_LEVEL_RAW_ID",
+        "clientExtensionResults": {
+            "nested": {"value": "SYNTHETIC_EXTENSION"},
+            "list": ["SYNTHETIC_LISTED"],
+        },
+    }
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {
+            "detail": "bad SYNTHETIC_TOP_LEVEL_ID SYNTHETIC_TOP_LEVEL_RAW_ID SYNTHETIC_EXTENSION SYNTHETIC_LISTED"
+        },
+    )
+    with pytest.raises(BadRequestError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=assertion
+        )
+    message = str(info.value)
+    for leaked in (
+        "SYNTHETIC_TOP_LEVEL_ID",
+        "SYNTHETIC_TOP_LEVEL_RAW_ID",
+        "SYNTHETIC_EXTENSION",
+        "SYNTHETIC_LISTED",
+    ):
+        assert leaked not in message
+        assert leaked not in repr(info.value.body)
+
+
 def test_agent_consent_transport_errors_keep_no_body(clock: FakeClock, key: SigningKey) -> None:
     def stall(_: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("stalled")

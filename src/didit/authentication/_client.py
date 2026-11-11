@@ -108,6 +108,38 @@ class _Call:
     errors and responses never keep it."""
 
 
+def _redacted(value: object, secrets: tuple[str, ...]) -> object:
+    """``value`` with every secret removed from its strings, at any depth."""
+    if isinstance(value, str):
+        for secret in secrets:
+            if secret:
+                value = value.replace(secret, "[redacted]")
+        return value
+    if isinstance(value, Mapping):
+        return {
+            key: _redacted(item, secrets)
+            for key, item in cast("Mapping[str, object]", value).items()
+        }
+    if isinstance(value, list):
+        return [_redacted(item, secrets) for item in cast("list[object]", value)]
+    return value
+
+
+def _string_values(value: object) -> list[str]:
+    """Every non-empty string in a nested JSON value, so none of it can leak into an error."""
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, Mapping):
+        return [
+            text
+            for item in cast("Mapping[str, object]", value).values()
+            for text in _string_values(item)
+        ]
+    if isinstance(value, (list, tuple)):
+        return [text for item in cast("Sequence[object]", value) for text in _string_values(item)]
+    return []
+
+
 def _required_text(value: object, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} is empty.")
@@ -280,13 +312,7 @@ class _AuthenticationBase:
                 else dict(assertion)
             )
             body["assertion"] = data
-            response = data.get("response")
-            if isinstance(response, Mapping):
-                secrets += [
-                    value
-                    for value in cast("Mapping[str, object]", response).values()
-                    if isinstance(value, str) and value
-                ]
+            secrets += _string_values(data)
         if scopes is not None:
             if isinstance(scopes, str):
                 raise TypeError("scopes must be a list such as ['read', 'act'], not a string.")
@@ -365,6 +391,8 @@ class _AuthenticationBase:
                 body = response.json()
             except ValueError:
                 body = response.text or None
+            if call.private_body:
+                body = _redacted(body, call.secrets)
             raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
