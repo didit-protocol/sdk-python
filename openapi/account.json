@@ -901,7 +901,7 @@
     "/organizations/me/{org_id}/applications/": {
       "post": {
         "summary": "Create Application",
-        "description": "Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.",
+        "description": "Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required. An MCP token (a \"Log in with Didit\" grant, `token_use` `mcp`) also needs the `didit:management` scope, which carries the `applications` resource; a grant limited to `didit:verification` is refused with 403 before anything is created.",
         "operationId": "create_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -1085,7 +1085,7 @@
             }
           },
           "403": {
-            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` For 72 hours after you recovered your account the request is refused with `code` `recovery_hold` and `until`, the time the hold ends. A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
+            "description": "You cannot create applications in this organization. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` For 72 hours after you recovered your account the request is refused with `code` `recovery_hold` and `until`, the time the hold ends. A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys. An MCP token whose grant lacks the `applications` resource (for example one limited to `didit:verification`, or `didit:staff` alone) gets `This token's scope does not permit this action.`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1127,6 +1127,12 @@
                   },
                   "McpScope": {
                     "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
+                    }
+                  },
+                  "McpScopeDenied": {
+                    "summary": "MCP grant without the applications scope",
                     "value": {
                       "detail": "This token's scope does not permit this action."
                     }
@@ -1209,7 +1215,7 @@
         "tags": [
           "Account Management"
         ],
-        "description": "List the organization's applications, 50 per page by default. Use this to discover `app_id` values when recovering credentials from a new machine, then call `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token.",
+        "description": "List the organization's applications, 50 per page by default. Use this to discover `app_id` values when recovering credentials from a new machine, then call `GET /organizations/me/{org_id}/applications/{app_id}/` for the API key. Requires an owner or admin Bearer token. An MCP token (a \"Log in with Didit\" grant, `token_use` `mcp`) also needs the `didit:management` scope, which carries the `applications` resource; a grant limited to `didit:verification` is refused with 403 before any application is listed.",
         "parameters": [
           {
             "name": "org_id",
@@ -1388,7 +1394,7 @@
             }
           },
           "403": {
-            "description": "You cannot list this organization's applications. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
+            "description": "You cannot list this organization's applications. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys. An MCP token whose grant lacks the `applications` resource (for example one limited to `didit:verification`, or `didit:staff` alone) gets `This token's scope does not permit this action.`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1415,6 +1421,12 @@
                   },
                   "McpScope": {
                     "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
+                    }
+                  },
+                  "McpScopeDenied": {
+                    "summary": "MCP grant without the applications scope",
                     "value": {
                       "detail": "This token's scope does not permit this action."
                     }
@@ -1489,7 +1501,7 @@
     "/organizations/me/{org_id}/applications/{app_id}/": {
       "get": {
         "summary": "Get Application Credentials",
-        "description": "Read one application's full record including `client_id` and `api_key`. Use this to recover a lost `api_key`.",
+        "description": "Read one application's full record including `client_id` and `api_key`. Use this to recover a lost `api_key`. An MCP token (a \"Log in with Didit\" grant, `token_use` `mcp`) also needs the `didit:management` scope, which carries the `applications` resource; a grant limited to `didit:verification` is refused with 403 before the application is read.",
         "operationId": "get_application_credentials",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -1606,7 +1618,7 @@
             }
           },
           "403": {
-            "description": "You cannot read this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
+            "description": "You cannot read this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys. An MCP token whose grant lacks the `applications` resource (for example one limited to `didit:verification`, or `didit:staff` alone) gets `This token's scope does not permit this action.`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1633,6 +1645,12 @@
                   },
                   "McpScope": {
                     "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
+                    }
+                  },
+                  "McpScopeDenied": {
+                    "summary": "MCP grant without the applications scope",
                     "value": {
                       "detail": "This token's scope does not permit this action."
                     }
@@ -1711,7 +1729,7 @@
       },
       "patch": {
         "summary": "Update Application",
-        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.",
+        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required. An MCP token (a \"Log in with Didit\" grant, `token_use` `mcp`) also needs the `didit:management` scope, which carries the `applications` resource; a grant limited to `didit:verification` is refused with 403 before anything is changed.",
         "operationId": "update_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -1912,7 +1930,7 @@
             }
           },
           "403": {
-            "description": "You cannot update this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys.",
+            "description": "You cannot update this application. A member of the organization who is not an owner or admin gets `Only organization owners and admins can manage applications.` An owner or admin whose access to the organization is suspended gets `Your access to this organization is suspended.` A request without an `Authorization` header gets `You do not have permission to perform this action.` A token issued to an AI agent (MCP) whose consent does not include application management gets `This token's scope does not permit this action.`, and a token limited to verification cannot read or change applications or their API keys. An MCP token whose grant lacks the `applications` resource (for example one limited to `didit:verification`, or `didit:staff` alone) gets `This token's scope does not permit this action.`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1939,6 +1957,12 @@
                   },
                   "McpScope": {
                     "summary": "Agent token without application management",
+                    "value": {
+                      "detail": "This token's scope does not permit this action."
+                    }
+                  },
+                  "McpScopeDenied": {
+                    "summary": "MCP grant without the applications scope",
                     "value": {
                       "detail": "This token's scope does not permit this action."
                     }

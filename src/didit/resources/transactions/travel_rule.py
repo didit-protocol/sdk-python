@@ -9,6 +9,7 @@ from typing import Literal, Sequence, cast
 
 import httpx
 
+from didit._pagination import AsyncPaginator, SyncPage
 from didit._resource import AsyncAPIResource, SyncAPIResource
 from didit._response import (
     async_to_raw_response_wrapper,
@@ -17,6 +18,8 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
+from didit.types.components.travel_rule_delivery_log_entry import TravelRuleDeliveryLogEntry
+from didit.types.components.travel_rule_delivery_log_page import TravelRuleDeliveryLogPage
 from didit.types.components.travel_rule_message import TravelRuleMessage
 from didit.types.components.travel_rule_test_vasp_inbound_response import (
     TravelRuleTestVaspInboundResponse,
@@ -36,7 +39,7 @@ __all__ = [
 class TransactionsTravelRule(SyncAPIResource):
     """The ``transactions.travel_rule`` resource of the Didit API.
 
-    Methods: ``confirm_ownership``, ``create_message``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
+    Methods: ``confirm_ownership``, ``create_message``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
     """
 
     @cached_property
@@ -301,11 +304,54 @@ class TransactionsTravelRule(SyncAPIResource):
             ),
         )
 
+    def list_deliveries(
+        self,
+        transaction_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[TravelRuleDeliveryLogEntry]:
+        """List Travel Rule delivery history.
+
+        Read the complete delivery history for a transaction, oldest first. Requires transaction read permission. Unlike the newest 100 entries embedded in detail, this endpoint paginates the full history. See [delivery history](/management-api/travel-rule/list-deliveries).
+
+        ``GET /v3/transactions/{transaction_id}/travel-rule/deliveries/``
+
+        Args:
+          transaction_id: Didit-stable transaction UUID that owns the transfer.
+          limit: Entries per page. Defaults to 100 and larger values are capped at 100; a value above 1,000,000 returns `400`.
+          offset: Number of entries to skip, up to 1,000,000. A larger value returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[TravelRuleDeliveryLogEntry]",
+            self._client.request_page(
+                "get",
+                "/v3/transactions/{transaction_id}/travel-rule/deliveries/",
+                cast_to=TravelRuleDeliveryLogPage,
+                item_type=TravelRuleDeliveryLogEntry,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTransactionsTravelRule(AsyncAPIResource):
     """The ``transactions.travel_rule`` resource of the Didit API.
 
-    Methods: ``confirm_ownership``, ``create_message``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
+    Methods: ``confirm_ownership``, ``create_message``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
     """
 
     @cached_property
@@ -570,6 +616,49 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
             ),
         )
 
+    def list_deliveries(
+        self,
+        transaction_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[TravelRuleDeliveryLogEntry]:
+        """List Travel Rule delivery history.
+
+        Read the complete delivery history for a transaction, oldest first. Requires transaction read permission. Unlike the newest 100 entries embedded in detail, this endpoint paginates the full history. See [delivery history](/management-api/travel-rule/list-deliveries).
+
+        ``GET /v3/transactions/{transaction_id}/travel-rule/deliveries/``
+
+        Args:
+          transaction_id: Didit-stable transaction UUID that owns the transfer.
+          limit: Entries per page. Defaults to 100 and larger values are capped at 100; a value above 1,000,000 returns `400`.
+          offset: Number of entries to skip, up to 1,000,000. A larger value returns `400`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[TravelRuleDeliveryLogEntry]",
+            self._client.request_page(
+                "get",
+                "/v3/transactions/{transaction_id}/travel-rule/deliveries/",
+                cast_to=TravelRuleDeliveryLogPage,
+                item_type=TravelRuleDeliveryLogEntry,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TransactionsTravelRuleWithRawResponse:
     def __init__(self, resource: TransactionsTravelRule) -> None:
@@ -579,6 +668,7 @@ class TransactionsTravelRuleWithRawResponse:
         self.list_messages = to_raw_response_wrapper(resource.list_messages)
         self.create_message = to_raw_response_wrapper(resource.create_message)
         self.trigger_test_vasp_inbound = to_raw_response_wrapper(resource.trigger_test_vasp_inbound)
+        self.list_deliveries = to_raw_response_wrapper(resource.list_deliveries)
 
 
 class AsyncTransactionsTravelRuleWithRawResponse:
@@ -591,6 +681,7 @@ class AsyncTransactionsTravelRuleWithRawResponse:
         self.trigger_test_vasp_inbound = async_to_raw_response_wrapper(
             resource.trigger_test_vasp_inbound
         )
+        self.list_deliveries = async_to_raw_response_wrapper(resource.list_deliveries)
 
 
 class TransactionsTravelRuleWithStreamingResponse:
@@ -603,6 +694,7 @@ class TransactionsTravelRuleWithStreamingResponse:
         self.trigger_test_vasp_inbound = to_streamed_response_wrapper(
             resource.trigger_test_vasp_inbound
         )
+        self.list_deliveries = to_streamed_response_wrapper(resource.list_deliveries)
 
 
 class AsyncTransactionsTravelRuleWithStreamingResponse:
@@ -615,3 +707,4 @@ class AsyncTransactionsTravelRuleWithStreamingResponse:
         self.trigger_test_vasp_inbound = async_to_streamed_response_wrapper(
             resource.trigger_test_vasp_inbound
         )
+        self.list_deliveries = async_to_streamed_response_wrapper(resource.list_deliveries)

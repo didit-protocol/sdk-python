@@ -334,6 +334,7 @@ class TransactionsRules(SyncAPIResource):
         evaluation_mode: Literal["ALL", "ANY"] | str | NotGiven = NOT_GIVEN,
         scope: TransactionRuleScopeParam | NotGiven = NOT_GIVEN,
         period_days: int | NotGiven = NOT_GIVEN,
+        rule_id: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -351,6 +352,7 @@ class TransactionsRules(SyncAPIResource):
           evaluation_mode
           scope: Which transactions the rule applies to. Only these three keys are accepted.
           period_days
+          rule_id: Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -369,6 +371,7 @@ class TransactionsRules(SyncAPIResource):
                     "evaluation_mode": evaluation_mode,
                     "scope": scope,
                     "period_days": period_days,
+                    "rule_id": rule_id,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -802,6 +805,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         evaluation_mode: Literal["ALL", "ANY"] | str | NotGiven = NOT_GIVEN,
         scope: TransactionRuleScopeParam | NotGiven = NOT_GIVEN,
         period_days: int | NotGiven = NOT_GIVEN,
+        rule_id: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -819,6 +823,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
           evaluation_mode
           scope: Which transactions the rule applies to. Only these three keys are accepted.
           period_days
+          rule_id: Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -837,6 +842,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                     "evaluation_mode": evaluation_mode,
                     "scope": scope,
                     "period_days": period_days,
+                    "rule_id": rule_id,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

@@ -18,6 +18,8 @@ class CasesRequestsPreviewParams(TypedDict, total=False):
     * `business_document` - business_document
     * `confirm_details` - confirm_details
     * `review_in_progress` - review_in_progress
+    * `source_of_funds` - Request a document showing the source of payment funds.
+    * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
     """
 
     language: CustomerMessagingLanguageEnum

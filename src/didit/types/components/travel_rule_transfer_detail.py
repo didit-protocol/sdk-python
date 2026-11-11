@@ -9,6 +9,7 @@ from didit.types.components.travel_rule_chain_details import TravelRuleChainDeta
 from didit.types.components.travel_rule_data_match import TravelRuleDataMatch
 from didit.types.components.travel_rule_data_unmasked import TravelRuleDataUnmasked
 from didit.types.components.travel_rule_delivery import TravelRuleDelivery
+from didit.types.components.travel_rule_delivery_log_entry import TravelRuleDeliveryLogEntry
 from didit.types.components.travel_rule_discovery_step import TravelRuleDiscoveryStep
 from didit.types.components.travel_rule_name_match import TravelRuleNameMatch
 from didit.types.components.travel_rule_next_action import TravelRuleNextAction
@@ -151,6 +152,12 @@ class TravelRuleTransferDetail(BaseModel):
 
     chain_details: TravelRuleChainDetails | None = None
     """How the transfer's chain names its two wallets, when that is more than one address paying another. Empty (`{}`) for an account-chain transfer (EVM, Solana, Tron), where the two addresses are the wallets. Matching, routing and the address book read the wallets from here first."""
+
+    deliveries: list[TravelRuleDeliveryLogEntry] | None = None
+    """Newest 100 delivery entries, presented oldest first (creation time, then identifier). Empty when no messages exist. Use the paginated delivery endpoint for complete history."""
+
+    deliveries_truncated: bool | None = None
+    """True when older entries were omitted from deliveries. Follow GET /v3/transactions/{transaction_id}/travel-rule/deliveries/ for the complete history."""
 
     not_required_reason: str | None = None
     """Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason."""

@@ -5,7 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
-from didit.types.components.transaction_travel_rule import TransactionTravelRule
+from didit.types.components.transaction_list_travel_rule import TransactionListTravelRule
 
 __all__ = [
     "TransactionsListResponse",
@@ -109,8 +109,8 @@ class TransactionsListResponseResults(BaseModel):
     travel_rule_status: str | None = None
     """Status of the transaction's Travel Rule transfer (for example `COMPLETED`), or `null` when it has none."""
 
-    travel_rule: TransactionTravelRule | None = None
-    """The transaction's Travel Rule transfer, the same block as `travel_rule` on `GET /v3/transactions/{transaction_id}/`, or `null` when the transaction has none."""
+    travel_rule: TransactionListTravelRule | None = None
+    """Travel Rule summary with latest delivery, or null when absent. Unlike transaction detail, this block omits deliveries and deliveries_truncated."""
 
 
 class TransactionsListResponse(BaseModel):

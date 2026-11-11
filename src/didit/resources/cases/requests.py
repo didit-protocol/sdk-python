@@ -122,9 +122,9 @@ class CasesRequests(SyncAPIResource):
         Args:
           case_uuid
           contact_id
-          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress
+          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           request_id
-          expires_at
+          expires_at: Use the expiry covered by the preview token. Source-of-funds and purpose-of-payment requests allow up to 14 days; other purposes allow up to seven days. The default remains seven days. Changing the expiry without a matching preview is rejected.
           preview_token
           language
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -282,7 +282,7 @@ class CasesRequests(SyncAPIResource):
         Args:
           case_uuid
           contact_id
-          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress
+          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           language
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -427,9 +427,9 @@ class AsyncCasesRequests(AsyncAPIResource):
         Args:
           case_uuid
           contact_id
-          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress
+          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           request_id
-          expires_at
+          expires_at: Use the expiry covered by the preview token. Source-of-funds and purpose-of-payment requests allow up to 14 days; other purposes allow up to seven days. The default remains seven days. Changing the expiry without a matching preview is rejected.
           preview_token
           language
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -587,7 +587,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         Args:
           case_uuid
           contact_id
-          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress
+          purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           language
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

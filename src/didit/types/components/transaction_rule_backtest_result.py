@@ -2,18 +2,28 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.transaction_rule_overlap import TransactionRuleOverlap
 
 __all__ = ["TransactionRuleBacktestResult"]
 
 
 class TransactionRuleBacktestResult(BaseModel):
-    evaluated: int | None = None
+    evaluated: int
     """Transactions evaluated (most recent first, capped)."""
 
-    matched: int | None = None
+    matched: int
     """Transactions the configuration would have matched."""
 
-    affected_entities: int | None = None
+    affected_entities: int
     """Distinct subjects (by vendor_data) among the matches."""
 
-    period_days: int | None = None
+    period_days: int
+
+    truncated: bool
+    """True only when additional transactions in the requested period were omitted by the replay cap."""
+
+    overlapping_rules: list[TransactionRuleOverlap]
+    """Active rules matching the candidate hits, excluding rule_id. Empty when none matched within the comparison bounds."""
+
+    overlapping_rules_truncated: bool
+    """True when the overlap comparison is partial: more than 50 eligible active rules, more than 1000 rule/transaction comparisons, or a truncated replay with candidate hits and eligible rules. False when there are no candidate hits or no eligible rules, even if truncated is true. Counts are not exhaustive when true."""

@@ -25,3 +25,6 @@ class TransactionsRulesBacktestParams(TypedDict, total=False):
     """Which transactions the rule applies to. Only these three keys are accepted."""
 
     period_days: int
+
+    rule_id: str
+    """Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration."""

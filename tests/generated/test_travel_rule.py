@@ -496,6 +496,18 @@ def test_travel_rule_register_inbound() -> None:
                         "warnings": ["declared_originator_not_an_input"],
                         "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
                     },
+                    "deliveries": [
+                        {
+                            "uuid": "11111111-2222-4333-8444-555555555555",
+                            "kind": "SEND",
+                            "status": "DELIVERED",
+                            "rail": "NETWORK",
+                            "created_at": "2026-11-01T10:00:00Z",
+                            "delivered_at": "2026-11-01T10:00:01Z",
+                            "detail_lines": ["Send", "Delivered"],
+                        }
+                    ],
+                    "deliveries_truncated": True,
                     "not_required_reason": "below_threshold",
                     "proof_state": "not_required",
                 },
