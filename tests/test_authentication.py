@@ -1698,6 +1698,29 @@ def test_agent_consent_reads_secrets_from_the_bytes_sent_not_a_second_serializat
     assert sent not in _shown(error)
 
 
+def test_agent_consent_error_response_carries_the_redacted_body(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "credential-string-0123456789"
+    issuer.reply(
+        "POST", "/agents/consent/", 400, {"error": "invalid_grant", "echo": f"x {secret} y"}
+    )
+    error = _consent_error(auth, {"id": secret})
+    assert error.response.text == '{"error":"invalid_grant","echo":"[redacted]"}'
+    assert error.response.status_code == 400
+    assert error.response.headers["content-length"] == str(len(error.response.content))
+    assert secret not in error.response.text
+    assert "credential-str" not in error.response.text
+
+
+def test_agent_consent_error_response_of_a_non_json_body_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 502, f"<html>{AGENT_CHALLENGE}</html>".encode(), "text/html")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.response.text == "[redacted]"
+
+
 def test_agent_consent_non_json_body_is_redacted_whole(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:

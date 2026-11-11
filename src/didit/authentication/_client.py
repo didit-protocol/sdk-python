@@ -108,24 +108,6 @@ class _Call:
     errors and responses never keep it."""
 
 
-def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
-    """The response an error may keep: for a private-body call, without its content.
-
-    The issuer may echo the challenge or the assertion, so the kept response carries the
-    status, the headers that identify it and no body.
-    """
-    if not call.private_body:
-        return response
-    headers = {
-        name: value
-        for name, value in response.headers.items()
-        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
-    }
-    return httpx.Response(
-        response.status_code, headers=headers, content=b"", request=response.request
-    )
-
-
 _REDACTED = "[redacted]"
 
 
@@ -152,6 +134,38 @@ def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     if isinstance(value, list):
         return [_redacted(item, secrets) for item in cast("list[object]", value)]
     return value
+
+
+def _redacted_body(call: _Call, response: httpx.Response) -> tuple[object, bytes]:
+    """The body of an answer to a private-body call with the secrets removed, and its bytes.
+
+    JSON is redacted structurally and serialised again; anything else (an HTML error page, a body
+    cut at the size limit) becomes the text ``[redacted]``; an empty body stays empty.
+    """
+    if not response.content:
+        return None, b""
+    try:
+        body = _redacted(response.json(), call.secrets)
+    except ValueError:
+        return _REDACTED, _REDACTED.encode()
+    return body, json.dumps(body, separators=(",", ":")).encode("utf-8")
+
+
+def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The response an error may keep: for a private-body call, the same status and headers with
+    the redacted body as content (the issuer may echo the challenge or the assertion).
+    """
+    if not call.private_body:
+        return response
+    _, content = _redacted_body(call, response)
+    headers = {
+        name: value
+        for name, value in response.headers.items()
+        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
+    }
+    return httpx.Response(
+        response.status_code, headers=headers, content=content, request=response.request
+    )
 
 
 _MIN_SECRET_LENGTH = 16
@@ -423,22 +437,16 @@ class _AuthenticationBase:
     @staticmethod
     def _read(call: _Call, response: httpx.Response) -> object:
         if not response.is_success:
+            if call.private_body:
+                # The message is derived from the redacted body only.
+                private_body, _ = _redacted_body(call, response)
+                raise make_status_error(response_for_error(call, response), private_body)
             body: object
             try:
                 body = response.json()
-                if call.private_body:
-                    body = _redacted(body, call.secrets)
             except ValueError:
-                # Not JSON (an HTML 502 page, a body cut at the size limit): never kept, not even redacted.
-                body = (
-                    (_REDACTED if response.content else None)
-                    if call.private_body
-                    else (response.text or None)
-                )
-            if call.private_body:
-                # The message is derived from the redacted body only.
-                raise make_status_error(response_for_error(call, response), body)
-            raise make_status_error(response_for_error(call, response), body, redact=call.secrets)
+                body = response.text or None
+            raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
         try:
