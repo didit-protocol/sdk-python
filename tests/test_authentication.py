@@ -1804,6 +1804,38 @@ def test_agent_consent_malformed_2xx_keeps_the_request_id_redacted(
     assert credential not in info.value.response.text
 
 
+def test_successful_approval_options_reach_the_caller_unchanged(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/passkey/",
+        200,
+        {"options": {**AGENT_APPROVAL_OPTIONS["options"], "challenge": AGENT_CHALLENGE}},
+    )
+    result = auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
+    assert result.options is not None
+    assert result.options.challenge == AGENT_CHALLENGE
+
+
+def test_agent_consent_header_name_is_matched_case_insensitively(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "CredentialString-AbCdEf0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={f"X-Echo-{credential}": "v", "x-keep": "fine"},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.response.headers["x-keep"] == "fine"
+    assert "credentialstring" not in str(error.response.headers).lower()
+
+
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
     credential = 'cred"ential\\string-0123456789'
 

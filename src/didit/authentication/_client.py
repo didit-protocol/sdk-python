@@ -142,8 +142,13 @@ def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     return value
 
 
+def _error_response(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The response an error carries: a sanitized copy for a private-body call, else the response."""
+    return _sanitized_response(call, response) if call.private_body else response
+
+
 def _sanitized_response(call: _Call, response: httpx.Response) -> httpx.Response:
-    """The whole response of a private-body call, sanitized once on receipt: the status code kept,
+    """The whole response of a private-body call, sanitized to build an error: the status code kept,
     each header whose name contains a secret dropped, the other values redacted, and the body
     redacted structurally (JSON serialised again; ``[redacted]`` when it is not JSON, was cut at the
     size limit or is empty). Every error of these calls is built from this response only.
@@ -160,7 +165,7 @@ def _sanitized_response(call: _Call, response: httpx.Response) -> httpx.Response
     headers = {
         name: cast("str", _redacted(value, call.secrets))
         for name, value in response.headers.items()
-        if _redacted(name, call.secrets) == name
+        if not any(secret and secret.lower() in name.lower() for secret in call.secrets)
         and name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
     }
     return httpx.Response(
@@ -438,22 +443,26 @@ class _AuthenticationBase:
     @staticmethod
     def _read(call: _Call, response: httpx.Response) -> object:
         if not response.is_success:
+            if call.private_body:
+                # Every error of a consent call is built from a sanitized copy only.
+                response = _sanitized_response(call, response)
+                private_body: object = (
+                    _REDACTED if response.content == _REDACTED.encode() else response.json()
+                )
+                raise make_status_error(response, private_body)
             body: object
             try:
                 body = response.json()
             except ValueError:
                 body = response.text or None
-            # A private-body call's response is already sanitized: nothing is replaced again.
-            raise make_status_error(
-                response, body, redact=() if call.private_body else call.secrets
-            )
+            raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
         try:
             return response.json()
         except ValueError as exc:
             raise APIResponseValidationError(
-                response=response,
+                response=_error_response(call, response),
                 message=(
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
                     f"got {response.headers.get('content-type', 'no content type')}."
@@ -470,7 +479,7 @@ class _AuthenticationBase:
             if "status" in fields:
                 return cast("AgentConsentResponse", validate_response(AgentConsentDenied, fields))
         raise APIResponseValidationError(
-            response=response,
+            response=_error_response(call, response),
             message=(
                 f"Expected an approved (code) or denied (status) answer from {call.method} "
                 f"{httpx.URL(call.url).path}."
@@ -481,7 +490,7 @@ class _AuthenticationBase:
         data = self._read(call, response)
         if not isinstance(data, dict):
             raise APIResponseValidationError(
-                response=response,
+                response=_error_response(call, response),
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
         return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))
@@ -876,9 +885,6 @@ class Authentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
-        if call.private_body:
-            # Sanitized once, on receipt: every error of this call is built from this response only.
-            response = _sanitized_response(call, response)
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
@@ -1124,9 +1130,6 @@ class AsyncAuthentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
-        if call.private_body:
-            # Sanitized once, on receipt: every error of this call is built from this response only.
-            response = _sanitized_response(call, response)
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
