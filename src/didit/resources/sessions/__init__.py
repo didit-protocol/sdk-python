@@ -525,6 +525,8 @@ class Sessions(SyncAPIResource):
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
         email_preview_token: str | NotGiven = NOT_GIVEN,
+        link_to_session_id: str | NotGiven = NOT_GIVEN,
+        link_reason: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -540,7 +542,11 @@ class Sessions(SyncAPIResource):
 
         Every call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.
 
-        Repeating `Approved` or `Declined` on a session that already has that status changes nothing and returns `200`: no webhook, no activity entry and no email. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
+        Repeating `Approved` or `Declined` on a session that already has that status returns `200` without a status webhook, status activity entry or email. An `Approved` request can still create a same-person link as described below. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
+
+        To record a reviewer decision that two verifications belong to the same person, send `new_status: "Approved"`, `link_to_session_id` and `link_reason`. Both sessions must be distinct, live KYC verifications in the same application. The target need not be approved or have a person profile. `link_reason` is separate from `comment`, must be nonblank after trimming and accepts at most 2000 characters. A reason without a target, linking with another status, an invalid or unavailable target, a self-link, or a KYB participant returns `400`. Approval and linking succeed together or neither changes. If either session already belongs to a group, their groups are joined. An already-approved source can be linked for the first time without another status event or email. A retry within the same group creates no additional link audit. Concurrent group edits return `409`; retry the request.
+
+        Grouping does not merge person profiles, profile fields or biometric data. Each verification keeps its original profile association and deletion ownership. Deleting a verification removes it from the group. Link actions have a separate audit recording the actor, time and `link_reason`; they are not status-review entries. Group navigation and unlinking are console-only, with no public read or unlink endpoint.
 
         ``PATCH /v3/session/{sessionId}/update-status/``
 
@@ -553,6 +559,8 @@ class Sessions(SyncAPIResource):
           email_address: Recipient for the notification email. **Required when `send_email` is `true`** - omitting it returns `400`.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
           email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
+          link_to_session_id: Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined.
+          link_reason: Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -574,6 +582,8 @@ class Sessions(SyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                     "email_preview_token": email_preview_token,
+                    "link_to_session_id": link_to_session_id,
+                    "link_reason": link_reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -3168,6 +3178,8 @@ class AsyncSessions(AsyncAPIResource):
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
         email_preview_token: str | NotGiven = NOT_GIVEN,
+        link_to_session_id: str | NotGiven = NOT_GIVEN,
+        link_reason: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3183,7 +3195,11 @@ class AsyncSessions(AsyncAPIResource):
 
         Every call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.
 
-        Repeating `Approved` or `Declined` on a session that already has that status changes nothing and returns `200`: no webhook, no activity entry and no email. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
+        Repeating `Approved` or `Declined` on a session that already has that status returns `200` without a status webhook, status activity entry or email. An `Approved` request can still create a same-person link as described below. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.
+
+        To record a reviewer decision that two verifications belong to the same person, send `new_status: "Approved"`, `link_to_session_id` and `link_reason`. Both sessions must be distinct, live KYC verifications in the same application. The target need not be approved or have a person profile. `link_reason` is separate from `comment`, must be nonblank after trimming and accepts at most 2000 characters. A reason without a target, linking with another status, an invalid or unavailable target, a self-link, or a KYB participant returns `400`. Approval and linking succeed together or neither changes. If either session already belongs to a group, their groups are joined. An already-approved source can be linked for the first time without another status event or email. A retry within the same group creates no additional link audit. Concurrent group edits return `409`; retry the request.
+
+        Grouping does not merge person profiles, profile fields or biometric data. Each verification keeps its original profile association and deletion ownership. Deleting a verification removes it from the group. Link actions have a separate audit recording the actor, time and `link_reason`; they are not status-review entries. Group navigation and unlinking are console-only, with no public read or unlink endpoint.
 
         ``PATCH /v3/session/{sessionId}/update-status/``
 
@@ -3196,6 +3212,8 @@ class AsyncSessions(AsyncAPIResource):
           email_address: Recipient for the notification email. **Required when `send_email` is `true`** - omitting it returns `400`.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
           email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
+          link_to_session_id: Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined.
+          link_reason: Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3217,6 +3235,8 @@ class AsyncSessions(AsyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                     "email_preview_token": email_preview_token,
+                    "link_to_session_id": link_to_session_id,
+                    "link_reason": link_reason,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

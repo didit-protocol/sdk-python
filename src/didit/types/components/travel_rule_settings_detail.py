@@ -144,3 +144,6 @@ class TravelRuleSettingsDetail(BaseModel):
 
     didit_network: TravelRuleSettingsDetailDiditNetwork | None = None
     """Whether the Didit network lists your VASP profile, so other Didit customers find it in the directory and reach it on the INTERNAL rail, and each condition it still misses."""
+
+    licence: str | None = None
+    """VASP licence or registration reference. Empty when not supplied."""

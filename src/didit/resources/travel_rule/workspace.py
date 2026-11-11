@@ -85,6 +85,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         self,
         *,
         vasp_id: str,
+        licence: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -98,6 +99,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
 
         Args:
           vasp_id: The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`.
+          licence: Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -110,7 +112,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 "/v3/travel-rule/workspace/claim/",
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
-                body={"vasp_id": vasp_id},
+                body={"vasp_id": vasp_id, "licence": licence},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -315,6 +317,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         self,
         *,
         vasp_id: str,
+        licence: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -328,6 +331,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
 
         Args:
           vasp_id: The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`.
+          licence: Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -340,7 +344,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 "/v3/travel-rule/workspace/claim/",
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
-                body={"vasp_id": vasp_id},
+                body={"vasp_id": vasp_id, "licence": licence},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

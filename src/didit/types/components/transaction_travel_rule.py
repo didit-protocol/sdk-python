@@ -111,3 +111,13 @@ class TransactionTravelRule(BaseModel):
 
     chain_details: TravelRuleChainDetails | None = None
     """How the transfer's chain names its two wallets, when that is more than one address paying another. Empty (`{}`) for an account-chain transfer (EVM, Solana, Tron), where the two addresses are the wallets. Matching, routing and the address book read the wallets from here first."""
+
+    not_required_reason: str | None = None
+    """Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason."""
+
+    proof_state: (
+        Literal["not_required", "confirmed", "not_confirmed", "requested", "not_requested"]
+        | str
+        | None
+    ) = None
+    """not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof."""
