@@ -108,6 +108,24 @@ class _Call:
     errors and responses never keep it."""
 
 
+def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The response an error may keep: for a private-body call, without its content.
+
+    The issuer may echo the challenge or the assertion, so the kept response carries the
+    status, the headers that identify it and no body.
+    """
+    if not call.private_body:
+        return response
+    headers = {
+        name: value
+        for name, value in response.headers.items()
+        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
+    }
+    return httpx.Response(
+        response.status_code, headers=headers, content=b"", request=response.request
+    )
+
+
 def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     """``value`` with every secret removed from its strings, at any depth."""
     if isinstance(value, str):
@@ -393,14 +411,14 @@ class _AuthenticationBase:
                 body = response.text or None
             if call.private_body:
                 body = _redacted(body, call.secrets)
-            raise make_status_error(response, body, redact=call.secrets)
+            raise make_status_error(response_for_error(call, response), body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
         try:
             return response.json()
         except ValueError as exc:
             raise APIResponseValidationError(
-                response=response,
+                response=response_for_error(call, response),
                 message=(
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
                     f"got {response.headers.get('content-type', 'no content type')}."
@@ -417,7 +435,7 @@ class _AuthenticationBase:
             if "status" in fields:
                 return cast("AgentConsentResponse", validate_response(AgentConsentDenied, fields))
         raise APIResponseValidationError(
-            response=response,
+            response=response_for_error(call, response),
             message=(
                 f"Expected an approved (code) or denied (status) answer from {call.method} "
                 f"{httpx.URL(call.url).path}."
@@ -428,7 +446,7 @@ class _AuthenticationBase:
         data = self._read(call, response)
         if not isinstance(data, dict):
             raise APIResponseValidationError(
-                response=response,
+                response=response_for_error(call, response),
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
         return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))

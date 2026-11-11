@@ -1552,6 +1552,8 @@ def test_agent_consent_redacts_every_string_of_the_assertion(
     ):
         assert leaked not in message
         assert leaked not in repr(info.value.body)
+        assert leaked not in info.value.response.text
+    assert info.value.response.status_code == 400
 
 
 def test_agent_consent_transport_errors_keep_no_body(clock: FakeClock, key: SigningKey) -> None:
