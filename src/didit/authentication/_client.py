@@ -168,6 +168,7 @@ def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
     )
 
 
+# Sensitive values are 16+ chars: user handles are 16-byte ids (22 base64url), credential ids 16+ bytes.
 _MIN_SECRET_LENGTH = 16
 """Shorter assertion strings (``id``, ``type``, ``public-key``) are not secrets: matching them
 would erase error codes such as ``invalid_grant`` (docs/DESIGN.md section 10)."""
