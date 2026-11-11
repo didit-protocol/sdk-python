@@ -37,6 +37,9 @@ from tests.authentication_helpers import (
     access_claims,
 )
 from tests.test_authentication import (
+    AGENT_APPROVAL_OPTIONS,
+    AGENT_CHALLENGE,
+    AGENT_CONSENT_APPROVED,
     SESSION_RESPONSE,
     STEP_UP_REQUIRED,
     TOKEN_RESPONSE,
@@ -62,6 +65,8 @@ REPLIES: dict[str, object] = {
     "get_session": SESSION_RESPONSE,
     "create_step_up": STEP_UP_REQUIRED,
     "retrieve_step_up": STEP_UP_REQUIRED,
+    "submit_agent_consent": AGENT_CONSENT_APPROVED,
+    "create_agent_approval_options": AGENT_APPROVAL_OPTIONS,
 }
 
 
@@ -152,6 +157,12 @@ def _calls(key: SigningKey) -> dict[str, Callable[[Any], Any]]:
             ACCESS_TOKEN, action="payout", amount="1500.00", currency="EUR", return_to=REDIRECT_URI
         ),
         "retrieve_step_up": lambda auth: auth.retrieve_step_up(ACCESS_TOKEN, STEP_UP_ID),
+        "submit_agent_consent": lambda auth: auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve"
+        ),
+        "create_agent_approval_options": lambda auth: auth.create_agent_approval_options(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE
+        ),
     }
 
 

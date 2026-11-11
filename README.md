@@ -249,6 +249,7 @@ print(claims.sub, claims.sid, claims.vendor_data, claims.org)
 - `create_pkce()`, `create_state()` and `create_nonce()` for the sign-in redirect; `exchange_code(code, code_verifier=..., redirect_uri=...)` and `refresh(refresh_token)` for tokens. Serialise refreshes for one session: reusing a consumed refresh token revokes the session.
 - `get_session(access_token)` asks the issuer whether the session is still live (instant revocation check); `revoke_session(access_token)` signs the person out.
 - `create_step_up(access_token, action="payout", amount="250.00", currency="EUR", return_to=...)` and `retrieve_step_up(access_token, step_up_id)`: go ahead without a step-up only when `step_up.required is False`, and after one only when `step_up.approved` is true.
+- `submit_agent_consent(access_token, challenge=..., decision="approve" | "deny", assertion=None, scopes=None)` records the signed-in person's decision on an agent's request and returns `AgentConsentApproved` (`code`, `redirect_uri`, `state`; no token) or `AgentConsentDenied`; `create_agent_approval_options(access_token, challenge=...)` returns the WebAuthn options for the fresh passkey `assertion` an approval may need (HTTP 403 `passkey_required` otherwise). Both are never retried, and the challenge and assertion are never logged or kept on errors.
 - `AsyncAuthentication` has the same methods with `await`. One instance per process is the intended use.
 
 See [`examples/authentication.py`](examples/authentication.py).

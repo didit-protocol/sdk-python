@@ -8,7 +8,7 @@ Every model keeps fields and claims this version does not know (``model_extra``)
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 from pydantic import Field
 
@@ -17,6 +17,16 @@ from .._models import BaseModel
 __all__ = [
     "AccessTokenClaims",
     "ActorClaim",
+    "AgentAuthenticatorResponse",
+    "AgentConsentApproved",
+    "AgentConsentDecision",
+    "AgentConsentDenied",
+    "AgentConsentResponse",
+    "AgentConsentScope",
+    "AgentCredentialDescriptor",
+    "AgentPasskeyAssertion",
+    "AgentApprovalOptions",
+    "AgentWebAuthnOptions",
     "AuthenticationSession",
     "IdTokenClaims",
     "OrganizationClaim",
@@ -39,6 +49,8 @@ StepUpAction = Literal["payout", "bank", "contact"]
 StepUpRule = Literal["payout", "device", "bank", "contact"]
 StepUpMethod = Literal["liveness", "selfie", "full_id"]
 StepUpStatus = Literal["pending", "review", "approved", "declined", "expired", "superseded"]
+AgentConsentDecision = Literal["approve", "deny"]
+AgentConsentScope = Literal["read", "act"]
 
 
 class OrganizationClaim(BaseModel):
@@ -194,3 +206,77 @@ class StepUp(BaseModel):
     def approved(self) -> bool:
         """``True`` only for status ``approved``: the one status to act on."""
         return self.status == "approved"
+
+
+class AgentAuthenticatorResponse(BaseModel):
+    """The ``response`` of a passkey assertion: every field is base64url text."""
+
+    clientDataJSON: str = Field(repr=False)
+    authenticatorData: str = Field(repr=False)
+    signature: str = Field(repr=False)
+    userHandle: str | None = Field(default=None, repr=False)
+
+
+class AgentPasskeyAssertion(BaseModel):
+    """The JSON-serialized result of ``navigator.credentials.get()``, base64url encoded.
+
+    Build it from the browser's result after converting every binary field to
+    base64url; never pass an unconverted ``PublicKeyCredential``. A plain dict with
+    the same keys is accepted too. It is request-bound and never logged.
+    """
+
+    id: str
+    rawId: str
+    type: Literal["public-key"] = "public-key"
+    response: AgentAuthenticatorResponse
+    clientExtensionResults: dict[str, Any] | None = None
+
+
+class AgentCredentialDescriptor(BaseModel):
+    """A passkey enrolled by the approving person."""
+
+    id: str
+    type: str
+    transports: list[str] | None = None
+
+
+class AgentWebAuthnOptions(BaseModel):
+    """WebAuthn request options for a fresh approval: pass them as ``publicKey`` to
+    ``navigator.credentials.get()`` after decoding the binary fields."""
+
+    challenge: str = Field(repr=False)
+    """Base64url; valid for less than 300 seconds and bound to this approval."""
+    rpId: str
+    userVerification: str
+    allowCredentials: list[AgentCredentialDescriptor]
+    timeout: int | None = None
+    """Browser timeout in milliseconds; does not extend the server expiry."""
+
+
+class AgentApprovalOptions(BaseModel):
+    """``POST agents/consent/passkey/``: the options for the approving person's passkey."""
+
+    options: AgentWebAuthnOptions
+
+
+class AgentConsentApproved(BaseModel):
+    """The person approved. No token is returned: the agent exchanges ``code`` itself.
+
+    ``code`` is single use and valid for 60 seconds; it is left out of ``repr``.
+    """
+
+    code: str = Field(repr=False)
+    redirect_uri: str
+    state: str
+
+
+class AgentConsentDenied(BaseModel):
+    """The person declined; no code is issued."""
+
+    status: str
+    """``denied``."""
+
+
+AgentConsentResponse = Union[AgentConsentApproved, AgentConsentDenied]
+"""``POST agents/consent/``: the answer has no shared discriminator, so the SDK
+tells the two apart by shape (``code`` means approved, ``status`` denied)."""
