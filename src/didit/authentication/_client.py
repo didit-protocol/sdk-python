@@ -441,15 +441,24 @@ class _AuthenticationBase:
         return APIConnectionError(request=request)
 
     @staticmethod
-    def _log(request: httpx.Request, response: httpx.Response, started: float) -> None:
+    def _log(
+        request: httpx.Request,
+        response: httpx.Response,
+        started: float,
+        call: _Call | None = None,
+    ) -> None:
         if log.isEnabledFor(logging.DEBUG):
+            request_id = _request_id(response.headers) or "-"
+            if call is not None and call.private_body:
+                # A consent answer may echo a secret in its request id: the log never records it.
+                request_id = cast("str", _redacted(request_id, call.secrets))
             log.debug(
                 "%s %s -> %d in %.0f ms (request id %s)",
                 request.method,
                 request.url.path,
                 response.status_code,
                 (time.monotonic() - started) * 1000,
-                _request_id(response.headers) or "-",
+                request_id,
             )
 
     @staticmethod
@@ -897,7 +906,7 @@ class Authentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
-        self._log(request, response, started)
+        self._log(request, response, started, call)
         response.request = _kept_request(call, request)
         return response
 
@@ -1142,7 +1151,7 @@ class AsyncAuthentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
-        self._log(request, response, started)
+        self._log(request, response, started, call)
         response.request = _kept_request(call, request)
         return response
 

@@ -1890,6 +1890,31 @@ def test_agent_consent_body_read_failure_is_a_fixed_connection_error(clock: Fake
     assert info.value.__context__ is None
 
 
+def test_agent_consent_debug_log_never_records_a_raw_request_id(
+    auth: Authentication, issuer: FakeIssuer, caplog: pytest.LogCaptureFixture
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200,
+            json=AGENT_CONSENT_APPROVED,
+            headers={"x-request-id": f"req-{credential}"},
+        ),
+    )
+    with caplog.at_level(logging.DEBUG, logger="didit"):
+        result = auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in caplog.text
+    assert "request id [redacted]" in caplog.text
+    assert result is not None
+
+
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
     credential = 'cred"ential\\string-0123456789'
 
