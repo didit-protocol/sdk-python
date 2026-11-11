@@ -1145,6 +1145,231 @@
           }
         }
       }
+    },
+    "/agents/consent/passkey/": {
+      "post": {
+        "tags": [
+          "Agent consent"
+        ],
+        "summary": "Get agent approval passkey options",
+        "operationId": "authentication_create_agent_approval_options",
+        "description": "Get fresh passkey options for a pending agent request. Binds the request to the signed-in identity; another identity cannot obtain options. No enrolled passkey returns 400 error: passkey_required. Enroll a passkey before retrying. Both calls require the person's bearer access token and a session created within the last five minutes; otherwise 403 detail: reauthentication_required. Refreshing a token does not make an old session recent. These are issuer-scoped runtime endpoints, not console actions.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "create_agent_approval_options",
+          "auth": "access_token",
+          "server": true
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentApprovalOptionsRequest"
+              },
+              "example": {
+                "challenge": "pending-agent-request-secret"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "WebAuthn request options for the approving person.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentApprovalOptionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or consumed challenge, invalid assertion, no enrolled passkey (options), or field validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OAuthError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FieldErrors"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "description": "A recent sign-in or passkey is required, the request belongs to another identity (options), or the origin is not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
+    },
+    "/agents/consent/": {
+      "post": {
+        "tags": [
+          "Agent consent"
+        ],
+        "summary": "Approve or deny agent access",
+        "operationId": "authentication_submit_agent_consent",
+        "description": "Approve or deny a pending agent request. With agent_humans_only enabled, first obtain options from /agents/consent/passkey/, perform WebAuthn in the browser and submit assertion within 300 seconds. A passkey-authenticated session alone is insufficient. Missing assertion or an identity not bound by the options call returns 403 detail: passkey_required. Expired, reused, foreign or invalid assertions return 400 error: invalid_grant. Denial does not require an assertion. Successful approval records auth.agent_access_approved at consent with request_id and credential_id; it does not wait for code exchange. Both calls require the person's bearer access token and a session created within the last five minutes; otherwise 403 detail: reauthentication_required. Refreshing a token does not make an old session recent. These are issuer-scoped runtime endpoints, not console actions. When agent_humans_only is off, the existing agent_approval policy still applies: the passkey policy requires a passkey-authenticated session.",
+        "security": [
+          {
+            "AccessToken": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "authentication",
+          "method": "submit_agent_consent",
+          "auth": "access_token",
+          "server": true
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentConsentRequest"
+              },
+              "examples": {
+                "Deny": {
+                  "value": {
+                    "challenge": "pending-agent-request-secret",
+                    "decision": "deny"
+                  }
+                },
+                "Approve": {
+                  "summary": "Replace assertion with the browser result; these illustrative bytes are not a valid signature.",
+                  "value": {
+                    "challenge": "pending-agent-request-secret",
+                    "decision": "approve",
+                    "assertion": {
+                      "id": "c3ludGhldGljLWNyZWRlbnRpYWw",
+                      "rawId": "c3ludGhldGljLWNyZWRlbnRpYWw",
+                      "type": "public-key",
+                      "response": {
+                        "clientDataJSON": "BASE64URL_CLIENT_DATA",
+                        "authenticatorData": "BASE64URL_AUTHENTICATOR_DATA",
+                        "signature": "BASE64URL_SIGNATURE",
+                        "userHandle": null
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Options or consent result.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Always `no-store`: never cache this response.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              },
+              "Pragma": {
+                "description": "Always `no-cache`.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConsentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or consumed challenge, invalid assertion, no enrolled passkey (options), or field validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OAuthError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FieldErrors"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/InvalidToken"
+          },
+          "403": {
+            "description": "A recent sign-in or passkey is required, the request belongs to another identity (options), or the origin is not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ApplicationNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/TemporarilyUnavailable"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2626,6 +2851,322 @@
           "detail": {
             "type": "string",
             "example": "invalid_token"
+          }
+        }
+      },
+      "AgentApprovalOptionsRequest": {
+        "type": "object",
+        "description": "Bind passkey options to the pending agent request and the signed-in person.",
+        "required": [
+          "challenge"
+        ],
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "description": "Pending agent request secret, not the WebAuthn challenge.",
+            "maxLength": 128,
+            "minLength": 1
+          }
+        }
+      },
+      "AgentPasskeyAssertion": {
+        "type": "object",
+        "description": "JSON-serialized result of navigator.credentials.get(). Encode binary fields as base64url; never send an unconverted PublicKeyCredential.",
+        "required": [
+          "id",
+          "rawId",
+          "type",
+          "response"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Base64url credential identifier."
+          },
+          "rawId": {
+            "type": "string",
+            "description": "Base64url raw credential identifier."
+          },
+          "type": {
+            "type": "string",
+            "description": "WebAuthn credential type.",
+            "enum": [
+              "public-key"
+            ]
+          },
+          "response": {
+            "$ref": "#/components/schemas/AgentAuthenticatorResponse"
+          },
+          "clientExtensionResults": {
+            "type": "object",
+            "description": "Browser extension results.",
+            "additionalProperties": true
+          }
+        },
+        "example": {
+          "id": "c3ludGhldGljLWNyZWRlbnRpYWw",
+          "rawId": "c3ludGhldGljLWNyZWRlbnRpYWw",
+          "type": "public-key",
+          "response": {
+            "clientDataJSON": "BASE64URL_CLIENT_DATA",
+            "authenticatorData": "BASE64URL_AUTHENTICATOR_DATA",
+            "signature": "BASE64URL_SIGNATURE",
+            "userHandle": null
+          }
+        }
+      },
+      "AgentAuthenticatorResponse": {
+        "type": "object",
+        "description": "WebAuthn authentication response.",
+        "required": [
+          "clientDataJSON",
+          "authenticatorData",
+          "signature"
+        ],
+        "properties": {
+          "clientDataJSON": {
+            "type": "string",
+            "description": "Base64url client data JSON."
+          },
+          "authenticatorData": {
+            "type": "string",
+            "description": "Base64url authenticator data."
+          },
+          "signature": {
+            "type": "string",
+            "description": "Base64url signature."
+          },
+          "userHandle": {
+            "type": "string",
+            "description": "Base64url user handle, when supplied by the authenticator.",
+            "nullable": true
+          }
+        }
+      },
+      "AgentCredentialDescriptor": {
+        "type": "object",
+        "description": "A passkey registered to the approving person.",
+        "required": [
+          "id",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Base64url credential identifier."
+          },
+          "type": {
+            "type": "string",
+            "description": "Credential type.",
+            "enum": [
+              "public-key"
+            ]
+          },
+          "transports": {
+            "type": "array",
+            "description": "Optional authenticator transport hints.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AgentWebAuthnOptions": {
+        "type": "object",
+        "description": "Pass these options as publicKey to navigator.credentials.get() after decoding binary fields.",
+        "required": [
+          "challenge",
+          "rpId",
+          "userVerification",
+          "allowCredentials"
+        ],
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "description": "Base64url challenge; decode to bytes for navigator.credentials.get(). Valid for less than 300 seconds and bound to this approval."
+          },
+          "rpId": {
+            "type": "string",
+            "description": "Relying-party hostname."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Browser timeout in milliseconds; does not extend the server expiry."
+          },
+          "userVerification": {
+            "type": "string",
+            "description": "User verification is mandatory.",
+            "enum": [
+              "required"
+            ]
+          },
+          "allowCredentials": {
+            "type": "array",
+            "description": "Only the approving person's enrolled passkeys. Decode each id to bytes for the browser.",
+            "items": {
+              "$ref": "#/components/schemas/AgentCredentialDescriptor"
+            }
+          }
+        }
+      },
+      "AgentApprovalOptionsResponse": {
+        "type": "object",
+        "description": "WebAuthn request options for fresh approval.",
+        "required": [
+          "options"
+        ],
+        "properties": {
+          "options": {
+            "$ref": "#/components/schemas/AgentWebAuthnOptions"
+          }
+        },
+        "example": {
+          "options": {
+            "challenge": "c3ludGhldGljLWNoYWxsZW5nZQ",
+            "rpId": "your-app.auth.didit.me",
+            "timeout": 60000,
+            "userVerification": "required",
+            "allowCredentials": [
+              {
+                "id": "c3ludGhldGljLWNyZWRlbnRpYWw",
+                "type": "public-key"
+              }
+            ]
+          }
+        }
+      },
+      "AgentConsentRequest": {
+        "type": "object",
+        "description": "Explicit approval or denial. When agent_humans_only is enabled, approval requires a fresh request-bound assertion, regardless of sign-in method. Denial needs no assertion.",
+        "required": [
+          "challenge",
+          "decision"
+        ],
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "description": "The same pending agent request secret used to obtain options.",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "decision": {
+            "type": "string",
+            "description": "Explicit consent decision.",
+            "enum": [
+              "approve",
+              "deny"
+            ]
+          },
+          "assertion": {
+            "$ref": "#/components/schemas/AgentPasskeyAssertion"
+          },
+          "scopes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "enum": [
+                "read",
+                "act"
+              ]
+            },
+            "description": "Optional narrowing of requested scopes; omitted means all requested scopes."
+          },
+          "organization_ids": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional organizations the person belongs to; omitted means none."
+          },
+          "lifetime": {
+            "type": "integer",
+            "enum": [
+              86400,
+              604800,
+              2592000
+            ],
+            "description": "Grant lifetime in seconds, limited by application policy. Omitted means the application policy lifetime."
+          }
+        }
+      },
+      "AgentConsentApproved": {
+        "type": "object",
+        "description": "Approval succeeded. No access or refresh token is returned here.",
+        "required": [
+          "code",
+          "redirect_uri",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Single-use agent authorization code, valid for 60 seconds. Exchange through the agent token flow with its PKCE verifier."
+          },
+          "redirect_uri": {
+            "type": "string",
+            "description": "Registered redirect URI from the agent request."
+          },
+          "state": {
+            "type": "string",
+            "description": "State from the agent request."
+          }
+        },
+        "example": {
+          "code": "single-use-agent-code",
+          "redirect_uri": "https://agent.example/callback",
+          "state": "request-state"
+        }
+      },
+      "AgentConsentDenied": {
+        "type": "object",
+        "description": "The person declined; no code is issued.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Consent was denied.",
+            "enum": [
+              "denied"
+            ]
+          }
+        },
+        "example": {
+          "status": "denied"
+        }
+      },
+      "AgentConsentResponse": {
+        "description": "Approval returns code, redirect_uri and state; denial returns status. The response has no shared discriminator field.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AgentConsentApproved"
+          },
+          {
+            "$ref": "#/components/schemas/AgentConsentDenied"
+          }
+        ]
+      },
+      "AgentApprovalAuditPayload": {
+        "type": "object",
+        "description": "Payload recorded for auth.agent_access_approved at successful consent, even if the agent never exchanges its code. This is an audit payload, not a customer webhook envelope; downstream delivery must be enabled separately.",
+        "required": [
+          "request_id",
+          "credential_id"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Identifier of the approved request.",
+            "format": "uuid"
+          },
+          "credential_id": {
+            "type": "string",
+            "description": "Verified WebAuthn credential identifier; empty when approval did not verify a fresh assertion."
           }
         }
       }

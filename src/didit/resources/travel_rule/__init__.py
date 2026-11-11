@@ -218,6 +218,7 @@ class TravelRule(SyncAPIResource):
         legal_name: str | NotGiven = NOT_GIVEN,
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
+        vasp_jurisdiction: str | NotGiven = NOT_GIVEN,
         name_matching_strictness: Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"]
         | str
         | NotGiven = NOT_GIVEN,
@@ -260,6 +261,7 @@ class TravelRule(SyncAPIResource):
           legal_name
           lei
           jurisdiction
+          vasp_jurisdiction: Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. Independent of `jurisdiction`, which sets the regulatory regime Didit stamps on your transfers. Send an empty string to clear it; the directory then shows `jurisdiction`.
           name_matching_strictness: `CONTAINS` accepts one name whose words all appear in the other.
           confirmation_timeout_hours
           timeout_outcome
@@ -296,6 +298,7 @@ class TravelRule(SyncAPIResource):
                     "legal_name": legal_name,
                     "lei": lei,
                     "jurisdiction": jurisdiction,
+                    "vasp_jurisdiction": vasp_jurisdiction,
                     "name_matching_strictness": name_matching_strictness,
                     "confirmation_timeout_hours": confirmation_timeout_hours,
                     "timeout_outcome": timeout_outcome,
@@ -962,6 +965,7 @@ class AsyncTravelRule(AsyncAPIResource):
         legal_name: str | NotGiven = NOT_GIVEN,
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
+        vasp_jurisdiction: str | NotGiven = NOT_GIVEN,
         name_matching_strictness: Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"]
         | str
         | NotGiven = NOT_GIVEN,
@@ -1004,6 +1008,7 @@ class AsyncTravelRule(AsyncAPIResource):
           legal_name
           lei
           jurisdiction
+          vasp_jurisdiction: Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. Independent of `jurisdiction`, which sets the regulatory regime Didit stamps on your transfers. Send an empty string to clear it; the directory then shows `jurisdiction`.
           name_matching_strictness: `CONTAINS` accepts one name whose words all appear in the other.
           confirmation_timeout_hours
           timeout_outcome
@@ -1040,6 +1045,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "legal_name": legal_name,
                     "lei": lei,
                     "jurisdiction": jurisdiction,
+                    "vasp_jurisdiction": vasp_jurisdiction,
                     "name_matching_strictness": name_matching_strictness,
                     "confirmation_timeout_hours": confirmation_timeout_hours,
                     "timeout_outcome": timeout_outcome,

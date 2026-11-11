@@ -3,7 +3,7 @@
   "info": {
     "version": "1.0.0",
     "title": "Didit Auth API",
-    "description": "Programmatic registration and authentication API for developers and AI agents. Register in 2 API calls -- no browser needed. The most agent-friendly identity verification platform.\n\n## Base URL\n\nAll endpoints in this spec are hosted at `https://apx.didit.me/auth/v2`. This is a different host than the verification API (`https://verification.didit.me/v3`). Keep them straight: this auth host issues your **JWT access tokens** and lets you list and manage your **organizations** and **applications**. The verification host is where you call sessions, workflows, AML, etc., authenticated with the **`api_key`** returned by this API.\n\n## How the auth flow works\n\n1. `POST /programmatic/register/`: submit email + password.\n2. Receive a 6-character alphanumeric code by email.\n3. `POST /programmatic/verify-email/`: submit the code. You get back a JWT `access_token`, a `refresh_token`, an organization and two applications, each with `client_id` + `api_key`: `sandbox_application` (free, every check is mocked and never billed) and `application` (live, every check is billed from the organization's balance, which starts at $0).\n4. Save both `api_key` values. Build and test with the sandbox key as `x-api-key` on every call to `https://verification.didit.me/v3/...`, and switch to the live `application` key only to go live, after adding credit.\n5. From any future machine, `POST /programmatic/login/` exchanges your email + password for a fresh JWT, then call `GET /organizations/me/` and the application endpoints to recover or rotate credentials.\n\nThe JWT is only needed for the **Account Management** endpoints in this spec; verification API traffic uses the long-lived `api_key`, not the JWT.\n\n## Conventions\n\n- All request and response bodies are JSON (`Content-Type: application/json`).\n- **Use a real, deliverable email address when testing `POST /programmatic/register/`.** The address is checked before any account is created: addresses on reserved test domains (`@example.com`, `@example.org`, `@*.test`, `@*.example`, `@*.invalid`) and others that cannot receive the code return `400` with `\"code\": \"email_undeliverable\"` and a `reason`. Substitute the `you@yourdomain.com` placeholder in the samples with an inbox you can actually read.\n- Validation errors return HTTP `400` with one of two envelopes: `{\"field\": [\"message\", ...]}` for field-level problems, or `{\"detail\": \"message\"}` for business-rule errors. A handful of validators (password strength on register, code expiry on verify-email) currently respond with a bare array `[\"message\"]` instead of the field-keyed form -- this is a known server-side inconsistency, so client code should accept both shapes.\n- Authentication errors come back as `{\"detail\": \"...\"}` with HTTP `401` (invalid bearer token) or `403` (missing bearer token / insufficient privileges).\n- Rate-limit responses include a `wait` field with the cooldown in seconds."
+    "description": "Programmatic registration and authentication API for developers and AI agents. Register in 2 API calls -- no browser needed. The most agent-friendly identity verification platform.\n\n## Base URL\n\nAll endpoints in this spec are hosted at `https://apx.didit.me/auth/v2`. This is a different host than the verification API (`https://verification.didit.me/v3`). Keep them straight: this auth host issues your **JWT access tokens** and lets you list and manage your **organizations** and **applications**. The verification host is where you call sessions, workflows, AML, etc., authenticated with the **`api_key`** returned by this API.\n\n## How the auth flow works\n\n1. `POST /programmatic/register/`: submit email + password.\n2. Receive a 6-character alphanumeric code by email.\n3. `POST /programmatic/verify-email/`: submit the code. You get back a JWT `access_token`, a `refresh_token`, an organization and two applications, each with `client_id` + `api_key`: `sandbox_application` (free, every check is mocked and never billed) and `application` (live, every check is billed from the organization's balance, which starts at $0).\n4. Save both `api_key` values. Build and test with the sandbox key as `x-api-key` on every call to `https://verification.didit.me/v3/...`, and switch to the live `application` key only to go live, after adding credit.\n5. From any future machine, `POST /programmatic/login/` exchanges your email + password for a fresh JWT, then call `GET /organizations/me/` and the application endpoints to recover or rotate credentials.\n\nThe JWT is only needed for the **Account Management** endpoints in this spec; verification API traffic uses the long-lived `api_key`, not the JWT.\n\n## Conventions\n\n- All request and response bodies are JSON (`Content-Type: application/json`).\n- **Use a real, deliverable email address when testing `POST /programmatic/register/`.** The address is checked before any account is created: addresses on reserved test domains (`@example.com`, `@example.org`, `@*.test`, `@*.example`, `@*.invalid`) and others that cannot receive the code return `400` with `\"code\": \"email_undeliverable\"` and a `reason`. Substitute the `you@yourdomain.com` placeholder in the samples with an inbox you can actually read.\n- Validation errors return HTTP `400` with one of two envelopes: `{\"field\": [\"message\", ...]}` for field-level problems, or `{\"detail\": \"message\"}` for business-rule errors. A handful of validators (password strength on register, code expiry on verify-email) currently respond with a bare array `[\"message\"]` instead of the field-keyed form -- this is a known server-side inconsistency, so client code should accept both shapes.\n- Authentication errors come back as `{\"detail\": \"...\"}` with HTTP `401` (invalid bearer token) or `403` (missing bearer token / insufficient privileges).\n- Rate-limit responses include a `wait` field with the cooldown in seconds.\n\n## Console identity recovery\n\nIdentity actions are console-only and require a console session; account API tokens, application API keys and end-user access tokens do not grant access. They are not public server SDK operations. See [admin identity actions](https://docs.didit.me/authentication/sign-in-methods#admin-identity-actions) for reset MFA, sign-in links, password reset and bulk status changes. The x-console-identity-actions extension references their request and result schemas without adding callable SDK paths."
   },
   "servers": [
     {
@@ -901,7 +901,7 @@
     "/organizations/me/{org_id}/applications/": {
       "post": {
         "summary": "Create Application",
-        "description": "Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.",
+        "description": "Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.",
         "operationId": "create_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -961,6 +961,13 @@
                 "Empty": {
                   "summary": "No body at all -- defaults to <org name> App",
                   "value": {}
+                },
+                "AdminSignInURL": {
+                  "summary": "Configure the admin sign-in handoff",
+                  "value": {
+                    "website_url": "https://acme.example",
+                    "initiate_login_uri": "https://acme.example/login"
+                  }
                 }
               }
             }
@@ -1704,7 +1711,7 @@
       },
       "patch": {
         "summary": "Update Application",
-        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.",
+        "description": "Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.\n\nSet initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.",
         "operationId": "update_organization_application",
         "x-didit-sdk": {
           "resource": "account.applications",
@@ -1754,7 +1761,7 @@
               },
               "examples": {
                 "RenameCustomerApplication": {
-                  "summary": "Rename and move to a new domain",
+                  "summary": "Rename and move domains when no admin sign-in URL is set; otherwise update or clear that URI in the same request.",
                   "value": {
                     "name": "Acme Production App",
                     "website_url": "https://app.acme.example"
@@ -1774,6 +1781,19 @@
                   "value": {
                     "terms_url": "https://acme.example/v2/terms",
                     "privacy_url": "https://acme.example/v2/privacy"
+                  }
+                },
+                "AdminSignInURL": {
+                  "summary": "Configure the admin sign-in handoff",
+                  "value": {
+                    "website_url": "https://acme.example",
+                    "initiate_login_uri": "https://acme.example/login"
+                  }
+                },
+                "ClearAdminSignInURL": {
+                  "summary": "Disable admin-sent sign-in links",
+                  "value": {
+                    "initiate_login_uri": ""
                   }
                 }
               }
@@ -2521,6 +2541,9 @@
             "description": "The application's environment. A `live` application bills every verification session and check created with its key. A `sandbox` application mocks every check and is never billed, so it is where you test (each sandbox application can create 500 test sessions every 24 hours). Read this field to pick the application: never infer the environment from the name.",
             "example": "live",
             "readOnly": true
+          },
+          "initiate_login_uri": {
+            "$ref": "#/components/schemas/ApplicationInitiateLoginURI"
           }
         }
       },
@@ -2564,6 +2587,9 @@
           },
           "data_location": {
             "$ref": "#/components/schemas/ApplicationDataLocation"
+          },
+          "initiate_login_uri": {
+            "$ref": "#/components/schemas/ApplicationInitiateLoginURI"
           }
         }
       },
@@ -2605,6 +2631,9 @@
           },
           "data_location": {
             "$ref": "#/components/schemas/ApplicationDataLocation"
+          },
+          "initiate_login_uri": {
+            "$ref": "#/components/schemas/ApplicationInitiateLoginURI"
           }
         }
       },
@@ -2936,7 +2965,221 @@
             "example": "data_location_check_unavailable"
           }
         }
+      },
+      "ApplicationInitiateLoginURI": {
+        "type": "string",
+        "maxLength": 2048,
+        "default": "",
+        "example": "https://acme.example/login",
+        "description": "Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link."
+      },
+      "ConsoleIdentityActionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action"
+        ],
+        "description": "Console-only action. reset_mfa deletes TOTP, passkeys and recovery codes, invalidates pending challenges, revokes sessions and agent grants, and queues a notice and audit when anything changes. It leaves the password unchanged. send_sign_in_link sends only to the identity email and requires initiate_login_uri. send_password_reset uses the existing 30-minute password-reset flow; it is limited to once per minute per identity. Status actions return the identity; reset and send actions return the corresponding result.",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "block",
+              "unblock",
+              "unlock",
+              "revoke_sessions",
+              "send_password_reset",
+              "reset_mfa",
+              "send_sign_in_link"
+            ],
+            "description": "Identity action to perform."
+          },
+          "notify_users": {
+            "type": "boolean",
+            "default": false,
+            "description": "Only block and unblock accept true. Emails the person when their blocked status changes. Repeating an unchanged status does not send another notice. Requires an email address."
+          }
+        },
+        "example": {
+          "action": "reset_mfa"
+        }
+      },
+      "ConsoleBulkIdentityActionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "ids"
+        ],
+        "description": "Console-only bulk action. Each identity is handled independently. send_password_reset is single-identity only. Duplicate IDs or an invalid request reject the entire request before processing.",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "block",
+              "unblock",
+              "unlock",
+              "revoke_sessions",
+              "reset_mfa",
+              "send_sign_in_link"
+            ],
+            "description": "Action applied to each identity."
+          },
+          "ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "One to 100 distinct identity IDs in this application."
+          },
+          "notify_users": {
+            "type": "boolean",
+            "default": false,
+            "description": "Only block and unblock accept true. Emails the person when their blocked status changes. Repeating an unchanged status does not send another notice. Requires an email address."
+          }
+        },
+        "example": {
+          "action": "reset_mfa",
+          "ids": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        }
+      },
+      "ConsoleMFAResetResult": {
+        "type": "object",
+        "required": [
+          "status",
+          "requires_sign_in_link"
+        ],
+        "description": "Successful console MFA reset. A repeated reset with nothing remaining to reset returns the same result without duplicate notices or audit events. An identity without email cannot be reset.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied"
+            ]
+          },
+          "requires_sign_in_link": {
+            "type": "boolean",
+            "description": "True when the person has no usable password. Offer a sign-in link after resetting MFA so they can sign in and enroll a new factor."
+          }
+        },
+        "example": {
+          "status": "applied",
+          "requires_sign_in_link": true
+        }
+      },
+      "ConsoleSignInLinkResult": {
+        "type": "object",
+        "required": [
+          "status",
+          "expires_in"
+        ],
+        "description": "Console sign-in email sent. Never contains the link or token. Missing application URI returns HTTP 400 with error initiate_login_uri_required. An identity without email or a blocked identity is rejected. Rate limits return 429 and delivery failure returns 503.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent"
+            ]
+          },
+          "expires_in": {
+            "type": "integer",
+            "enum": [
+              900
+            ],
+            "description": "Single-use handoff lifetime in seconds; the handoff does not authenticate the person."
+          }
+        },
+        "example": {
+          "status": "sent",
+          "expires_in": 900
+        }
+      },
+      "ConsoleBulkIdentityActionResult": {
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "description": "Per-identity result. Successful sign-in email uses sent, not applied. Missing identities, including identities from another application, return not_found. An action-level error returns invalid_request; error is included for failed sign-in-link actions only.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "sent",
+              "not_found",
+              "invalid_request"
+            ]
+          },
+          "requires_sign_in_link": {
+            "type": "boolean",
+            "description": "Present only for a successful reset_mfa."
+          },
+          "expires_in": {
+            "type": "integer",
+            "enum": [
+              900
+            ],
+            "description": "Present only for a successful send_sign_in_link."
+          },
+          "error": {
+            "type": "string",
+            "description": "Sign-in-link failure code, such as initiate_login_uri_required, identity_has_no_email, identity_blocked, rate_limited or delivery_unavailable."
+          }
+        }
+      },
+      "ConsoleBulkIdentityActionResponse": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleBulkIdentityActionResult"
+            },
+            "description": "One result per requested identity, in request order. Check each status even when the HTTP response is 200."
+          }
+        },
+        "example": {
+          "results": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "status": "applied",
+              "requires_sign_in_link": true
+            }
+          ]
+        }
       }
+    }
+  },
+  "x-console-identity-actions": {
+    "description": "Console-only identity recovery and status actions. Requires write:authentication; reset_mfa and send_sign_in_link additionally require write:authentication_mfa, assigned to Owner/Admin. No public SDK method is exposed.",
+    "request": {
+      "$ref": "#/components/schemas/ConsoleIdentityActionRequest"
+    },
+    "bulkRequest": {
+      "$ref": "#/components/schemas/ConsoleBulkIdentityActionRequest"
+    },
+    "mfaResetResponse": {
+      "$ref": "#/components/schemas/ConsoleMFAResetResult"
+    },
+    "signInLinkResponse": {
+      "$ref": "#/components/schemas/ConsoleSignInLinkResult"
+    },
+    "bulkResponse": {
+      "$ref": "#/components/schemas/ConsoleBulkIdentityActionResponse"
     }
   }
 }

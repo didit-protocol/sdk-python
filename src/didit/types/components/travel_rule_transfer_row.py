@@ -86,6 +86,12 @@ class TravelRuleTransferRow(BaseModel):
     matched_transaction_id: str | None = None
     """The other side of a deposit you matched to an announced transfer by hand."""
 
+    scenario: str | None = None
+    """The sandbox scenario that answered this transfer, only when `rail` is `TEST_VASP` (for example `accept`, `decline` or `name_mismatch`). `null` for every other transfer, including a live one."""
+
+    webhooks_count: int | None = None
+    """How many webhook delivery attempts Didit recorded for this transfer's transaction, across every event type. Each retry and each manual resend is a separate attempt and counts. Scoped to the calling application; deleted transactions are not counted."""
+
     deadline_at: _dt.datetime | None = None
     """When the transfer expires if it is still waiting on its counterparty. Set on every transfer you create with `POST /v3/transactions/` that needs an exchange, outbound or inbound. Null below the threshold, on a Lightning payment the Travel Rule does not apply to, and on inbound transfers Didit creates when a counterparty reaches you (an inbound TRP inquiry, a network message or the INTERNAL inbound leg)."""
 

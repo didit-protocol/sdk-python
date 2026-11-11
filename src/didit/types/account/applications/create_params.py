@@ -6,6 +6,7 @@ from typing import Sequence
 from typing_extensions import TypedDict
 
 from didit.types.components.application_data_location import ApplicationDataLocation
+from didit.types.components.application_initiate_login_uri import ApplicationInitiateLoginURI
 
 __all__ = ["AccountApplicationsCreateParams"]
 
@@ -33,3 +34,6 @@ class AccountApplicationsCreateParams(TypedDict, total=False):
 
     data_location: ApplicationDataLocation
     """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""
+
+    initiate_login_uri: ApplicationInitiateLoginURI
+    """Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link."""

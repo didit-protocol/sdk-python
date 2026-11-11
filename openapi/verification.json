@@ -5540,6 +5540,214 @@
         ]
       }
     },
+    "/v1/sandbox/scenarios/": {
+      "get": {
+        "summary": "List sandbox scenarios and Test VASP metadata",
+        "description": "Read the sandbox catalog Didit serves for testing. Authenticate with your application's API key or access token; a sandbox session's `Session-Token` also reads it, narrowed to the scenarios that session's workflow can produce. `scenarios`, `magic_values`, `risk_cases`, `sample_identity` and `delivery_conventions` describe the mocked session outcomes and the values that trigger them. `travel_rule` is the Didit Test VASP: its identity, the `routes` it answers over, and each scenario's own `route`. Every Test VASP exchange runs in process inside Didit, so `TEST_VASP` is not a live network or email transport and no real VASP is contacted. Pick a Travel Rule scenario by its beneficiary wallet address or by a beneficiary name of the form `Didit Test VASP <suffix>`. See [Travel Rule sandbox testing](/transaction-monitoring/travel-rule-sandbox).",
+        "operationId": "listSandboxScenarios",
+        "x-didit-sdk": {
+          "resource": "sandbox",
+          "method": "list_scenarios",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sandbox"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          },
+          {
+            "SessionTokenAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v1/sandbox/scenarios/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sandbox.list_scenarios()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sandbox.listScenarios();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sandbox.ListScenarios(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sandbox().listScenarios();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->sandbox->listScenarios();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sandbox.list_scenarios\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sandbox.ListScenariosAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sandbox catalog. `travel_rule.routes` lists the rails the Test VASP answers over, and every `travel_rule.scenarios[]` entry carries its own `route` beside its trigger values and resulting status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxScenarioCatalog"
+                },
+                "examples": {
+                  "Catalog": {
+                    "value": {
+                      "scenarios": [
+                        {
+                          "slug": "decline_aml_hit",
+                          "title": "Declined - AML hit",
+                          "description": "The screening returns one production-shaped hit and declines the session.",
+                          "default_status": "Declined",
+                          "steps": [
+                            "AML"
+                          ],
+                          "group": "aml",
+                          "magic_inputs": {
+                            "user_email": "sandbox+aml_hit@didit.test"
+                          },
+                          "warnings": [
+                            {
+                              "risk": "POSSIBLE_MATCH_FOUND",
+                              "feature": "AML",
+                              "input_field": "user_email",
+                              "magic_value": "sandbox+aml_hit@didit.test"
+                            }
+                          ]
+                        }
+                      ],
+                      "magic_values": [
+                        {
+                          "risk": "POSSIBLE_MATCH_FOUND",
+                          "feature": "AML",
+                          "input_field": "user_email",
+                          "magic_value": "sandbox+aml_hit@didit.test",
+                          "description": "Triggers a possible AML match."
+                        }
+                      ],
+                      "risk_cases": [
+                        {
+                          "risk": "POSSIBLE_MATCH_FOUND",
+                          "feature": "AML",
+                          "status_path": "aml.status",
+                          "default_status": "Declined"
+                        }
+                      ],
+                      "sample_identity": {
+                        "date_of_birth": "1990-01-01",
+                        "date_of_issue": "2021-06-15",
+                        "date_of_expiry": "2031-06-15",
+                        "documents": [
+                          {
+                            "sandbox_sample": null,
+                            "document_name": "Brazil - Passport (2015)",
+                            "is_default": true,
+                            "first_name": "ALICE",
+                            "last_name": "SILVA",
+                            "date_of_birth": "1990-01-01",
+                            "gender": "F",
+                            "nationality": "BRA",
+                            "id_country": "BRA",
+                            "identification_number": "FX123456"
+                          }
+                        ]
+                      },
+                      "delivery_conventions": {
+                        "email_optin": {
+                          "description": "By default sandbox sessions do not send emails. Use one of these patterns on the recipient address to deliver them.",
+                          "patterns": [
+                            {
+                              "pattern": "<local>+sandbox@<domain>",
+                              "example": "alice+sandbox@example.com"
+                            },
+                            {
+                              "pattern": "*@didit.test",
+                              "example": "alice@didit.test"
+                            }
+                          ]
+                        },
+                        "phone_otp_code": {
+                          "description": "Sandbox phone OTP check accepts any code.",
+                          "value": "123456"
+                        },
+                        "email_otp_code": {
+                          "description": "Sandbox email OTP check accepts any code.",
+                          "value": "123456"
+                        }
+                      },
+                      "travel_rule": {
+                        "legal_name": "Didit Test VASP",
+                        "lei": "DIDITESTVASP00000001",
+                        "jurisdiction": "GB",
+                        "compliance_email": "travel-rule-test-vasp@didit.test",
+                        "travel_address": "trp:test-vasp.didit.test/trp/inquiries/test-vasp/?t=i",
+                        "network_codes": {
+                          "GTR": "DIDITTESTVASP",
+                          "TRUST": "DIDITTESTVASP",
+                          "VERIFYVASP": "didit-test-vasp",
+                          "SYGNA": "DIDITTESTVASP"
+                        },
+                        "routes": [
+                          "TEST_VASP"
+                        ],
+                        "chain": "ETH",
+                        "timeout_window_seconds": 60,
+                        "default_scenario": "accept",
+                        "inbound_scenarios": [
+                          "accept",
+                          "name_mismatch"
+                        ],
+                        "scenarios": [
+                          {
+                            "slug": "accept",
+                            "route": "TEST_VASP",
+                            "title": "Test VASP - accepts",
+                            "description": "The test VASP accepts the transfer and returns the beneficiary identity. The exchange completes; send the on-chain id to finish it.",
+                            "beneficiary_name": "Didit Test VASP",
+                            "beneficiary_wallet_address": "0xc00c4cd93ff83953ce3347b33656d68ab8f35cfb",
+                            "chain": "ETH",
+                            "travel_rule_status": "COMPLETED",
+                            "answers": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No Didit-issued credential was sent, the credential is not active, or a live session's token was used."
+          }
+        }
+      }
+    },
     "/v3/session/{sessionId}/sandbox/arm/": {
       "post": {
         "summary": "Arm a sandbox scenario on a session",
@@ -34466,6 +34674,7 @@
                     "value": {
                       "is_enabled": false,
                       "jurisdiction": "EU",
+                      "vasp_jurisdiction": "",
                       "name_matching_strictness": "DEFAULT",
                       "confirmation_timeout_hours": 48,
                       "timeout_outcome": "HOLD",
@@ -85694,6 +85903,8 @@
                       "originator_wallet_type": "vasp",
                       "beneficiary_wallet_type": "vasp",
                       "matched_transaction_id": null,
+                      "scenario": null,
+                      "webhooks_count": 3,
                       "deadline_at": "2026-10-21T08:41:13Z",
                       "created_at": "2026-10-19T08:41:13Z"
                     }
@@ -91753,6 +91964,8 @@
                       "originator_wallet_type": "vasp",
                       "beneficiary_wallet_type": "vasp",
                       "matched_transaction_id": null,
+                      "scenario": null,
+                      "webhooks_count": 0,
                       "deadline_at": null,
                       "created_at": "2026-10-19T08:41:13Z"
                     }
@@ -95307,7 +95520,11 @@
           "jurisdiction": {
             "type": "string",
             "maxLength": 8,
-            "description": "Your VASP's operating jurisdiction code. Default `\"EU\"`. Didit maps it to the regime it stamps on your Travel Rule transactions as `travel_rule_regime` (for example `EU` or an EU member code becomes `eu`), which transaction rules can key on. Other Didit customers see it as your jurisdiction in the VASP directory once the Didit network lists your profile."
+            "description": "Your VASP's regulatory regime code. Default `\"EU\"`. Didit maps it to the regime it stamps on your Travel Rule transactions as `travel_rule_regime` (for example `EU` or an EU member code becomes `eu`), which transaction rules can key on, and it decides which data fields the exchange must share. Other Didit customers see `vasp_jurisdiction` in the VASP directory; while `vasp_jurisdiction` is empty, the directory shows this value instead."
+          },
+          "vasp_jurisdiction": {
+            "type": "string",
+            "description": "Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. It is independent of `jurisdiction`, the regulatory regime Didit stamps on your transfers; while `vasp_jurisdiction` is empty, the directory shows `jurisdiction`. Empty until you set it."
           },
           "name_matching_strictness": {
             "type": "string",
@@ -95513,6 +95730,11 @@
           "jurisdiction": {
             "type": "string",
             "maxLength": 8
+          },
+          "vasp_jurisdiction": {
+            "type": "string",
+            "maxLength": 3,
+            "description": "Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. Independent of `jurisdiction`, which sets the regulatory regime Didit stamps on your transfers. Send an empty string to clear it; the directory then shows `jurisdiction`."
           },
           "name_matching_strictness": {
             "type": "string",
@@ -97149,6 +97371,545 @@
           },
           "travel_rule": {
             "$ref": "#/components/schemas/TravelRuleTransferDetail"
+          }
+        }
+      },
+      "SandboxScenarioCatalog": {
+        "type": "object",
+        "required": [
+          "scenarios",
+          "magic_values",
+          "risk_cases",
+          "sample_identity",
+          "delivery_conventions",
+          "travel_rule"
+        ],
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "description": "The session scenarios Didit can arm. A session credential narrows this list to the scenarios its workflow can produce.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxScenario"
+            }
+          },
+          "magic_values": {
+            "type": "array",
+            "description": "Every magic value in the registry, with the risk and feature it triggers.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxMagicValue"
+            }
+          },
+          "risk_cases": {
+            "type": "array",
+            "description": "Every risk a sandbox session can be stamped with, and the status it maps to.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxRiskCase"
+            }
+          },
+          "sample_identity": {
+            "$ref": "#/components/schemas/SandboxSampleIdentity"
+          },
+          "delivery_conventions": {
+            "$ref": "#/components/schemas/SandboxDeliveryConventions"
+          },
+          "travel_rule": {
+            "$ref": "#/components/schemas/SandboxTestVasp"
+          }
+        }
+      },
+      "SandboxScenario": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "description",
+          "default_status",
+          "steps",
+          "group",
+          "magic_inputs",
+          "warnings"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Scenario slug, accepted by `sandbox_scenario` at session create and by `POST /v3/session/{sessionId}/sandbox/arm/`.",
+            "example": "decline_aml_hit"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable scenario name."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the scenario makes the session do."
+          },
+          "default_status": {
+            "type": "string",
+            "enum": [
+              "Approved",
+              "Declined",
+              "In Review"
+            ],
+            "description": "The session status the scenario settles on."
+          },
+          "steps": {
+            "type": "array",
+            "description": "The workflow feature steps that produce the scenario. Empty when the scenario needs no feature step.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "id_document",
+              "selfie",
+              "phone_email",
+              "address",
+              "questionnaire",
+              "database",
+              "aml",
+              "bank",
+              "location",
+              "signature",
+              "company",
+              "other"
+            ],
+            "description": "The picker group the scenario is listed under."
+          },
+          "magic_inputs": {
+            "type": "object",
+            "description": "The session input field values that arm the scenario, keyed by input field name.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "description": "The registry entries the scenario's magic inputs resolve to.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxScenarioWarning"
+            }
+          }
+        }
+      },
+      "SandboxScenarioWarning": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "input_field",
+          "magic_value"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk the magic value stamps on the session."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that raises the risk."
+          },
+          "input_field": {
+            "type": "string",
+            "description": "The session input field carrying the magic value."
+          },
+          "magic_value": {
+            "type": "string",
+            "description": "The value that triggers the risk."
+          }
+        }
+      },
+      "SandboxMagicValue": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "input_field",
+          "magic_value",
+          "description"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk the value stamps on the session."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that raises the risk."
+          },
+          "input_field": {
+            "type": "string",
+            "description": "The session input field the value belongs to."
+          },
+          "magic_value": {
+            "type": "string",
+            "description": "The value to send for that input field."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the value simulates."
+          }
+        }
+      },
+      "SandboxRiskCase": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "status_path",
+          "default_status"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk code."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that owns the risk."
+          },
+          "status_path": {
+            "type": "string",
+            "description": "The decision path the status is read from, for example `aml.status`."
+          },
+          "default_status": {
+            "type": "string",
+            "description": "The status the risk resolves to when no rule changes it."
+          }
+        }
+      },
+      "SandboxSampleIdentity": {
+        "type": "object",
+        "required": [
+          "date_of_birth",
+          "date_of_issue",
+          "date_of_expiry",
+          "documents"
+        ],
+        "properties": {
+          "date_of_birth": {
+            "type": "string",
+            "description": "Date of birth shared by the sample documents."
+          },
+          "date_of_issue": {
+            "type": "string",
+            "description": "Date of issue shared by the sample documents."
+          },
+          "date_of_expiry": {
+            "type": "string",
+            "description": "Date of expiry shared by the sample documents."
+          },
+          "documents": {
+            "type": "array",
+            "description": "The pinned sandbox documents and the exact identity each one extracts.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxSampleDocument"
+            }
+          }
+        }
+      },
+      "SandboxSampleDocument": {
+        "type": "object",
+        "required": [
+          "sandbox_sample",
+          "document_name",
+          "is_default"
+        ],
+        "properties": {
+          "sandbox_sample": {
+            "type": "string",
+            "nullable": true,
+            "description": "The sample slug that selects this document, or `null` for the default document."
+          },
+          "document_name": {
+            "type": "string",
+            "description": "The document the sandbox OCR mock returns."
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is the document returned when no sample is selected."
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted given name, for `expected_details`."
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted surname, for `expected_details`."
+          },
+          "date_of_birth": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted date of birth, for `expected_details`."
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted sex code, for `expected_details`."
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted nationality code, for `expected_details`."
+          },
+          "id_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted issuing country code, for `expected_details`."
+          },
+          "identification_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted document number, for `expected_details`."
+          }
+        }
+      },
+      "SandboxDeliveryConventions": {
+        "type": "object",
+        "required": [
+          "email_optin",
+          "phone_otp_code",
+          "email_otp_code"
+        ],
+        "properties": {
+          "email_optin": {
+            "type": "object",
+            "required": [
+              "description",
+              "patterns"
+            ],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "How sandbox email delivery opt-in works."
+              },
+              "patterns": {
+                "type": "array",
+                "description": "Recipient address patterns that make sandbox deliver the email.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "pattern",
+                    "example"
+                  ],
+                  "properties": {
+                    "pattern": {
+                      "type": "string",
+                      "description": "The pattern to match."
+                    },
+                    "example": {
+                      "type": "string",
+                      "description": "An address that matches the pattern."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "phone_otp_code": {
+            "$ref": "#/components/schemas/SandboxOtpConvention"
+          },
+          "email_otp_code": {
+            "$ref": "#/components/schemas/SandboxOtpConvention"
+          }
+        }
+      },
+      "SandboxOtpConvention": {
+        "type": "object",
+        "required": [
+          "description",
+          "value"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "What the sandbox accepts."
+          },
+          "value": {
+            "type": "string",
+            "description": "The code to check with."
+          }
+        }
+      },
+      "SandboxTestVasp": {
+        "type": "object",
+        "required": [
+          "legal_name",
+          "lei",
+          "jurisdiction",
+          "compliance_email",
+          "travel_address",
+          "network_codes",
+          "routes",
+          "chain",
+          "timeout_window_seconds",
+          "default_scenario",
+          "inbound_scenarios",
+          "scenarios"
+        ],
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "The Test VASP's legal name. A beneficiary name of this value, or `Didit Test VASP <suffix>`, selects a scenario.",
+            "example": "Didit Test VASP"
+          },
+          "lei": {
+            "type": "string",
+            "description": "A well-formed test LEI that is not registered with GLEIF.",
+            "example": "DIDITESTVASP00000001"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "description": "The Test VASP's jurisdiction.",
+            "example": "GB"
+          },
+          "compliance_email": {
+            "type": "string",
+            "description": "The Test VASP's compliance address, under a `.test` domain. Sandbox never mails it.",
+            "example": "travel-rule-test-vasp@didit.test"
+          },
+          "travel_address": {
+            "type": "string",
+            "description": "The Test VASP's travel address, under a `.test` host. It is never reachable."
+          },
+          "network_codes": {
+            "type": "object",
+            "description": "The participant code the Test VASP is known by on each network. No message is ever sent to one.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "routes": {
+            "type": "array",
+            "description": "The rails the Test VASP answers over. `TEST_VASP` runs in process inside Didit, with no network or email transport.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TEST_VASP"
+              ]
+            }
+          },
+          "chain": {
+            "type": "string",
+            "description": "The chain of the Test VASP's wallet addresses.",
+            "example": "ETH"
+          },
+          "timeout_window_seconds": {
+            "type": "integer",
+            "description": "How long the `timeout` scenario leaves the transfer waiting before the overdue sweeper expires it."
+          },
+          "default_scenario": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "decline",
+              "name_mismatch",
+              "not_reachable",
+              "timeout",
+              "self_hosted"
+            ],
+            "description": "The scenario used when no trigger names one.",
+            "example": "accept"
+          },
+          "inbound_scenarios": {
+            "type": "array",
+            "description": "The scenarios `POST /v3/travel-rule/test-vasp/inbound/` accepts.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accept",
+                "name_mismatch"
+              ]
+            }
+          },
+          "scenarios": {
+            "type": "array",
+            "description": "Every Test VASP scenario, with its trigger values and the status it ends at.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxTestVaspScenario"
+            }
+          }
+        }
+      },
+      "SandboxTestVaspScenario": {
+        "type": "object",
+        "required": [
+          "slug",
+          "route",
+          "title",
+          "description",
+          "beneficiary_name",
+          "beneficiary_wallet_address",
+          "chain",
+          "travel_rule_status",
+          "answers"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "decline",
+              "name_mismatch",
+              "not_reachable",
+              "timeout",
+              "self_hosted"
+            ],
+            "description": "Scenario slug."
+          },
+          "route": {
+            "type": "string",
+            "enum": [
+              "TEST_VASP"
+            ],
+            "description": "The rail this scenario answers over. It is always `TEST_VASP`, which runs in process inside Didit."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable scenario name."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the Test VASP does in this scenario."
+          },
+          "beneficiary_name": {
+            "type": "string",
+            "description": "The beneficiary legal name that triggers this scenario."
+          },
+          "beneficiary_wallet_address": {
+            "type": "string",
+            "description": "The beneficiary wallet address that triggers this scenario, compared case-insensitively."
+          },
+          "chain": {
+            "type": "string",
+            "description": "The chain of `beneficiary_wallet_address`.",
+            "example": "ETH"
+          },
+          "travel_rule_status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_COUNTERPARTY",
+              "ON_HOLD",
+              "COMPLETED",
+              "FINISHED",
+              "CANCELLED",
+              "EXPIRED",
+              "COUNTERPARTY_MISMATCHED_DATA",
+              "COUNTERPARTY_VASP_NOT_FOUND",
+              "COUNTERPARTY_VASP_NOT_REACHABLE",
+              "UNCONFIRMED_OWNERSHIP",
+              "COUNTERPARTY_VASP_GENERAL_DECLINE",
+              "NOT_ENOUGH_COUNTERPARTY_DATA",
+              "NOT_APPLICABLE"
+            ],
+            "description": "The status the exchange ends at."
+          },
+          "answers": {
+            "type": "boolean",
+            "description": "Whether the Test VASP answers at all. `false` makes the real delivery queue retry and then fail the transfer."
           }
         }
       },
@@ -124832,6 +125593,15 @@
             "format": "uuid",
             "nullable": true,
             "description": "The other side of a deposit you matched to an announced transfer by hand."
+          },
+          "scenario": {
+            "type": "string",
+            "nullable": true,
+            "description": "The sandbox scenario that answered this transfer, only when `rail` is `TEST_VASP` (for example `accept`, `decline` or `name_mismatch`). `null` for every other transfer, including a live one."
+          },
+          "webhooks_count": {
+            "type": "integer",
+            "description": "How many webhook delivery attempts Didit recorded for this transfer's transaction, across every event type. Each retry and each manual resend is a separate attempt and counts. Scoped to the calling application; deleted transactions are not counted."
           },
           "deadline_at": {
             "type": "string",

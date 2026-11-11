@@ -6,6 +6,7 @@ from typing import Literal
 
 from didit._models import BaseModel
 from didit.types.components.application_data_location import ApplicationDataLocation
+from didit.types.components.application_initiate_login_uri import ApplicationInitiateLoginURI
 from didit.types.components.application_product import ApplicationProduct
 
 __all__ = ["Application"]
@@ -51,3 +52,6 @@ class Application(BaseModel):
 
     mode: Literal["live", "sandbox"] | str | None = None
     """The application's environment. A `live` application bills every verification session and check created with its key. A `sandbox` application mocks every check and is never billed, so it is where you test (each sandbox application can create 500 test sessions every 24 hours). Read this field to pick the application: never infer the environment from the name."""
+
+    initiate_login_uri: ApplicationInitiateLoginURI | None = None
+    """Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link."""

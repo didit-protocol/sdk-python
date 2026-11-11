@@ -518,6 +518,9 @@ if TYPE_CHECKING:
     from didit.types.components.application_data_location import (
         ApplicationDataLocation as ApplicationDataLocation,
     )
+    from didit.types.components.application_initiate_login_uri import (
+        ApplicationInitiateLoginURI as ApplicationInitiateLoginURI,
+    )
     from didit.types.components.application_product import ApplicationProduct as ApplicationProduct
     from didit.types.components.bank_account_check_business_holder import (
         BankAccountCheckBusinessHolder as BankAccountCheckBusinessHolder,
@@ -1406,8 +1409,39 @@ if TYPE_CHECKING:
     from didit.types.components.routing_publication_routing_condition import (
         RoutingPublicationRoutingCondition as RoutingPublicationRoutingCondition,
     )
+    from didit.types.components.sandbox_delivery_conventions import (
+        SandboxDeliveryConventions as SandboxDeliveryConventions,
+    )
+    from didit.types.components.sandbox_delivery_conventions import (
+        SandboxDeliveryConventionsEmailOptin as SandboxDeliveryConventionsEmailOptin,
+    )
+    from didit.types.components.sandbox_delivery_conventions import (
+        SandboxDeliveryConventionsEmailOptinPatterns as SandboxDeliveryConventionsEmailOptinPatterns,
+    )
+    from didit.types.components.sandbox_magic_value import SandboxMagicValue as SandboxMagicValue
+    from didit.types.components.sandbox_otp_convention import (
+        SandboxOtpConvention as SandboxOtpConvention,
+    )
+    from didit.types.components.sandbox_risk_case import SandboxRiskCase as SandboxRiskCase
+    from didit.types.components.sandbox_sample_document import (
+        SandboxSampleDocument as SandboxSampleDocument,
+    )
+    from didit.types.components.sandbox_sample_identity import (
+        SandboxSampleIdentity as SandboxSampleIdentity,
+    )
+    from didit.types.components.sandbox_scenario import SandboxScenario as SandboxScenario
+    from didit.types.components.sandbox_scenario_catalog import (
+        SandboxScenarioCatalog as SandboxScenarioCatalog,
+    )
+    from didit.types.components.sandbox_scenario_warning import (
+        SandboxScenarioWarning as SandboxScenarioWarning,
+    )
     from didit.types.components.sandbox_simulate_response import (
         SandboxSimulateResponse as SandboxSimulateResponse,
+    )
+    from didit.types.components.sandbox_test_vasp import SandboxTestVasp as SandboxTestVasp
+    from didit.types.components.sandbox_test_vasp_scenario import (
+        SandboxTestVaspScenario as SandboxTestVaspScenario,
     )
     from didit.types.components.session_decision import SessionDecision as SessionDecision
     from didit.types.components.session_decision import (
@@ -3501,6 +3535,7 @@ _MODULES: dict[str, str] = {
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue": "components.application_analytics_workflow_funnel",
     "ApplicationCredentialsSummary": "components.application_credentials_summary",
     "ApplicationDataLocation": "components.application_data_location",
+    "ApplicationInitiateLoginURI": "components.application_initiate_login_uri",
     "ApplicationProduct": "components.application_product",
     "BankAccountCheckBusinessHolder": "components.bank_account_check_business_holder",
     "BankAccountCheckHolder": "components.bank_account_check_holder",
@@ -4108,7 +4143,20 @@ _MODULES: dict[str, str] = {
     "RoutingPublicationPolicyDraftResponse": "components.routing_publication_policy_draft_response",
     "RoutingPublicationPolicyRevision": "components.routing_publication_policy_revision",
     "RoutingPublicationRoutingCondition": "components.routing_publication_routing_condition",
+    "SandboxDeliveryConventions": "components.sandbox_delivery_conventions",
+    "SandboxDeliveryConventionsEmailOptin": "components.sandbox_delivery_conventions",
+    "SandboxDeliveryConventionsEmailOptinPatterns": "components.sandbox_delivery_conventions",
+    "SandboxMagicValue": "components.sandbox_magic_value",
+    "SandboxOtpConvention": "components.sandbox_otp_convention",
+    "SandboxRiskCase": "components.sandbox_risk_case",
+    "SandboxSampleDocument": "components.sandbox_sample_document",
+    "SandboxSampleIdentity": "components.sandbox_sample_identity",
+    "SandboxScenario": "components.sandbox_scenario",
+    "SandboxScenarioCatalog": "components.sandbox_scenario_catalog",
+    "SandboxScenarioWarning": "components.sandbox_scenario_warning",
     "SandboxSimulateResponse": "components.sandbox_simulate_response",
+    "SandboxTestVasp": "components.sandbox_test_vasp",
+    "SandboxTestVaspScenario": "components.sandbox_test_vasp_scenario",
     "SessionDecision": "components.session_decision",
     "SessionDecisionAssignee": "components.session_decision",
     "SessionDecisionBiometricConsent": "components.session_decision",
@@ -4740,6 +4788,7 @@ __all__ = [
     "ApplicationAnalyticsWorkflowFunnelValueStepsValue",
     "ApplicationCredentialsSummary",
     "ApplicationDataLocation",
+    "ApplicationInitiateLoginURI",
     "ApplicationProduct",
     "BankAccountCheckBusinessHolder",
     "BankAccountCheckHolder",
@@ -5347,7 +5396,20 @@ __all__ = [
     "RoutingPublicationPolicyDraftResponse",
     "RoutingPublicationPolicyRevision",
     "RoutingPublicationRoutingCondition",
+    "SandboxDeliveryConventions",
+    "SandboxDeliveryConventionsEmailOptin",
+    "SandboxDeliveryConventionsEmailOptinPatterns",
+    "SandboxMagicValue",
+    "SandboxOtpConvention",
+    "SandboxRiskCase",
+    "SandboxSampleDocument",
+    "SandboxSampleIdentity",
+    "SandboxScenario",
+    "SandboxScenarioCatalog",
+    "SandboxScenarioWarning",
     "SandboxSimulateResponse",
+    "SandboxTestVasp",
+    "SandboxTestVaspScenario",
     "SessionDecision",
     "SessionDecisionAssignee",
     "SessionDecisionBiometricConsent",

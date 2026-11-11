@@ -545,6 +545,7 @@ def test_travel_rule_retrieve_settings() -> None:
             response_json={
                 "is_enabled": False,
                 "jurisdiction": "EU",
+                "vasp_jurisdiction": "",
                 "name_matching_strictness": "DEFAULT",
                 "confirmation_timeout_hours": 48,
                 "timeout_outcome": "HOLD",
@@ -943,6 +944,7 @@ def test_travel_rule_update_settings() -> None:
             response_json={
                 "is_enabled": True,
                 "jurisdiction": "sample",
+                "vasp_jurisdiction": "sample",
                 "name_matching_strictness": "NONE",
                 "confirmation_timeout_hours": 1,
                 "timeout_outcome": "HOLD",
@@ -1582,6 +1584,8 @@ def test_travel_rule_transfers_list() -> None:
                         "originator_wallet_type": "vasp",
                         "beneficiary_wallet_type": "vasp",
                         "matched_transaction_id": None,
+                        "scenario": None,
+                        "webhooks_count": 3,
                         "deadline_at": "2026-10-21T08:41:13Z",
                         "created_at": "2026-10-19T08:41:13Z",
                     }
@@ -1669,6 +1673,8 @@ def test_travel_rule_unmatched_deposits_list() -> None:
                         "originator_wallet_type": "vasp",
                         "beneficiary_wallet_type": "vasp",
                         "matched_transaction_id": None,
+                        "scenario": None,
+                        "webhooks_count": 0,
                         "deadline_at": None,
                         "created_at": "2026-10-19T08:41:13Z",
                     }
@@ -2175,6 +2181,7 @@ def test_travel_rule_workspace_claim() -> None:
                 "settings": {
                     "is_enabled": True,
                     "jurisdiction": "sample",
+                    "vasp_jurisdiction": "sample",
                     "name_matching_strictness": "NONE",
                     "confirmation_timeout_hours": 1,
                     "timeout_outcome": "HOLD",
@@ -2304,6 +2311,7 @@ def test_travel_rule_workspace_confirm_domain() -> None:
                 "settings": {
                     "is_enabled": True,
                     "jurisdiction": "sample",
+                    "vasp_jurisdiction": "sample",
                     "name_matching_strictness": "NONE",
                     "confirmation_timeout_hours": 1,
                     "timeout_outcome": "HOLD",
@@ -2433,6 +2441,7 @@ def test_travel_rule_workspace_enable_billing() -> None:
                 "settings": {
                     "is_enabled": True,
                     "jurisdiction": "sample",
+                    "vasp_jurisdiction": "sample",
                     "name_matching_strictness": "NONE",
                     "confirmation_timeout_hours": 1,
                     "timeout_outcome": "HOLD",
@@ -2561,6 +2570,7 @@ def test_travel_rule_workspace_get() -> None:
                 "settings": {
                     "is_enabled": True,
                     "jurisdiction": "sample",
+                    "vasp_jurisdiction": "sample",
                     "name_matching_strictness": "NONE",
                     "confirmation_timeout_hours": 1,
                     "timeout_outcome": "HOLD",
@@ -2712,6 +2722,7 @@ def test_travel_rule_workspace_verify_domain_dns() -> None:
                 "settings": {
                     "is_enabled": True,
                     "jurisdiction": "sample",
+                    "vasp_jurisdiction": "sample",
                     "name_matching_strictness": "NONE",
                     "confirmation_timeout_hours": 1,
                     "timeout_outcome": "HOLD",
