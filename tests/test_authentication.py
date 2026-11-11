@@ -1660,6 +1660,23 @@ def test_agent_consent_keeps_error_codes_and_short_assertion_strings(
     assert long not in _shown(error)
 
 
+def test_agent_consent_redacts_strings_the_encoder_writes_from_native_values(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    listed = "nested-credential-string-0123456789"
+    keyed = "int-keyed-credential-string-0123456"
+    assertion: dict[str, Any] = {
+        "id": "short",
+        "clientExtensionResults": {"deep": (listed,), 5: keyed},
+    }
+    issuer.reply(
+        "POST", "/agents/consent/", 400, {"error": "invalid_grant", "a": listed, "b": keyed}
+    )
+    error = _consent_error(auth, assertion)
+    assert error.body == {"error": "invalid_grant", "a": "[redacted]", "b": "[redacted]"}
+    assert listed not in _shown(error)
+
+
 def test_agent_consent_non_json_body_is_redacted_whole(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:

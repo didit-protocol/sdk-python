@@ -347,7 +347,9 @@ class _AuthenticationBase:
                 else dict(assertion)
             )
             body["assertion"] = data
-            secrets += _string_values(data)
+            # The secrets are read from the JSON the request carries, decoded back: whatever the caller
+            # nested in the assertion, the set equals what goes over the wire.
+            secrets += _string_values(json.loads(json.dumps(data, separators=(",", ":"))))
         if scopes is not None:
             if isinstance(scopes, str):
                 raise TypeError("scopes must be a list such as ['read', 'act'], not a string.")
