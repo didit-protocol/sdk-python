@@ -1483,8 +1483,7 @@ def test_agent_consent_status_errors(
                 ACCESS_TOKEN,
                 challenge=AGENT_CHALLENGE,
                 decision="approve",
-                # No short keys: every string that contains an assertion key or value is redacted.
-                assertion={"response": {"signature": "SYNTHETIC_SIGNATURE"}},
+                assertion=AGENT_ASSERTION,
             )
         return auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
 
@@ -1580,12 +1579,22 @@ def _reply_raw(issuer: FakeIssuer, status: int, content: bytes, content_type: st
 def test_agent_consent_redaction_leaves_no_fragment_of_a_prefixed_secret(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:
-    issuer.reply("POST", "/agents/consent/", 400, {"detail": "bad abcdef and abc", "o": "abcdef"})
-    error = _consent_error(auth, {"id": "abc", "signature": "abcdef"})
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {
+            "detail": "bad abcCREDENTIALID0123456 and abcCREDENTIALID0123",
+            "o": "abcCREDENTIALID0123456",
+        },
+    )
+    error = _consent_error(
+        auth, {"id": "abcCREDENTIALID0123", "signature": "abcCREDENTIALID0123456"}
+    )
     assert error.body == {"detail": "[redacted]", "o": "[redacted]"}
     shown = _shown(error)
-    assert "abc" not in shown
-    assert "def" not in shown
+    assert "abcCRED" not in shown
+    assert "456" not in shown
 
 
 def test_agent_consent_redacts_the_whole_string_that_contains_a_secret(
@@ -1595,9 +1604,9 @@ def test_agent_consent_redacts_the_whole_string_that_contains_a_secret(
         "POST",
         "/agents/consent/",
         400,
-        {"detail": "bad assertion xyzSECRETxyz", "keep": "fine"},
+        {"detail": "bad assertion xyzSECRET-0123456789abcdefxyz", "keep": "fine"},
     )
-    error = _consent_error(auth, {"id": "SECRET"})
+    error = _consent_error(auth, {"id": "SECRET-0123456789abcdef"})
     assert error.body == {"detail": "[redacted]", "keep": "fine"}
     assert str(error).startswith("HTTP 400: [redacted]")
 
@@ -1609,23 +1618,46 @@ def test_agent_consent_redacts_a_secret_used_as_an_object_key(
         "POST",
         "/agents/consent/",
         400,
-        {"detail": "no", "echo-SECRET-1": "a", "echo-SECRET-2": "b"},
+        {
+            "detail": "no",
+            "echo-SECRET-0123456789abcdef-1": "a",
+            "echo-SECRET-0123456789abcdef-2": "b",
+        },
     )
-    error = _consent_error(auth, {"id": "SECRET"})
+    error = _consent_error(auth, {"id": "SECRET-0123456789abcdef"})
     assert error.body == {"detail": "no", "[redacted]": "a", "[redacted]2": "b"}
-    assert "SECRET" not in _shown(error)
+    assert "SECRET-0123456789abcdef" not in _shown(error)
 
 
 def test_agent_consent_redacts_other_json_escape_spellings(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:
-    secret = "a/b+\u00e9"
-    _reply_raw(issuer, 400, b'{"detail":"x","echo":"a\\/b+\\u00E9"}', "application/json")
+    secret = "a/b+\u00e9-padding0123456"
+    _reply_raw(
+        issuer, 400, b'{"detail":"x","echo":"a\\/b+\\u00E9-padding0123456"}', "application/json"
+    )
     error = _consent_error(auth, {"id": secret})
     assert error.body == {"detail": "x", "echo": "[redacted]"}
     shown = _shown(error)
     assert "a/b" not in shown
     assert "00E9" not in shown
+    assert "padding0123456" not in shown
+
+
+def test_agent_consent_keeps_error_codes_and_short_assertion_strings(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    long = "Y3JlZGVudGlhbC1pZC0xMjM0NTY3ODkw"
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"error": "invalid_grant", "detail": f"id public-key {long}"},
+    )
+    error = _consent_error(auth, {"id": long, "type": "public-key"})
+    assert error.body == {"error": "invalid_grant", "detail": "[redacted]"}
+    assert "invalid_grant" in _shown(error)
+    assert long not in _shown(error)
 
 
 def test_agent_consent_non_json_body_is_redacted_whole(

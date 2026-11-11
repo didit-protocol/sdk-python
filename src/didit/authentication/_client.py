@@ -154,10 +154,16 @@ def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     return value
 
 
+_MIN_SECRET_LENGTH = 16
+"""Shorter assertion strings (``id``, ``type``, ``public-key``) are not secrets: matching them
+would erase error codes such as ``invalid_grant`` (docs/DESIGN.md section 10)."""
+
+
 def _string_values(value: object) -> list[str]:
-    """Every non-empty string in a nested JSON value, so none of it can leak into an error."""
+    """Every string of at least 16 characters in a nested JSON value (object keys and values),
+    so none of it can leak into an error."""
     if isinstance(value, str):
-        return [value] if value else []
+        return [value] if len(value) >= _MIN_SECRET_LENGTH else []
     if isinstance(value, Mapping):
         return [
             text
