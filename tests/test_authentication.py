@@ -1761,6 +1761,49 @@ def test_agent_consent_redacts_the_request_id_and_headers(
     assert credential not in str(error.response.headers)
 
 
+def test_agent_consent_drops_a_header_named_after_a_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={f"x-{credential}": credential, "x-keep": "fine"},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.response.headers["x-keep"] == "fine"
+    assert credential not in str(error.response.headers)
+
+
+def test_agent_consent_malformed_2xx_keeps_the_request_id_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200,
+            content=f"not json {credential}".encode(),
+            headers={"x-request-id": f"req-{credential}", "content-type": "text/html"},
+        ),
+    )
+    with pytest.raises(APIResponseValidationError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in str(info.value)
+    assert info.value.response.headers["x-request-id"] == "[redacted]"
+    assert credential not in info.value.response.text
+
+
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
     credential = 'cred"ential\\string-0123456789'
 

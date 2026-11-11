@@ -142,35 +142,25 @@ def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     return value
 
 
-def _redacted_body(call: _Call, response: httpx.Response) -> tuple[object, bytes]:
-    """The body of an answer to a private-body call with the secrets removed, and its bytes.
-
-    JSON is redacted structurally and serialised again; anything else (an HTML error page, a body
-    cut at the size limit) becomes the text ``[redacted]``; an empty body is not JSON either.
+def _sanitized_response(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The whole response of a private-body call, sanitized once on receipt: the status code kept,
+    each header whose name contains a secret dropped, the other values redacted, and the body
+    redacted structurally (JSON serialised again; ``[redacted]`` when it is not JSON, was cut at the
+    size limit or is empty). Every error of these calls is built from this response only.
     """
     if not response.content:
-        # An empty body is not JSON.
-        return _REDACTED, _REDACTED.encode()
-    try:
-        body = _redacted(response.json(), call.secrets)
-    except ValueError:
-        return _REDACTED, _REDACTED.encode()
-    return body, json.dumps(body, separators=(",", ":")).encode("utf-8")
-
-
-def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
-    """The response an error may keep: for a private-body call, the same status and headers with
-    the redacted body as content (the issuer may echo the challenge or the assertion).
-    """
-    if not call.private_body:
-        return response
-    _, content = _redacted_body(call, response)
-    # Header values are issuer-controlled too (a request id, an echo): one that contains a secret
-    # is replaced whole.
+        content = _REDACTED.encode()
+    else:
+        try:
+            body = _redacted(response.json(), call.secrets)
+            content = json.dumps(body, separators=(",", ":")).encode("utf-8")
+        except ValueError:
+            content = _REDACTED.encode()
     headers = {
         name: cast("str", _redacted(value, call.secrets))
         for name, value in response.headers.items()
-        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
+        if _redacted(name, call.secrets) == name
+        and name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
     }
     return httpx.Response(
         response.status_code, headers=headers, content=content, request=response.request
@@ -447,23 +437,22 @@ class _AuthenticationBase:
     @staticmethod
     def _read(call: _Call, response: httpx.Response) -> object:
         if not response.is_success:
-            if call.private_body:
-                # The message is derived from the redacted body only.
-                private_body, _ = _redacted_body(call, response)
-                raise make_status_error(response_for_error(call, response), private_body)
             body: object
             try:
                 body = response.json()
             except ValueError:
                 body = response.text or None
-            raise make_status_error(response, body, redact=call.secrets)
+            # A private-body call's response is already sanitized: nothing is replaced again.
+            raise make_status_error(
+                response, body, redact=() if call.private_body else call.secrets
+            )
         if response.status_code == 204 or not response.content:
             return None
         try:
             return response.json()
         except ValueError as exc:
             raise APIResponseValidationError(
-                response=response_for_error(call, response),
+                response=response,
                 message=(
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
                     f"got {response.headers.get('content-type', 'no content type')}."
@@ -480,7 +469,7 @@ class _AuthenticationBase:
             if "status" in fields:
                 return cast("AgentConsentResponse", validate_response(AgentConsentDenied, fields))
         raise APIResponseValidationError(
-            response=response_for_error(call, response),
+            response=response,
             message=(
                 f"Expected an approved (code) or denied (status) answer from {call.method} "
                 f"{httpx.URL(call.url).path}."
@@ -491,7 +480,7 @@ class _AuthenticationBase:
         data = self._read(call, response)
         if not isinstance(data, dict):
             raise APIResponseValidationError(
-                response=response_for_error(call, response),
+                response=response,
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
         return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))
@@ -886,6 +875,9 @@ class Authentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
+        if call.private_body:
+            # Sanitized once, on receipt: every error of this call is built from this response only.
+            response = _sanitized_response(call, response)
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
@@ -1131,6 +1123,9 @@ class AsyncAuthentication(_AuthenticationBase):
             raise failure from None
         if response is None:  # pragma: no cover - a failure was raised above
             raise RuntimeError("no response")
+        if call.private_body:
+            # Sanitized once, on receipt: every error of this call is built from this response only.
+            response = _sanitized_response(call, response)
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
