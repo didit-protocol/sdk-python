@@ -1828,6 +1828,15 @@ def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClo
     assert info.value.__context__ is None
 
 
+def test_agent_consent_deeply_nested_body_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 400, b"[" * 10000 + b"]" * 10000, "application/json")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert error.response.text == "[redacted]"
+
+
 def test_agent_consent_non_json_body_is_redacted_whole(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:

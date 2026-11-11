@@ -154,7 +154,8 @@ def _sanitized_response(call: _Call, response: httpx.Response) -> httpx.Response
         try:
             body = _redacted(response.json(), call.secrets)
             content = json.dumps(body, separators=(",", ":")).encode("utf-8")
-        except ValueError:
+        except (ValueError, RecursionError):
+            # Not JSON, or nested past the parser's or the walk's depth limit: not JSON.
             content = _REDACTED.encode()
     headers = {
         name: cast("str", _redacted(value, call.secrets))
