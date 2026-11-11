@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+from typing import Literal
 
 from didit._models import BaseModel
 from didit.types.components.application_data_location import ApplicationDataLocation
@@ -47,3 +48,6 @@ class Application(BaseModel):
 
     products: list[ApplicationProduct] | None = None
     """The application's products. Always all three, in this order: `identity`, `transactions`, `authentication`. A new application has `identity` enabled with every module on, and `transactions` and `authentication` disabled. Read-only: a `products` key in a create or update body is ignored."""
+
+    mode: Literal["live", "sandbox"] | str | None = None
+    """The application's environment. A `live` application bills every verification session and check created with its key. A `sandbox` application mocks every check and is never billed, so it is where you test (each sandbox application can create 500 test sessions every 24 hours). Read this field to pick the application: never infer the environment from the name."""

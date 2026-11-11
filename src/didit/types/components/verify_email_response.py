@@ -24,7 +24,10 @@ class VerifyEmailResponse(BaseModel):
     """Minimal organization shape returned inline by `POST /programmatic/verify-email/`."""
 
     application: ApplicationCredentialsSummary | None = None
-    """Minimal application shape returned inline by `POST /programmatic/verify-email/`. Persist the `api_key` immediately."""
+    """The organization's live application (`mode: live`): the credentials a production integration ships with. Every check created with its key is billed from the organization's balance."""
+
+    sandbox_application: ApplicationCredentialsSummary | None = None
+    """The organization's sandbox application (`mode: sandbox`). Use its `api_key` to build and test the integration for free: every check is mocked and never billed. Switch to the live `application` key to go live."""
 
     v_2fa_required: bool | None = Field(default=None, alias="2fa_required")
     """Present and `true` when the account already has an authenticator app or a passkey. The response then carries `temp_token` instead of tokens and application keys."""
