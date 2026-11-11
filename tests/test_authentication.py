@@ -1867,6 +1867,29 @@ def test_agent_consent_encoding_failure_has_a_fixed_message(auth: Authentication
     assert str(again.value) == "Could not encode the agent consent request."
 
 
+def test_agent_consent_body_read_failure_is_a_fixed_connection_error(clock: FakeClock) -> None:
+    class Broken(httpx.SyncByteStream):
+        def __iter__(self) -> Iterator[bytes]:
+            yield b"{"
+            raise httpx.ReadError("credential-string-0123456789 broken stream")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Broken(), request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
+        local = configure(Authentication(ISSUER, http_client=http), clock)
+        with pytest.raises(APIConnectionError) as info:
+            local.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion={"id": "x"},
+            )
+    assert "credential-string" not in str(info.value)
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None
+
+
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
     credential = 'cred"ential\\string-0123456789'
 
