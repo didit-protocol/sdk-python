@@ -339,7 +339,6 @@ class _AuthenticationBase:
         if decision not in ("approve", "deny"):
             raise ValueError(f"decision must be 'approve' or 'deny', got {decision!r}.")
         body: dict[str, object] = {"challenge": challenge, "decision": decision}
-        secrets = [token, challenge]
         if assertion is not None:
             data = (
                 assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
@@ -347,9 +346,6 @@ class _AuthenticationBase:
                 else dict(assertion)
             )
             body["assertion"] = data
-            # The secrets are read from the JSON the request carries, decoded back: whatever the caller
-            # nested in the assertion, the set equals what goes over the wire.
-            secrets += _string_values(json.loads(json.dumps(data, separators=(",", ":"))))
         if scopes is not None:
             if isinstance(scopes, str):
                 raise TypeError("scopes must be a list such as ['read', 'act'], not a string.")
@@ -360,11 +356,15 @@ class _AuthenticationBase:
             body["organization_ids"] = list(organization_ids)
         if lifetime is not None:
             body["lifetime"] = lifetime
+        # Encoded exactly once: the plain body decoded from these bytes is what is sent, and the secrets are
+        # read from it, so a caller's object is never serialized a second time.
+        sent = cast("dict[str, object]", json.loads(json.dumps(body, separators=(",", ":"))))
+        secrets = [token, challenge, *_string_values(sent.get("assertion"))]
         return _Call(
             "POST",
             self._url(_AGENT_CONSENT_PATH),
             bearer=token,
-            json_body=body,
+            json_body=sent,
             secrets=tuple(secrets),
             private_body=True,
         )

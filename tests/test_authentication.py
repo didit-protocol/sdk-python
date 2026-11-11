@@ -1677,6 +1677,27 @@ def test_agent_consent_redacts_strings_the_encoder_writes_from_native_values(
     assert listed not in _shown(error)
 
 
+def test_agent_consent_reads_secrets_from_the_bytes_sent_not_a_second_serialization(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    sent = "credential-string-actually-sent-0123"
+
+    class Stateful(dict[str, Any]):
+        reads = 0
+
+        def items(self) -> Any:
+            type(self).reads += 1
+            if type(self).reads > 1:
+                raise RuntimeError("serialized twice")
+            return super().items()
+
+    extension = Stateful({"credProps": {"value": sent}})
+    issuer.reply("POST", "/agents/consent/", 400, {"error": "invalid_grant", "echo": sent})
+    error = _consent_error(auth, {"id": "short", "clientExtensionResults": extension})
+    assert error.body == {"error": "invalid_grant", "echo": "[redacted]"}
+    assert sent not in _shown(error)
+
+
 def test_agent_consent_non_json_body_is_redacted_whole(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:
