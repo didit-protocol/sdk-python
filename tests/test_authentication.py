@@ -1483,7 +1483,8 @@ def test_agent_consent_status_errors(
                 ACCESS_TOKEN,
                 challenge=AGENT_CHALLENGE,
                 decision="approve",
-                assertion=AGENT_ASSERTION,
+                # No short keys: every string that contains an assertion key or value is redacted.
+                assertion={"response": {"signature": "SYNTHETIC_SIGNATURE"}},
             )
         return auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
 
@@ -1554,6 +1555,96 @@ def test_agent_consent_redacts_every_string_of_the_assertion(
         assert leaked not in repr(info.value.body)
         assert leaked not in info.value.response.text
     assert info.value.response.status_code == 400
+
+
+def _consent_error(auth: Authentication, assertion: dict[str, Any]) -> APIStatusError:
+    with pytest.raises(APIStatusError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=assertion
+        )
+    return info.value
+
+
+def _shown(error: APIStatusError) -> str:
+    return "\n".join([str(error), repr(error), repr(error.body), error.response.text])
+
+
+def _reply_raw(issuer: FakeIssuer, status: int, content: bytes, content_type: str) -> None:
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(status, content=content, headers={"content-type": content_type}),
+    )
+
+
+def test_agent_consent_redaction_leaves_no_fragment_of_a_prefixed_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply("POST", "/agents/consent/", 400, {"detail": "bad abcdef and abc", "o": "abcdef"})
+    error = _consent_error(auth, {"id": "abc", "signature": "abcdef"})
+    assert error.body == {"detail": "[redacted]", "o": "[redacted]"}
+    shown = _shown(error)
+    assert "abc" not in shown
+    assert "def" not in shown
+
+
+def test_agent_consent_redacts_the_whole_string_that_contains_a_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"detail": "bad assertion xyzSECRETxyz", "keep": "fine"},
+    )
+    error = _consent_error(auth, {"id": "SECRET"})
+    assert error.body == {"detail": "[redacted]", "keep": "fine"}
+    assert str(error).startswith("HTTP 400: [redacted]")
+
+
+def test_agent_consent_redacts_a_secret_used_as_an_object_key(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"detail": "no", "echo-SECRET-1": "a", "echo-SECRET-2": "b"},
+    )
+    error = _consent_error(auth, {"id": "SECRET"})
+    assert error.body == {"detail": "no", "[redacted]": "a", "[redacted]2": "b"}
+    assert "SECRET" not in _shown(error)
+
+
+def test_agent_consent_redacts_other_json_escape_spellings(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "a/b+\u00e9"
+    _reply_raw(issuer, 400, b'{"detail":"x","echo":"a\\/b+\\u00E9"}', "application/json")
+    error = _consent_error(auth, {"id": secret})
+    assert error.body == {"detail": "x", "echo": "[redacted]"}
+    shown = _shown(error)
+    assert "a/b" not in shown
+    assert "00E9" not in shown
+
+
+def test_agent_consent_non_json_body_is_redacted_whole(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    html = f"<html>Bad gateway {AGENT_CHALLENGE}</html>".encode()
+    _reply_raw(issuer, 502, html, "text/html")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert AGENT_CHALLENGE not in _shown(error)
+
+
+def test_agent_consent_secret_past_the_detail_cap_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 400, b"x" * 600 + AGENT_CHALLENGE.encode(), "text/plain")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert AGENT_CHALLENGE not in _shown(error)
 
 
 def test_agent_consent_transport_errors_keep_no_body(clock: FakeClock, key: SigningKey) -> None:

@@ -126,18 +126,29 @@ def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
     )
 
 
+_REDACTED = "[redacted]"
+
+
 def _redacted(value: object, secrets: tuple[str, ...]) -> object:
-    """``value`` with every secret removed from its strings, at any depth."""
+    """``value`` with every string that contains a secret replaced whole, at any depth.
+
+    Object keys count as strings, and strings are compared as decoded, so the spelling of
+    the raw JSON text does not matter. A redacted key that collides with another key is
+    numbered (``[redacted]``, ``[redacted]2``, ...).
+    """
     if isinstance(value, str):
-        for secret in secrets:
-            if secret:
-                value = value.replace(secret, "[redacted]")
-        return value
+        return _REDACTED if any(secret and secret in value for secret in secrets) else value
     if isinstance(value, Mapping):
-        return {
-            key: _redacted(item, secrets)
-            for key, item in cast("Mapping[str, object]", value).items()
-        }
+        result: dict[str, object] = {}
+        for key, item in cast("Mapping[str, object]", value).items():
+            name = cast("str", _redacted(key, secrets))
+            if name in result:
+                number = 2
+                while f"{name}{number}" in result:
+                    number += 1
+                name = f"{name}{number}"
+            result[name] = _redacted(item, secrets)
+        return result
     if isinstance(value, list):
         return [_redacted(item, secrets) for item in cast("list[object]", value)]
     return value
@@ -150,8 +161,8 @@ def _string_values(value: object) -> list[str]:
     if isinstance(value, Mapping):
         return [
             text
-            for item in cast("Mapping[str, object]", value).values()
-            for text in _string_values(item)
+            for key, item in cast("Mapping[str, object]", value).items()
+            for text in (*_string_values(key), *_string_values(item))
         ]
     if isinstance(value, (list, tuple)):
         return [text for item in cast("Sequence[object]", value) for text in _string_values(item)]
@@ -407,10 +418,18 @@ class _AuthenticationBase:
             body: object
             try:
                 body = response.json()
+                if call.private_body:
+                    body = _redacted(body, call.secrets)
             except ValueError:
-                body = response.text or None
+                # Not JSON (an HTML 502 page, a body cut at the size limit): never kept, not even redacted.
+                body = (
+                    (_REDACTED if response.content else None)
+                    if call.private_body
+                    else (response.text or None)
+                )
             if call.private_body:
-                body = _redacted(body, call.secrets)
+                # The message is derived from the redacted body only.
+                raise make_status_error(response_for_error(call, response), body)
             raise make_status_error(response_for_error(call, response), body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
