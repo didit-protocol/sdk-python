@@ -75,3 +75,6 @@ class TravelRuleUpdateSettingsParams(TypedDict, total=False):
 
     disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
     """Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks."""
+
+    licence: str
+    """VASP licence or registration reference. Empty when not supplied."""

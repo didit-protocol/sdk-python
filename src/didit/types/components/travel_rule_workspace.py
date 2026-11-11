@@ -6,6 +6,9 @@ from typing import Literal
 
 from didit._models import BaseModel
 from didit.types.components.travel_rule_settings_detail import TravelRuleSettingsDetail
+from didit.types.components.travel_rule_workspace_outbound_price import (
+    TravelRuleWorkspaceOutboundPrice,
+)
 from didit.types.components.travel_rule_workspace_txt_record import TravelRuleWorkspaceTxtRecord
 
 __all__ = ["TravelRuleWorkspace", "TravelRuleWorkspaceClaim", "TravelRuleWorkspaceDomain"]
@@ -25,6 +28,12 @@ class TravelRuleWorkspaceClaim(BaseModel):
     vasp_id: str | None = None
 
     vasp_name: str | None = None
+
+    licence: str | None = None
+    """Licence submitted with the claim. Empty when not supplied."""
+
+    rejection_reason: Literal["", "domain_mismatch", "other"] | str | None = None
+    """Structured rejection reason. Empty when none was recorded; a new claim or approval clears it. Read review_note for the explanation."""
 
 
 class TravelRuleWorkspaceDomain(BaseModel):
@@ -63,3 +72,9 @@ class TravelRuleWorkspace(BaseModel):
     """Whether the Didit network lists this VASP and, when not, each condition it still misses."""
 
     settings: TravelRuleSettingsDetail | None = None
+
+    outbound_price: TravelRuleWorkspaceOutboundPrice | None = None
+    """Own-account outbound quote, or null when a flat Travel Rule quote is unavailable. Does not enable billing."""
+
+    licence: str | None = None
+    """Current profile licence for a granted claim, otherwise the submitted claim licence. Empty when not supplied."""

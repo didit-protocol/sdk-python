@@ -245,6 +245,7 @@ class TravelRule(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
+        licence: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -281,6 +282,7 @@ class TravelRule(SyncAPIResource):
           sunrise_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
+          licence: VASP licence or registration reference. Empty when not supplied.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -318,6 +320,7 @@ class TravelRule(SyncAPIResource):
                     "sunrise_policy": sunrise_policy,
                     "non_responsive_policy": non_responsive_policy,
                     "disabled_networks": disabled_networks,
+                    "licence": licence,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -992,6 +995,7 @@ class AsyncTravelRule(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
+        licence: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1028,6 +1032,7 @@ class AsyncTravelRule(AsyncAPIResource):
           sunrise_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
+          licence: VASP licence or registration reference. Empty when not supplied.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1065,6 +1070,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "sunrise_policy": sunrise_policy,
                     "non_responsive_policy": non_responsive_policy,
                     "disabled_networks": disabled_networks,
+                    "licence": licence,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

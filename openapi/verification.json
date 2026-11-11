@@ -5904,7 +5904,7 @@
     "/v3/session/{sessionId}/update-status/": {
       "patch": {
         "summary": "Approve, decline, or request resubmission for a verification session",
-        "description": "Manually override the final decision of a KYC or KYB verification session. Set `new_status` to `Approved` or `Declined` to record a manual decision, or to `Resubmitted` to clear specific verification steps and let the user redo them through the same verification URL. The endpoint accepts both user (KYC) and business (KYB) session IDs.\n\nCall it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. Your API key needs the `write:sessions` permission (a scoped API key needs write access to decisions). The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.\n\nFor `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected: list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. The selected steps' previous results move to the resubmission's history (returned by Get Decision with `include=resubmissions`), the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly: resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.\n\nEvery call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.\n\nRepeating `Approved` or `Declined` on a session that already has that status changes nothing and returns `200`: no webhook, no activity entry and no email. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.",
+        "description": "Manually override the final decision of a KYC or KYB verification session. Set `new_status` to `Approved` or `Declined` to record a manual decision, or to `Resubmitted` to clear specific verification steps and let the user redo them through the same verification URL. The endpoint accepts both user (KYC) and business (KYB) session IDs.\n\nCall it once a session has reached a reviewable state: the current status must be `Approved`, `Declined`, `In Review`, `Kyc Expired`, `Abandoned`, or `Resubmitted`. Sessions that are still `Not Started`, `In Progress`, or `Awaiting User`, or that ended as `Expired`, return `400`. Your API key needs the `write:sessions` permission (a scoped API key needs write access to decisions). The eligible-state check runs before body validation, so an ineligible session returns the `Wrong Current Status` error even when the payload is also invalid.\n\nFor `Resubmitted`, pass `nodes_to_resubmit` to choose which workflow steps the user must redo, or omit it to auto-select existing feature attempts in a resubmittable state (`Declined`, `In Review`, `Not Finished`, `Expired`). Never-attempted features are not auto-selected: list them explicitly in `nodes_to_resubmit`, or the request returns `400` when no recorded attempt needs resubmission. The selected steps' previous results move to the resubmission's history (returned by Get Decision with `include=resubmissions`), the steps are reordered to match the workflow graph, the session's expiration window restarts, and the original verification URL becomes usable again. Backend-only steps (`AML`, `DATABASE_VALIDATION`, `IP_ANALYSIS`) at the head of the list run immediately without user interaction; if every resubmitted step is backend-only, the session re-finalizes within the same request. `KYB_REGISTRY` and `KYB_KEY_PEOPLE` cannot be resubmitted directly: resubmit the relevant child KYC sessions instead and the parent business session recomputes automatically.\n\nEvery call that changes the status fires the `status.updated` [webhook](/integration/webhooks) once the change commits and appends an activity entry (with actor attribution and your `comment`) to the session's `reviews`, visible in [Get Decision](#get-/v3/session/-sessionId-/decision/) and in the console activity timeline. The user-profile aggregates linked to the session's `vendor_data` update as well. Declining disables ongoing AML monitoring for the session; re-approving re-enables it (from `Resubmitted`, `Declined`, or `Kyc Expired`) when the workflow has monitoring turned on. Approving or declining a child KYC that belongs to a KYB key-people check recomputes the parent business session's status. Set `send_email: true` (with `email_address`) to notify the user: a status notice for `Approved`/`Declined`, or a resubmission email containing the verification link and per-step reasons for `Resubmitted`. To check the email first, preview it with [Preview Decision Email](/sessions-api/preview-decision-email) (`Approved`, `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (`Resubmitted`) and pass its `preview_token` as `email_preview_token`: the update then sends exactly the previewed email, or returns `409` before changing anything when the email or the session changed since the preview or the receipt is older than 15 minutes.\n\nRepeating `Approved` or `Declined` on a session that already has that status returns `200` without a status webhook, status activity entry or email. An `Approved` request can still create a same-person link as described below. Repeating `Resubmitted` returns `400` (`The new status is the same as the current status.`). Missing or invalid credentials and missing permissions return `403`; an expired scoped API key returns `401`.\n\nTo record a reviewer decision that two verifications belong to the same person, send `new_status: \"Approved\"`, `link_to_session_id` and `link_reason`. Both sessions must be distinct, live KYC verifications in the same application. The target need not be approved or have a person profile. `link_reason` is separate from `comment`, must be nonblank after trimming and accepts at most 2000 characters. A reason without a target, linking with another status, an invalid or unavailable target, a self-link, or a KYB participant returns `400`. Approval and linking succeed together or neither changes. If either session already belongs to a group, their groups are joined. An already-approved source can be linked for the first time without another status event or email. A retry within the same group creates no additional link audit. Concurrent group edits return `409`; retry the request.\n\nGrouping does not merge person profiles, profile fields or biometric data. Each verification keeps its original profile association and deletion ownership. Deleting a verification removes it from the group. Link actions have a separate audit recording the actor, time and `link_reason`; they are not status-review entries. Group navigation and unlinking are console-only, with no public read or unlink endpoint.",
         "operationId": "patch_v3_session_update_status",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -6032,6 +6032,22 @@
                     "minLength": 1,
                     "maxLength": 512,
                     "description": "Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field."
+                  },
+                  "link_to_session_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "writeOnly": true,
+                    "description": "Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined.",
+                    "example": "22222222-3333-4444-8555-666666666666"
+                  },
+                  "link_reason": {
+                    "type": "string",
+                    "writeOnly": true,
+                    "minLength": 1,
+                    "maxLength": 2000,
+                    "pattern": "\\S",
+                    "description": "Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field.",
+                    "example": "Reviewed both verifications and confirmed they belong to the same person."
                   }
                 }
               },
@@ -6084,6 +6100,14 @@
                     "email_language": "en",
                     "email_preview_token": "eyJkaWdlc3QiOiI0ZjJhIn0:1uExAm:Pl3x4mpleS1gnatureValue000000000000000"
                   }
+                },
+                "Approve And Link": {
+                  "summary": "Approve and group two KYC verifications after review",
+                  "value": {
+                    "new_status": "Approved",
+                    "link_to_session_id": "22222222-3333-4444-8555-666666666666",
+                    "link_reason": "Reviewed both verifications and confirmed they belong to the same person."
+                  }
                 }
               }
             }
@@ -6091,7 +6115,7 @@
         },
         "responses": {
           "200": {
-            "description": "Status updated. The response contains only the `session_id`; fetch the updated session via [Get Decision](#get-/v3/session/-sessionId-/decision/). The `status.updated` webhook fires once the change commits. Repeating `Approved` or `Declined` returns the same body and changes nothing.",
+            "description": "Status updated or already set. The response contains only session_id, including when linking. Fetch the session via [Get Decision](/sessions-api/retrieve-session). A status change fires status.updated once committed. Repeating Approved or Declined creates no status event or email; Approved can still create a first same-person link. A same-group retry creates no additional link audit.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6195,6 +6219,30 @@
                         "A preview receipt is only valid when the email is sent."
                       ]
                     }
+                  },
+                  "Link Requires Approval And Reason": {
+                    "value": {
+                      "link_reason": [
+                        "Linking requires approval and a nonblank reason."
+                      ]
+                    }
+                  },
+                  "Link Target Required": {
+                    "value": {
+                      "link_to_session_id": [
+                        "Choose a verification to link."
+                      ]
+                    }
+                  },
+                  "Invalid Link Target": {
+                    "value": {
+                      "link_to_session_id": "Choose a live verification in the same application."
+                    }
+                  },
+                  "Self Or KYB Source Link": {
+                    "value": {
+                      "link_to_session_id": "Choose another user verification."
+                    }
                   }
                 }
               }
@@ -6266,7 +6314,7 @@
             }
           },
           "409": {
-            "description": "The email preview changed or expired. Generate a new preview before confirming; no session changes or email delivery occur.",
+            "description": "Concurrent group edits: neither approval nor linking changes; retry the request. An email preview conflict also returns 409 without changes or email delivery; generate a new preview before confirming.",
             "content": {
               "application/json": {
                 "examples": {
@@ -6274,6 +6322,12 @@
                     "summary": "The receipt no longer matches, or is older than 15 minutes",
                     "value": {
                       "detail": "This email preview changed or expired. Preview the message again before confirming."
+                    }
+                  },
+                  "Link Contention": {
+                    "summary": "Another request is changing a group member",
+                    "value": {
+                      "detail": "The verifications are being changed. Retry the request."
                     }
                   }
                 }
@@ -25668,7 +25722,23 @@
             "description": "Missing or invalid `x-api-key`."
           },
           "409": {
-            "description": "No AML provider is configured for the application, or the configured provider does not support wallet screening yet. Configure transaction monitoring first."
+            "description": "The screening cannot run until you fix its configuration. `detail` says what to fix, and nothing is billed:\n\n- `wallet_screening_provider_not_configured`: no AML provider is configured for the application. Configure transaction monitoring first.\n- `wallet_screening_provider_unavailable`: the configured provider does not support wallet screening yet.\n- `wallet_screening_provider_credentials_rejected`: the provider rejected the API key you connected, for example `TRM Labs rejected the API key of your Marketplace connection. Update the key on the TRM Labs connection and try again.` A key the provider does not recognise: update it on the Marketplace connection, or in the transaction monitoring settings for a key configured there. A valid key that is not licensed for the product wallet screening needs (Chainalysis Address Screening, for example), or a provider that refuses Didit's servers at its IP allowlist: `detail` names what to change.\n- `wallet_screening_provider_quota_exceeded`: the provider refused the screening because your account's call allowance is spent, for example `Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again.` Raise the limit with the provider.\n\nRetrying with the same key does not help. A connection whose **Fall back to Didit** setting is on screens on Didit's managed provider instead and answers `200`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "What to fix, in plain words."
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again."
+                }
+              }
+            }
           },
           "422": {
             "description": "`blockchain` omitted for a `0x` address, which every EVM network shares. Nothing is screened or billed; resend with `blockchain` set to one of `candidate_chains`.",
@@ -25709,7 +25779,22 @@
             }
           },
           "502": {
-            "description": "The AML provider could not complete the screening. Retry later."
+            "description": "The AML provider could not complete the screening. Retry later. For a provider you connected in the Marketplace, `detail` names it, for example `Crystal could not complete the screening. Try again later.` Nothing is billed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Crystal could not complete the screening. Try again later."
+                }
+              }
+            }
           }
         }
       }
@@ -31494,7 +31579,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body or image. Common causes: invalid base64, invalid image, no detectable face, image over 2 MB, missing embedding, or the User already has 5 uploaded faces.",
+            "description": "Invalid request body or image. Common causes: invalid base64, invalid image, no detectable face, a detected face that cannot be cropped from the image (`face_crop_empty`), image over 2 MB, missing embedding, or the User already has 5 uploaded faces.",
             "content": {
               "application/json": {
                 "examples": {
@@ -31511,6 +31596,12 @@
                   "Too large": {
                     "value": {
                       "image": "Image exceeds maximum size of 2 MB."
+                    }
+                  },
+                  "Face cannot be cropped": {
+                    "value": {
+                      "image": "The detected face could not be cropped from the image. Upload a different photo where the face is fully visible.",
+                      "code": "face_crop_empty"
                     }
                   }
                 }
@@ -68455,7 +68546,7 @@
             }
           },
           "400": {
-            "description": "The list does not take face uploads, or the image is missing, invalid, too large or shows no usable face. No entry was created.",
+            "description": "The list does not take face uploads, or the image is missing, invalid, too large, shows no usable face, or holds a detected face that cannot be cropped from the image (`face_crop_empty`). No entry was created.",
             "content": {
               "application/json": {
                 "examples": {
@@ -68503,6 +68594,12 @@
                   "No usable face": {
                     "value": {
                       "image": "Could not extract face embedding. Try a different image."
+                    }
+                  },
+                  "Face cannot be cropped": {
+                    "value": {
+                      "image": "The detected face could not be cropped from the image. Upload a different photo where the face is fully visible.",
+                      "code": "face_crop_empty"
                     }
                   }
                 }
@@ -82801,7 +82898,28 @@
             "description": "No invitation has this link."
           },
           "410": {
-            "description": "The invitation is no longer open: expired, already used, or withdrawn."
+            "description": "The invitation is no longer open: expired, already used, or withdrawn.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleJoinClosed"
+                },
+                "examples": {
+                  "expired": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one.",
+                      "reason": "expired",
+                      "sender_name": "Example VASP"
+                    }
+                  },
+                  "closed": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -82882,7 +83000,28 @@
             "description": "No invitation has this link."
           },
           "410": {
-            "description": "The invitation is no longer open: expired, already used, or withdrawn."
+            "description": "The invitation is no longer open: expired, already used, or withdrawn.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleJoinClosed"
+                },
+                "examples": {
+                  "expired": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one.",
+                      "reason": "expired",
+                      "sender_name": "Example VASP"
+                    }
+                  },
+                  "closed": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one."
+                    }
+                  }
+                }
+              }
+            }
           },
           "429": {
             "description": "Too many attempts to join. The `X-RateLimit-*` headers name the budget that was spent."
@@ -82957,7 +83096,28 @@
             "description": "No invitation has this link."
           },
           "410": {
-            "description": "The invitation is no longer open: expired, already used, or withdrawn."
+            "description": "The invitation is no longer open: expired, already used, or withdrawn.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleJoinClosed"
+                },
+                "examples": {
+                  "expired": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one.",
+                      "reason": "expired",
+                      "sender_name": "Example VASP"
+                    }
+                  },
+                  "closed": {
+                    "value": {
+                      "detail": "This invitation is no longer open. Ask the VASP that contacted you for a new one."
+                    }
+                  }
+                }
+              }
+            }
           },
           "429": {
             "description": "Too many attempts to join. The `X-RateLimit-*` headers name the budget that was spent."
@@ -95710,6 +95870,12 @@
                 "description": "Whether the current compliance_email was confirmed through the emailed link."
               }
             }
+          },
+          "licence": {
+            "type": "string",
+            "description": "VASP licence or registration reference. Empty when not supplied.",
+            "maxLength": 255,
+            "example": "REG-EXAMPLE"
           }
         }
       },
@@ -95854,6 +96020,12 @@
             },
             "description": "Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.",
             "default": []
+          },
+          "licence": {
+            "type": "string",
+            "description": "VASP licence or registration reference. Empty when not supplied.",
+            "maxLength": 255,
+            "example": "REG-EXAMPLE"
           }
         },
         "description": "All fields optional; PUT applies a partial update."
@@ -96194,6 +96366,24 @@
           },
           "chain_details": {
             "$ref": "#/components/schemas/TravelRuleChainDetails"
+          },
+          "not_required_reason": {
+            "type": "string",
+            "description": "Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason.",
+            "nullable": true,
+            "example": "below_threshold"
+          },
+          "proof_state": {
+            "type": "string",
+            "description": "not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof.",
+            "enum": [
+              "not_required",
+              "confirmed",
+              "not_confirmed",
+              "requested",
+              "not_requested"
+            ],
+            "example": "not_requested"
           }
         }
       },
@@ -100118,7 +100308,7 @@
         "properties": {
           "provider": {
             "type": "string",
-            "description": "Provider that performed the screening (e.g. `merklescience`, `crystal`)."
+            "description": "Provider that performed the screening (e.g. `merklescience`, `crystal`). When the provider you connected in the Marketplace rejected or failed the screening and that connection's fallback to Didit is on, this names Didit's managed screening, not the provider you connected, and `fallback_from_provider` names the provider that failed."
           },
           "screening_type": {
             "type": "string",
@@ -100580,6 +100770,18 @@
                 }
               }
             }
+          },
+          "fallback_from_provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when the provider you connected in the Marketplace rejected or failed this screening and it ran on Didit's managed provider instead, because that connection's **Fall back to Didit** setting is on: the key of the provider that failed (`crystal`, `chainalysis`, `elliptic` or `trmlabs`). The screening is billed at the managed rate and the failed call is not billed. `null` on every other screening.",
+            "example": null
+          },
+          "fallback_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the provider you connected failed, when `fallback_from_provider` is set, for example `Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again.` `null` on every other screening.",
+            "example": null
           },
           "raw_response": {
             "type": "object",
@@ -122804,6 +123006,24 @@
           },
           "chain_details": {
             "$ref": "#/components/schemas/TravelRuleChainDetails"
+          },
+          "not_required_reason": {
+            "type": "string",
+            "description": "Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason.",
+            "nullable": true,
+            "example": "below_threshold"
+          },
+          "proof_state": {
+            "type": "string",
+            "description": "not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof.",
+            "enum": [
+              "not_required",
+              "confirmed",
+              "not_confirmed",
+              "requested",
+              "not_requested"
+            ],
+            "example": "not_requested"
           }
         }
       },
@@ -124198,6 +124418,42 @@
                 }
               }
             }
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Linked outbound transfer UUID; null without an eligible pickup transfer.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "description": "Linked transaction amount as a decimal string, in currency; null without an eligible pickup transfer.",
+            "nullable": true,
+            "example": "125.50"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Linked transaction currency; null without an eligible pickup transfer.",
+            "nullable": true
+          },
+          "sent_at": {
+            "type": "string",
+            "description": "Invitation send time; null if unsent or without an eligible pickup transfer.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sender_name": {
+            "type": "string",
+            "description": "Sender display name, using the same invitation name as vasp_name."
+          },
+          "portal_url": {
+            "type": "string",
+            "description": "Original pickup URL, only while it is valid and the invited address was a recipient of that request. Otherwise null. Reading does not renew the link.",
+            "format": "uri",
+            "nullable": true
+          },
+          "outbound_price": {
+            "$ref": "#/components/schemas/TravelRulePublicOutboundPrice"
           }
         }
       },
@@ -124282,6 +124538,12 @@
             "type": "string",
             "format": "uuid",
             "description": "The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`."
+          },
+          "licence": {
+            "type": "string",
+            "description": "Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted.",
+            "maxLength": 255,
+            "example": "REG-EXAMPLE"
           }
         }
       },
@@ -124391,6 +124653,19 @@
               },
               "vasp_name": {
                 "type": "string"
+              },
+              "licence": {
+                "type": "string",
+                "description": "Licence submitted with the claim. Empty when not supplied."
+              },
+              "rejection_reason": {
+                "type": "string",
+                "description": "Structured rejection reason. Empty when none was recorded; a new claim or approval clears it. Read review_note for the explanation.",
+                "enum": [
+                  "",
+                  "domain_mismatch",
+                  "other"
+                ]
               }
             }
           },
@@ -124437,6 +124712,13 @@
           },
           "settings": {
             "$ref": "#/components/schemas/TravelRuleSettingsDetail"
+          },
+          "outbound_price": {
+            "$ref": "#/components/schemas/TravelRuleWorkspaceOutboundPrice"
+          },
+          "licence": {
+            "type": "string",
+            "description": "Current profile licence for a granted claim, otherwise the submitted claim licence. Empty when not supplied."
           }
         }
       },
@@ -128980,6 +129262,111 @@
             "description": "`true` once a person signed in to the console turned on \"Connected AI agents can top up with your saved card\" in Billing > Payment methods. Off by default."
           }
         }
+      },
+      "TravelRulePublicOutboundPrice": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Public list unit price as a decimal string. Never the sender account price."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the public list price."
+          },
+          "unit": {
+            "type": "string",
+            "description": "Billing unit of the public list price."
+          },
+          "source": {
+            "type": "string",
+            "description": "Public list quote.",
+            "enum": [
+              "list"
+            ]
+          }
+        },
+        "nullable": true,
+        "required": [
+          "amount",
+          "currency",
+          "unit",
+          "source"
+        ],
+        "description": "Public outbound quote, or null when no Travel Rule line is available."
+      },
+      "TravelRuleWorkspaceOutboundPrice": {
+        "type": "object",
+        "properties": {
+          "list_price": {
+            "type": "string",
+            "description": "List unit price as a decimal string."
+          },
+          "effective_price": {
+            "type": "string",
+            "description": "Account unit price as a decimal string; null when the account contract does not price this usage.",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "Quote currency for this account."
+          },
+          "discount_pct": {
+            "type": "number",
+            "description": "Plan discount percentage; zero for a contract quote."
+          },
+          "product": {
+            "type": "string",
+            "description": "Product that owns the usage."
+          },
+          "source": {
+            "type": "string",
+            "description": "Whether the quote comes from the plan or account contract.",
+            "enum": [
+              "plan",
+              "contract"
+            ]
+          }
+        },
+        "nullable": true,
+        "required": [
+          "list_price",
+          "effective_price",
+          "currency",
+          "discount_pct",
+          "product",
+          "source"
+        ],
+        "description": "Own-account outbound quote, or null when a flat Travel Rule quote is unavailable. Does not enable billing."
+      },
+      "TravelRuleJoinClosed": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "The invitation is no longer open."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Present only for an expired invitation.",
+            "enum": [
+              "expired"
+            ]
+          },
+          "sender_name": {
+            "type": "string",
+            "description": "Sender display name. Present only for an expired invitation."
+          },
+          "sender_contact_email": {
+            "type": "string",
+            "description": "Optional on expiry only: the linked outbound sender's currently public, confirmed compliance mailbox. Omitted when unavailable.",
+            "format": "email"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "description": "Expired invitations include reason and sender_name, and may include sender_contact_email. Already-used and withdrawn invitations return detail only. No recipient address, request summary or pickup URL is returned."
       }
     },
     "securitySchemes": {

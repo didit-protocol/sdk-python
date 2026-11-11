@@ -9,3 +9,6 @@ __all__ = ["TravelRuleWorkspaceClaimParams"]
 class TravelRuleWorkspaceClaimParams(TypedDict, total=False):
     vasp_id: Required[str]
     """The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`."""
+
+    licence: str
+    """Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted."""

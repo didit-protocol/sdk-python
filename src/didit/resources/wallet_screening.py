@@ -153,6 +153,8 @@ class WalletScreening(SyncAPIResource):
         network_edges: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
         pep_counterparty: bool | None | NotGiven = NOT_GIVEN,
         risk_factors: Sequence[WalletScreeningScreenPdfParamsRiskFactors] | NotGiven = NOT_GIVEN,
+        fallback_from_provider: str | None | NotGiven = NOT_GIVEN,
+        fallback_reason: str | None | NotGiven = NOT_GIVEN,
         raw_response: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -166,7 +168,7 @@ class WalletScreening(SyncAPIResource):
         ``POST /v3/wallet-screening/pdf/``
 
         Args:
-          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`).
+          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`). When the provider you connected in the Marketplace rejected or failed the screening and that connection's fallback to Didit is on, this names Didit's managed screening, not the provider you connected, and `fallback_from_provider` names the provider that failed.
           screening_type: Always `WALLET_SCREENING` for this endpoint.
           risk_score: Normalised 0-100 risk score. Higher means greater exposure to risky entities. Merkle Science grades an address 0-5, which maps to 0, 15, 35, 55, 75 or 95.
           severity: Risk bucket derived from `risk_score`: `0-9` UNKNOWN, `10-39` LOW, `40-69` MEDIUM, `70-89` HIGH, `90-100` CRITICAL. `UNKNOWN` is the lowest band, not a separate no-data state: `risk_score` 0 (the common clean-address case) means no adverse assessment, while a non-zero score in the 1-9 range is a real but sub-LOW signal - read the `risk_score`, not just the band. Never treat `UNKNOWN` as an affirmative low-risk or clear rating; do not display it as a pass.
@@ -193,6 +195,8 @@ class WalletScreening(SyncAPIResource):
           network_edges: Exposure graph edges for transaction screening. Empty on a wallet screening result.
           pep_counterparty: Politically exposed person exposure. `null` when no PEP finding is available, which is every result today because no provider reports one; `false` only for an explicit negative screening result. Do not read `null` as a completed PEP check.
           risk_factors: Ranked explanation of `risk_score`: what produced this verdict. Providers grade an address on their own model and return only a verdict (Merkle Science returns an integer 0-5), so the score alone is not actionable. Ordered high-risk first, then by the value that moved through each driver, capped at the five strongest; `source_of_funds` and `destination_of_funds` always carry the complete breakdown. A high `risk_score` with no `is_high_risk` entry means the provider reported no sanctions or attributed-entity match and graded the address purely on its own exposure model - `summary` states this explicitly.
+          fallback_from_provider: Set when the provider you connected in the Marketplace rejected or failed this screening and it ran on Didit's managed provider instead, because that connection's **Fall back to Didit** setting is on: the key of the provider that failed (`crystal`, `chainalysis`, `elliptic` or `trmlabs`). The screening is billed at the managed rate and the failed call is not billed. `null` on every other screening.
+          fallback_reason: Why the provider you connected failed, when `fallback_from_provider` is set, for example `Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again.` `null` on every other screening.
           raw_response: The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -234,6 +238,8 @@ class WalletScreening(SyncAPIResource):
                     "network_edges": network_edges,
                     "pep_counterparty": pep_counterparty,
                     "risk_factors": risk_factors,
+                    "fallback_from_provider": fallback_from_provider,
+                    "fallback_reason": fallback_reason,
                     "raw_response": raw_response,
                 },
                 accept="application/pdf, application/json",
@@ -364,6 +370,8 @@ class AsyncWalletScreening(AsyncAPIResource):
         network_edges: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
         pep_counterparty: bool | None | NotGiven = NOT_GIVEN,
         risk_factors: Sequence[WalletScreeningScreenPdfParamsRiskFactors] | NotGiven = NOT_GIVEN,
+        fallback_from_provider: str | None | NotGiven = NOT_GIVEN,
+        fallback_reason: str | None | NotGiven = NOT_GIVEN,
         raw_response: Mapping[str, object] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -377,7 +385,7 @@ class AsyncWalletScreening(AsyncAPIResource):
         ``POST /v3/wallet-screening/pdf/``
 
         Args:
-          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`).
+          provider: Provider that performed the screening (e.g. `merklescience`, `crystal`). When the provider you connected in the Marketplace rejected or failed the screening and that connection's fallback to Didit is on, this names Didit's managed screening, not the provider you connected, and `fallback_from_provider` names the provider that failed.
           screening_type: Always `WALLET_SCREENING` for this endpoint.
           risk_score: Normalised 0-100 risk score. Higher means greater exposure to risky entities. Merkle Science grades an address 0-5, which maps to 0, 15, 35, 55, 75 or 95.
           severity: Risk bucket derived from `risk_score`: `0-9` UNKNOWN, `10-39` LOW, `40-69` MEDIUM, `70-89` HIGH, `90-100` CRITICAL. `UNKNOWN` is the lowest band, not a separate no-data state: `risk_score` 0 (the common clean-address case) means no adverse assessment, while a non-zero score in the 1-9 range is a real but sub-LOW signal - read the `risk_score`, not just the band. Never treat `UNKNOWN` as an affirmative low-risk or clear rating; do not display it as a pass.
@@ -404,6 +412,8 @@ class AsyncWalletScreening(AsyncAPIResource):
           network_edges: Exposure graph edges for transaction screening. Empty on a wallet screening result.
           pep_counterparty: Politically exposed person exposure. `null` when no PEP finding is available, which is every result today because no provider reports one; `false` only for an explicit negative screening result. Do not read `null` as a completed PEP check.
           risk_factors: Ranked explanation of `risk_score`: what produced this verdict. Providers grade an address on their own model and return only a verdict (Merkle Science returns an integer 0-5), so the score alone is not actionable. Ordered high-risk first, then by the value that moved through each driver, capped at the five strongest; `source_of_funds` and `destination_of_funds` always carry the complete breakdown. A high `risk_score` with no `is_high_risk` entry means the provider reported no sanctions or attributed-entity match and graded the address purely on its own exposure model - `summary` states this explicitly.
+          fallback_from_provider: Set when the provider you connected in the Marketplace rejected or failed this screening and it ran on Didit's managed provider instead, because that connection's **Fall back to Didit** setting is on: the key of the provider that failed (`crystal`, `chainalysis`, `elliptic` or `trmlabs`). The screening is billed at the managed rate and the failed call is not billed. `null` on every other screening.
+          fallback_reason: Why the provider you connected failed, when `fallback_from_provider` is set, for example `Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again.` `null` on every other screening.
           raw_response: The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -445,6 +455,8 @@ class AsyncWalletScreening(AsyncAPIResource):
                     "network_edges": network_edges,
                     "pep_counterparty": pep_counterparty,
                     "risk_factors": risk_factors,
+                    "fallback_from_provider": fallback_from_provider,
+                    "fallback_reason": fallback_reason,
                     "raw_response": raw_response,
                 },
                 accept="application/pdf, application/json",

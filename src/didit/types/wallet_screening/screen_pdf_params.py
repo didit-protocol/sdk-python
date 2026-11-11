@@ -197,7 +197,7 @@ class WalletScreeningScreenPdfParams(TypedDict, total=False):
     """Same shape as the `POST /v3/wallet-screening/` response - pass that response body back verbatim, including `report_signature`."""
 
     provider: Required[str]
-    """Provider that performed the screening (e.g. `merklescience`, `crystal`)."""
+    """Provider that performed the screening (e.g. `merklescience`, `crystal`). When the provider you connected in the Marketplace rejected or failed the screening and that connection's fallback to Didit is on, this names Didit's managed screening, not the provider you connected, and `fallback_from_provider` names the provider that failed."""
 
     screening_type: Required[Literal["WALLET_SCREENING"] | str]
     """Always `WALLET_SCREENING` for this endpoint."""
@@ -275,6 +275,12 @@ class WalletScreeningScreenPdfParams(TypedDict, total=False):
 
     risk_factors: Sequence[WalletScreeningScreenPdfParamsRiskFactors]
     """Ranked explanation of `risk_score`: what produced this verdict. Providers grade an address on their own model and return only a verdict (Merkle Science returns an integer 0-5), so the score alone is not actionable. Ordered high-risk first, then by the value that moved through each driver, capped at the five strongest; `source_of_funds` and `destination_of_funds` always carry the complete breakdown. A high `risk_score` with no `is_high_risk` entry means the provider reported no sanctions or attributed-entity match and graded the address purely on its own exposure model - `summary` states this explicitly."""
+
+    fallback_from_provider: str | None
+    """Set when the provider you connected in the Marketplace rejected or failed this screening and it ran on Didit's managed provider instead, because that connection's **Fall back to Didit** setting is on: the key of the provider that failed (`crystal`, `chainalysis`, `elliptic` or `trmlabs`). The screening is billed at the managed rate and the failed call is not billed. `null` on every other screening."""
+
+    fallback_reason: str | None
+    """Why the provider you connected failed, when `fallback_from_provider` is set, for example `Your Crystal account has reached its call limit. Raise the limit with Crystal to screen with it again.` `null` on every other screening."""
 
     raw_response: Mapping[str, object]
     """The provider's own payload. Its shape is provider-specific and can change without notice: read the normalised fields instead of parsing it."""

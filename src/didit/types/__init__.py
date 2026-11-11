@@ -2249,6 +2249,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_workspace_domain_code_response import (
         TravelRuleWorkspaceDomainCodeResponse as TravelRuleWorkspaceDomainCodeResponse,
     )
+    from didit.types.components.travel_rule_workspace_outbound_price import (
+        TravelRuleWorkspaceOutboundPrice as TravelRuleWorkspaceOutboundPrice,
+    )
     from didit.types.components.travel_rule_workspace_txt_record import (
         TravelRuleWorkspaceTxtRecord as TravelRuleWorkspaceTxtRecord,
     )
@@ -4584,6 +4587,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleWorkspaceDomain": "components.travel_rule_workspace",
     "TravelRuleWorkspaceDomainCodeResponse": "components.travel_rule_workspace_domain_code_response",
     "TravelRuleWorkspaceEnableBillingParams": "travel_rule.workspace.enable_billing_params",
+    "TravelRuleWorkspaceOutboundPrice": "components.travel_rule_workspace_outbound_price",
     "TravelRuleWorkspaceTxtRecord": "components.travel_rule_workspace_txt_record",
     "UserDetailItem": "components.user_detail_item",
     "UserDetailItemComments": "components.user_detail_item",
@@ -5837,6 +5841,7 @@ __all__ = [
     "TravelRuleWorkspaceDomain",
     "TravelRuleWorkspaceDomainCodeResponse",
     "TravelRuleWorkspaceEnableBillingParams",
+    "TravelRuleWorkspaceOutboundPrice",
     "TravelRuleWorkspaceTxtRecord",
     "UserDetailItem",
     "UserDetailItemComments",

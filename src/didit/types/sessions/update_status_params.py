@@ -66,3 +66,9 @@ class SessionsUpdateStatusParams(TypedDict, total=False):
 
     email_preview_token: str
     """Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field."""
+
+    link_to_session_id: str
+    """Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined."""
+
+    link_reason: str
+    """Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field."""
