@@ -109,6 +109,7 @@ class _Call:
 
 
 _REDACTED = "[redacted]"
+_ENCODE_FAILURE = "Could not encode the agent consent request."
 
 
 def _redacted(value: object, secrets: tuple[str, ...]) -> object:
@@ -360,11 +361,16 @@ class _AuthenticationBase:
             raise ValueError(f"decision must be 'approve' or 'deny', got {decision!r}.")
         body: dict[str, object] = {"challenge": challenge, "decision": decision}
         if assertion is not None:
-            data = (
-                assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
-                if isinstance(assertion, BaseModel)
-                else dict(assertion)
-            )
+            try:
+                data = (
+                    assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
+                    if isinstance(assertion, BaseModel)
+                    else dict(assertion)
+                )
+            except Exception:  # a serializer's message may hold a credential
+                data = None
+            if data is None:
+                raise TypeError(_ENCODE_FAILURE) from None
             body["assertion"] = data
         if scopes is not None:
             if isinstance(scopes, str):
@@ -378,7 +384,13 @@ class _AuthenticationBase:
             body["lifetime"] = lifetime
         # Encoded exactly once: the plain body decoded from these bytes is what is sent, and the secrets are
         # read from it, so a caller's object is never serialized a second time.
-        sent = cast("dict[str, object]", json.loads(json.dumps(body, separators=(",", ":"))))
+        sent: dict[str, object] | None
+        try:
+            sent = cast("dict[str, object]", json.loads(json.dumps(body, separators=(",", ":"))))
+        except Exception:  # a serializer's message may hold a credential
+            sent = None
+        if sent is None:
+            raise TypeError(_ENCODE_FAILURE) from None
         secrets = [token, challenge, *_string_values(sent.get("assertion"))]
         return _Call(
             "POST",

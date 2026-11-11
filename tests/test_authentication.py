@@ -16,7 +16,7 @@ import subprocess
 import sys
 import threading
 import urllib.parse
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from typing import Any, TypeVar, cast
@@ -1834,6 +1834,37 @@ def test_agent_consent_header_name_is_matched_case_insensitively(
     error = _consent_error(auth, {"id": credential})
     assert error.response.headers["x-keep"] == "fine"
     assert "credentialstring" not in str(error.response.headers).lower()
+
+
+def test_agent_consent_encoding_failure_has_a_fixed_message(auth: Authentication) -> None:
+    class Boom(Mapping[str, Any]):
+        def __getitem__(self, key: str) -> Any:
+            raise RuntimeError("credential-string-0123456789")
+
+        def __iter__(self) -> Any:
+            raise RuntimeError("credential-string-0123456789")
+
+        def __len__(self) -> int:
+            return 1
+
+    with pytest.raises(TypeError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion=Boom(),
+        )
+    assert str(info.value) == "Could not encode the agent consent request."
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None or info.value.__suppress_context__
+    with pytest.raises(TypeError) as again:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": object()},
+        )
+    assert str(again.value) == "Could not encode the agent consent request."
 
 
 def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
