@@ -1721,6 +1721,70 @@ def test_agent_consent_error_response_of_a_non_json_body_is_redacted(
     assert error.response.text == "[redacted]"
 
 
+def test_agent_consent_empty_body_is_redacted(auth: Authentication, issuer: FakeIssuer) -> None:
+    _reply_raw(issuer, 502, b"", "text/plain")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert error.response.text == "[redacted]"
+
+
+def test_agent_consent_keeps_a_safe_key_named_redacted_after_a_secret_key(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "SECRET-0123456789abcdef"
+    _reply_raw(
+        issuer,
+        400,
+        f'{{"a-{secret}":"x","[redacted]":"safe"}}'.encode(),
+        "application/json",
+    )
+    error = _consent_error(auth, {"id": secret})
+    assert error.body == {"[redacted]2": "x", "[redacted]": "safe"}
+
+
+def test_agent_consent_redacts_the_request_id_and_headers(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={"x-request-id": f"req-{credential}", "x-echo": credential},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.request_id == "[redacted]"
+    assert credential not in str(error)
+    assert credential not in str(error.response.headers)
+
+
+def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
+    credential = 'cred"ential\\string-0123456789'
+
+    def fail(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError(f"write failed: {request.content.decode()}", request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(fail)) as http:
+        local = configure(Authentication(ISSUER, http_client=http), clock)
+        with pytest.raises(APIConnectionError) as info:
+            local.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion={"id": credential},
+            )
+    error: BaseException | None = info.value
+    while error is not None:
+        assert "ential" not in str(error)
+        assert "write failed" not in repr(error)
+        error = error.__cause__ or error.__context__
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None
+
+
 def test_agent_consent_non_json_body_is_redacted_whole(
     auth: Authentication, issuer: FakeIssuer
 ) -> None:

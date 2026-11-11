@@ -121,14 +121,20 @@ def _redacted(value: object, secrets: tuple[str, ...]) -> object:
     if isinstance(value, str):
         return _REDACTED if any(secret and secret in value for secret in secrets) else value
     if isinstance(value, Mapping):
+        items = cast("Mapping[str, object]", value).items()
+        # Reserve every safe key name first, so a placeholder never takes one.
+        taken = {key for key, _ in items if _redacted(key, secrets) == key}
         result: dict[str, object] = {}
-        for key, item in cast("Mapping[str, object]", value).items():
-            name = cast("str", _redacted(key, secrets))
-            if name in result:
-                number = 2
-                while f"{name}{number}" in result:
+        number = 1
+        for key, item in items:
+            name = key
+            if _redacted(key, secrets) != key:
+                while True:
+                    name = _REDACTED if number == 1 else f"{_REDACTED}{number}"
                     number += 1
-                name = f"{name}{number}"
+                    if name not in taken:
+                        break
+                taken.add(name)
             result[name] = _redacted(item, secrets)
         return result
     if isinstance(value, list):
@@ -140,10 +146,11 @@ def _redacted_body(call: _Call, response: httpx.Response) -> tuple[object, bytes
     """The body of an answer to a private-body call with the secrets removed, and its bytes.
 
     JSON is redacted structurally and serialised again; anything else (an HTML error page, a body
-    cut at the size limit) becomes the text ``[redacted]``; an empty body stays empty.
+    cut at the size limit) becomes the text ``[redacted]``; an empty body is not JSON either.
     """
     if not response.content:
-        return None, b""
+        # An empty body is not JSON.
+        return _REDACTED, _REDACTED.encode()
     try:
         body = _redacted(response.json(), call.secrets)
     except ValueError:
@@ -158,8 +165,10 @@ def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
     if not call.private_body:
         return response
     _, content = _redacted_body(call, response)
+    # Header values are issuer-controlled too (a request id, an echo): one that contains a secret
+    # is replaced whole.
     headers = {
-        name: value
+        name: cast("str", _redacted(value, call.secrets))
         for name, value in response.headers.items()
         if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
     }
@@ -859,10 +868,24 @@ class Authentication(_AuthenticationBase):
     def _send(self, call: _Call) -> httpx.Response:
         request = self._build(call, self._client)
         started = time.monotonic()
+        failure: APIConnectionError | None = None
+        response: httpx.Response | None = None
         try:
             response = self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, _kept_request(call, request)) from exc
+            failure = self._transport_error(exc, _kept_request(call, request))
+            if not call.private_body:
+                raise failure from exc
+        except Exception:
+            if not call.private_body:
+                raise
+            failure = APIConnectionError(request=_kept_request(call, request))
+        if failure is not None:
+            # Raised outside the handler, so no context and no cause carry the transport's text, which
+            # may quote the serialized request.
+            raise failure from None
+        if response is None:  # pragma: no cover - a failure was raised above
+            raise RuntimeError("no response")
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
@@ -1090,10 +1113,24 @@ class AsyncAuthentication(_AuthenticationBase):
     async def _send(self, call: _Call) -> httpx.Response:
         request = self._build(call, self._client)
         started = time.monotonic()
+        failure: APIConnectionError | None = None
+        response: httpx.Response | None = None
         try:
             response = await self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, _kept_request(call, request)) from exc
+            failure = self._transport_error(exc, _kept_request(call, request))
+            if not call.private_body:
+                raise failure from exc
+        except Exception:
+            if not call.private_body:
+                raise
+            failure = APIConnectionError(request=_kept_request(call, request))
+        if failure is not None:
+            # Raised outside the handler, so no context and no cause carry the transport's text, which
+            # may quote the serialized request.
+            raise failure from None
+        if response is None:  # pragma: no cover - a failure was raised above
+            raise RuntimeError("no response")
         self._log(request, response, started)
         response.request = _kept_request(call, request)
         return response
