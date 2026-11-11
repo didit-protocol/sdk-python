@@ -12,6 +12,7 @@ from didit.types.components.transaction_rule_detail import TransactionRuleDetail
 from didit.types.components.transaction_rule_install_result import TransactionRuleInstallResult
 from didit.types.components.transaction_rule_library_entry import TransactionRuleLibraryEntry
 from didit.types.components.transaction_summary import TransactionSummary
+from didit.types.components.travel_rule_delivery_log_entry import TravelRuleDeliveryLogEntry
 from didit.types.components.travel_rule_message import TravelRuleMessage
 from didit.types.components.travel_rule_test_vasp_inbound_response import (
     TravelRuleTestVaspInboundResponse,
@@ -731,6 +732,9 @@ def test_transactions_rules_backtest() -> None:
                 "matched": 12,
                 "affected_entities": 4,
                 "period_days": 90,
+                "truncated": False,
+                "overlapping_rules": [],
+                "overlapping_rules_truncated": False,
             },
         ),
         lambda c: c.transactions.rules.backtest(
@@ -1505,6 +1509,18 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
                     "warnings": ["declared_originator_not_an_input"],
                     "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
                 },
+                "deliveries": [
+                    {
+                        "uuid": "11111111-2222-4333-8444-555555555555",
+                        "kind": "SEND",
+                        "status": "DELIVERED",
+                        "rail": "NETWORK",
+                        "created_at": "2026-11-01T10:00:00Z",
+                        "delivered_at": "2026-11-01T10:00:01Z",
+                        "detail_lines": ["Send", "Delivered"],
+                    }
+                ],
+                "deliveries_truncated": True,
                 "not_required_reason": "below_threshold",
                 "proof_state": "not_required",
             },
@@ -1577,6 +1593,50 @@ def test_transactions_travel_rule_create_message() -> None:
         ),
         lambda r: isinstance(r, TravelRuleMessage),
         lambda r: isinstance(r, TravelRuleMessage),
+    )
+
+
+def test_transactions_travel_rule_list_deliveries() -> None:
+    """``GET /v3/transactions/{transaction_id}/travel-rule/deliveries/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/transactions/00000000-0000-4000-8000-000000000001/travel-rule/deliveries/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "uuid": "11111111-2222-4333-8444-555555555555",
+                        "kind": "SEND",
+                        "status": "DELIVERED",
+                        "rail": "NETWORK",
+                        "created_at": "2026-11-01T10:00:00Z",
+                        "delivered_at": "2026-11-01T10:00:01Z",
+                        "detail_lines": ["Send", "Delivered"],
+                    }
+                ],
+            },
+        ),
+        lambda c: c.transactions.travel_rule.list_deliveries(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda c: c.transactions.travel_rule.list_deliveries(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, TravelRuleDeliveryLogEntry) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, TravelRuleDeliveryLogEntry) for x1 in r.results)
+        ),
     )
 
 
@@ -1743,6 +1803,18 @@ def test_transactions_travel_rule_trigger_test_vasp_inbound() -> None:
                         "warnings": ["declared_originator_not_an_input"],
                         "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
                     },
+                    "deliveries": [
+                        {
+                            "uuid": "11111111-2222-4333-8444-555555555555",
+                            "kind": "SEND",
+                            "status": "DELIVERED",
+                            "rail": "NETWORK",
+                            "created_at": "2026-11-01T10:00:00Z",
+                            "delivered_at": "2026-11-01T10:00:01Z",
+                            "detail_lines": ["Send", "Delivered"],
+                        }
+                    ],
+                    "deliveries_truncated": True,
                     "not_required_reason": "below_threshold",
                     "proof_state": "not_required",
                 },
@@ -1878,6 +1950,18 @@ def test_transactions_travel_rule_update_transfer() -> None:
                     "warnings": ["declared_originator_not_an_input"],
                     "not_applicable_reason": "LIGHTNING_NO_PAYEE_IDENTIFIER",
                 },
+                "deliveries": [
+                    {
+                        "uuid": "11111111-2222-4333-8444-555555555555",
+                        "kind": "SEND",
+                        "status": "DELIVERED",
+                        "rail": "NETWORK",
+                        "created_at": "2026-11-01T10:00:00Z",
+                        "delivered_at": "2026-11-01T10:00:01Z",
+                        "detail_lines": ["Send", "Delivered"],
+                    }
+                ],
+                "deliveries_truncated": True,
                 "not_required_reason": "below_threshold",
                 "proof_state": "not_required",
             },

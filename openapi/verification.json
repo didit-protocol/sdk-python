@@ -26234,10 +26234,10 @@
                             "nullable": true,
                             "allOf": [
                               {
-                                "$ref": "#/components/schemas/TransactionTravelRule"
+                                "$ref": "#/components/schemas/TransactionListTravelRule"
                               }
                             ],
-                            "description": "The transaction's Travel Rule transfer, the same block as `travel_rule` on `GET /v3/transactions/{transaction_id}/`, or `null` when the transaction has none."
+                            "description": "Travel Rule summary with latest delivery, or null when absent. Unlike transaction detail, this block omits deliveries and deliveries_truncated."
                           }
                         }
                       }
@@ -48397,7 +48397,10 @@
                   "evaluated": 4820,
                   "matched": 12,
                   "affected_entities": 4,
-                  "period_days": 90
+                  "period_days": 90,
+                  "truncated": false,
+                  "overlapping_rules": [],
+                  "overlapping_rules_truncated": false
                 }
               }
             }
@@ -84162,7 +84165,7 @@
       "post": {
         "operationId": "investigator_run_override",
         "summary": "Override a recommendation",
-        "description": "Takes another action with a category and a reason. Also overrides a decision the Investigator took on its own while it still stands. Restricted keys need the `decisions` scope (write); transaction alerts also need `transactions` (write). Escalating a verification or transaction opens a case.",
+        "description": "Takes another action with a category and a reason. Also overrides a decision the Investigator took on its own while it still stands. Restricted keys need the `decisions` scope (write); transaction alerts also need `transactions` (write). Escalating a verification or transaction opens a case. Automated transaction decisions can be overridden only while the original decision still stands. The original decision remains unchanged, the override is recorded separately, and an immediate policy question is raised for its recorded situations with the original policy action. The override does not charge for another automated decision.",
         "tags": [
           "Investigator"
         ],
@@ -84183,7 +84186,7 @@
             }
           },
           "409": {
-            "description": "Already decided, or a guardrail holds the item."
+            "description": "Already overridden, the original automated decision no longer stands, or a guardrail holds the item."
           },
           "401": {
             "description": "Missing or invalid API key."
@@ -92404,6 +92407,146 @@
           }
         ]
       }
+    },
+    "/v3/transactions/{transaction_id}/travel-rule/deliveries/": {
+      "get": {
+        "summary": "List Travel Rule delivery history",
+        "description": "Read the complete delivery history for a transaction, oldest first. Requires transaction read permission. Unlike the newest 100 entries embedded in detail, this endpoint paginates the full history. See [delivery history](/management-api/travel-rule/list-deliveries).",
+        "operationId": "listTravelRuleDeliveries",
+        "x-didit-sdk": {
+          "resource": "transactions.travel_rule",
+          "method": "list_deliveries",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "description": "Didit-stable transaction UUID that owns the transfer.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 100
+            },
+            "description": "Entries per page. Defaults to 100 and larger values are capped at 100; a value above 1,000,000 returns `400`."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            },
+            "description": "Number of entries to skip, up to 1,000,000. A larger value returns `400`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated delivery history, oldest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleDeliveryLogPage"
+                },
+                "example": {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "uuid": "11111111-2222-4333-8444-555555555555",
+                      "kind": "SEND",
+                      "status": "DELIVERED",
+                      "rail": "NETWORK",
+                      "created_at": "2026-11-01T10:00:00Z",
+                      "delivered_at": "2026-11-01T10:00:01Z",
+                      "detail_lines": [
+                        "Send",
+                        "Delivered"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A wrong, revoked or expired API key."
+          },
+          "403": {
+            "description": "Missing, invalid, or revoked API key, or the key cannot read this application's transactions. A missing key returns `403`; a wrong, revoked or expired key returns `401`."
+          },
+          "404": {
+            "description": "Transaction or Travel Rule transfer not found."
+          },
+          "400": {
+            "description": "A `limit` or `offset` above 1,000,000 was sent."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/transactions/11111111-2222-3333-4444-555555555555/travel-rule/deliveries/?limit=100&offset=0' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nfor item in client.transactions.travel_rule.list_deliveries(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.transactions.travelRule.listDeliveries(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.Transactions.TravelRule.ListDeliveriesAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TransactionsTravelRuleListDeliveriesParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.transactions().travelRule().listDeliveries(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\nforeach ($didit->transactions->travelRule->listDeliveries('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.transactions.travel_rule.list_deliveries(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Transactions.TravelRule.ListDeliveriesAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -96367,6 +96510,18 @@
           "chain_details": {
             "$ref": "#/components/schemas/TravelRuleChainDetails"
           },
+          "deliveries": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDeliveryLogEntry"
+            },
+            "description": "Newest 100 delivery entries, presented oldest first (creation time, then identifier). Empty when no messages exist. Use the paginated delivery endpoint for complete history."
+          },
+          "deliveries_truncated": {
+            "type": "boolean",
+            "description": "True when older entries were omitted from deliveries. Follow GET /v3/transactions/{transaction_id}/travel-rule/deliveries/ for the complete history."
+          },
           "not_required_reason": {
             "type": "string",
             "description": "Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason.",
@@ -100169,6 +100324,11 @@
             "minimum": 1,
             "maximum": 365,
             "default": 90
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration."
           }
         },
         "description": "Hypothetical rule configuration to evaluate against recent transactions. Read-only and free: nothing is created or modified. Send the same conditions, aggregation, evaluation_mode AND scope as the rule you intend to activate. Omitted conditions, aggregation and scope add no constraints of their own; dropping scope can include directions or transaction types the saved rule skips. Omitted evaluation_mode defaults to ALL (which can reduce matches for an ANY rule), and omitted period_days defaults to 90 days, not unlimited history."
@@ -100190,8 +100350,32 @@
           },
           "period_days": {
             "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True only when additional transactions in the requested period were omitted by the replay cap."
+          },
+          "overlapping_rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionRuleOverlap"
+            },
+            "description": "Active rules matching the candidate hits, excluding rule_id. Empty when none matched within the comparison bounds."
+          },
+          "overlapping_rules_truncated": {
+            "type": "boolean",
+            "description": "True when the overlap comparison is partial: more than 50 eligible active rules, more than 1000 rule/transaction comparisons, or a truncated replay with candidate hits and eligible rules. False when there are no candidate hits or no eligible rules, even if truncated is true. Counts are not exhaustive when true."
           }
-        }
+        },
+        "required": [
+          "evaluated",
+          "matched",
+          "affected_entities",
+          "period_days",
+          "truncated",
+          "overlapping_rules",
+          "overlapping_rules_truncated"
+        ]
       },
       "TransactionRuleLibraryEntry": {
         "type": "object",
@@ -106507,10 +106691,12 @@
           "proof_of_address",
           "business_document",
           "confirm_details",
-          "review_in_progress"
+          "review_in_progress",
+          "source_of_funds",
+          "purpose_of_payment"
         ],
         "type": "string",
-        "description": "* `identity_document` - identity_document\n* `proof_of_address` - proof_of_address\n* `business_document` - business_document\n* `confirm_details` - confirm_details\n* `review_in_progress` - review_in_progress"
+        "description": "* `identity_document` - identity_document\n* `proof_of_address` - proof_of_address\n* `business_document` - business_document\n* `confirm_details` - confirm_details\n* `review_in_progress` - review_in_progress\n* `source_of_funds` - Request a document showing the source of payment funds.\n* `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases."
       },
       "FraudTypeEnum": {
         "enum": [
@@ -107343,10 +107529,12 @@
           "proof_of_address",
           "business_document",
           "confirm_details",
-          "review_in_progress"
+          "review_in_progress",
+          "source_of_funds",
+          "purpose_of_payment"
         ],
         "type": "string",
-        "description": "* `identity_document` - identity_document\n* `proof_of_address` - proof_of_address\n* `business_document` - business_document\n* `confirm_details` - confirm_details\n* `review_in_progress` - review_in_progress"
+        "description": "* `identity_document` - identity_document\n* `proof_of_address` - proof_of_address\n* `business_document` - business_document\n* `confirm_details` - confirm_details\n* `review_in_progress` - review_in_progress\n* `source_of_funds` - Request a document showing the source of payment funds.\n* `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases."
       },
       "CaseDuplicateTypeEnum": {
         "enum": [
@@ -107438,7 +107626,8 @@
           },
           "expires_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Use the expiry covered by the preview token. Source-of-funds and purpose-of-payment requests allow up to 14 days; other purposes allow up to seven days. The default remains seven days. Changing the expiry without a matching preview is rejected."
           },
           "preview_token": {
             "type": "string",
@@ -108301,6 +108490,25 @@
                 },
                 "title": {
                   "type": "string"
+                },
+                "language": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Language of the document version selected for this signing attempt, not necessarily the requested interface language. A complete translation matching the signer language (or session language when unset) is selected; otherwise the original is used. Null when the selected version has no language set. Frozen when the attempt starts; once signed, this is the language actually signed.",
+                  "example": "en"
+                },
+                "source_revision": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUID of the source document revision copied into this signing attempt, including when a translated variant is selected. Distinct from id, which identifies the signer's document copy. Frozen when the attempt starts.",
+                  "example": "22222222-2222-4222-8222-222222222222"
+                },
+                "translation_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true,
+                  "description": "UUID of the selected translated variant, or null when the original document is selected. Frozen with the document copy when the attempt starts; later language or translation changes do not replace it.",
+                  "example": null
                 },
                 "file_name": {
                   "type": "string"
@@ -122864,7 +123072,7 @@
       },
       "TransactionTravelRule": {
         "type": "object",
-        "description": "A transaction's Travel Rule transfer, as `GET /v3/transactions/{transaction_id}/`, the `201` of `POST /v3/transactions/` and each row of `GET /v3/transactions/` return it. `direction`, `rail`, `counterparty_vasp`, `delivery`, `discovery`, `reason` and `next_actions` have the same shape as on `PATCH /v3/transactions/{transaction_id}/travel-rule/`, so one read of a transaction says why its transfer is stuck and what moves it on.",
+        "description": "Travel Rule transfer on transaction detail and creation responses. Includes latest delivery and bounded delivery history. Transaction lists omit the history fields.",
         "properties": {
           "uuid": {
             "type": "string",
@@ -123006,6 +123214,18 @@
           },
           "chain_details": {
             "$ref": "#/components/schemas/TravelRuleChainDetails"
+          },
+          "deliveries": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDeliveryLogEntry"
+            },
+            "description": "Newest 100 delivery entries, presented oldest first (creation time, then identifier). Empty when no messages exist. Use the paginated delivery endpoint for complete history."
+          },
+          "deliveries_truncated": {
+            "type": "boolean",
+            "description": "True when older entries were omitted from deliveries. Follow GET /v3/transactions/{transaction_id}/travel-rule/deliveries/ for the complete history."
           },
           "not_required_reason": {
             "type": "string",
@@ -129260,6 +129480,322 @@
           "enabled": {
             "type": "boolean",
             "description": "`true` once a person signed in to the console turned on \"Connected AI agents can top up with your saved card\" in Billing > Payment methods. Off by default."
+          }
+        }
+      },
+      "TransactionRuleOverlap": {
+        "type": "object",
+        "required": [
+          "rule_id",
+          "name",
+          "actions",
+          "overlap_count"
+        ],
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Other active rule that matched candidate hits."
+          },
+          "name": {
+            "type": "string",
+            "description": "Title of the overlapping rule."
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionRuleAction"
+            },
+            "description": "All actions configured on the overlapping rule."
+          },
+          "overlap_count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Candidate matches also matched by this rule within the comparison bounds. May be partial when overlapping_rules_truncated is true."
+          }
+        }
+      },
+      "TravelRuleDeliveryLogEntry": {
+        "type": "object",
+        "description": "One supplier-neutral entry in the delivery history.",
+        "required": [
+          "uuid",
+          "kind",
+          "status",
+          "rail",
+          "created_at",
+          "delivered_at",
+          "detail_lines"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Delivery identifier."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SEND",
+              "ANSWER",
+              "TXID",
+              "CANCEL",
+              "POLL"
+            ],
+            "description": "What the message carries. `SEND`: the transfer's first message to the counterparty (outbound; the rail is chosen when it is sent). `ANSWER`: your accept or decline, owed to the network that asked (inbound). `TXID`: the on-chain transaction hash, after you finish the transfer. `CANCEL`: the cancellation, after you cancel it. `POLL`: a status query to a network that offers one, repeated every 5 minutes while the transfer waits on the counterparty."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "SENDING",
+              "RETRYING",
+              "DELIVERED",
+              "FAILED"
+            ],
+            "description": "Current delivery status."
+          },
+          "rail": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "EMAIL",
+              "TRP",
+              "INTERNAL",
+              "NETWORK",
+              null
+            ],
+            "description": "Supplier-neutral transport type; null until selected."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the delivery was created."
+          },
+          "delivered_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When delivery completed, or null."
+          },
+          "detail_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Human-readable message kind and delivery status. Does not expose transport payloads or raw errors."
+          }
+        },
+        "example": {
+          "uuid": "11111111-2222-4333-8444-555555555555",
+          "kind": "SEND",
+          "status": "DELIVERED",
+          "rail": "NETWORK",
+          "created_at": "2026-11-01T10:00:00Z",
+          "delivered_at": "2026-11-01T10:00:01Z",
+          "detail_lines": [
+            "Send",
+            "Delivered"
+          ]
+        }
+      },
+      "TransactionListTravelRule": {
+        "type": "object",
+        "description": "Travel Rule summary on a transaction list item. Includes latest delivery but omits deliveries and deliveries_truncated.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string",
+            "nullable": true
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "obligations_count": {
+            "type": "integer"
+          },
+          "originator_data": {
+            "type": "object",
+            "description": "Originator party. For an inbound transfer the counterparty's values are masked until ownership is confirmed."
+          },
+          "beneficiary_data": {
+            "type": "object",
+            "description": "Beneficiary party. For an inbound transfer the counterparty's values are masked until ownership is confirmed."
+          },
+          "name_match": {
+            "type": "object",
+            "nullable": true,
+            "description": "The name comparison that decided the transfer (score and strictness). Null until one ran. The compared names are masked together with the parties."
+          },
+          "data_match": {
+            "$ref": "#/components/schemas/TravelRuleDataMatch"
+          },
+          "mismatched_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Shortcut for `data_match.mismatched_fields`. Empty when nothing differs."
+          },
+          "data_unmasked": {
+            "$ref": "#/components/schemas/TravelRuleDataUnmasked"
+          },
+          "data_masked": {
+            "type": "boolean",
+            "description": "True while the counterparty's personal data is masked in this response."
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "INBOUND",
+              "OUTBOUND"
+            ],
+            "description": "Which side of the exchange this transfer is."
+          },
+          "rail": {
+            "type": "string",
+            "nullable": true,
+            "description": "The rail the transfer went over: `INTERNAL`, `TRP`, `GTR`, `TRUST`, `VERIFYVASP`, `SYGNA` or `EMAIL` (`TEST_VASP` on a sandbox application, when the Didit Test VASP answered), or `null` until a rail is chosen."
+          },
+          "counterparty_vasp": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "lei": {
+                "type": "string"
+              },
+              "dd_score": {
+                "type": "integer",
+                "description": "Due-diligence score from 0 to 100, where higher is better. Same scale as in the VASP directory."
+              },
+              "dd_score_breakdown": {
+                "type": "object",
+                "description": "Per-component contributions to dd_score, one object per component as in the VASP directory (jurisdiction, verification, protocol, lei, history, essentials, responsiveness), each {points, max, reason, detail}. {} until the counterparty has been assessed.",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "points": {
+                      "type": "number",
+                      "description": "Points awarded for this component."
+                    },
+                    "max": {
+                      "type": "integer",
+                      "description": "Maximum points this component can award."
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "Machine-readable code of the component's verdict."
+                    },
+                    "detail": {
+                      "type": "string",
+                      "description": "Human-readable reason for the awarded points."
+                    }
+                  }
+                }
+              },
+              "dd_assessed_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the due-diligence assessment last ran. Null until the counterparty has been assessed."
+              }
+            },
+            "description": "The counterparty's directory entry, or `null` when the transfer links none."
+          },
+          "delivery": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleDelivery"
+              }
+            ],
+            "description": "The newest message the transfer owes another party. `null` when it has owed none, for example below `threshold_amount` or for a declared self-hosted wallet."
+          },
+          "discovery": {
+            "type": "array",
+            "description": "How Didit looked for the counterparty, one entry per step that ran. Empty when no discovery ran, for example on an inbound transfer.",
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDiscoveryStep"
+            }
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why a `COUNTERPARTY_VASP_NOT_FOUND` or `COUNTERPARTY_VASP_NOT_REACHABLE` transfer is stuck; `\"\"` for any other status. A failed delivery decides it first, on `COUNTERPARTY_VASP_NOT_REACHABLE` only: `email_undeliverable` (the mail provider refused the compliance email and no address is left to try: when it was sent, on a reminder, or as a permanent bounce reported later) or `delivery_failed` (the rail that was delivering failed for good: a network rail refused the message or ran out of retries, a `TRP` identity host did not answer, or the counterparty's `TRP` host did not accept the inquiry). Otherwise the `discovery` trace decides it: `awaiting_end_user` (no step named a counterparty Didit can reach), `directory_match_no_route` (a step named a directory VASP that has no route), `picked_member_without_proven_wallet` (the end user picked a Didit customer that has not proven control of the wallet), or `no_directory_match` when the trace gives no other reason. A resend moves the transfer on, so the reason clears. See [Why a transfer is stuck](/transaction-monitoring/travel-rule#why-a-transfer-is-stuck)."
+          },
+          "next_actions": {
+            "type": "array",
+            "description": "What moves the transfer on; `[]` for any status but `COUNTERPARTY_VASP_NOT_FOUND` or `COUNTERPARTY_VASP_NOT_REACHABLE`. `email_undeliverable` offers `update_compliance_email`, then `resend`. `delivery_failed` offers `resend`. A discovery reason offers `select_counterparty_vasp`, `declare_self_hosted`, `add_vasp_hint` and `resend`.",
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleNextAction"
+            }
+          },
+          "chain_details": {
+            "$ref": "#/components/schemas/TravelRuleChainDetails"
+          },
+          "not_required_reason": {
+            "type": "string",
+            "description": "Null when required is true. Otherwise below_threshold, the recorded chain exemption (for example LIGHTNING_NO_PAYEE_IDENTIFIER, LIGHTNING_BOLT12_BLINDED_PAYEE or LIGHTNING_LNURL_NAMES_NO_PAYEE), or unknown for legacy transfers without a recorded reason.",
+            "nullable": true,
+            "example": "below_threshold"
+          },
+          "proof_state": {
+            "type": "string",
+            "description": "not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof.",
+            "enum": [
+              "not_required",
+              "confirmed",
+              "not_confirmed",
+              "requested",
+              "not_requested"
+            ],
+            "example": "not_requested"
+          }
+        }
+      },
+      "TravelRuleDeliveryLogPage": {
+        "type": "object",
+        "required": [
+          "count",
+          "next",
+          "previous",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count normally capped at 100; it is not a reliable total for larger histories. Follow next until null, regardless of count."
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Next page URL, or null."
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Previous page URL, or null."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDeliveryLogEntry"
+            },
+            "description": "Entries ordered oldest first by creation time, then identifier."
           }
         }
       },

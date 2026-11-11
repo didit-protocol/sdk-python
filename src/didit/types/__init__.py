@@ -1977,6 +1977,15 @@ if TYPE_CHECKING:
     from didit.types.components.transaction_detail import (
         TransactionDetailTags as TransactionDetailTags,
     )
+    from didit.types.components.transaction_list_travel_rule import (
+        TransactionListTravelRule as TransactionListTravelRule,
+    )
+    from didit.types.components.transaction_list_travel_rule import (
+        TransactionListTravelRuleCounterpartyVasp as TransactionListTravelRuleCounterpartyVasp,
+    )
+    from didit.types.components.transaction_list_travel_rule import (
+        TransactionListTravelRuleCounterpartyVaspDdScoreBreakdownValue as TransactionListTravelRuleCounterpartyVaspDdScoreBreakdownValue,
+    )
     from didit.types.components.transaction_note import TransactionNote as TransactionNote
     from didit.types.components.transaction_note import (
         TransactionNoteMetadata as TransactionNoteMetadata,
@@ -2046,6 +2055,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.transaction_rule_library_entry import (
         TransactionRuleLibraryEntry as TransactionRuleLibraryEntry,
+    )
+    from didit.types.components.transaction_rule_overlap import (
+        TransactionRuleOverlap as TransactionRuleOverlap,
     )
     from didit.types.components.transaction_rule_scope import (
         TransactionRuleScope as TransactionRuleScope,
@@ -2124,6 +2136,12 @@ if TYPE_CHECKING:
         TravelRuleDataUnmasked as TravelRuleDataUnmasked,
     )
     from didit.types.components.travel_rule_delivery import TravelRuleDelivery as TravelRuleDelivery
+    from didit.types.components.travel_rule_delivery_log_entry import (
+        TravelRuleDeliveryLogEntry as TravelRuleDeliveryLogEntry,
+    )
+    from didit.types.components.travel_rule_delivery_log_page import (
+        TravelRuleDeliveryLogPage as TravelRuleDeliveryLogPage,
+    )
     from didit.types.components.travel_rule_discovery_step import (
         TravelRuleDiscoveryStep as TravelRuleDiscoveryStep,
     )
@@ -4432,6 +4450,9 @@ _MODULES: dict[str, str] = {
     "TransactionDetailRemediation": "components.transaction_detail",
     "TransactionDetailRuleRuns": "components.transaction_detail",
     "TransactionDetailTags": "components.transaction_detail",
+    "TransactionListTravelRule": "components.transaction_list_travel_rule",
+    "TransactionListTravelRuleCounterpartyVasp": "components.transaction_list_travel_rule",
+    "TransactionListTravelRuleCounterpartyVaspDdScoreBreakdownValue": "components.transaction_list_travel_rule",
     "TransactionNote": "components.transaction_note",
     "TransactionNoteMetadata": "components.transaction_note",
     "TransactionRuleAction": "components.transaction_rule_action",
@@ -4456,6 +4477,7 @@ _MODULES: dict[str, str] = {
     "TransactionRuleDetail": "components.transaction_rule_detail",
     "TransactionRuleInstallResult": "components.transaction_rule_install_result",
     "TransactionRuleLibraryEntry": "components.transaction_rule_library_entry",
+    "TransactionRuleOverlap": "components.transaction_rule_overlap",
     "TransactionRuleScope": "components.transaction_rule_scope",
     "TransactionRuleScopeParam": "components.transaction_rule_scope",
     "TransactionSummary": "components.transaction_summary",
@@ -4522,6 +4544,8 @@ _MODULES: dict[str, str] = {
     "TravelRuleDataSharingFieldsParam": "components.travel_rule_data_sharing_fields",
     "TravelRuleDataUnmasked": "components.travel_rule_data_unmasked",
     "TravelRuleDelivery": "components.travel_rule_delivery",
+    "TravelRuleDeliveryLogEntry": "components.travel_rule_delivery_log_entry",
+    "TravelRuleDeliveryLogPage": "components.travel_rule_delivery_log_page",
     "TravelRuleDiscoveryStep": "components.travel_rule_discovery_step",
     "TravelRuleInboundResponse": "components.travel_rule_inbound_response",
     "TravelRuleListVaspsResponse": "travel_rule.list_vasps_response",
@@ -5686,6 +5710,9 @@ __all__ = [
     "TransactionDetailRemediation",
     "TransactionDetailRuleRuns",
     "TransactionDetailTags",
+    "TransactionListTravelRule",
+    "TransactionListTravelRuleCounterpartyVasp",
+    "TransactionListTravelRuleCounterpartyVaspDdScoreBreakdownValue",
     "TransactionNote",
     "TransactionNoteMetadata",
     "TransactionRuleAction",
@@ -5710,6 +5737,7 @@ __all__ = [
     "TransactionRuleDetail",
     "TransactionRuleInstallResult",
     "TransactionRuleLibraryEntry",
+    "TransactionRuleOverlap",
     "TransactionRuleScope",
     "TransactionRuleScopeParam",
     "TransactionSummary",
@@ -5776,6 +5804,8 @@ __all__ = [
     "TravelRuleDataSharingFieldsParam",
     "TravelRuleDataUnmasked",
     "TravelRuleDelivery",
+    "TravelRuleDeliveryLogEntry",
+    "TravelRuleDeliveryLogPage",
     "TravelRuleDiscoveryStep",
     "TravelRuleInboundResponse",
     "TravelRuleListVaspsResponse",
