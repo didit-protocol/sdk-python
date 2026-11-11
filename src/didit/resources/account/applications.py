@@ -19,6 +19,7 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.application import Application
 from didit.types.components.application_data_location import ApplicationDataLocation
+from didit.types.components.application_initiate_login_uri import ApplicationInitiateLoginURI
 from didit.types.components.paginated_application_list import PaginatedApplicationList
 
 __all__ = [
@@ -102,6 +103,7 @@ class AccountApplications(SyncAPIResource):
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
         data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
+        initiate_login_uri: ApplicationInitiateLoginURI | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -110,6 +112,8 @@ class AccountApplications(SyncAPIResource):
         """Create Application.
 
         Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
+
+        Set initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.
 
         ``POST /organizations/me/{org_id}/applications/``
 
@@ -122,6 +126,7 @@ class AccountApplications(SyncAPIResource):
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application (not shown to end users).
           data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
+          initiate_login_uri: Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -144,6 +149,7 @@ class AccountApplications(SyncAPIResource):
                     "privacy_url": privacy_url,
                     "description": description,
                     "data_location": data_location,
+                    "initiate_login_uri": initiate_login_uri,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -204,6 +210,7 @@ class AccountApplications(SyncAPIResource):
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
         data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
+        initiate_login_uri: ApplicationInitiateLoginURI | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -212,6 +219,8 @@ class AccountApplications(SyncAPIResource):
         """Update Application.
 
         Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.
+
+        Set initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 
@@ -225,6 +234,7 @@ class AccountApplications(SyncAPIResource):
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application.
           data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
+          initiate_login_uri: Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -247,6 +257,7 @@ class AccountApplications(SyncAPIResource):
                     "privacy_url": privacy_url,
                     "description": description,
                     "data_location": data_location,
+                    "initiate_login_uri": initiate_login_uri,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -327,6 +338,7 @@ class AsyncAccountApplications(AsyncAPIResource):
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
         data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
+        initiate_login_uri: ApplicationInitiateLoginURI | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -335,6 +347,8 @@ class AsyncAccountApplications(AsyncAPIResource):
         """Create Application.
 
         Create an application inside an organization, in the data location you choose (`data_location`, the European Union by default; it can't be changed afterwards). The response includes `api_key`; persist it now (recoverable via GET). Requires owner/admin JWT.
+
+        Set initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.
 
         ``POST /organizations/me/{org_id}/applications/``
 
@@ -347,6 +361,7 @@ class AsyncAccountApplications(AsyncAPIResource):
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application (not shown to end users).
           data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
+          initiate_login_uri: Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -369,6 +384,7 @@ class AsyncAccountApplications(AsyncAPIResource):
                     "privacy_url": privacy_url,
                     "description": description,
                     "data_location": data_location,
+                    "initiate_login_uri": initiate_login_uri,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -429,6 +445,7 @@ class AsyncAccountApplications(AsyncAPIResource):
         privacy_url: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
         data_location: ApplicationDataLocation | NotGiven = NOT_GIVEN,
+        initiate_login_uri: ApplicationInitiateLoginURI | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -437,6 +454,8 @@ class AsyncAccountApplications(AsyncAPIResource):
         """Update Application.
 
         Update application metadata (name, URLs, redirect URIs). `api_key` and `client_id` are never rotated. `products` is read-only: a `products` key in the body is ignored. `data_location` can't be changed after the application is created, except once on the live application created with your organization, while it is unused (see the request body). Requires owner/admin JWT.
+
+        Set initiate_login_uri to your HTTPS sign-in page on the exact website_url hostname, or an empty string to disable admin-sent sign-in links. Changing website_url also revalidates the saved sign-in URI. Invalid values return 400 with an initiate_login_uri field error; hostname and URI policy failures use https_url_on_registered_website_required.
 
         ``PATCH /organizations/me/{org_id}/applications/{app_id}/``
 
@@ -450,6 +469,7 @@ class AsyncAccountApplications(AsyncAPIResource):
           privacy_url: Privacy policy URL shown in the verification flow.
           description: Internal description for the application.
           data_location: Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union.
+          initiate_login_uri: Application sign-in URL for an admin-sent sign-in link. Optional; an empty string disables sending. A nonempty value must use HTTPS and the exact hostname of website_url (subdomains must match), with no userinfo, query, fragment or whitespace and no port other than 443. The server also revalidates the saved URI when website_url changes; update or clear initiate_login_uri in the same PATCH if needed. The hosted handoff adds iss and login_hint, but creates no session or tokens. See /authentication/sign-in-methods#admin-sent-sign-in-link.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -472,6 +492,7 @@ class AsyncAccountApplications(AsyncAPIResource):
                     "privacy_url": privacy_url,
                     "description": description,
                     "data_location": data_location,
+                    "initiate_login_uri": initiate_login_uri,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

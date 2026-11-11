@@ -229,6 +229,8 @@ It never takes the API key: it talks to the application's issuer (`https://<slug
 - `exchange_code(code, code_verifier, redirect_uri)` and `refresh(refresh_token)` against `POST token/`; document that refreshes for one session must be serialised, because reusing a consumed refresh token revokes the session.
 - `get_session(access_token)` (`GET session/`) for instant revocation checks, and `revoke_session(access_token)` (`DELETE session/`).
 - `create_step_up(access_token, action, amount?, currency?, return_to?)` (`POST step-up/`) and `retrieve_step_up(access_token, id)`; document that the backend acts only on status `approved`.
+- `submit_agent_consent(access_token, challenge, decision, assertion?, scopes?, organization_ids?, lifetime?)` (`POST agents/consent/`) approves or denies a pending agent request and returns either the approval (`code`, `redirect_uri`, `state`) or the denial (`status` `denied`), and `create_agent_approval_options(access_token, challenge)` (`POST agents/consent/passkey/`) returns the WebAuthn request options (`options`) for the approving person.
+  The browser performs WebAuthn and the backend forwards the JSON-serialised assertion; the `challenge` is the pending agent request secret, so never log it, and neither method returns an access or refresh token.
 - Browser-only routes (hosted pages, password, email and phone codes, passkeys, MFA, social, SSO) are out of scope.
 - The console management API for Authentication uses console sessions, not API keys, so it is out of scope until it accepts API keys.
 - Authentication events do not exist as webhooks yet; do not invent `auth.*` webhook types.

@@ -22,6 +22,9 @@ class TravelRuleUpdateSettingsParams(TypedDict, total=False):
 
     jurisdiction: str
 
+    vasp_jurisdiction: str
+    """Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. Independent of `jurisdiction`, which sets the regulatory regime Didit stamps on your transfers. Send an empty string to clear it; the directory then shows `jurisdiction`."""
+
     name_matching_strictness: Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"] | str
     """`CONTAINS` accepts one name whose words all appear in the other."""
 

@@ -46,6 +46,13 @@ from ._pkce import create_pkce as _create_pkce
 from ._pkce import create_state as _create_state
 from ._types import (
     AccessTokenClaims,
+    AgentApprovalOptions,
+    AgentConsentApproved,
+    AgentConsentDecision,
+    AgentConsentDenied,
+    AgentConsentResponse,
+    AgentConsentScope,
+    AgentPasskeyAssertion,
     AuthenticationSession,
     IdTokenClaims,
     StepUp,
@@ -71,6 +78,8 @@ _JWKS_PATH = ".well-known/jwks.json"
 _TOKEN_PATH = "token/"  # noqa: S105 - a path, not a secret
 _SESSION_PATH = "session/"
 _STEP_UP_PATH = "step-up/"
+_AGENT_CONSENT_PATH = "agents/consent/"
+_AGENT_APPROVAL_OPTIONS_PATH = "agents/consent/passkey/"
 
 Audience = Union[str, Sequence[str]]
 """One audience (the application id) or several, any of which is accepted."""
@@ -94,6 +103,59 @@ class _Call:
     json_body: Mapping[str, object] | None = None
     secrets: tuple[str, ...] = ()
     """Values redacted from error messages: tokens, codes and verifiers."""
+    private_body: bool = False
+    """The JSON body carries a secret (a consent challenge or passkey assertion):
+    errors and responses never keep it."""
+
+
+def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The response an error may keep: for a private-body call, without its content.
+
+    The issuer may echo the challenge or the assertion, so the kept response carries the
+    status, the headers that identify it and no body.
+    """
+    if not call.private_body:
+        return response
+    headers = {
+        name: value
+        for name, value in response.headers.items()
+        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
+    }
+    return httpx.Response(
+        response.status_code, headers=headers, content=b"", request=response.request
+    )
+
+
+def _redacted(value: object, secrets: tuple[str, ...]) -> object:
+    """``value`` with every secret removed from its strings, at any depth."""
+    if isinstance(value, str):
+        for secret in secrets:
+            if secret:
+                value = value.replace(secret, "[redacted]")
+        return value
+    if isinstance(value, Mapping):
+        return {
+            key: _redacted(item, secrets)
+            for key, item in cast("Mapping[str, object]", value).items()
+        }
+    if isinstance(value, list):
+        return [_redacted(item, secrets) for item in cast("list[object]", value)]
+    return value
+
+
+def _string_values(value: object) -> list[str]:
+    """Every non-empty string in a nested JSON value, so none of it can leak into an error."""
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, Mapping):
+        return [
+            text
+            for item in cast("Mapping[str, object]", value).values()
+            for text in _string_values(item)
+        ]
+    if isinstance(value, (list, tuple)):
+        return [text for item in cast("Sequence[object]", value) for text in _string_values(item)]
+    return []
 
 
 def _required_text(value: object, name: str) -> str:
@@ -126,8 +188,9 @@ def _amount_text(amount: Amount) -> str:
 
 def _kept_request(call: _Call, request: httpx.Request) -> httpx.Request:
     """The request an error or response keeps: without the form body of a token
-    request, which carries the code, the PKCE verifier or the refresh token."""
-    if call.form is None:
+    request, which carries the code, the PKCE verifier or the refresh token, and
+    without the JSON body of an agent consent request (challenge, assertion)."""
+    if call.form is None and not call.private_body:
         return request
     headers = request.headers.copy()
     headers.pop("content-length", None)
@@ -242,6 +305,63 @@ class _AuthenticationBase:
         path = encode_path(_STEP_UP_PATH + "{step_up_id}/", {"step_up_id": step_up_id})
         return _Call("GET", self._url(path), bearer=token, secrets=(token,))
 
+    def _agent_consent_call(
+        self,
+        access_token: str,
+        *,
+        challenge: str,
+        decision: AgentConsentDecision | str,
+        assertion: AgentPasskeyAssertion | Mapping[str, Any] | None,
+        scopes: Sequence[AgentConsentScope | str] | None,
+        organization_ids: Sequence[str] | None,
+        lifetime: int | None,
+    ) -> _Call:
+        token = _required_text(access_token, "access_token")
+        challenge = _required_text(challenge, "challenge")
+        decision = _required_text(decision, "decision")
+        if decision not in ("approve", "deny"):
+            raise ValueError(f"decision must be 'approve' or 'deny', got {decision!r}.")
+        body: dict[str, object] = {"challenge": challenge, "decision": decision}
+        secrets = [token, challenge]
+        if assertion is not None:
+            data = (
+                assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
+                if isinstance(assertion, BaseModel)
+                else dict(assertion)
+            )
+            body["assertion"] = data
+            secrets += _string_values(data)
+        if scopes is not None:
+            if isinstance(scopes, str):
+                raise TypeError("scopes must be a list such as ['read', 'act'], not a string.")
+            body["scopes"] = list(scopes)
+        if organization_ids is not None:
+            if isinstance(organization_ids, str):
+                raise TypeError("organization_ids must be a list of organization ids.")
+            body["organization_ids"] = list(organization_ids)
+        if lifetime is not None:
+            body["lifetime"] = lifetime
+        return _Call(
+            "POST",
+            self._url(_AGENT_CONSENT_PATH),
+            bearer=token,
+            json_body=body,
+            secrets=tuple(secrets),
+            private_body=True,
+        )
+
+    def _agent_approval_options_call(self, access_token: str, challenge: str) -> _Call:
+        token = _required_text(access_token, "access_token")
+        challenge = _required_text(challenge, "challenge")
+        return _Call(
+            "POST",
+            self._url(_AGENT_APPROVAL_OPTIONS_PATH),
+            bearer=token,
+            json_body={"challenge": challenge},
+            secrets=(token, challenge),
+            private_body=True,
+        )
+
     def _build(self, call: _Call, client: httpx.Client | httpx.AsyncClient) -> httpx.Request:
         headers = {
             "Accept": "application/json",
@@ -289,25 +409,44 @@ class _AuthenticationBase:
                 body = response.json()
             except ValueError:
                 body = response.text or None
-            raise make_status_error(response, body, redact=call.secrets)
+            if call.private_body:
+                body = _redacted(body, call.secrets)
+            raise make_status_error(response_for_error(call, response), body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
         try:
             return response.json()
         except ValueError as exc:
             raise APIResponseValidationError(
-                response=response,
+                response=response_for_error(call, response),
                 message=(
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
                     f"got {response.headers.get('content-type', 'no content type')}."
                 ),
             ) from exc
 
+    def _consent(self, call: _Call, response: httpx.Response) -> AgentConsentResponse:
+        """The approved or the denied answer, told apart by shape (no discriminator)."""
+        data = self._read(call, response)
+        if isinstance(data, dict):
+            fields = cast("dict[str, Any]", data)
+            if "code" in fields:
+                return cast("AgentConsentResponse", validate_response(AgentConsentApproved, fields))
+            if "status" in fields:
+                return cast("AgentConsentResponse", validate_response(AgentConsentDenied, fields))
+        raise APIResponseValidationError(
+            response=response_for_error(call, response),
+            message=(
+                f"Expected an approved (code) or denied (status) answer from {call.method} "
+                f"{httpx.URL(call.url).path}."
+            ),
+        )
+
     def _model(self, call: _Call, response: httpx.Response, model: type[ModelT]) -> ModelT:
         data = self._read(call, response)
         if not isinstance(data, dict):
             raise APIResponseValidationError(
-                response=response,
+                response=response_for_error(call, response),
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
         return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))
@@ -627,6 +766,58 @@ class Authentication(_AuthenticationBase):
         call = self._retrieve_step_up_call(access_token, step_up_id)
         return self._model(call, self._send(call), StepUp)
 
+    def submit_agent_consent(
+        self,
+        access_token: str,
+        *,
+        challenge: str,
+        decision: AgentConsentDecision | str,
+        assertion: AgentPasskeyAssertion | Mapping[str, Any] | None = None,
+        scopes: Sequence[AgentConsentScope | str] | None = None,
+        organization_ids: Sequence[str] | None = None,
+        lifetime: int | None = None,
+    ) -> AgentConsentResponse:
+        """Record the signed-in person's decision on an agent's request (``POST agents/consent/``).
+
+        ``access_token`` is the person's access token and ``challenge`` the pending
+        agent request secret. ``decision`` is ``approve`` or ``deny``. When the
+        application only lets humans approve, an approval needs a fresh
+        ``assertion`` (from :meth:`create_agent_approval_options`); a denial never
+        does. ``scopes`` narrows what the agent asked for (``read``, ``act``),
+        ``organization_ids`` names the organizations it may use and ``lifetime``
+        is the grant lifetime in seconds (86400, 604800 or 2592000).
+
+        Returns :class:`AgentConsentApproved` (``code``, ``redirect_uri``,
+        ``state``; no token) or :class:`AgentConsentDenied`; test with
+        ``isinstance``. Never retried, and the challenge and assertion are never
+        logged or kept on errors. HTTP 400 ``invalid_grant`` means the challenge is
+        invalid or already used; HTTP 403 ``passkey_required`` means call
+        :meth:`create_agent_approval_options` first.
+        """
+        call = self._agent_consent_call(
+            access_token,
+            challenge=challenge,
+            decision=decision,
+            assertion=assertion,
+            scopes=scopes,
+            organization_ids=organization_ids,
+            lifetime=lifetime,
+        )
+        return self._consent(call, self._send(call))
+
+    def create_agent_approval_options(
+        self, access_token: str, *, challenge: str
+    ) -> AgentApprovalOptions:
+        """WebAuthn options for the person's fresh approval (``POST agents/consent/passkey/``).
+
+        Pass ``options`` as ``publicKey`` to ``navigator.credentials.get()`` in the
+        browser, then send the converted result as ``assertion`` to
+        :meth:`submit_agent_consent`. ``challenge`` is the pending agent request
+        secret, not the WebAuthn challenge. Never retried or logged.
+        """
+        call = self._agent_approval_options_call(access_token, challenge)
+        return self._model(call, self._send(call), AgentApprovalOptions)
+
     # I/O ----------------------------------------------------------------------
 
     def _send(self, call: _Call) -> httpx.Response:
@@ -827,6 +1018,36 @@ class AsyncAuthentication(_AuthenticationBase):
         """See :meth:`Authentication.retrieve_step_up`: act only on status ``approved``."""
         call = self._retrieve_step_up_call(access_token, step_up_id)
         return self._model(call, await self._send(call), StepUp)
+
+    async def submit_agent_consent(
+        self,
+        access_token: str,
+        *,
+        challenge: str,
+        decision: AgentConsentDecision | str,
+        assertion: AgentPasskeyAssertion | Mapping[str, Any] | None = None,
+        scopes: Sequence[AgentConsentScope | str] | None = None,
+        organization_ids: Sequence[str] | None = None,
+        lifetime: int | None = None,
+    ) -> AgentConsentResponse:
+        """See :meth:`Authentication.submit_agent_consent`. Never retried."""
+        call = self._agent_consent_call(
+            access_token,
+            challenge=challenge,
+            decision=decision,
+            assertion=assertion,
+            scopes=scopes,
+            organization_ids=organization_ids,
+            lifetime=lifetime,
+        )
+        return self._consent(call, await self._send(call))
+
+    async def create_agent_approval_options(
+        self, access_token: str, *, challenge: str
+    ) -> AgentApprovalOptions:
+        """See :meth:`Authentication.create_agent_approval_options`. Never retried."""
+        call = self._agent_approval_options_call(access_token, challenge)
+        return self._model(call, await self._send(call), AgentApprovalOptions)
 
     # I/O ----------------------------------------------------------------------
 

@@ -44,6 +44,10 @@ from didit import (
 from didit.authentication import (
     AccessTokenClaims,
     ActorClaim,
+    AgentApprovalOptions,
+    AgentConsentApproved,
+    AgentConsentDenied,
+    AgentPasskeyAssertion,
     AsyncAuthentication,
     Authentication,
     AuthenticationSession,
@@ -120,6 +124,32 @@ SESSION_RESPONSE = {
             "custom_role": {"key": "approver", "permissions": ["payouts:approve"]},
         }
     ],
+}
+AGENT_CHALLENGE = "synthetic-agent-challenge-0001"
+AGENT_CONSENT_APPROVED = {
+    "code": "synthetic-agent-code-0001",
+    "redirect_uri": "https://agent.example/callback",
+    "state": "request-state",
+}
+AGENT_APPROVAL_OPTIONS = {
+    "options": {
+        "challenge": "c3ludGhldGljLWNoYWxsZW5nZQ",
+        "rpId": "your-app.auth.didit.me",
+        "timeout": 60000,
+        "userVerification": "required",
+        "allowCredentials": [{"id": "c3ludGhldGljLWNyZWRlbnRpYWw", "type": "public-key"}],
+    }
+}
+AGENT_ASSERTION = {
+    "id": "c3ludGhldGljLWNyZWRlbnRpYWw",
+    "rawId": "c3ludGhldGljLWNyZWRlbnRpYWw",
+    "type": "public-key",
+    "response": {
+        "clientDataJSON": "SYNTHETIC_CLIENT_DATA",
+        "authenticatorData": "SYNTHETIC_AUTHENTICATOR_DATA",
+        "signature": "SYNTHETIC_SIGNATURE",
+        "userHandle": None,
+    },
 }
 STEP_UP_REQUIRED = {
     "id": STEP_UP_ID,
@@ -1326,6 +1356,249 @@ def test_step_up_id_is_percent_encoded(auth: Authentication, issuer: FakeIssuer)
     with pytest.raises(NotFoundError):
         auth.retrieve_step_up(ACCESS_TOKEN, "a/b")
     assert issuer.requests[-1].url.raw_path == b"/step-up/a%2Fb/"
+
+
+# Agent consent -------------------------------------------------------------------
+
+
+def test_submit_agent_consent_approve(auth: Authentication, issuer: FakeIssuer) -> None:
+    issuer.reply("POST", "/agents/consent/", 200, AGENT_CONSENT_APPROVED)
+    result = auth.submit_agent_consent(
+        ACCESS_TOKEN,
+        challenge=AGENT_CHALLENGE,
+        decision="approve",
+        assertion=AgentPasskeyAssertion.model_validate(AGENT_ASSERTION),
+        scopes=["read"],
+        organization_ids=["6f1c2d3e-0000-4000-8000-00000000e001"],
+        lifetime=86400,
+    )
+    assert isinstance(result, AgentConsentApproved)
+    assert (result.code, result.redirect_uri, result.state) == (
+        "synthetic-agent-code-0001",
+        "https://agent.example/callback",
+        "request-state",
+    )
+    assert "synthetic-agent-code-0001" not in repr(result)
+    request = issuer.last("/agents/consent/")
+    assert request.headers["authorization"] == f"Bearer {ACCESS_TOKEN}"
+    assert request.headers["content-type"] == "application/json"
+    body = json.loads(request.content)
+    assert body["challenge"] == AGENT_CHALLENGE
+    assert body["decision"] == "approve"
+    assert body["scopes"] == ["read"]
+    assert body["organization_ids"] == ["6f1c2d3e-0000-4000-8000-00000000e001"]
+    assert body["lifetime"] == 86400
+    assert body["assertion"]["response"]["signature"] == "SYNTHETIC_SIGNATURE"
+    assert body["assertion"]["type"] == "public-key"
+
+
+def test_submit_agent_consent_accepts_a_plain_assertion_dict(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply("POST", "/agents/consent/", 200, AGENT_CONSENT_APPROVED)
+    auth.submit_agent_consent(
+        ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=AGENT_ASSERTION
+    )
+    assert json.loads(issuer.last("/agents/consent/").content)["assertion"] == AGENT_ASSERTION
+
+
+def test_submit_agent_consent_deny(auth: Authentication, issuer: FakeIssuer) -> None:
+    issuer.reply("POST", "/agents/consent/", 200, {"status": "denied"})
+    result = auth.submit_agent_consent(ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="deny")
+    assert isinstance(result, AgentConsentDenied)
+    assert result.status == "denied"
+    assert json.loads(issuer.last("/agents/consent/").content) == {
+        "challenge": AGENT_CHALLENGE,
+        "decision": "deny",
+    }
+
+
+def test_create_agent_approval_options(auth: Authentication, issuer: FakeIssuer) -> None:
+    issuer.reply("POST", "/agents/consent/passkey/", 200, AGENT_APPROVAL_OPTIONS)
+    result = auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
+    assert isinstance(result, AgentApprovalOptions)
+    options = result.options
+    assert (options.rpId, options.userVerification, options.timeout) == (
+        "your-app.auth.didit.me",
+        "required",
+        60000,
+    )
+    assert options.allowCredentials[0].id == "c3ludGhldGljLWNyZWRlbnRpYWw"
+    assert "c3ludGhldGljLWNoYWxsZW5nZQ" not in repr(options)
+    request = issuer.last("/agents/consent/passkey/")
+    assert request.headers["authorization"] == f"Bearer {ACCESS_TOKEN}"
+    assert json.loads(request.content) == {"challenge": AGENT_CHALLENGE}
+
+
+def test_agent_consent_async(issuer: FakeIssuer, clock: FakeClock) -> None:
+    issuer.reply("POST", "/agents/consent/", 200, AGENT_CONSENT_APPROVED)
+    issuer.reply("POST", "/agents/consent/passkey/", 200, AGENT_APPROVAL_OPTIONS)
+
+    async def run() -> None:
+        async with issuer.async_client() as http:
+            auth = configure(AsyncAuthentication(ISSUER, http_client=http), clock)
+            approved = await auth.submit_agent_consent(
+                ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve"
+            )
+            assert isinstance(approved, AgentConsentApproved)
+            options = await auth.create_agent_approval_options(
+                ACCESS_TOKEN, challenge=AGENT_CHALLENGE
+            )
+            assert options.options.rpId == "your-app.auth.didit.me"
+            issuer.reply("POST", "/agents/consent/", 403, {"detail": "passkey_required"})
+            with pytest.raises(PermissionDeniedError):
+                await auth.submit_agent_consent(
+                    ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve"
+                )
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "error"),
+    [
+        (400, {"error": "invalid_grant"}, BadRequestError),
+        (400, {"challenge": ["This field is required."]}, BadRequestError),
+        (401, {"detail": "invalid_token"}, AuthenticationError),
+        (403, {"detail": "passkey_required"}, PermissionDeniedError),
+        (404, {"detail": "Not found."}, NotFoundError),
+        (429, {"detail": "Too many requests."}, RateLimitError),
+        (503, {"detail": "unavailable"}, InternalServerError),
+    ],
+)
+@pytest.mark.parametrize("path", ["/agents/consent/", "/agents/consent/passkey/"])
+def test_agent_consent_status_errors(
+    auth: Authentication,
+    issuer: FakeIssuer,
+    path: str,
+    status: int,
+    body: object,
+    error: type[APIStatusError],
+) -> None:
+    issuer.reply("POST", path, status, body)
+
+    def call() -> object:
+        if path == "/agents/consent/":
+            return auth.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion=AGENT_ASSERTION,
+            )
+        return auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
+
+    with pytest.raises(error) as info:
+        call()
+    assert type(info.value) is error
+    assert info.value.status == status
+    assert info.value.body == body
+    # A POST is never retried.
+    assert issuer.count(path) == 1
+    # Neither the token nor the challenge nor the assertion is kept.
+    assert info.value.response.request.headers["authorization"] == "[redacted]"
+    assert info.value.response.request.read() == b""
+    assert AGENT_CHALLENGE not in str(info.value)
+
+
+def test_agent_consent_echoed_secrets_are_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"detail": f"bad {AGENT_CHALLENGE} {ACCESS_TOKEN} SYNTHETIC_SIGNATURE"},
+    )
+    with pytest.raises(BadRequestError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=AGENT_ASSERTION
+        )
+    message = str(info.value)
+    assert AGENT_CHALLENGE not in message
+    assert ACCESS_TOKEN not in message
+    assert "SYNTHETIC_SIGNATURE" not in message
+
+
+def test_agent_consent_redacts_every_string_of_the_assertion(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    assertion = {
+        **AGENT_ASSERTION,
+        "id": "SYNTHETIC_TOP_LEVEL_ID",
+        "rawId": "SYNTHETIC_TOP_LEVEL_RAW_ID",
+        "clientExtensionResults": {
+            "nested": {"value": "SYNTHETIC_EXTENSION"},
+            "list": ["SYNTHETIC_LISTED"],
+        },
+    }
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {
+            "detail": "bad SYNTHETIC_TOP_LEVEL_ID SYNTHETIC_TOP_LEVEL_RAW_ID SYNTHETIC_EXTENSION SYNTHETIC_LISTED"
+        },
+    )
+    with pytest.raises(BadRequestError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=assertion
+        )
+    message = str(info.value)
+    for leaked in (
+        "SYNTHETIC_TOP_LEVEL_ID",
+        "SYNTHETIC_TOP_LEVEL_RAW_ID",
+        "SYNTHETIC_EXTENSION",
+        "SYNTHETIC_LISTED",
+    ):
+        assert leaked not in message
+        assert leaked not in repr(info.value.body)
+        assert leaked not in info.value.response.text
+    assert info.value.response.status_code == 400
+
+
+def test_agent_consent_transport_errors_keep_no_body(clock: FakeClock, key: SigningKey) -> None:
+    def stall(_: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("stalled")
+
+    with httpx.Client(transport=httpx.MockTransport(stall)) as http:
+        auth = configure(Authentication(ISSUER, http_client=http), clock)
+        with pytest.raises(APITimeoutError) as info:
+            auth.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion=AGENT_ASSERTION,
+            )
+    assert info.value.request.read() == b""
+
+
+def test_agent_consent_argument_errors(auth: Authentication, issuer: FakeIssuer) -> None:
+    with pytest.raises(ValueError, match="access_token"):
+        auth.submit_agent_consent("", challenge=AGENT_CHALLENGE, decision="approve")
+    with pytest.raises(ValueError, match="challenge"):
+        auth.submit_agent_consent(ACCESS_TOKEN, challenge="", decision="approve")
+    with pytest.raises(ValueError, match="decision"):
+        auth.submit_agent_consent(ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="maybe")
+    with pytest.raises(TypeError, match="scopes"):
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", scopes="read"
+        )
+    with pytest.raises(TypeError, match="organization_ids"):
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", organization_ids="x"
+        )
+    with pytest.raises(ValueError, match="challenge"):
+        auth.create_agent_approval_options(ACCESS_TOKEN, challenge=" ")
+    assert issuer.requests == []
+
+
+@pytest.mark.parametrize("body", [{"unexpected": True}, ["code"], {}])
+def test_agent_consent_unrecognised_answer(
+    auth: Authentication, issuer: FakeIssuer, body: object
+) -> None:
+    issuer.reply("POST", "/agents/consent/", 200, body)
+    with pytest.raises(APIResponseValidationError, match="approved"):
+        auth.submit_agent_consent(ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve")
 
 
 # Errors --------------------------------------------------------------------------

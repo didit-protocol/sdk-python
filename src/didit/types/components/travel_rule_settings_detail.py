@@ -63,7 +63,10 @@ class TravelRuleSettingsDetail(BaseModel):
     """Whether the managed Travel Rule negotiation flow is active for outbound `travelRule` transactions on this application."""
 
     jurisdiction: str | None = None
-    """Your VASP's operating jurisdiction code. Default `"EU"`. Didit maps it to the regime it stamps on your Travel Rule transactions as `travel_rule_regime` (for example `EU` or an EU member code becomes `eu`), which transaction rules can key on. Other Didit customers see it as your jurisdiction in the VASP directory once the Didit network lists your profile."""
+    """Your VASP's regulatory regime code. Default `"EU"`. Didit maps it to the regime it stamps on your Travel Rule transactions as `travel_rule_regime` (for example `EU` or an EU member code becomes `eu`), which transaction rules can key on, and it decides which data fields the exchange must share. Other Didit customers see `vasp_jurisdiction` in the VASP directory; while `vasp_jurisdiction` is empty, the directory shows this value instead."""
+
+    vasp_jurisdiction: str | None = None
+    """Your VASP profile's own jurisdiction, up to 3 characters (for example `GB` or `USA`), shown to other Didit customers in the VASP directory. It is independent of `jurisdiction`, the regulatory regime Didit stamps on your transfers; while `vasp_jurisdiction` is empty, the directory shows `jurisdiction`. Empty until you set it."""
 
     name_matching_strictness: (
         Literal["NONE", "STRICT", "CONTAINS", "DEFAULT", "FUZZY"] | str | None
