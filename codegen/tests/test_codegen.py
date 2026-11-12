@@ -639,6 +639,13 @@ def test_component_that_is_the_whole_request_body_is_the_params_type() -> None:
     files = generate(REPO / "openapi")
     declared = [path for path, text in files.items() if "class CasesLinksCreateParams(" in text]
     assert declared == ["src/didit/types/components/cases_links_create_params.py"]
+    # The operation's own params module stays importable, as a generated re-export.
+    reexport = files["src/didit/types/cases/links/create_params.py"]
+    assert reexport.startswith(HEADER)
+    assert "didit.types.components.cases_links_create_params import" in reexport
+    assert "CasesLinksCreateParams as CasesLinksCreateParams" in reexport
+    assert "class " not in reexport
+    assert "src/didit/types/cases/links/__init__.py" in files
     links = files["src/didit/resources/cases/links.py"]
     assert "entity_type: Literal[" in links
     assert "entity_uuid: str," in links
@@ -660,3 +667,13 @@ def test_two_different_types_with_one_name_still_collide(openapi: pathlib.Path) 
         CodegenError, match="Two different types are both named CasesLinksCreateParams"
     ):
         generate(openapi)
+
+
+def test_old_and_new_import_paths_give_the_same_type() -> None:
+    from didit import types as didit_types
+    from didit.types.cases.links.create_params import CasesLinksCreateParams as via_operation
+    from didit.types.components.cases_links_create_params import (
+        CasesLinksCreateParams as via_component,
+    )
+
+    assert via_operation is via_component is didit_types.CasesLinksCreateParams

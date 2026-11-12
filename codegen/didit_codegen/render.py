@@ -85,6 +85,16 @@ def render_types(registry: Registry) -> dict[str, str]:
         for i in range(1, len(parts)):
             packages.add(".".join(parts[:i]))
         files[module_path(module)] = _render_type_module(module, names, registry)
+    for module, name in registry.reexports.items():
+        parts = module.split(".")
+        for i in range(1, len(parts)):
+            packages.add(".".join(parts[:i]))
+        source = registry.defs[name].module
+        files[module_path(module)] = (
+            f"{HEADER}from __future__ import annotations\n\n"
+            f"from didit.types.{source} import {name} as {name}\n\n"
+            f'__all__ = ["{name}"]\n'
+        )
     for package in packages:
         files[package.replace(".", "/") + "/__init__.py"] = HEADER
     files["__init__.py"] = _render_types_init(registry)

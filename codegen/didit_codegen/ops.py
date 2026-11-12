@@ -159,13 +159,14 @@ def _path_names(path: str) -> list[str]:
 
 
 def _reused_component_params(
-    builder: TypeBuilder, spec: Spec, schema: Json, params_name: str
+    builder: TypeBuilder, spec: Spec, schema: Json, params_name: str, params_module: str
 ) -> Ann | None:
     """The component an operation's whole request body points at, when it is the params type.
 
     A body that is exactly ``{"$ref": "#/components/schemas/X"}`` where X is already named like
     the derived ``<Resource><Method>Params`` type: that component is the params type, so it is
-    reused instead of declaring a second type with the same name.
+    reused instead of declaring a second type with the same name. The operation's own params
+    module stays importable as a generated re-export of the component.
     """
     ref = schema.get("$ref") if isinstance(schema, dict) else None
     if not isinstance(ref, str) or not ref.startswith("#/components/schemas/"):
@@ -174,7 +175,10 @@ def _reused_component_params(
     if comp not in spec.components or builder.component_name(spec, comp) != params_name:
         return None
     ann = builder.component_param(spec, comp)
-    return ann if ann.expr == params_name else None
+    if ann.expr != params_name:
+        return None
+    builder.registry.reexports[params_module] = params_name
+    return ann
 
 
 def build_method(op: Operation, builder: TypeBuilder) -> Method:
@@ -234,7 +238,7 @@ def build_method(op: Operation, builder: TypeBuilder) -> Method:
                 "properties": props,
                 "required": sorted(required),
             }
-        ann = _reused_component_params(builder, spec, schema, params_name)
+        ann = _reused_component_params(builder, spec, schema, params_name, params_module)
         if ann is None:
             ann = builder.param(spec, root, params_name, params_module)
         td = builder.registry.defs.get(ann.expr)
