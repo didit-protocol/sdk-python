@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.15.0](https://github.com/didit-protocol/sdk-python/compare/v1.14.1...v1.15.0) (2026-11-12)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-12 ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+
+
+### API changes that can break typed code
+
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/` request body `links[].entity_type`: added (required) ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/` request body `links[].entity_uuid`: added (required) ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/{blueprint_uuid}/publish/` response `content_config`: type changed from any to object ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+
 ## [1.14.1](https://github.com/didit-protocol/sdk-python/compare/v1.14.0...v1.14.1) (2026-11-12)
 
 
