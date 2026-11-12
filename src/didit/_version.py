@@ -1,2 +1,2 @@
 __title__ = "didit"
-__version__ = "1.14.1"  # x-release-please-version
+__version__ = "1.15.0"  # x-release-please-version
