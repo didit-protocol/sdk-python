@@ -5,6 +5,8 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.case_blueprint_applies_to import CaseBlueprintAppliesTo
+from didit.types.components.case_blueprint_stage_definition import CaseBlueprintStageDefinition
 
 __all__ = ["CaseBlueprintListItem"]
 
@@ -37,3 +39,9 @@ class CaseBlueprintListItem(BaseModel):
     version: int | None = None
 
     default_deadline_hours: int | None = None
+
+    applies_to: CaseBlueprintAppliesTo | None = None
+    """Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot."""
+
+    stages: list[CaseBlueprintStageDefinition] | None = None
+    """Configured stages, or the default stages when none are configured."""

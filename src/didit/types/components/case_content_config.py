@@ -6,6 +6,7 @@ from typing import Sequence
 from typing_extensions import TypedDict
 
 from didit._models import BaseModel
+from didit.types.components.case_blueprint_stage import CaseBlueprintStage, CaseBlueprintStageParam
 
 __all__ = [
     "CaseContentConfig",
@@ -22,84 +23,11 @@ __all__ = [
     "CaseContentConfigParam",
     "CaseContentConfigReporting",
     "CaseContentConfigReportingParam",
+    "CaseContentConfigStages",
+    "CaseContentConfigStagesParam",
     "CaseContentConfigVerifications",
     "CaseContentConfigVerificationsParam",
 ]
-
-
-class CaseContentConfigAmlControlParam(TypedDict, total=False):
-    enabled: bool
-
-    financial: bool
-
-    identity: bool
-
-
-class CaseContentConfigChecklistItemsParam(TypedDict, total=False):
-    label: str
-
-    order: int
-
-
-class CaseContentConfigChecklistParam(TypedDict, total=False):
-    enabled: bool
-
-    optional: bool
-    """When true, a case can be resolved with incomplete checklist items."""
-
-    items: Sequence[CaseContentConfigChecklistItemsParam]
-
-
-class CaseContentConfigFinancialParam(TypedDict, total=False):
-    enabled: bool
-
-    payment_methods: bool
-
-    transactions: bool
-
-
-class CaseContentConfigIdentityParam(TypedDict, total=False):
-    enabled: bool
-
-    personal_information: bool
-
-    applicant_tags: bool
-
-    contact_information: bool
-
-    risk_overview: bool
-
-    poi_documents: bool
-
-    poa_documents: bool
-
-
-class CaseContentConfigReportingParam(TypedDict, total=False):
-    enabled: bool
-
-    fiu_reports: bool
-
-
-class CaseContentConfigVerificationsParam(TypedDict, total=False):
-    enabled: bool
-
-    summary: bool
-
-
-class CaseContentConfigParam(TypedDict, total=False):
-    """The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected."""
-
-    checklist: CaseContentConfigChecklistParam
-
-    aml_control: CaseContentConfigAmlControlParam
-
-    identity: CaseContentConfigIdentityParam
-
-    verifications: CaseContentConfigVerificationsParam
-
-    reporting: CaseContentConfigReportingParam
-
-    financial: CaseContentConfigFinancialParam
 
 
 class CaseContentConfigAmlControl(BaseModel):
@@ -155,6 +83,13 @@ class CaseContentConfigReporting(BaseModel):
     fiu_reports: bool | None = None
 
 
+class CaseContentConfigStages(BaseModel):
+    """Ordered review stages. Omitted or empty items use the default Triage, Evidence review and Decision stages."""
+
+    items: list[CaseBlueprintStage] | None = None
+    """At most ten stages with distinct keys. Resolving a case is a status change, not a stage."""
+
+
 class CaseContentConfigVerifications(BaseModel):
     enabled: bool | None = None
 
@@ -162,7 +97,7 @@ class CaseContentConfigVerifications(BaseModel):
 
 
 class CaseContentConfig(BaseModel):
-    """The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected."""
+    """Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it."""
 
     checklist: CaseContentConfigChecklist | None = None
 
@@ -175,3 +110,91 @@ class CaseContentConfig(BaseModel):
     reporting: CaseContentConfigReporting | None = None
 
     financial: CaseContentConfigFinancial | None = None
+
+    stages: CaseContentConfigStages | None = None
+    """Ordered review stages. Omitted or empty items use the default Triage, Evidence review and Decision stages."""
+
+
+class CaseContentConfigAmlControlParam(TypedDict, total=False):
+    enabled: bool
+
+    financial: bool
+
+    identity: bool
+
+
+class CaseContentConfigChecklistItemsParam(TypedDict, total=False):
+    label: str
+
+    order: int
+
+
+class CaseContentConfigChecklistParam(TypedDict, total=False):
+    enabled: bool
+
+    optional: bool
+    """When true, a case can be resolved with incomplete checklist items."""
+
+    items: Sequence[CaseContentConfigChecklistItemsParam]
+
+
+class CaseContentConfigFinancialParam(TypedDict, total=False):
+    enabled: bool
+
+    payment_methods: bool
+
+    transactions: bool
+
+
+class CaseContentConfigIdentityParam(TypedDict, total=False):
+    enabled: bool
+
+    personal_information: bool
+
+    applicant_tags: bool
+
+    contact_information: bool
+
+    risk_overview: bool
+
+    poi_documents: bool
+
+    poa_documents: bool
+
+
+class CaseContentConfigReportingParam(TypedDict, total=False):
+    enabled: bool
+
+    fiu_reports: bool
+
+
+class CaseContentConfigStagesParam(TypedDict, total=False):
+    """Ordered review stages. Omitted or empty items use the default Triage, Evidence review and Decision stages."""
+
+    items: Sequence[CaseBlueprintStageParam]
+    """At most ten stages with distinct keys. Resolving a case is a status change, not a stage."""
+
+
+class CaseContentConfigVerificationsParam(TypedDict, total=False):
+    enabled: bool
+
+    summary: bool
+
+
+class CaseContentConfigParam(TypedDict, total=False):
+    """Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it."""
+
+    checklist: CaseContentConfigChecklistParam
+
+    aml_control: CaseContentConfigAmlControlParam
+
+    identity: CaseContentConfigIdentityParam
+
+    verifications: CaseContentConfigVerificationsParam
+
+    reporting: CaseContentConfigReportingParam
+
+    financial: CaseContentConfigFinancialParam
+
+    stages: CaseContentConfigStagesParam
+    """Ordered review stages. Omitted or empty items use the default Triage, Evidence review and Decision stages."""

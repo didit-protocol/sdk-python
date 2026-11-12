@@ -626,3 +626,37 @@ def test_scrub_keeps_timestamps_and_replaces_secrets() -> None:
         "token_date": "sample-token",
         "api_key_at": "sample-secret",
     }
+
+
+# A component that is an operation's whole request body ------------------------------
+
+_LINKS_PATH = (
+    "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/"
+)
+
+
+def test_component_that_is_the_whole_request_body_is_the_params_type() -> None:
+    files = generate(REPO / "openapi")
+    declared = [path for path, text in files.items() if "class CasesLinksCreateParams(" in text]
+    assert declared == ["src/didit/types/components/cases_links_create_params.py"]
+    links = files["src/didit/resources/cases/links.py"]
+    assert "entity_type: Literal[" in links
+    assert "entity_uuid: str," in links
+    assert (
+        "links: Sequence[CasesLinksCreateParams]" in files["src/didit/types/cases/create_params.py"]
+    )
+
+
+def test_two_different_types_with_one_name_still_collide(openapi: pathlib.Path) -> None:
+    spec = _read(openapi / "verification.json")
+    body = spec["paths"][_LINKS_PATH]["post"]["requestBody"]["content"]["application/json"]
+    body["schema"] = {
+        "type": "object",
+        "required": ["note"],
+        "properties": {"note": {"type": "string"}},
+    }
+    _write(openapi / "verification.json", spec)
+    with pytest.raises(
+        CodegenError, match="Two different types are both named CasesLinksCreateParams"
+    ):
+        generate(openapi)

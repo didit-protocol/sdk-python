@@ -9,7 +9,7 @@ __all__ = ["TransactionsTravelRuleUpdateTransferParams"]
 
 
 class TransactionsTravelRuleUpdateTransferParams(TypedDict, total=False):
-    """Provide exactly one of: payment_txn_id (finish), action=cancel, action=resend, action=update_compliance_email with compliance_email, action=update_originator_wallet with wallet_address, or action=beneficiary_vasp with beneficiary_vasp."""
+    """Provide exactly one of: payment_txn_id (finish), action=cancel, action=resend, action=update_compliance_email with compliance_email, action=update_originator_wallet with wallet_address, or action=beneficiary_vasp with beneficiary_vasp. Alternatively, provide action=add_vasp_hint with name and optional lei and country."""
 
     payment_txn_id: str
     """The on-chain transaction hash. Requires the transfer to be an outbound transfer in COMPLETED status."""
@@ -21,13 +21,14 @@ class TransactionsTravelRuleUpdateTransferParams(TypedDict, total=False):
             "update_compliance_email",
             "update_originator_wallet",
             "beneficiary_vasp",
+            "add_vasp_hint",
         ]
         | str
     )
-    """"cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again."""
+    """"cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again. "add_vasp_hint" saves a counterparty name and optional LEI and country, then re-runs discovery on an outbound transfer in a resendable status."""
 
     compliance_email: str
-    """Required with `action: update_compliance_email`. Kept as this transfer's `beneficiary_data.counterparty_vasp_email`: it belongs to this transfer only and joins no directory entry and no contact list."""
+    """Required with action=update_compliance_email. Saved in beneficiary_data.counterparty_vasp_email. If the transfer has a known directory VASP, also saved as your application-private contact for that VASP."""
 
     wallet_address: str
     """With `action: update_originator_wallet`: the wallet the funds left from. When the transfer's UTXO inputs are known it must be one of them."""
@@ -37,3 +38,21 @@ class TransactionsTravelRuleUpdateTransferParams(TypedDict, total=False):
 
     beneficiary_vasp: str
     """Required with action=beneficiary_vasp: the `id` of a directory VASP, from `GET /v3/travel-rule/vasps/`. Your choice outranks every automatic discovery step, which never overrides it."""
+
+    reason: Literal["", "user_cancelled", "wrong_wallet", "compliance_decision", "other"] | str
+    """With action=cancel: your cancellation reason. Omitted or empty means unspecified."""
+
+    notify_on_answer: bool
+    """With action=resend: whether your team should be notified when the counterparty answers. Initially false; omission preserves the saved preference."""
+
+    name: str
+    """Required with action=add_vasp_hint. Counterparty VASP name."""
+
+    lei: str
+    """With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint."""
+
+    country: str
+    """With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint."""
+
+    vasp_name: str
+    """With action=update_compliance_email: optional counterparty name saved with the address when nonempty."""

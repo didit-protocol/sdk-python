@@ -12,11 +12,13 @@ __all__ = ["CaseLink"]
 class CaseLink(BaseModel):
     uuid: str | None = None
 
-    linked_entity_type: Literal["session", "business_session", "transaction"] | str | None = None
+    linked_entity_type: (
+        Literal["session", "business_session", "transaction", "network"] | str | None
+    ) = None
 
     linked_entity_uuid: str | None = None
 
     linked_entity_summary: dict[str, object] | None = None
-    """session_id/session_number/status for session and business_session links; uuid/txn_id/status for transaction links."""
+    """session_id/session_number/status for session and business_session links; uuid/txn_id/status for transaction links. Network links return only {"uuid": "<network-uuid>"}, without network member details."""
 
     created_at: _dt.datetime | None = None

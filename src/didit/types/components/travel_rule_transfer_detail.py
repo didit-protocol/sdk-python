@@ -13,6 +13,7 @@ from didit.types.components.travel_rule_delivery_log_entry import TravelRuleDeli
 from didit.types.components.travel_rule_discovery_step import TravelRuleDiscoveryStep
 from didit.types.components.travel_rule_name_match import TravelRuleNameMatch
 from didit.types.components.travel_rule_next_action import TravelRuleNextAction
+from didit.types.components.travel_rule_user_choice import TravelRuleUserChoice
 
 __all__ = [
     "TravelRuleTransferDetail",
@@ -168,3 +169,17 @@ class TravelRuleTransferDetail(BaseModel):
         | None
     ) = None
     """not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof."""
+
+    cancel_reason: (
+        Literal["", "user_cancelled", "wrong_wallet", "compliance_decision", "other"] | str | None
+    ) = None
+    """Recorded cancellation reason, empty when unspecified."""
+
+    cancelled_by: str | None = None
+    """Recorded cancellation actor, or an empty string when none is recorded."""
+
+    notify_on_answer: bool | None = None
+    """Saved team notification preference. Initially false."""
+
+    user_choice: TravelRuleUserChoice | None = None
+    """Explicit user-choice state, or null when counterparty_choice=user was not requested."""

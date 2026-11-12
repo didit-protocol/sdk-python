@@ -11,6 +11,7 @@ from didit.types.components.travel_rule_data_unmasked import TravelRuleDataUnmas
 from didit.types.components.travel_rule_delivery import TravelRuleDelivery
 from didit.types.components.travel_rule_discovery_step import TravelRuleDiscoveryStep
 from didit.types.components.travel_rule_next_action import TravelRuleNextAction
+from didit.types.components.travel_rule_user_choice import TravelRuleUserChoice
 
 __all__ = [
     "TransactionListTravelRule",
@@ -121,3 +122,6 @@ class TransactionListTravelRule(BaseModel):
         | None
     ) = None
     """not_required when the transfer is not required; otherwise confirmed or not_confirmed follows ownership_confirmed. With no verdict, requested means an active outbound ownership widget matches this transfer and subject; otherwise not_requested. A request is not completed proof."""
+
+    user_choice: TravelRuleUserChoice | None = None
+    """Explicit user-choice state, or null when counterparty_choice=user was not requested."""

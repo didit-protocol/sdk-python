@@ -19,6 +19,8 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.cases.blueprints.list_presets_response import CasesBlueprintsListPresetsResponse
 from didit.types.cases.blueprints.list_response import CasesBlueprintsListResponse
+from didit.types.components.case_blueprint_ai_draft_response import CaseBlueprintAiDraftResponse
+from didit.types.components.case_blueprint_applies_to import CaseBlueprintAppliesToParam
 from didit.types.components.case_blueprint_detail import CaseBlueprintDetail
 from didit.types.components.case_blueprint_list_item import CaseBlueprintListItem
 from didit.types.components.case_blueprint_preset_install_result import (
@@ -48,7 +50,7 @@ __all__ = [
 class CasesBlueprints(SyncAPIResource):
     """The ``cases.blueprints`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``discard_draft``, ``install_presets``, ``list``, ``list_history``, ``list_presets``, ``publish``, ``retrieve``, ``retrieve_draft``, ``save_draft``, ``update``.
+    Methods: ``ai_draft``, ``create``, ``delete``, ``discard_draft``, ``install_presets``, ``list``, ``list_history``, ``list_presets``, ``publish``, ``retrieve``, ``retrieve_draft``, ``save_draft``, ``update``.
     """
 
     @cached_property
@@ -119,6 +121,7 @@ class CasesBlueprints(SyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
+        applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -126,7 +129,7 @@ class CasesBlueprints(SyncAPIResource):
     ) -> CaseBlueprintDetail:
         """Create blueprint.
 
-        Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it.
+        Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/``
 
@@ -141,10 +144,11 @@ class CasesBlueprints(SyncAPIResource):
           transfer_enabled
           four_eyes_checker_blueprint: Setting this enables 4-eyes review: resolutions on this blueprint stage on the checker blueprint's queue.
           require_resolution_note
-          content_config: The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.
+          content_config: Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it.
           is_active
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
+          applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -173,6 +177,7 @@ class CasesBlueprints(SyncAPIResource):
                     "is_active": is_active,
                     "default_deadline_hours": default_deadline_hours,
                     "publish": publish,
+                    "applies_to": applies_to,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -275,6 +280,7 @@ class CasesBlueprints(SyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
+        applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -282,7 +288,7 @@ class CasesBlueprints(SyncAPIResource):
     ) -> CaseBlueprintDetail:
         """Update blueprint.
 
-        Partially update a blueprint's general settings or content_config.
+        Partially update a blueprint's general settings or content_config. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.
 
         ``PATCH /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/{blueprint_uuid}/``
 
@@ -298,10 +304,11 @@ class CasesBlueprints(SyncAPIResource):
           transfer_enabled
           four_eyes_checker_blueprint: Setting this enables 4-eyes review: resolutions on this blueprint stage on the checker blueprint's queue.
           require_resolution_note
-          content_config: The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.
+          content_config: Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it.
           is_active
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           expected_version: The version opened by the editor. A stale version returns 409 without changing the review policy.
+          applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -331,6 +338,7 @@ class CasesBlueprints(SyncAPIResource):
                     "is_active": is_active,
                     "default_deadline_hours": default_deadline_hours,
                     "expected_version": expected_version,
+                    "applies_to": applies_to,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -611,11 +619,49 @@ class CasesBlueprints(SyncAPIResource):
             ),
         )
 
+    def ai_draft(
+        self,
+        *,
+        prompt: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> CaseBlueprintAiDraftResponse:
+        """Draft case blueprint with AI.
+
+        Generate an unsaved blueprint proposal. Requires write:cases. Returns a draft object, not a blueprint UUID; no blueprint or saved policy draft is created. Review the proposal, choose assignees and any teams, approvals or routing, then create or update a blueprint separately. Invalid generated content or generation failure returns 503. See [blueprint AI drafts](/management-api/case-blueprints/ai-draft).
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/``
+
+        Args:
+          prompt: Nonblank description of the review policy to propose.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "CaseBlueprintAiDraftResponse",
+            self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/",
+                cast_to=CaseBlueprintAiDraftResponse,
+                scope="application",
+                auth="api_key",
+                body={"prompt": prompt},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncCasesBlueprints(AsyncAPIResource):
     """The ``cases.blueprints`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``discard_draft``, ``install_presets``, ``list``, ``list_history``, ``list_presets``, ``publish``, ``retrieve``, ``retrieve_draft``, ``save_draft``, ``update``.
+    Methods: ``ai_draft``, ``create``, ``delete``, ``discard_draft``, ``install_presets``, ``list``, ``list_history``, ``list_presets``, ``publish``, ``retrieve``, ``retrieve_draft``, ``save_draft``, ``update``.
     """
 
     @cached_property
@@ -686,6 +732,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
+        applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -693,7 +740,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
     ) -> CaseBlueprintDetail:
         """Create blueprint.
 
-        Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it.
+        Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/``
 
@@ -708,10 +755,11 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           transfer_enabled
           four_eyes_checker_blueprint: Setting this enables 4-eyes review: resolutions on this blueprint stage on the checker blueprint's queue.
           require_resolution_note
-          content_config: The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.
+          content_config: Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it.
           is_active
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
+          applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -740,6 +788,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                     "is_active": is_active,
                     "default_deadline_hours": default_deadline_hours,
                     "publish": publish,
+                    "applies_to": applies_to,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -842,6 +891,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
+        applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -849,7 +899,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
     ) -> CaseBlueprintDetail:
         """Update blueprint.
 
-        Partially update a blueprint's general settings or content_config.
+        Partially update a blueprint's general settings or content_config. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.
 
         ``PATCH /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/{blueprint_uuid}/``
 
@@ -865,10 +915,11 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           transfer_enabled
           four_eyes_checker_blueprint: Setting this enables 4-eyes review: resolutions on this blueprint stage on the checker blueprint's queue.
           require_resolution_note
-          content_config: The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.
+          content_config: Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it.
           is_active
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           expected_version: The version opened by the editor. A stale version returns 409 without changing the review policy.
+          applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -898,6 +949,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                     "is_active": is_active,
                     "default_deadline_hours": default_deadline_hours,
                     "expected_version": expected_version,
+                    "applies_to": applies_to,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1178,6 +1230,44 @@ class AsyncCasesBlueprints(AsyncAPIResource):
             ),
         )
 
+    async def ai_draft(
+        self,
+        *,
+        prompt: str,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> CaseBlueprintAiDraftResponse:
+        """Draft case blueprint with AI.
+
+        Generate an unsaved blueprint proposal. Requires write:cases. Returns a draft object, not a blueprint UUID; no blueprint or saved policy draft is created. Review the proposal, choose assignees and any teams, approvals or routing, then create or update a blueprint separately. Invalid generated content or generation failure returns 503. See [blueprint AI drafts](/management-api/case-blueprints/ai-draft).
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/``
+
+        Args:
+          prompt: Nonblank description of the review policy to propose.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "CaseBlueprintAiDraftResponse",
+            await self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/",
+                cast_to=CaseBlueprintAiDraftResponse,
+                scope="application",
+                auth="api_key",
+                body={"prompt": prompt},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class CasesBlueprintsWithRawResponse:
     def __init__(self, resource: CasesBlueprints) -> None:
@@ -1194,6 +1284,7 @@ class CasesBlueprintsWithRawResponse:
         self.save_draft = to_raw_response_wrapper(resource.save_draft)
         self.discard_draft = to_raw_response_wrapper(resource.discard_draft)
         self.list_history = to_raw_response_wrapper(resource.list_history)
+        self.ai_draft = to_raw_response_wrapper(resource.ai_draft)
 
 
 class AsyncCasesBlueprintsWithRawResponse:
@@ -1211,6 +1302,7 @@ class AsyncCasesBlueprintsWithRawResponse:
         self.save_draft = async_to_raw_response_wrapper(resource.save_draft)
         self.discard_draft = async_to_raw_response_wrapper(resource.discard_draft)
         self.list_history = async_to_raw_response_wrapper(resource.list_history)
+        self.ai_draft = async_to_raw_response_wrapper(resource.ai_draft)
 
 
 class CasesBlueprintsWithStreamingResponse:
@@ -1228,6 +1320,7 @@ class CasesBlueprintsWithStreamingResponse:
         self.save_draft = to_streamed_response_wrapper(resource.save_draft)
         self.discard_draft = to_streamed_response_wrapper(resource.discard_draft)
         self.list_history = to_streamed_response_wrapper(resource.list_history)
+        self.ai_draft = to_streamed_response_wrapper(resource.ai_draft)
 
 
 class AsyncCasesBlueprintsWithStreamingResponse:
@@ -1245,3 +1338,4 @@ class AsyncCasesBlueprintsWithStreamingResponse:
         self.save_draft = async_to_streamed_response_wrapper(resource.save_draft)
         self.discard_draft = async_to_streamed_response_wrapper(resource.discard_draft)
         self.list_history = async_to_streamed_response_wrapper(resource.list_history)
+        self.ai_draft = async_to_streamed_response_wrapper(resource.ai_draft)

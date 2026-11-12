@@ -13,6 +13,7 @@ class CaseDuplicateCaseLinkCreateRequest(TypedDict, total=False):
     """* `session` - Session
     * `business_session` - Business Session
     * `transaction` - Transaction
+    * `network` - Network containing the selected case subject
     """
 
     entity_uuid: Required[str]

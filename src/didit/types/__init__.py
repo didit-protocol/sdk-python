@@ -156,6 +156,9 @@ if TYPE_CHECKING:
         CasesApplyEntityActionParams as CasesApplyEntityActionParams,
     )
     from didit.types.cases.assign_params import CasesAssignParams as CasesAssignParams
+    from didit.types.cases.blueprints.ai_draft_params import (
+        CasesBlueprintsAiDraftParams as CasesBlueprintsAiDraftParams,
+    )
     from didit.types.cases.blueprints.create_params import (
         CasesBlueprintsCreateParams as CasesBlueprintsCreateParams,
     )
@@ -194,9 +197,6 @@ if TYPE_CHECKING:
     from didit.types.cases.create_params import CasesCreateParamsSubject as CasesCreateParamsSubject
     from didit.types.cases.find_duplicates_params import (
         CasesFindDuplicatesParams as CasesFindDuplicatesParams,
-    )
-    from didit.types.cases.links.create_params import (
-        CasesLinksCreateParams as CasesLinksCreateParams,
     )
     from didit.types.cases.list_events_response import (
         CasesListEventsResponse as CasesListEventsResponse,
@@ -615,32 +615,20 @@ if TYPE_CHECKING:
         CaseActionStatusEnum as CaseActionStatusEnum,
     )
     from didit.types.components.case_assignee import CaseAssignee as CaseAssignee
+    from didit.types.components.case_blueprint_ai_draft import (
+        CaseBlueprintAiDraft as CaseBlueprintAiDraft,
+    )
+    from didit.types.components.case_blueprint_ai_draft_response import (
+        CaseBlueprintAiDraftResponse as CaseBlueprintAiDraftResponse,
+    )
+    from didit.types.components.case_blueprint_applies_to import (
+        CaseBlueprintAppliesTo as CaseBlueprintAppliesTo,
+    )
+    from didit.types.components.case_blueprint_applies_to import (
+        CaseBlueprintAppliesToParam as CaseBlueprintAppliesToParam,
+    )
     from didit.types.components.case_blueprint_detail import (
         CaseBlueprintDetail as CaseBlueprintDetail,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfig as CaseBlueprintDetailContentConfig,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigAmlControl as CaseBlueprintDetailContentConfigAmlControl,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigChecklist as CaseBlueprintDetailContentConfigChecklist,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigChecklistItems as CaseBlueprintDetailContentConfigChecklistItems,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigFinancial as CaseBlueprintDetailContentConfigFinancial,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigIdentity as CaseBlueprintDetailContentConfigIdentity,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigReporting as CaseBlueprintDetailContentConfigReporting,
-    )
-    from didit.types.components.case_blueprint_detail import (
-        CaseBlueprintDetailContentConfigVerifications as CaseBlueprintDetailContentConfigVerifications,
     )
     from didit.types.components.case_blueprint_detail import (
         CaseBlueprintDetailCreationSources as CaseBlueprintDetailCreationSources,
@@ -653,6 +641,13 @@ if TYPE_CHECKING:
     )
     from didit.types.components.case_blueprint_preset_install_result import (
         CaseBlueprintPresetInstallResult as CaseBlueprintPresetInstallResult,
+    )
+    from didit.types.components.case_blueprint_stage import CaseBlueprintStage as CaseBlueprintStage
+    from didit.types.components.case_blueprint_stage import (
+        CaseBlueprintStageParam as CaseBlueprintStageParam,
+    )
+    from didit.types.components.case_blueprint_stage_definition import (
+        CaseBlueprintStageDefinition as CaseBlueprintStageDefinition,
     )
     from didit.types.components.case_blueprint_summary import (
         CaseBlueprintSummary as CaseBlueprintSummary,
@@ -713,6 +708,12 @@ if TYPE_CHECKING:
     )
     from didit.types.components.case_content_config import (
         CaseContentConfigReportingParam as CaseContentConfigReportingParam,
+    )
+    from didit.types.components.case_content_config import (
+        CaseContentConfigStages as CaseContentConfigStages,
+    )
+    from didit.types.components.case_content_config import (
+        CaseContentConfigStagesParam as CaseContentConfigStagesParam,
     )
     from didit.types.components.case_content_config import (
         CaseContentConfigVerifications as CaseContentConfigVerifications,
@@ -803,6 +804,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.case_subject import CaseSubject as CaseSubject
     from didit.types.components.case_team_summary import CaseTeamSummary as CaseTeamSummary
+    from didit.types.components.cases_links_create_params import (
+        CasesLinksCreateParams as CasesLinksCreateParams,
+    )
     from didit.types.components.compliance_list import ComplianceList as ComplianceList
     from didit.types.components.compliance_list_entry import (
         ComplianceListEntry as ComplianceListEntry,
@@ -1673,6 +1677,9 @@ if TYPE_CHECKING:
         SessionDecisionKeyPeopleChecks as SessionDecisionKeyPeopleChecks,
     )
     from didit.types.components.session_decision import (
+        SessionDecisionKeyPeopleChecksListedCompanyDeclaration as SessionDecisionKeyPeopleChecksListedCompanyDeclaration,
+    )
+    from didit.types.components.session_decision import (
         SessionDecisionKeyPeopleChecksRegistry as SessionDecisionKeyPeopleChecksRegistry,
     )
     from didit.types.components.session_decision import (
@@ -2238,6 +2245,12 @@ if TYPE_CHECKING:
     )
     from didit.types.components.travel_rule_transfer_row import (
         TravelRuleTransferRow as TravelRuleTransferRow,
+    )
+    from didit.types.components.travel_rule_user_choice import (
+        TravelRuleUserChoice as TravelRuleUserChoice,
+    )
+    from didit.types.components.travel_rule_user_link_response import (
+        TravelRuleUserLinkResponse as TravelRuleUserLinkResponse,
     )
     from didit.types.components.travel_rule_utxo import TravelRuleUtxo as TravelRuleUtxo
     from didit.types.components.travel_rule_utxo_entry import (
@@ -3265,6 +3278,9 @@ if TYPE_CHECKING:
     from didit.types.transactions.travel_rule.create_message_params import (
         TransactionsTravelRuleCreateMessageParams as TransactionsTravelRuleCreateMessageParams,
     )
+    from didit.types.transactions.travel_rule.create_user_link_params import (
+        TransactionsTravelRuleCreateUserLinkParams as TransactionsTravelRuleCreateUserLinkParams,
+    )
     from didit.types.transactions.travel_rule.trigger_test_vasp_inbound_params import (
         TransactionsTravelRuleTriggerTestVaspInboundParams as TransactionsTravelRuleTriggerTestVaspInboundParams,
     )
@@ -3276,6 +3292,9 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.counterparty_contacts.list_response import (
         TravelRuleCounterpartyContactsListResponse as TravelRuleCounterpartyContactsListResponse,
+    )
+    from didit.types.travel_rule.create_vasp_params import (
+        TravelRuleCreateVaspParams as TravelRuleCreateVaspParams,
     )
     from didit.types.travel_rule.create_widget_session_params import (
         TravelRuleCreateWidgetSessionParams as TravelRuleCreateWidgetSessionParams,
@@ -3620,19 +3639,18 @@ _MODULES: dict[str, str] = {
     "CaseActionEntityTypeEnum": "components.case_action_entity_type_enum",
     "CaseActionStatusEnum": "components.case_action_status_enum",
     "CaseAssignee": "components.case_assignee",
+    "CaseBlueprintAiDraft": "components.case_blueprint_ai_draft",
+    "CaseBlueprintAiDraftResponse": "components.case_blueprint_ai_draft_response",
+    "CaseBlueprintAppliesTo": "components.case_blueprint_applies_to",
+    "CaseBlueprintAppliesToParam": "components.case_blueprint_applies_to",
     "CaseBlueprintDetail": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfig": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigAmlControl": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigChecklist": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigChecklistItems": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigFinancial": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigIdentity": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigReporting": "components.case_blueprint_detail",
-    "CaseBlueprintDetailContentConfigVerifications": "components.case_blueprint_detail",
     "CaseBlueprintDetailCreationSources": "components.case_blueprint_detail",
     "CaseBlueprintDetailReceivesEscalationFrom": "components.case_blueprint_detail",
     "CaseBlueprintListItem": "components.case_blueprint_list_item",
     "CaseBlueprintPresetInstallResult": "components.case_blueprint_preset_install_result",
+    "CaseBlueprintStage": "components.case_blueprint_stage",
+    "CaseBlueprintStageDefinition": "components.case_blueprint_stage_definition",
+    "CaseBlueprintStageParam": "components.case_blueprint_stage",
     "CaseBlueprintSummary": "components.case_blueprint_summary",
     "CaseBulkUpdateResult": "components.case_bulk_update_result",
     "CaseBulkUpdateResultFailures": "components.case_bulk_update_result",
@@ -3655,6 +3673,8 @@ _MODULES: dict[str, str] = {
     "CaseContentConfigParam": "components.case_content_config",
     "CaseContentConfigReporting": "components.case_content_config",
     "CaseContentConfigReportingParam": "components.case_content_config",
+    "CaseContentConfigStages": "components.case_content_config",
+    "CaseContentConfigStagesParam": "components.case_content_config",
     "CaseContentConfigVerifications": "components.case_content_config",
     "CaseContentConfigVerificationsParam": "components.case_content_config",
     "CaseDetail": "components.case_detail",
@@ -3694,6 +3714,7 @@ _MODULES: dict[str, str] = {
     "CaseTeamSummary": "components.case_team_summary",
     "CasesApplyEntityActionParams": "cases.apply_entity_action_params",
     "CasesAssignParams": "cases.assign_params",
+    "CasesBlueprintsAiDraftParams": "cases.blueprints.ai_draft_params",
     "CasesBlueprintsCreateParams": "cases.blueprints.create_params",
     "CasesBlueprintsDiscardDraftParams": "cases.blueprints.discard_draft_params",
     "CasesBlueprintsInstallPresetsParams": "cases.blueprints.install_presets_params",
@@ -3709,7 +3730,7 @@ _MODULES: dict[str, str] = {
     "CasesCreateParams": "cases.create_params",
     "CasesCreateParamsSubject": "cases.create_params",
     "CasesFindDuplicatesParams": "cases.find_duplicates_params",
-    "CasesLinksCreateParams": "cases.links.create_params",
+    "CasesLinksCreateParams": "components.cases_links_create_params",
     "CasesListEventsResponse": "cases.list_events_response",
     "CasesListResponse": "cases.list_response",
     "CasesListReviewersResponse": "cases.list_reviewers_response",
@@ -4255,6 +4276,7 @@ _MODULES: dict[str, str] = {
     "SessionDecisionIpAnalysesPoaDocumentLocation": "components.session_decision",
     "SessionDecisionIpAnalysesWarnings": "components.session_decision",
     "SessionDecisionKeyPeopleChecks": "components.session_decision",
+    "SessionDecisionKeyPeopleChecksListedCompanyDeclaration": "components.session_decision",
     "SessionDecisionKeyPeopleChecksRegistry": "components.session_decision",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwners": "components.session_decision",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwnersKycAmlCategories": "components.session_decision",
@@ -4521,6 +4543,7 @@ _MODULES: dict[str, str] = {
     "TransactionsRulesUpdateParams": "transactions.rules.update_params",
     "TransactionsTravelRuleConfirmOwnershipParams": "transactions.travel_rule.confirm_ownership_params",
     "TransactionsTravelRuleCreateMessageParams": "transactions.travel_rule.create_message_params",
+    "TransactionsTravelRuleCreateUserLinkParams": "transactions.travel_rule.create_user_link_params",
     "TransactionsTravelRuleTriggerTestVaspInboundParams": "transactions.travel_rule.trigger_test_vasp_inbound_params",
     "TransactionsTravelRuleUpdateTransferParams": "transactions.travel_rule.update_transfer_params",
     "TravelRuleChainDetails": "components.travel_rule_chain_details",
@@ -4537,6 +4560,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleCounterpartyScreening": "components.travel_rule_counterparty_screening",
     "TravelRuleCounterpartyScreeningResult": "components.travel_rule_counterparty_screening_result",
     "TravelRuleCounterpartyScreeningStatus": "components.travel_rule_counterparty_screening_status",
+    "TravelRuleCreateVaspParams": "travel_rule.create_vasp_params",
     "TravelRuleCreateWidgetSessionParams": "travel_rule.create_widget_session_params",
     "TravelRuleDataMatch": "components.travel_rule_data_match",
     "TravelRuleDataMatchFieldsValue": "components.travel_rule_data_match",
@@ -4592,6 +4616,8 @@ _MODULES: dict[str, str] = {
     "TravelRuleUnmatchedDepositsMatchParams": "travel_rule.unmatched_deposits.match_params",
     "TravelRuleUpdateSettingsParams": "travel_rule.update_settings_params",
     "TravelRuleUpdateVaspDecisionParams": "travel_rule.update_vasp_decision_params",
+    "TravelRuleUserChoice": "components.travel_rule_user_choice",
+    "TravelRuleUserLinkResponse": "components.travel_rule_user_link_response",
     "TravelRuleUtxo": "components.travel_rule_utxo",
     "TravelRuleUtxoEntry": "components.travel_rule_utxo_entry",
     "TravelRuleUtxoEntryParam": "components.travel_rule_utxo_entry",
@@ -4880,19 +4906,18 @@ __all__ = [
     "CaseActionEntityTypeEnum",
     "CaseActionStatusEnum",
     "CaseAssignee",
+    "CaseBlueprintAiDraft",
+    "CaseBlueprintAiDraftResponse",
+    "CaseBlueprintAppliesTo",
+    "CaseBlueprintAppliesToParam",
     "CaseBlueprintDetail",
-    "CaseBlueprintDetailContentConfig",
-    "CaseBlueprintDetailContentConfigAmlControl",
-    "CaseBlueprintDetailContentConfigChecklist",
-    "CaseBlueprintDetailContentConfigChecklistItems",
-    "CaseBlueprintDetailContentConfigFinancial",
-    "CaseBlueprintDetailContentConfigIdentity",
-    "CaseBlueprintDetailContentConfigReporting",
-    "CaseBlueprintDetailContentConfigVerifications",
     "CaseBlueprintDetailCreationSources",
     "CaseBlueprintDetailReceivesEscalationFrom",
     "CaseBlueprintListItem",
     "CaseBlueprintPresetInstallResult",
+    "CaseBlueprintStage",
+    "CaseBlueprintStageDefinition",
+    "CaseBlueprintStageParam",
     "CaseBlueprintSummary",
     "CaseBulkUpdateResult",
     "CaseBulkUpdateResultFailures",
@@ -4915,6 +4940,8 @@ __all__ = [
     "CaseContentConfigParam",
     "CaseContentConfigReporting",
     "CaseContentConfigReportingParam",
+    "CaseContentConfigStages",
+    "CaseContentConfigStagesParam",
     "CaseContentConfigVerifications",
     "CaseContentConfigVerificationsParam",
     "CaseDetail",
@@ -4954,6 +4981,7 @@ __all__ = [
     "CaseTeamSummary",
     "CasesApplyEntityActionParams",
     "CasesAssignParams",
+    "CasesBlueprintsAiDraftParams",
     "CasesBlueprintsCreateParams",
     "CasesBlueprintsDiscardDraftParams",
     "CasesBlueprintsInstallPresetsParams",
@@ -5515,6 +5543,7 @@ __all__ = [
     "SessionDecisionIpAnalysesPoaDocumentLocation",
     "SessionDecisionIpAnalysesWarnings",
     "SessionDecisionKeyPeopleChecks",
+    "SessionDecisionKeyPeopleChecksListedCompanyDeclaration",
     "SessionDecisionKeyPeopleChecksRegistry",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwners",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwnersKycAmlCategories",
@@ -5781,6 +5810,7 @@ __all__ = [
     "TransactionsRulesUpdateParams",
     "TransactionsTravelRuleConfirmOwnershipParams",
     "TransactionsTravelRuleCreateMessageParams",
+    "TransactionsTravelRuleCreateUserLinkParams",
     "TransactionsTravelRuleTriggerTestVaspInboundParams",
     "TransactionsTravelRuleUpdateTransferParams",
     "TravelRuleChainDetails",
@@ -5797,6 +5827,7 @@ __all__ = [
     "TravelRuleCounterpartyScreening",
     "TravelRuleCounterpartyScreeningResult",
     "TravelRuleCounterpartyScreeningStatus",
+    "TravelRuleCreateVaspParams",
     "TravelRuleCreateWidgetSessionParams",
     "TravelRuleDataMatch",
     "TravelRuleDataMatchFieldsValue",
@@ -5852,6 +5883,8 @@ __all__ = [
     "TravelRuleUnmatchedDepositsMatchParams",
     "TravelRuleUpdateSettingsParams",
     "TravelRuleUpdateVaspDecisionParams",
+    "TravelRuleUserChoice",
+    "TravelRuleUserLinkResponse",
     "TravelRuleUtxo",
     "TravelRuleUtxoEntry",
     "TravelRuleUtxoEntryParam",

@@ -5,6 +5,7 @@ from typing import Literal, Sequence
 
 from typing_extensions import TypedDict
 
+from didit.types.components.case_blueprint_applies_to import CaseBlueprintAppliesToParam
 from didit.types.components.case_content_config import CaseContentConfigParam
 
 __all__ = ["CasesBlueprintsUpdateParams"]
@@ -37,7 +38,7 @@ class CasesBlueprintsUpdateParams(TypedDict, total=False):
     require_resolution_note: bool
 
     content_config: CaseContentConfigParam
-    """The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected."""
+    """Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it."""
 
     is_active: bool
 
@@ -46,3 +47,6 @@ class CasesBlueprintsUpdateParams(TypedDict, total=False):
 
     expected_version: int
     """The version opened by the editor. A stale version returns 409 without changing the review policy."""
+
+    applies_to: CaseBlueprintAppliesToParam
+    """Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot."""

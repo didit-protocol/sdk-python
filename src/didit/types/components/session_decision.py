@@ -103,6 +103,7 @@ __all__ = [
     "SessionDecisionIpAnalysesPoaDocumentLocation",
     "SessionDecisionIpAnalysesWarnings",
     "SessionDecisionKeyPeopleChecks",
+    "SessionDecisionKeyPeopleChecksListedCompanyDeclaration",
     "SessionDecisionKeyPeopleChecksRegistry",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwners",
     "SessionDecisionKeyPeopleChecksRegistryBeneficialOwnersKycAmlCategories",
@@ -2075,6 +2076,22 @@ class SessionDecisionIpAnalyses(BaseModel):
     """Raw device signals collected for the step."""
 
 
+class SessionDecisionKeyPeopleChecksListedCompanyDeclaration(BaseModel):
+    """The company's own declaration that it is listed on a stock exchange, or owned by a listed company, made on the Key People screen instead of naming a beneficial owner. Present in every `key_people_checks` entry unless the workflow's Returned data settings leave it out, and `null` unless the company made the declaration, which it can only do where the workflow allows it (`kyb_key_people_allow_listed_company_declaration`). Didit does not check the declaration against a stock exchange: the workflow's `kyb_key_people_listed_company_action` decides the Key People outcome (Review by default) and the `KYB_LISTED_COMPANY_DECLARED` warning is added. The company must still name at least one person who manages or represents it (director, non-executive director, chairman, representative, authorized signatory or company officer)."""
+
+    type: Literal["listed_company", "subsidiary_of_listed_company"] | str
+    """`listed_company`: the company itself is listed on a stock exchange. `subsidiary_of_listed_company`: the company is owned by a listed company."""
+
+    stock_exchange: str | None
+    """Name of the stock exchange, as typed by the company (for example `London Stock Exchange`). `null` when left empty."""
+
+    isin: str | None
+    """ISIN of the listed security: 12 characters, upper-case, no spaces, with a valid check digit (for example `GBEXAMPLE002`). `null` when left empty."""
+
+    listed_parent_company_name: str | None
+    """Name of the listed parent company. Only set when `type` is `subsidiary_of_listed_company`; `null` otherwise."""
+
+
 class SessionDecisionKeyPeopleChecksRegistryBeneficialOwnersKycAmlCategories(BaseModel):
     """Per-category summary derived from the person's AML hits. `null` when there are no hits."""
 
@@ -2560,6 +2577,9 @@ class SessionDecisionKeyPeopleChecks(BaseModel):
 
     ubo_kyc_summary: SessionDecisionKeyPeopleChecksUboKycSummary | None = None
     """Aggregate UBO KYC progress, or null when no UBOs have linked KYC sessions."""
+
+    listed_company_declaration: SessionDecisionKeyPeopleChecksListedCompanyDeclaration | None = None
+    """The company's own declaration that it is listed on a stock exchange, or owned by a listed company, made on the Key People screen instead of naming a beneficial owner. Present in every `key_people_checks` entry unless the workflow's Returned data settings leave it out, and `null` unless the company made the declaration, which it can only do where the workflow allows it (`kyb_key_people_allow_listed_company_declaration`). Didit does not check the declaration against a stock exchange: the workflow's `kyb_key_people_listed_company_action` decides the Key People outcome (Review by default) and the `KYB_LISTED_COMPANY_DECLARED` warning is added. The company must still name at least one person who manages or represents it (director, non-executive director, chairman, representative, authorized signatory or company officer)."""
 
     warnings: list[dict[str, object]] | None = None
 

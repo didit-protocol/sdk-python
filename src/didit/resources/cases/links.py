@@ -87,7 +87,7 @@ class CasesLinks(SyncAPIResource):
         self,
         case_uuid: str,
         *,
-        entity_type: Literal["session", "business_session", "transaction"] | str,
+        entity_type: Literal["session", "business_session", "transaction", "network"] | str,
         entity_uuid: str,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -96,13 +96,13 @@ class CasesLinks(SyncAPIResource):
     ) -> CaseLink:
         """Add case link.
 
-        Attach a session, business session, or transaction to the case. Rejected with 400 if the entity belongs to a different subject than the case.
+        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/``
 
         Args:
           case_uuid: Case UUID.
-          entity_type
+          entity_type: Type of record to attach. A network must be visible and contain the selected case subject.
           entity_uuid
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -225,7 +225,7 @@ class AsyncCasesLinks(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
-        entity_type: Literal["session", "business_session", "transaction"] | str,
+        entity_type: Literal["session", "business_session", "transaction", "network"] | str,
         entity_uuid: str,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -234,13 +234,13 @@ class AsyncCasesLinks(AsyncAPIResource):
     ) -> CaseLink:
         """Add case link.
 
-        Attach a session, business session, or transaction to the case. Rejected with 400 if the entity belongs to a different subject than the case.
+        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/``
 
         Args:
           case_uuid: Case UUID.
-          entity_type
+          entity_type: Type of record to attach. A network must be visible and contain the selected case subject.
           entity_uuid
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.

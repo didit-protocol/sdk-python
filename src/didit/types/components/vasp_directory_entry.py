@@ -196,7 +196,7 @@ class VaspDirectoryEntry(BaseModel):
     """The entry's id, for GET /v3/travel-rule/vasps/{vasp_id}/."""
 
     kind: Literal["directory", "didit"] | str | None = None
-    """directory for an entry of the shared directory; didit for a member of the Didit network."""
+    """directory for a shared or application-private directory entry; didit for a Didit network member."""
 
     name: str | None = None
 
@@ -268,3 +268,6 @@ class VaspDirectoryEntry(BaseModel):
 
     questionnaires: list[TravelRuleCounterpartyQuestionnaire] | None = None
     """Your application's due-diligence questionnaires with this VASP, newest first. Private to your application."""
+
+    source: Literal["didit_network", "directory", "added_by_you"] | str | None = None
+    """directory for a shared directory entry, added_by_you for your application-private entry, or didit_network for a directory entry linked to a Didit customer. Separate kind=didit member results may omit this field; use kind to identify them."""

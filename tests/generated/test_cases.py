@@ -23,6 +23,7 @@ from didit.types.components.case_action_case_action_receipt_page import (
 from didit.types.components.case_action_case_entity_action_result import (
     CaseActionCaseEntityActionResult,
 )
+from didit.types.components.case_blueprint_ai_draft_response import CaseBlueprintAiDraftResponse
 from didit.types.components.case_blueprint_detail import CaseBlueprintDetail
 from didit.types.components.case_blueprint_list_item import CaseBlueprintListItem
 from didit.types.components.case_blueprint_preset_install_result import (
@@ -191,7 +192,7 @@ def test_cases_approve_resolution() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -209,12 +210,15 @@ def test_cases_approve_resolution() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -352,7 +356,7 @@ def test_cases_assign() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -370,12 +374,15 @@ def test_cases_assign() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -596,7 +603,7 @@ def test_cases_create() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -614,12 +621,15 @@ def test_cases_create() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -785,7 +795,7 @@ def test_cases_escalate() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -803,12 +813,15 @@ def test_cases_escalate() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -1442,7 +1455,7 @@ def test_cases_reject_resolution() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -1460,12 +1473,15 @@ def test_cases_reject_resolution() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -1608,7 +1624,7 @@ def test_cases_reopen() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -1626,12 +1642,15 @@ def test_cases_reopen() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -1768,7 +1787,7 @@ def test_cases_request_info() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -1786,12 +1805,15 @@ def test_cases_request_info() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -1932,7 +1954,7 @@ def test_cases_resolve() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -1950,12 +1972,15 @@ def test_cases_resolve() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -2100,7 +2125,7 @@ def test_cases_retrieve() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -2118,12 +2143,15 @@ def test_cases_retrieve() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -2421,7 +2449,7 @@ def test_cases_transfer() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -2439,12 +2467,15 @@ def test_cases_transfer() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -2588,7 +2619,7 @@ def test_cases_update() -> None:
                     "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000005",
                     "four_eyes_checker_blueprint_name": "sample",
                     "content_config": {
-                        "checklist": {"enabled": True, "optional": True, "items": [{}]},
+                        "checklist": {"enabled": True, "optional": True, "items": []},
                         "aml_control": {"enabled": True, "financial": True, "identity": True},
                         "identity": {
                             "enabled": True,
@@ -2606,12 +2637,15 @@ def test_cases_update() -> None:
                             "payment_methods": True,
                             "transactions": True,
                         },
+                        "stages": {"items": []},
                     },
                     "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                     "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                     "updated_at": "2026-01-01T00:00:00Z",
                     "version": 1,
                     "default_deadline_hours": 1,
+                    "applies_to": ["AML"],
+                    "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                 },
                 "notes": [
                     {
@@ -2682,6 +2716,40 @@ def test_cases_update() -> None:
     )
 
 
+def test_cases_blueprints_ai_draft() -> None:
+    """``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/cases/blueprints/ai-draft/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "prompt": "Draft an AML review policy with triage and evidence review stages."
+            },
+            status=200,
+            response_json={
+                "draft": {
+                    "name": "AML review",
+                    "applies_to": ["AML"],
+                    "require_resolution_note": True,
+                    "content_config": {
+                        "stages": {"items": [{"key": "triage", "label": "Triage", "sla_hours": 24}]}
+                    },
+                }
+            },
+        ),
+        lambda c: c.cases.blueprints.ai_draft(
+            prompt="Draft an AML review policy with triage and evidence review stages."
+        ),
+        lambda c: c.cases.blueprints.ai_draft(
+            prompt="Draft an AML review policy with triage and evidence review stages."
+        ),
+        lambda r: isinstance(r, CaseBlueprintAiDraftResponse),
+        lambda r: isinstance(r, CaseBlueprintAiDraftResponse),
+    )
+
+
 def test_cases_blueprints_create() -> None:
     """``POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/``"""
     check_operation(
@@ -2697,8 +2765,10 @@ def test_cases_blueprints_create() -> None:
                 "max_active_cases": 15,
                 "require_resolution_note": True,
                 "content_config": {
-                    "aml_control": {"enabled": True, "financial": True, "identity": False}
+                    "aml_control": {"enabled": True, "financial": True, "identity": False},
+                    "stages": {"items": [{"label": "Triage", "sla_hours": 24, "worked_by": None}]},
                 },
+                "applies_to": ["AML"],
             },
             status=201,
             response_json={
@@ -2737,12 +2807,22 @@ def test_cases_blueprints_create() -> None:
                     "verifications": {"enabled": True, "summary": True},
                     "reporting": {"enabled": True, "fiu_reports": True},
                     "financial": {"enabled": True, "payment_methods": True, "transactions": True},
+                    "stages": {"items": [{"label": "Triage"}]},
                 },
                 "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                 "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                 "updated_at": "2026-01-01T00:00:00Z",
                 "version": 1,
                 "default_deadline_hours": 1,
+                "applies_to": ["AML"],
+                "stages": [
+                    {
+                        "key": "triage",
+                        "label": "Triage",
+                        "sla_hours": 24,
+                        "worked_by": "a0000000-0000-4000-8000-000000000001",
+                    }
+                ],
             },
             strict_type=CaseBlueprintDetail,
         ),
@@ -2752,7 +2832,11 @@ def test_cases_blueprints_create() -> None:
             assignment_method="AUTOMATIC",
             max_active_cases=15,
             require_resolution_note=True,
-            content_config={"aml_control": {"enabled": True, "financial": True, "identity": False}},
+            content_config={
+                "aml_control": {"enabled": True, "financial": True, "identity": False},
+                "stages": {"items": [{"label": "Triage", "sla_hours": 24, "worked_by": None}]},
+            },
+            applies_to=["AML"],
         ),
         lambda c: c.cases.blueprints.create(
             name="AML investigation",
@@ -2760,7 +2844,11 @@ def test_cases_blueprints_create() -> None:
             assignment_method="AUTOMATIC",
             max_active_cases=15,
             require_resolution_note=True,
-            content_config={"aml_control": {"enabled": True, "financial": True, "identity": False}},
+            content_config={
+                "aml_control": {"enabled": True, "financial": True, "identity": False},
+                "stages": {"items": [{"label": "Triage", "sla_hours": 24, "worked_by": None}]},
+            },
+            applies_to=["AML"],
         ),
         lambda r: isinstance(r, CaseBlueprintDetail),
         lambda r: isinstance(r, CaseBlueprintDetail),
@@ -2863,6 +2951,8 @@ def test_cases_blueprints_list() -> None:
                         "created_at": "2026-01-01T00:00:00Z",
                         "version": 1,
                         "default_deadline_hours": 1,
+                        "applies_to": ["AML"],
+                        "stages": [{"key": "triage", "label": "Triage", "sla_hours": 24}],
                     }
                 ],
             },
@@ -2955,6 +3045,7 @@ def test_cases_blueprints_list_presets() -> None:
                                 "payment_methods": True,
                                 "transactions": True,
                             },
+                            "stages": {"items": []},
                         },
                         "installed": True,
                     }
@@ -2996,7 +3087,27 @@ def test_cases_blueprints_publish() -> None:
                 "four_eyes_checker_blueprint": "00000000-0000-4000-8000-000000000003",
                 "four_eyes_checker_blueprint_name": "sample",
                 "require_resolution_note": True,
-                "content_config": "value",
+                "content_config": {
+                    "checklist": {
+                        "enabled": True,
+                        "optional": True,
+                        "items": [{"label": "sample", "order": 1}],
+                    },
+                    "aml_control": {"enabled": True, "financial": True, "identity": True},
+                    "identity": {
+                        "enabled": True,
+                        "personal_information": True,
+                        "applicant_tags": True,
+                        "contact_information": True,
+                        "risk_overview": True,
+                        "poi_documents": True,
+                        "poa_documents": True,
+                    },
+                    "verifications": {"enabled": True, "summary": True},
+                    "reporting": {"enabled": True, "fiu_reports": True},
+                    "financial": {"enabled": True, "payment_methods": True, "transactions": True},
+                    "stages": {"items": [{"label": "Triage"}]},
+                },
                 "version": 1,
                 "default_deadline_hours": 1,
                 "is_active": True,
@@ -3005,6 +3116,15 @@ def test_cases_blueprints_publish() -> None:
                 "receives_escalation_from": [{}],
                 "created_at": "2026-01-01T00:00:00Z",
                 "updated_at": "2026-01-01T00:00:00Z",
+                "applies_to": ["AML"],
+                "stages": [
+                    {
+                        "key": "triage",
+                        "label": "Triage",
+                        "sla_hours": 24,
+                        "worked_by": "a0000000-0000-4000-8000-000000000001",
+                    }
+                ],
             },
             strict_type=CasePublicationCaseBlueprint,
         ),
@@ -3068,12 +3188,22 @@ def test_cases_blueprints_retrieve() -> None:
                     "verifications": {"enabled": True, "summary": True},
                     "reporting": {"enabled": True, "fiu_reports": True},
                     "financial": {"enabled": True, "payment_methods": True, "transactions": True},
+                    "stages": {"items": [{"label": "Triage"}]},
                 },
                 "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                 "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                 "updated_at": "2026-01-01T00:00:00Z",
                 "version": 1,
                 "default_deadline_hours": 1,
+                "applies_to": ["AML"],
+                "stages": [
+                    {
+                        "key": "triage",
+                        "label": "Triage",
+                        "sla_hours": 24,
+                        "worked_by": "a0000000-0000-4000-8000-000000000001",
+                    }
+                ],
             },
             strict_type=CaseBlueprintDetail,
         ),
@@ -3197,12 +3327,22 @@ def test_cases_blueprints_update() -> None:
                     "verifications": {"enabled": True, "summary": True},
                     "reporting": {"enabled": True, "fiu_reports": True},
                     "financial": {"enabled": True, "payment_methods": True, "transactions": True},
+                    "stages": {"items": [{"label": "Triage"}]},
                 },
                 "creation_sources": [{"kind": "aml", "id": "sample", "name": "sample"}],
                 "receives_escalation_from": [{"id": "sample", "name": "sample"}],
                 "updated_at": "2026-01-01T00:00:00Z",
                 "version": 1,
                 "default_deadline_hours": 1,
+                "applies_to": ["AML"],
+                "stages": [
+                    {
+                        "key": "triage",
+                        "label": "Triage",
+                        "sla_hours": 24,
+                        "worked_by": "a0000000-0000-4000-8000-000000000001",
+                    }
+                ],
             },
             strict_type=CaseBlueprintDetail,
         ),

@@ -9,6 +9,7 @@ __all__ = ["CasesLinksCreateParams"]
 
 
 class CasesLinksCreateParams(TypedDict, total=False):
-    entity_type: Required[Literal["session", "business_session", "transaction"] | str]
+    entity_type: Required[Literal["session", "business_session", "transaction", "network"] | str]
+    """Type of record to attach. A network must be visible and contain the selected case subject."""
 
     entity_uuid: Required[str]

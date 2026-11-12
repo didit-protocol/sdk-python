@@ -6,7 +6,7 @@ from __future__ import annotations
 import builtins
 import datetime as _dt
 from functools import cached_property
-from typing import TYPE_CHECKING, Literal, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, Literal, Sequence, cast
 
 import httpx
 
@@ -48,6 +48,7 @@ from didit.types.components.case_duplicate_case_subject_input_request import (
 )
 from didit.types.components.case_event import CaseEvent
 from didit.types.components.case_list_item import CaseListItem
+from didit.types.components.cases_links_create_params import CasesLinksCreateParams
 
 if TYPE_CHECKING:
     from didit.resources.cases.blueprints import (
@@ -285,7 +286,7 @@ class Cases(SyncAPIResource):
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         subject: CasesCreateParamsSubject | NotGiven = NOT_GIVEN,
-        links: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        links: Sequence[CasesLinksCreateParams] | NotGiven = NOT_GIVEN,
         assigned_to: str | None | NotGiven = NOT_GIVEN,
         review_duplicates: bool | NotGiven = NOT_GIVEN,
         separate_incident_reason: str | NotGiven = NOT_GIVEN,
@@ -297,7 +298,7 @@ class Cases(SyncAPIResource):
     ) -> CaseDetail:
         """Create case.
 
-        Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases.
+        Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed. An explicit subject is required whenever links includes a network.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/``
 
@@ -307,8 +308,8 @@ class Cases(SyncAPIResource):
           priority
           due_at
           tags
-          subject: Required unless links is provided; the case's exactly-one subject.
-          links: Sessions/business sessions/transactions to attach on creation, e.g. [{"entity_type": "transaction", "entity_uuid": "..."}]. When subject is omitted, the subject is derived from the first link's owner.
+          subject: Exactly one user or business. Supply explicitly when any network link is supplied, even alongside other link types; otherwise may be derived from links.
+          links: Up to 500 session, business_session, transaction or network links; at most 20 when review_duplicates=true. When any network link is present, subject must be supplied explicitly. Otherwise the subject may be derived from a linked record.
           assigned_to: User UUID to assign immediately.
           review_duplicates: Recheck existing investigations before creating the case. When true, a subject with existing cases requires a nonblank separate_incident_reason. The console always enables this protection. Omitting it preserves existing API behavior.
           separate_incident_reason
@@ -1469,7 +1470,7 @@ class AsyncCases(AsyncAPIResource):
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         subject: CasesCreateParamsSubject | NotGiven = NOT_GIVEN,
-        links: Sequence[Mapping[str, object]] | NotGiven = NOT_GIVEN,
+        links: Sequence[CasesLinksCreateParams] | NotGiven = NOT_GIVEN,
         assigned_to: str | None | NotGiven = NOT_GIVEN,
         review_duplicates: bool | NotGiven = NOT_GIVEN,
         separate_incident_reason: str | NotGiven = NOT_GIVEN,
@@ -1481,7 +1482,7 @@ class AsyncCases(AsyncAPIResource):
     ) -> CaseDetail:
         """Create case.
 
-        Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases.
+        Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed. An explicit subject is required whenever links includes a network.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/``
 
@@ -1491,8 +1492,8 @@ class AsyncCases(AsyncAPIResource):
           priority
           due_at
           tags
-          subject: Required unless links is provided; the case's exactly-one subject.
-          links: Sessions/business sessions/transactions to attach on creation, e.g. [{"entity_type": "transaction", "entity_uuid": "..."}]. When subject is omitted, the subject is derived from the first link's owner.
+          subject: Exactly one user or business. Supply explicitly when any network link is supplied, even alongside other link types; otherwise may be derived from links.
+          links: Up to 500 session, business_session, transaction or network links; at most 20 when review_duplicates=true. When any network link is present, subject must be supplied explicitly. Otherwise the subject may be derived from a linked record.
           assigned_to: User UUID to assign immediately.
           review_duplicates: Recheck existing investigations before creating the case. When true, a subject with existing cases requires a nonblank separate_incident_reason. The console always enables this protection. Omitting it preserves existing API behavior.
           separate_incident_reason
