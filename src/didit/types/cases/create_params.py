@@ -2,19 +2,20 @@
 from __future__ import annotations
 
 import datetime as _dt
-from typing import Literal, Mapping, Sequence
+from typing import Literal, Sequence
 
 from typing_extensions import Required, TypedDict
 
 from didit.types.components.case_duplicate_case_fraud_source_context_request import (
     CaseDuplicateCaseFraudSourceContextRequest,
 )
+from didit.types.components.cases_links_create_params import CasesLinksCreateParams
 
 __all__ = ["CasesCreateParams", "CasesCreateParamsSubject"]
 
 
 class CasesCreateParamsSubject(TypedDict, total=False):
-    """Required unless links is provided; the case's exactly-one subject."""
+    """Exactly one user or business. Supply explicitly when any network link is supplied, even alongside other link types; otherwise may be derived from links."""
 
     type: Literal["user", "business"] | str
 
@@ -34,10 +35,10 @@ class CasesCreateParams(TypedDict, total=False):
     tags: Sequence[str]
 
     subject: CasesCreateParamsSubject
-    """Required unless links is provided; the case's exactly-one subject."""
+    """Exactly one user or business. Supply explicitly when any network link is supplied, even alongside other link types; otherwise may be derived from links."""
 
-    links: Sequence[Mapping[str, object]]
-    """Sessions/business sessions/transactions to attach on creation, e.g. [{"entity_type": "transaction", "entity_uuid": "..."}]. When subject is omitted, the subject is derived from the first link's owner."""
+    links: Sequence[CasesLinksCreateParams]
+    """Up to 500 session, business_session, transaction or network links; at most 20 when review_duplicates=true. When any network link is present, subject must be supplied explicitly. Otherwise the subject may be derived from a linked record."""
 
     assigned_to: str | None
     """User UUID to assign immediately."""

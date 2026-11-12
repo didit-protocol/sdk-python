@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from .naming import RESERVED_KWARGS, identifier, pascal, resource_class, snake
-from .spec import CodegenError, Operation
+from .spec import CodegenError, Operation, Spec
 from .typegen import Ann, TypeBuilder, TypeDef
 
 Json = Any
@@ -158,6 +158,29 @@ def _path_names(path: str) -> list[str]:
     return re.findall(r"\{([^}]+)\}", path)
 
 
+def _reused_component_params(
+    builder: TypeBuilder, spec: Spec, schema: Json, params_name: str, params_module: str
+) -> Ann | None:
+    """The component an operation's whole request body points at, when it is the params type.
+
+    A body that is exactly ``{"$ref": "#/components/schemas/X"}`` where X is already named like
+    the derived ``<Resource><Method>Params`` type: that component is the params type, so it is
+    reused instead of declaring a second type with the same name. The operation's own params
+    module stays importable as a generated re-export of the component.
+    """
+    ref = schema.get("$ref") if isinstance(schema, dict) else None
+    if not isinstance(ref, str) or not ref.startswith("#/components/schemas/"):
+        return None
+    comp = ref.rsplit("/", 1)[1]
+    if comp not in spec.components or builder.component_name(spec, comp) != params_name:
+        return None
+    ann = builder.component_param(spec, comp)
+    if ann.expr != params_name:
+        return None
+    builder.registry.reexports[params_module] = params_name
+    return ann
+
+
 def build_method(op: Operation, builder: TypeBuilder) -> Method:
     sdk = op.sdk
     spec = op.spec
@@ -215,7 +238,9 @@ def build_method(op: Operation, builder: TypeBuilder) -> Method:
                 "properties": props,
                 "required": sorted(required),
             }
-        ann = builder.param(spec, root, params_name, params_module)
+        ann = _reused_component_params(builder, spec, schema, params_name, params_module)
+        if ann is None:
+            ann = builder.param(spec, root, params_name, params_module)
         td = builder.registry.defs.get(ann.expr)
         if td is not None and td.kind == "typeddict" and ann.expr == params_name:
             params_type = params_name

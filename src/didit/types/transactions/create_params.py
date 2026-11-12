@@ -342,6 +342,9 @@ class TransactionsCreateParamsTravelRuleDetails(TypedDict, total=False):
     ivms101: Mapping[str, object]
     """The `originator` and `beneficiary` blocks wrapped in one IVMS 101 object (`IVMS101` is accepted too). Top-level blocks win over the wrapper's."""
 
+    counterparty_choice: Literal["discovery", "user"] | str
+    """discovery uses automatic counterparty discovery. user asks the end user to choose, issues a link and attempts email when their Didit record has an address. Cannot be combined with beneficiary_data.counterparty_vasp_name or counterparty_vasp_lei. Read user_choice in the response; link or email failure does not fail creation."""
+
 
 class TransactionsCreateParams(TypedDict, total=False):
     transaction_id: Required[str]

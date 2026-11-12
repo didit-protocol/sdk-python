@@ -4701,6 +4701,7 @@
                             "flagged": 0,
                             "pending": 1
                           },
+                          "listed_company_declaration": null,
                           "warnings": []
                         }
                       ],
@@ -5538,214 +5539,6 @@
             "source": "using System;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar content = await client.Sessions.GeneratePdfAsync(\"11111111-2222-3333-4444-555555555555\");\nawait content.SaveToAsync(\"download.pdf\");"
           }
         ]
-      }
-    },
-    "/v1/sandbox/scenarios/": {
-      "get": {
-        "summary": "List sandbox scenarios and Test VASP metadata",
-        "description": "Read the sandbox catalog Didit serves for testing. Authenticate with your application's API key or access token; a sandbox session's `Session-Token` also reads it, narrowed to the scenarios that session's workflow can produce. `scenarios`, `magic_values`, `risk_cases`, `sample_identity` and `delivery_conventions` describe the mocked session outcomes and the values that trigger them. `travel_rule` is the Didit Test VASP: its identity, the `routes` it answers over, and each scenario's own `route`. Every Test VASP exchange runs in process inside Didit, so `TEST_VASP` is not a live network or email transport and no real VASP is contacted. Pick a Travel Rule scenario by its beneficiary wallet address or by a beneficiary name of the form `Didit Test VASP <suffix>`. See [Travel Rule sandbox testing](/transaction-monitoring/travel-rule-sandbox).",
-        "operationId": "listSandboxScenarios",
-        "x-didit-sdk": {
-          "resource": "sandbox",
-          "method": "list_scenarios",
-          "auth": "api_key",
-          "server": true
-        },
-        "tags": [
-          "Sandbox"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          },
-          {
-            "SessionTokenAuth": []
-          }
-        ],
-        "x-codeSamples": [
-          {
-            "lang": "curl",
-            "label": "curl",
-            "source": "curl -X GET https://verification.didit.me/v1/sandbox/scenarios/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
-          },
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sandbox.list_scenarios()\nprint(result)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sandbox.listScenarios();\nconsole.log(result);"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sandbox.ListScenarios(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sandbox().listScenarios();\nSystem.out.println(result);"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->sandbox->listScenarios();\nprint_r($result->toArray());"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sandbox.list_scenarios\nputs result.to_h"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sandbox.ListScenariosAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The sandbox catalog. `travel_rule.routes` lists the rails the Test VASP answers over, and every `travel_rule.scenarios[]` entry carries its own `route` beside its trigger values and resulting status.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SandboxScenarioCatalog"
-                },
-                "examples": {
-                  "Catalog": {
-                    "value": {
-                      "scenarios": [
-                        {
-                          "slug": "decline_aml_hit",
-                          "title": "Declined - AML hit",
-                          "description": "The screening returns one production-shaped hit and declines the session.",
-                          "default_status": "Declined",
-                          "steps": [
-                            "AML"
-                          ],
-                          "group": "aml",
-                          "magic_inputs": {
-                            "user_email": "sandbox+aml_hit@didit.test"
-                          },
-                          "warnings": [
-                            {
-                              "risk": "POSSIBLE_MATCH_FOUND",
-                              "feature": "AML",
-                              "input_field": "user_email",
-                              "magic_value": "sandbox+aml_hit@didit.test"
-                            }
-                          ]
-                        }
-                      ],
-                      "magic_values": [
-                        {
-                          "risk": "POSSIBLE_MATCH_FOUND",
-                          "feature": "AML",
-                          "input_field": "user_email",
-                          "magic_value": "sandbox+aml_hit@didit.test",
-                          "description": "Triggers a possible AML match."
-                        }
-                      ],
-                      "risk_cases": [
-                        {
-                          "risk": "POSSIBLE_MATCH_FOUND",
-                          "feature": "AML",
-                          "status_path": "aml.status",
-                          "default_status": "Declined"
-                        }
-                      ],
-                      "sample_identity": {
-                        "date_of_birth": "1990-01-01",
-                        "date_of_issue": "2021-06-15",
-                        "date_of_expiry": "2031-06-15",
-                        "documents": [
-                          {
-                            "sandbox_sample": null,
-                            "document_name": "Brazil - Passport (2015)",
-                            "is_default": true,
-                            "first_name": "ALICE",
-                            "last_name": "SILVA",
-                            "date_of_birth": "1990-01-01",
-                            "gender": "F",
-                            "nationality": "BRA",
-                            "id_country": "BRA",
-                            "identification_number": "FX123456"
-                          }
-                        ]
-                      },
-                      "delivery_conventions": {
-                        "email_optin": {
-                          "description": "By default sandbox sessions do not send emails. Use one of these patterns on the recipient address to deliver them.",
-                          "patterns": [
-                            {
-                              "pattern": "<local>+sandbox@<domain>",
-                              "example": "alice+sandbox@example.com"
-                            },
-                            {
-                              "pattern": "*@didit.test",
-                              "example": "alice@didit.test"
-                            }
-                          ]
-                        },
-                        "phone_otp_code": {
-                          "description": "Sandbox phone OTP check accepts any code.",
-                          "value": "123456"
-                        },
-                        "email_otp_code": {
-                          "description": "Sandbox email OTP check accepts any code.",
-                          "value": "123456"
-                        }
-                      },
-                      "travel_rule": {
-                        "legal_name": "Didit Test VASP",
-                        "lei": "DIDITESTVASP00000001",
-                        "jurisdiction": "GB",
-                        "compliance_email": "travel-rule-test-vasp@didit.test",
-                        "travel_address": "trp:test-vasp.didit.test/trp/inquiries/test-vasp/?t=i",
-                        "network_codes": {
-                          "GTR": "DIDITTESTVASP",
-                          "TRUST": "DIDITTESTVASP",
-                          "VERIFYVASP": "didit-test-vasp",
-                          "SYGNA": "DIDITTESTVASP"
-                        },
-                        "routes": [
-                          "TEST_VASP"
-                        ],
-                        "chain": "ETH",
-                        "timeout_window_seconds": 60,
-                        "default_scenario": "accept",
-                        "inbound_scenarios": [
-                          "accept",
-                          "name_mismatch"
-                        ],
-                        "scenarios": [
-                          {
-                            "slug": "accept",
-                            "route": "TEST_VASP",
-                            "title": "Test VASP - accepts",
-                            "description": "The test VASP accepts the transfer and returns the beneficiary identity. The exchange completes; send the on-chain id to finish it.",
-                            "beneficiary_name": "Didit Test VASP",
-                            "beneficiary_wallet_address": "0xc00c4cd93ff83953ce3347b33656d68ab8f35cfb",
-                            "chain": "ETH",
-                            "travel_rule_status": "COMPLETED",
-                            "answers": true
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "No Didit-issued credential was sent, the credential is not active, or a live session's token was used."
-          }
-        }
       }
     },
     "/v3/session/{sessionId}/sandbox/arm/": {
@@ -18732,7 +18525,7 @@
                   "Unknown top-level field": {
                     "value": {
                       "workflow_type": [
-                        "The v3 workflow API only accepts `workflow_label`, `is_default`, `status`, `features`, `is_white_label_enabled`, `is_desktop_allowed`, `max_retry_attempts`, `retry_window_days`, `session_expiration_time`, `face_liveness_max_attempts`, `face_match_max_attempts`."
+                        "The v3 workflow API only accepts `workflow_label`, `is_default`, `status`, `features`, `is_white_label_enabled`, `is_desktop_allowed`, `is_session_reference_enabled`, `max_retry_attempts`, `retry_window_days`, `session_expiration_time`, `face_liveness_max_attempts`, `face_match_max_attempts`."
                       ]
                     }
                   },
@@ -26846,6 +26639,15 @@
                       "ivms101": {
                         "type": "object",
                         "description": "The `originator` and `beneficiary` blocks wrapped in one IVMS 101 object (`IVMS101` is accepted too). Top-level blocks win over the wrapper's."
+                      },
+                      "counterparty_choice": {
+                        "type": "string",
+                        "description": "discovery uses automatic counterparty discovery. user asks the end user to choose, issues a link and attempts email when their Didit record has an address. Cannot be combined with beneficiary_data.counterparty_vasp_name or counterparty_vasp_lei. Read user_choice in the response; link or email failure does not fail creation.",
+                        "enum": [
+                          "discovery",
+                          "user"
+                        ],
+                        "default": "discovery"
                       }
                     }
                   },
@@ -35532,7 +35334,7 @@
     "/v3/travel-rule/vasps/": {
       "get": {
         "summary": "Search the VASP directory",
-        "description": "Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires.",
+        "description": "Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires. Includes entries your application added privately. The optional source field distinguishes their provenance; kind=didit member results may omit source.",
         "operationId": "listTravelRuleVasps",
         "tags": [
           "Travel Rule"
@@ -35743,6 +35545,145 @@
           "auth": "api_key",
           "server": true
         }
+      },
+      "post": {
+        "summary": "Create a private VASP directory entry",
+        "description": "Add a VASP privately to your application and optionally invite it. Requires write access to transactions. The response uses source=added_by_you. A matching visible name or LEI returns 409 with the existing vasp_id. See [Search the directory](/management-api/travel-rule/search-vasps).",
+        "operationId": "createTravelRuleVasp",
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "create_vasp",
+          "auth": "api_key",
+          "server": true
+        },
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TravelRuleVaspCreateRequest"
+              },
+              "example": {
+                "name": "Example VASP",
+                "email": "compliance@example.com",
+                "jurisdiction": "DE",
+                "invite": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaspDirectoryEntry"
+                },
+                "example": {
+                  "id": "11111111-2222-3333-4444-555555555555",
+                  "kind": "directory",
+                  "name": "Example VASP",
+                  "lei": "",
+                  "jurisdiction": "DE",
+                  "source": "added_by_you",
+                  "contacts": [
+                    {
+                      "id": "22222222-3333-4444-5555-666666666666",
+                      "email": "compliance@example.com",
+                      "name": "",
+                      "source": "application",
+                      "scope": "application",
+                      "verified_at": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request fields."
+          },
+          "403": {
+            "description": "Missing permission to write transactions."
+          },
+          "409": {
+            "description": "A visible entry already matches the name or LEI. Select the existing vasp_id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "Conflict explanation."
+                    },
+                    "vasp_id": {
+                      "type": "string",
+                      "description": "Existing VASP identifier.",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "vasp_id"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/travel-rule/vasps/' \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"name\": \"Example VASP\", \"email\": \"compliance@example.com\", \"jurisdiction\": \"DE\", \"invite\": false}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.create_vasp(\n    name=\"Example VASP\",\n    email=\"compliance@example.com\",\n    jurisdiction=\"DE\",\n    invite=False,\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.createVasp({\n  name: \"Example VASP\",\n  email: \"compliance@example.com\",\n  jurisdiction: \"DE\",\n  invite: false,\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.CreateVASP(ctx, didit.TravelRuleVASPCreateRequest{\n\tName:         \"Example VASP\",\n\tEmail:        \"compliance@example.com\",\n\tJurisdiction: didit.String(\"DE\"),\n\tInvite:       didit.Bool(false),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleVaspCreateRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().createVasp(TravelRuleVaspCreateRequest.builder()\n        .name(\"Example VASP\")\n        .email(\"compliance@example.com\")\n        .jurisdiction(\"DE\")\n        .invite(false)\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->createVasp([\n    'name' => 'Example VASP',\n    'email' => 'compliance@example.com',\n    'jurisdiction' => 'DE',\n    'invite' => false,\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.create_vasp(\n  name: \"Example VASP\",\n  email: \"compliance@example.com\",\n  jurisdiction: \"DE\",\n  invite: false\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.CreateVaspAsync(new TravelRuleVaspCreateRequest\n{\n    Name = \"Example VASP\",\n    Email = \"compliance@example.com\",\n    Jurisdiction = \"DE\",\n    Invite = false,\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
       }
     },
     "/v3/travel-rule/vasps/{vasp_id}/": {
@@ -36943,8 +36884,8 @@
     },
     "/v3/transactions/{transaction_id}/travel-rule/": {
       "patch": {
-        "summary": "Finish, cancel, resend, or update the originator wallet of a Travel Rule transfer",
-        "description": "Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{\"action\": \"cancel\"}` to cancel a non-terminal transfer, or `{\"action\": \"resend\"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{\"action\": \"update_compliance_email\", \"compliance_email\": \"desk@example.com\"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{\"action\": \"update_originator_wallet\", \"wallet_address\": \"...\"}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{\"action\": \"beneficiary_vasp\", \"beneficiary_vasp\": \"<directory VASP id>\"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again.",
+        "summary": "Update a Travel Rule transfer",
+        "description": "Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{\"action\": \"cancel\"}` to cancel a non-terminal transfer, or `{\"action\": \"resend\"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{\"action\": \"update_compliance_email\", \"compliance_email\": \"desk@example.com\"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{\"action\": \"update_originator_wallet\", \"wallet_address\": \"...\"}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{\"action\": \"beneficiary_vasp\", \"beneficiary_vasp\": \"<directory VASP id>\"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again. Cancellation accepts an optional reason and returns cancel_reason and cancelled_by. Resend accepts notify_on_answer; omission preserves the saved preference, initially false. Resend invalidates the previous counterparty pickup link. action=add_vasp_hint requires name, accepts lei and country, saves the hint and re-runs discovery under the same outbound/status restrictions as resend. update_compliance_email also accepts vasp_name and saves the address as an application-private contact when the transfer has a known directory VASP.",
         "operationId": "patchTravelRuleTransfer",
         "x-didit-sdk": {
           "resource": "transactions.travel_rule",
@@ -36987,18 +36928,21 @@
                 },
                 "Cancel": {
                   "value": {
-                    "action": "cancel"
+                    "action": "cancel",
+                    "reason": "user_cancelled"
                   }
                 },
                 "Resend": {
                   "value": {
-                    "action": "resend"
+                    "action": "resend",
+                    "notify_on_answer": true
                   }
                 },
                 "Update compliance email": {
                   "value": {
                     "action": "update_compliance_email",
-                    "compliance_email": "desk@example.com"
+                    "compliance_email": "desk@example.com",
+                    "vasp_name": "Example VASP"
                   }
                 },
                 "Update originator wallet": {
@@ -37011,6 +36955,13 @@
                   "value": {
                     "action": "beneficiary_vasp",
                     "beneficiary_vasp": "9f1c2b34-5d6e-4f70-8a91-b2c3d4e5f607"
+                  }
+                },
+                "Add VASP hint": {
+                  "value": {
+                    "action": "add_vasp_hint",
+                    "name": "Example VASP",
+                    "country": "DE"
                   }
                 }
               }
@@ -37071,14 +37022,14 @@
             }
           },
           "400": {
-            "description": "Neither payment_txn_id nor a supported action was provided, `compliance_email` is missing or not an email address on `update_compliance_email`, or, for `update_originator_wallet`, no wallet_address, a wallet or memo the transfer's chain cannot carry, or a wallet that is not one of the transfer's UTXO inputs, or `beneficiary_vasp` is missing or not a valid directory VASP id.",
+            "description": "Neither payment_txn_id nor a supported action was provided, `compliance_email` is missing or not an email address on `update_compliance_email`, or, for `update_originator_wallet`, no wallet_address, a wallet or memo the transfer's chain cannot carry, or a wallet that is not one of the transfer's UTXO inputs, or `beneficiary_vasp` is missing or not a valid directory VASP id. An invalid cancellation reason, invalid LEI, or missing name for add_vasp_hint also returns 400.",
             "content": {
               "application/json": {
                 "examples": {
                   "No action": {
                     "value": {
                       "detail": [
-                        "Provide payment_txn_id, action=cancel, action=resend, action=beneficiary_vasp, action=update_originator_wallet or action=update_compliance_email."
+                        "Provide payment_txn_id, action=cancel, action=resend, action=beneficiary_vasp, action=update_originator_wallet, action=add_vasp_hint or action=update_compliance_email."
                       ]
                     }
                   },
@@ -37097,7 +37048,7 @@
             "description": "Unknown transaction, the transaction has no Travel Rule transfer, or (action `beneficiary_vasp`) no directory entry has that id."
           },
           "409": {
-            "description": "The transfer is not in a state that allows this operation (e.g. not COMPLETED/outbound for finish, already terminal for cancel, or not an outbound transfer in a resendable status for resend). `update_compliance_email` answers `409` for an inbound transfer, and for an outbound one outside COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE and NOT_ENOUGH_COUNTERPARTY_DATA. `update_originator_wallet` answers `409` for an inbound, cancelled or expired transfer. `beneficiary_vasp` answers `409` unless the transfer is outbound and in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA.",
+            "description": "The transfer is not in a state that allows this operation (e.g. not COMPLETED/outbound for finish, already terminal for cancel, or not an outbound transfer in a resendable status for resend). `update_compliance_email` answers `409` for an inbound transfer, and for an outbound one outside COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE and NOT_ENOUGH_COUNTERPARTY_DATA. `update_originator_wallet` answers `409` for an inbound, cancelled or expired transfer. `beneficiary_vasp` answers `409` unless the transfer is outbound and in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA. add_vasp_hint requires the same direction and statuses as resend. Selecting a VASP blocked by your organization also returns 409.",
             "content": {
               "application/json": {
                 "examples": {
@@ -39617,7 +39568,7 @@
       },
       "post": {
         "summary": "Create case",
-        "description": "Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases.",
+        "description": "Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed. An explicit subject is required whenever links includes a network.",
         "operationId": "create_case",
         "x-didit-sdk": {
           "resource": "cases",
@@ -39693,7 +39644,7 @@
                   },
                   "subject": {
                     "type": "object",
-                    "description": "Required unless links is provided; the case's exactly-one subject.",
+                    "description": "Exactly one user or business. Supply explicitly when any network link is supplied, even alongside other link types; otherwise may be derived from links.",
                     "properties": {
                       "type": {
                         "type": "string",
@@ -39710,10 +39661,11 @@
                   },
                   "links": {
                     "type": "array",
-                    "description": "Sessions/business sessions/transactions to attach on creation, e.g. [{\"entity_type\": \"transaction\", \"entity_uuid\": \"...\"}]. When subject is omitted, the subject is derived from the first link's owner.",
+                    "description": "Up to 500 session, business_session, transaction or network links; at most 20 when review_duplicates=true. When any network link is present, subject must be supplied explicitly. Otherwise the subject may be derived from a linked record.",
                     "items": {
-                      "type": "object"
-                    }
+                      "$ref": "#/components/schemas/CasesLinksCreateParams"
+                    },
+                    "maxItems": 500
                   },
                   "assigned_to": {
                     "type": "string",
@@ -39804,7 +39756,7 @@
             }
           },
           "400": {
-            "description": "Neither subject nor links provided, or the subject/blueprint/assignee was not found.",
+            "description": "Neither subject nor links provided, or the subject/blueprint/assignee was not found. Network links require a selected member subject and a visible network. Case creation accepts at most 500 links (20 with review_duplicates=true).",
             "content": {
               "application/json": {
                 "schema": {
@@ -39815,6 +39767,9 @@
           },
           "409": {
             "description": "Duplicate review is enabled and an existing case was found without a separate-incident reason. No case was created."
+          },
+          "403": {
+            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable."
           }
         },
         "security": [
@@ -42644,7 +42599,7 @@
       },
       "post": {
         "summary": "Add case link",
-        "description": "Attach a session, business session, or transaction to the case. Rejected with 400 if the entity belongs to a different subject than the case.",
+        "description": "Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.",
         "operationId": "create_case_link",
         "x-didit-sdk": {
           "resource": "cases.links",
@@ -42694,25 +42649,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "entity_type",
-                  "entity_uuid"
-                ],
-                "properties": {
-                  "entity_type": {
-                    "type": "string",
-                    "enum": [
-                      "session",
-                      "business_session",
-                      "transaction"
-                    ]
-                  },
-                  "entity_uuid": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+                "$ref": "#/components/schemas/CasesLinksCreateParams"
               },
               "example": {
                 "entity_type": "transaction",
@@ -42775,7 +42712,7 @@
             }
           },
           "400": {
-            "description": "Entity belongs to a different profile than the case subject.",
+            "description": "Entity belongs to a different profile than the case subject. Network links require a selected member subject and a visible network.",
             "content": {
               "application/json": {
                 "schema": {
@@ -42788,6 +42725,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable."
           }
         },
         "security": [
@@ -44328,7 +44268,7 @@
       },
       "post": {
         "summary": "Create blueprint",
-        "description": "Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it.",
+        "description": "Create a case blueprint: general settings (assignment, escalation, transfer, 4-eyes pairing) plus content_config, the six sections that drive the case page. Set publish=false to create an unpublished draft; Publish creates its first live version. Discarding a never-published draft deletes it. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.",
         "operationId": "create_case_blueprint",
         "x-didit-sdk": {
           "resource": "cases.blueprints",
@@ -44448,6 +44388,9 @@
                     "writeOnly": true,
                     "default": true,
                     "description": "Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations."
+                  },
+                  "applies_to": {
+                    "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
                   }
                 }
               },
@@ -44464,8 +44407,20 @@
                     "enabled": true,
                     "financial": true,
                     "identity": false
+                  },
+                  "stages": {
+                    "items": [
+                      {
+                        "label": "Triage",
+                        "sla_hours": 24,
+                        "worked_by": null
+                      }
+                    ]
                   }
-                }
+                },
+                "applies_to": [
+                  "AML"
+                ]
               }
             }
           }
@@ -44475,41 +44430,6 @@
             "lang": "curl",
             "label": "curl",
             "source": "curl -X POST 'https://verification.didit.me/v3/organization/11111111-2222-3333-4444-555555555555/application/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/cases/blueprints/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"name\": \"AML investigation\", \"assignee_pool\": [\"9a000000-0000-4000-8000-0000000000aa\"], \"assignment_method\": \"AUTOMATIC\", \"max_active_cases\": 15, \"require_resolution_note\": true, \"content_config\": {\"aml_control\": {\"enabled\": true, \"financial\": true, \"identity\": false}}}'"
-          },
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.cases.blueprints.create(\n    name=\"AML investigation\",\n    assignee_pool=[\"9a000000-0000-4000-8000-0000000000aa\"],\n    assignment_method=\"AUTOMATIC\",\n    max_active_cases=15,\n    require_resolution_note=True,\n    content_config={\n        \"aml_control\": {\n            \"enabled\": True,\n            \"financial\": True,\n            \"identity\": False,\n        },\n    },\n)\nprint(result)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.cases.blueprints.create({\n  name: \"AML investigation\",\n  assignee_pool: [\"9a000000-0000-4000-8000-0000000000aa\"],\n  assignment_method: \"AUTOMATIC\",\n  max_active_cases: 15,\n  require_resolution_note: true,\n  content_config: {\n    aml_control: {\n      enabled: true,\n      financial: true,\n      identity: false,\n    },\n  },\n});\nconsole.log(result);"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Cases.Blueprints.Create(ctx, didit.CasesBlueprintsCreateParams{\n\tName:                  \"AML investigation\",\n\tAssigneePool:          []string{\"9a000000-0000-4000-8000-0000000000aa\"},\n\tAssignmentMethod:      didit.Some(didit.CasesBlueprintsCreateParamsAssignmentMethod(\"AUTOMATIC\")),\n\tMaxActiveCases:        didit.Int(15),\n\tRequireResolutionNote: didit.Bool(true),\n\tContentConfig: didit.Some(didit.CaseContentConfigParam{\n\t\tAMLControl: didit.Some(didit.CaseContentConfigParamAMLControl{\n\t\t\tEnabled:   didit.Bool(true),\n\t\t\tFinancial: didit.Bool(true),\n\t\t\tIdentity:  didit.Bool(false),\n\t\t}),\n\t}),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.CaseContentConfig;\nimport me.didit.types.CasesBlueprintsCreateParams;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.cases().blueprints().create(CasesBlueprintsCreateParams.builder()\n        .name(\"AML investigation\")\n        .assigneePool(List.of(\"9a000000-0000-4000-8000-0000000000aa\"))\n        .assignmentMethod(CasesBlueprintsCreateParams.AssignmentMethod.of(\"AUTOMATIC\"))\n        .maxActiveCases(15L)\n        .requireResolutionNote(true)\n        .contentConfig(CaseContentConfig.builder()\n                .amlControl(CaseContentConfig.AmlControl.builder()\n                        .enabled(true)\n                        .financial(true)\n                        .identity(false)\n                        .build())\n                .build())\n        .build());\nSystem.out.println(result);"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->cases->blueprints->create([\n    'name' => 'AML investigation',\n    'assignee_pool' => ['9a000000-0000-4000-8000-0000000000aa'],\n    'assignment_method' => 'AUTOMATIC',\n    'max_active_cases' => 15,\n    'require_resolution_note' => true,\n    'content_config' => [\n        'aml_control' => [\n            'enabled' => true,\n            'financial' => true,\n            'identity' => false,\n        ],\n    ],\n]);\nprint_r($result->toArray());"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.cases.blueprints.create(\n  name: \"AML investigation\",\n  assignee_pool: [\"9a000000-0000-4000-8000-0000000000aa\"],\n  assignment_method: \"AUTOMATIC\",\n  max_active_cases: 15,\n  require_resolution_note: true,\n  content_config: {\n    aml_control: {\n      enabled: true,\n      financial: true,\n      identity: false,\n    },\n  }\n)\nputs result.to_h"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Cases.Blueprints.CreateAsync(new CasesBlueprintsCreateParams\n{\n    Name = \"AML investigation\",\n    AssigneePool = new string[] { \"9a000000-0000-4000-8000-0000000000aa\" },\n    AssignmentMethod = new CasesBlueprintsCreateParamsAssignmentMethod(\"AUTOMATIC\"),\n    MaxActiveCases = 15,\n    RequireResolutionNote = true,\n    ContentConfig = new CaseContentConfig\n    {\n        AmlControl = new CaseContentConfigAmlControl\n        {\n            Enabled = true,\n            Financial = true,\n            Identity = false,\n        },\n    },\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "responses": {
@@ -44524,7 +44444,7 @@
             }
           },
           "400": {
-            "description": "Name over 24 chars, empty assignee_pool, or a cross-referenced blueprint (escalation/checker) not found.",
+            "description": "Invalid blueprint fields, unsupported applies_to value, invalid stage definition, inactive or other-application stage team, or invalid blueprint reference.",
             "content": {
               "application/json": {
                 "schema": {
@@ -44651,7 +44571,7 @@
       },
       "patch": {
         "summary": "Update blueprint",
-        "description": "Partially update a blueprint's general settings or content_config.",
+        "description": "Partially update a blueprint's general settings or content_config. applies_to accepts the six case-type values. content_config.stages.items[].worked_by is an optional active review-team UUID from this application. These settings are preserved in case policy snapshots; later edits do not change existing snapshots.",
         "operationId": "update_case_blueprint",
         "x-didit-sdk": {
           "resource": "cases.blueprints",
@@ -44772,6 +44692,9 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "The version opened by the editor. A stale version returns 409 without changing the review policy."
+                  },
+                  "applies_to": {
+                    "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
                   }
                 }
               },
@@ -44836,6 +44759,9 @@
           },
           "409": {
             "description": "The review policy changed since expected_version. Review the latest version before retrying."
+          },
+          "400": {
+            "description": "Invalid blueprint fields, unsupported applies_to value, invalid stage definition, inactive or other-application stage team, or invalid blueprint reference."
           }
         },
         "security": [
@@ -47091,6 +47017,11 @@
             "lang": "javascript",
             "label": "Node.js",
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nawait didit.regulatoryReports.delete(\"5ec00000-0000-4000-8000-000000000007\", {\n  confirm_delete: true,\n});"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nif err := client.RegulatoryReports.Delete(ctx, \"5ec00000-0000-4000-8000-000000000007\", didit.RegulatoryReportsDeleteParams{\n\tConfirmDelete: didit.Bool(true),\n}); err != nil {\n\tlog.Fatal(err)\n}"
           },
           {
             "lang": "java",
@@ -69811,6 +69742,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.webhooks.updateConfig({\n  face_retention_policy: \"retain_until_user_deleted\",\n  face_retention_days: 365,\n  biometric_consent_mode: \"auto\",\n});\nconsole.log(result);"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Webhooks.UpdateConfig(ctx, didit.WebhooksUpdateConfigParams{\n\tFaceRetentionPolicy:  didit.Some(didit.WebhooksUpdateConfigParamsFaceRetentionPolicy(\"retain_until_user_deleted\")),\n\tFaceRetentionDays:    didit.Int(365),\n\tBiometricConsentMode: didit.Some(didit.WebhooksUpdateConfigParamsBiometricConsentMode(\"auto\")),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import me.didit.Didit;\nimport me.didit.types.WebhooksUpdateConfigParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.webhooks().updateConfig(WebhooksUpdateConfigParams.builder()\n        .faceRetentionPolicy(WebhooksUpdateConfigParams.FaceRetentionPolicy.of(\"retain_until_user_deleted\"))\n        .faceRetentionDays(365L)\n        .biometricConsentMode(WebhooksUpdateConfigParams.BiometricConsentMode.of(\"auto\"))\n        .build());\nSystem.out.println(result);"
@@ -77493,6 +77429,41 @@
             "lang": "curl",
             "label": "curl",
             "source": "curl -X GET 'https://verification.didit.me/v3/organization/11111111-2222-3333-4444-555555555555/application/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/analytics/today/?tz=Europe%2FMadrid' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.analytics.retrieve_today()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.analytics.retrieveToday();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Analytics.RetrieveToday(ctx, didit.AnalyticsRetrieveTodayParams{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.analytics().retrieveToday();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->analytics->retrieveToday();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.analytics.retrieve_today\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Analytics.RetrieveTodayAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "security": [
@@ -85877,6 +85848,15 @@
         ],
         "parameters": [
           {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact transfer or transaction UUID, or a case-insensitive fragment of txn_id, either side's declared or resolved wallet address, or VASP name. Whitespace is trimmed; only the first 255 characters are searched. Combines with the other filters."
+          },
+          {
             "name": "direction",
             "in": "query",
             "required": false,
@@ -87277,6 +87257,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nawait didit.transactions.batchDelete({\n  transaction_uuids: [\"abcdef12-3456-7890-abcd-ef1234567890\", \"12345678-90ab-cdef-1234-567890abcdef\"],\n});"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nif err := client.Transactions.BatchDelete(ctx, didit.TransactionsBatchDeleteParams{\n\tTransactionUUIDs: didit.Some([]string{\"abcdef12-3456-7890-abcd-ef1234567890\", \"12345678-90ab-cdef-1234-567890abcdef\"}),\n}); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.TransactionsBatchDeleteParams;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nclient.transactions().batchDelete(TransactionsBatchDeleteParams.builder()\n        .putAdditionalProperty(\"transaction_uuids\", List.of(\"abcdef12-3456-7890-abcd-ef1234567890\", \"12345678-90ab-cdef-1234-567890abcdef\"))\n        .build());"
@@ -87391,6 +87376,11 @@
             "lang": "javascript",
             "label": "Node.js",
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.networks.retrieve();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Networks.Retrieve(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -87529,6 +87519,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.networks.retrieveQuestionnaire();\nconsole.log(result);"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Networks.RetrieveQuestionnaire(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().networks().retrieveQuestionnaire();\nSystem.out.println(result);"
@@ -87598,6 +87593,11 @@
             "lang": "javascript",
             "label": "Node.js",
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.networks.updateQuestionnaire({\n  legal_name: \"Example VASP Ltd\",\n  incorporation_country: \"ES\",\n  aml_ctf_policy_attested: true,\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Networks.UpdateQuestionnaire(ctx, didit.TravelRuleNetworkQuestionnaireAnswersParam{\n\tLegalName:            didit.String(\"Example VASP Ltd\"),\n\tIncorporationCountry: didit.String(\"ES\"),\n\tAMLCtfPolicyAttested: didit.Bool(true),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -87733,6 +87733,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.networks.submitQuestionnaire();\nconsole.log(result);"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Networks.SubmitQuestionnaire(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().networks().submitQuestionnaire();\nSystem.out.println(result);"
@@ -87866,6 +87871,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.networks.requestAccess(\"your-network\");\nconsole.log(result);"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Networks.RequestAccess(ctx, \"your-network\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().networks().requestAccess(\"your-network\");\nSystem.out.println(result);"
@@ -87980,6 +87990,11 @@
             "lang": "javascript",
             "label": "Node.js",
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.addressValidation.validate({\n  address_line_1: \"1600 Amphitheatre Pkwy\",\n  city: \"Mountain View\",\n  region: \"CA\",\n  postal_code: \"94043\",\n  country: \"US\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AddressValidation.Validate(ctx, didit.AddressValidationRequest{\n\tAddressLine1: didit.String(\"1600 Amphitheatre Pkwy\"),\n\tCity:         didit.String(\"Mountain View\"),\n\tRegion:       didit.String(\"CA\"),\n\tPostalCode:   didit.String(\"94043\"),\n\tCountry:      \"US\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -88186,6 +88201,11 @@
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.travelRule.walletProofs.list()) {\n  console.log(item);\n}"
           },
           {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.TravelRule.WalletProofs.ListAutoPaging(ctx, didit.TravelRuleWalletProofsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
             "lang": "java",
             "label": "Java",
             "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.travelRule().walletProofs().list()) {\n    System.out.println(item);\n}"
@@ -88308,6 +88328,11 @@
             "lang": "javascript",
             "label": "Node.js",
             "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.walletProofs.decide(\"11111111-2222-3333-4444-555555555555\", {\n  decision: \"approve\",\n  note: \"Address matches the wallet app.\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.WalletProofs.Decide(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleWalletProofDecision{\n\tDecision: \"approve\",\n\tNote:     didit.String(\"Address matches the wallet app.\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -88815,6 +88840,41 @@
             "lang": "curl",
             "label": "cURL",
             "source": "curl --request POST \\\n  --url https://verification.didit.me/v3/id-verification/wallets/verifications/REQUEST_ID/response/ \\\n  --header 'x-api-key: YOUR_API_KEY' \\\n  --header 'Content-Type: application/json' \\\n  --data '{\n  \"response\": {\n    \"protocol\": \"openid4vp-v1-signed\",\n    \"data\": {\n      \"response\": \"<compact JWE returned by the wallet>\"\n    }\n  }\n}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.id_wallets.submit_verification_response(\n    \"11111111-2222-3333-4444-555555555555\",\n    response={\"protocol\": \"openid4vp-v1-signed\", \"data\": {\"response\": \"<compact JWE returned by the wallet>\"}},\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.idWallets.submitVerificationResponse(\"11111111-2222-3333-4444-555555555555\", {\n  response: { protocol: \"openid4vp-v1-signed\", data: { response: \"<compact JWE returned by the wallet>\" } },\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.IDWallets.SubmitVerificationResponse(ctx, \"11111111-2222-3333-4444-555555555555\", didit.DigitalIDWalletAPIWalletDigitalCredentialResponseRequest{\n\tResponse: map[string]any{\"protocol\": \"openid4vp-v1-signed\", \"data\": map[string]any{\"response\": \"<compact JWE returned by the wallet>\"}},\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.util.Map;\nimport me.didit.Didit;\nimport me.didit.types.DigitalIdWalletApiWalletDigitalCredentialResponseRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.idWallets().submitVerificationResponse(\"11111111-2222-3333-4444-555555555555\", DigitalIdWalletApiWalletDigitalCredentialResponseRequest.builder()\n        .response(Map.of(\"protocol\", \"openid4vp-v1-signed\", \"data\", Map.of(\"response\", \"<compact JWE returned by the wallet>\")))\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->idWallets->submitVerificationResponse('11111111-2222-3333-4444-555555555555', [\n    'response' => ['protocol' => 'openid4vp-v1-signed', 'data' => ['response' => '<compact JWE returned by the wallet>']],\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.id_wallets.submit_verification_response(\n  \"11111111-2222-3333-4444-555555555555\",\n  response: { protocol: \"openid4vp-v1-signed\", data: { response: \"<compact JWE returned by the wallet>\" } }\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Collections.Generic;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.IdWallets.SubmitVerificationResponseAsync(\"11111111-2222-3333-4444-555555555555\", new DigitalIdWalletApiWalletDigitalCredentialResponseRequest\n{\n    Response = new Dictionary<string, object> { [\"protocol\"] = \"openid4vp-v1-signed\", [\"data\"] = new Dictionary<string, object> { [\"response\"] = \"<compact JWE returned by the wallet>\" } },\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -88990,6 +89050,41 @@
             "lang": "curl",
             "label": "cURL",
             "source": "curl --request POST \\\n  --url https://verification.didit.me/v3/id-verification/wallets/google-wallet/ \\\n  --header 'x-api-key: YOUR_API_KEY' \\\n  --header 'Idempotency-Key: your-unique-attempt-key' \\\n  --header 'Content-Type: application/json' \\\n  --data '{\n  \"country\": \"USA\",\n  \"vendor_data\": \"your-customer-reference\",\n  \"metadata\": {\n    \"reference\": \"example\"\n  },\n  \"origin\": \"https://app.example.com\"\n}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.id_wallets.start_google_wallet(\n    vendor_data=\"your-customer-reference\",\n    metadata={\"reference\": \"example\"},\n    country=\"USA\",\n    origin=\"https://app.example.com\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.idWallets.startGoogleWallet({\n  vendor_data: \"your-customer-reference\",\n  metadata: { reference: \"example\" },\n  country: \"USA\",\n  origin: \"https://app.example.com\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.IDWallets.StartGoogleWallet(ctx, didit.IDWalletsStartGoogleWalletParams{\n\tBody: didit.DigitalIDWalletAPIGoogleWalletWalletVerificationStartRequest{\n\t\tVendorData: didit.String(\"your-customer-reference\"),\n\t\tMetadata:   didit.Some(map[string]any{\"reference\": \"example\"}),\n\t\tCountry:    didit.DigitalIDWalletAPIGoogleWalletWalletVerificationStartCountryEnum(\"USA\"),\n\t\tOrigin:     \"https://app.example.com\",\n\t},\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.util.Map;\nimport me.didit.Didit;\nimport me.didit.types.DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum;\nimport me.didit.types.DigitalIdWalletApiGoogleWalletWalletVerificationStartRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.idWallets().startGoogleWallet(DigitalIdWalletApiGoogleWalletWalletVerificationStartRequest.builder()\n        .vendorData(\"your-customer-reference\")\n        .metadata(Map.of(\"reference\", \"example\"))\n        .country(DigitalIdWalletApiGoogleWalletWalletVerificationStartCountryEnum.of(\"USA\"))\n        .origin(\"https://app.example.com\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->idWallets->startGoogleWallet([\n    'vendor_data' => 'your-customer-reference',\n    'metadata' => ['reference' => 'example'],\n    'country' => 'USA',\n    'origin' => 'https://app.example.com',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.id_wallets.start_google_wallet(\n  vendor_data: \"your-customer-reference\",\n  metadata: { reference: \"example\" },\n  country: \"USA\",\n  origin: \"https://app.example.com\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Collections.Generic;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.IdWallets.StartGoogleWalletAsync(new DigitalIdWalletApiGoogleWalletWalletVerificationStartRequest\n{\n    VendorData = \"your-customer-reference\",\n    Metadata = new Dictionary<string, object> { [\"reference\"] = \"example\" },\n    Country = \"USA\",\n    Origin = \"https://app.example.com\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ],
         "x-didit-wallet-id": "google_wallet"
@@ -92408,6 +92503,332 @@
         ]
       }
     },
+    "/v3/organization/{organization_id}/application/{application_id}/cases/blueprints/ai-draft/": {
+      "post": {
+        "summary": "Draft case blueprint with AI",
+        "description": "Generate an unsaved blueprint proposal. Requires write:cases. Returns a draft object, not a blueprint UUID; no blueprint or saved policy draft is created. Review the proposal, choose assignees and any teams, approvals or routing, then create or update a blueprint separately. Invalid generated content or generation failure returns 503. See [blueprint AI drafts](/management-api/case-blueprints/ai-draft).",
+        "operationId": "draft_case_blueprint",
+        "x-didit-sdk": {
+          "resource": "cases.blueprints",
+          "method": "ai_draft",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "tags": [
+          "Case Blueprints"
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization UUID."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application UUID."
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseBlueprintAiDraftRequest"
+              },
+              "example": {
+                "prompt": "Draft an AML review policy with triage and evidence review stages."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unsaved proposal. No state was changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseBlueprintAiDraftResponse"
+                },
+                "example": {
+                  "draft": {
+                    "name": "AML review",
+                    "applies_to": [
+                      "AML"
+                    ],
+                    "require_resolution_note": true,
+                    "content_config": {
+                      "stages": {
+                        "items": [
+                          {
+                            "key": "triage",
+                            "label": "Triage",
+                            "sla_hours": 24
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "prompt is missing, blank or longer than 4000 characters."
+          },
+          "401": {
+            "description": "Authentication is required."
+          },
+          "403": {
+            "description": "write:cases permission is required."
+          },
+          "404": {
+            "description": "Application not found."
+          },
+          "503": {
+            "description": "Generation failed or produced an invalid proposal. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "A blueprint draft could not be generated. Please try again."
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": []
+      }
+    },
+    "/v1/sandbox/scenarios/": {
+      "get": {
+        "summary": "List sandbox scenarios and Test VASP metadata",
+        "description": "Read the sandbox catalog Didit serves for testing. Authenticate with your application's API key or access token; a sandbox session's `Session-Token` also reads it, narrowed to the scenarios that session's workflow can produce. `scenarios`, `magic_values`, `risk_cases`, `sample_identity` and `delivery_conventions` describe the mocked session outcomes and the values that trigger them. `travel_rule` is the Didit Test VASP: its identity, the `routes` it answers over, and each scenario's own `route`. Every Test VASP exchange runs in process inside Didit, so `TEST_VASP` is not a live network or email transport and no real VASP is contacted. Pick a Travel Rule scenario by its beneficiary wallet address or by a beneficiary name of the form `Didit Test VASP <suffix>`. See [Travel Rule sandbox testing](/transaction-monitoring/travel-rule-sandbox).",
+        "operationId": "listSandboxScenarios",
+        "x-didit-sdk": {
+          "resource": "sandbox",
+          "method": "list_scenarios",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sandbox"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          },
+          {
+            "SessionTokenAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v1/sandbox/scenarios/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sandbox.list_scenarios()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sandbox.listScenarios();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sandbox.ListScenarios(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sandbox().listScenarios();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sandbox.list_scenarios\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sandbox.ListScenariosAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sandbox catalog. `travel_rule.routes` lists the rails the Test VASP answers over, and every `travel_rule.scenarios[]` entry carries its own `route` beside its trigger values and resulting status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxScenarioCatalog"
+                },
+                "examples": {
+                  "Catalog": {
+                    "value": {
+                      "scenarios": [
+                        {
+                          "slug": "decline_aml_hit",
+                          "title": "Declined - AML hit",
+                          "description": "The screening returns one production-shaped hit and declines the session.",
+                          "default_status": "Declined",
+                          "steps": [
+                            "AML"
+                          ],
+                          "group": "aml",
+                          "magic_inputs": {
+                            "user_email": "sandbox+aml_hit@didit.test"
+                          },
+                          "warnings": [
+                            {
+                              "risk": "POSSIBLE_MATCH_FOUND",
+                              "feature": "AML",
+                              "input_field": "user_email",
+                              "magic_value": "sandbox+aml_hit@didit.test"
+                            }
+                          ]
+                        }
+                      ],
+                      "magic_values": [
+                        {
+                          "risk": "POSSIBLE_MATCH_FOUND",
+                          "feature": "AML",
+                          "input_field": "user_email",
+                          "magic_value": "sandbox+aml_hit@didit.test",
+                          "description": "Triggers a possible AML match."
+                        }
+                      ],
+                      "risk_cases": [
+                        {
+                          "risk": "POSSIBLE_MATCH_FOUND",
+                          "feature": "AML",
+                          "status_path": "aml.status",
+                          "default_status": "Declined"
+                        }
+                      ],
+                      "sample_identity": {
+                        "date_of_birth": "1990-01-01",
+                        "date_of_issue": "2021-06-15",
+                        "date_of_expiry": "2031-06-15",
+                        "documents": [
+                          {
+                            "sandbox_sample": null,
+                            "document_name": "Brazil - Passport (2015)",
+                            "is_default": true,
+                            "first_name": "ALICE",
+                            "last_name": "SILVA",
+                            "date_of_birth": "1990-01-01",
+                            "gender": "F",
+                            "nationality": "BRA",
+                            "id_country": "BRA",
+                            "identification_number": "FX123456"
+                          }
+                        ]
+                      },
+                      "delivery_conventions": {
+                        "email_optin": {
+                          "description": "By default sandbox sessions do not send emails. Use one of these patterns on the recipient address to deliver them.",
+                          "patterns": [
+                            {
+                              "pattern": "<local>+sandbox@<domain>",
+                              "example": "alice+sandbox@example.com"
+                            },
+                            {
+                              "pattern": "*@didit.test",
+                              "example": "alice@didit.test"
+                            }
+                          ]
+                        },
+                        "phone_otp_code": {
+                          "description": "Sandbox phone OTP check accepts any code.",
+                          "value": "123456"
+                        },
+                        "email_otp_code": {
+                          "description": "Sandbox email OTP check accepts any code.",
+                          "value": "123456"
+                        }
+                      },
+                      "travel_rule": {
+                        "legal_name": "Didit Test VASP",
+                        "lei": "DIDITESTVASP00000001",
+                        "jurisdiction": "GB",
+                        "compliance_email": "travel-rule-test-vasp@didit.test",
+                        "travel_address": "trp:test-vasp.didit.test/trp/inquiries/test-vasp/?t=i",
+                        "network_codes": {
+                          "GTR": "DIDITTESTVASP",
+                          "TRUST": "DIDITTESTVASP",
+                          "VERIFYVASP": "didit-test-vasp",
+                          "SYGNA": "DIDITTESTVASP"
+                        },
+                        "routes": [
+                          "TEST_VASP"
+                        ],
+                        "chain": "ETH",
+                        "timeout_window_seconds": 60,
+                        "default_scenario": "accept",
+                        "inbound_scenarios": [
+                          "accept",
+                          "name_mismatch"
+                        ],
+                        "scenarios": [
+                          {
+                            "slug": "accept",
+                            "route": "TEST_VASP",
+                            "title": "Test VASP - accepts",
+                            "description": "The test VASP accepts the transfer and returns the beneficiary identity. The exchange completes; send the on-chain id to finish it.",
+                            "beneficiary_name": "Didit Test VASP",
+                            "beneficiary_wallet_address": "0xc00c4cd93ff83953ce3347b33656d68ab8f35cfb",
+                            "chain": "ETH",
+                            "travel_rule_status": "COMPLETED",
+                            "answers": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No Didit-issued credential was sent, the credential is not active, or a live session's token was used."
+          }
+        }
+      }
+    },
     "/v3/transactions/{transaction_id}/travel-rule/deliveries/": {
       "get": {
         "summary": "List Travel Rule delivery history",
@@ -92509,41 +92930,145 @@
             "lang": "curl",
             "label": "curl",
             "source": "curl -X GET 'https://verification.didit.me/v3/transactions/11111111-2222-3333-4444-555555555555/travel-rule/deliveries/?limit=100&offset=0' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ]
+      }
+    },
+    "/v3/transactions/{transaction_id}/travel-rule/user-link/": {
+      "post": {
+        "summary": "Create or email a Travel Rule end-user link",
+        "description": "Issue a new link and revoke previous open links for this transfer. Requires write access to transactions and an outbound transfer in AWAITING_COUNTERPARTY, COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, UNCONFIRMED_OWNERSHIP or ON_HOLD. channel=email uses the end user's Didit-record email and verification-session language when available. A send failure returns the link with emailed_to empty; email_available reports address availability, not delivery. See [User links](/management-api/travel-rule/create-user-link).",
+        "operationId": "createTravelRuleUserLink",
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "transactions.travel_rule",
+          "method": "create_user_link",
+          "auth": "api_key",
+          "server": true
+        },
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "description": "Didit-stable transaction UUID that owns the transfer.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TravelRuleUserLinkRequest"
+              },
+              "example": {
+                "channel": "link"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleUserLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request fields."
+          },
+          "403": {
+            "description": "Missing permission to write transactions."
+          },
+          "404": {
+            "description": "Unknown transaction or no Travel Rule transfer."
+          },
+          "409": {
+            "description": "Transfer direction/status does not allow a link, or channel=email has no end-user address. For the latter, code=end_user_email_missing; retry with channel=link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "Conflict explanation."
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Present when email is unavailable.",
+                      "enum": [
+                        "end_user_email_missing"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ]
+                },
+                "example": {
+                  "detail": "This end user has no email on their Didit record. Copy the link instead.",
+                  "code": "end_user_email_missing"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/transactions/{transaction_id}/travel-rule/user-link/' \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"channel\": \"link\"}'"
           },
           {
             "lang": "python",
             "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nfor item in client.transactions.travel_rule.list_deliveries(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.transactions.travel_rule.create_user_link(\n    \"11111111-2222-3333-4444-555555555555\",\n    channel=\"link\",\n)\nprint(result)"
           },
           {
             "lang": "javascript",
             "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.transactions.travelRule.listDeliveries(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.transactions.travelRule.createUserLink(\"11111111-2222-3333-4444-555555555555\", {\n  channel: \"link\",\n});\nconsole.log(result);"
           },
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.Transactions.TravelRule.ListDeliveriesAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TransactionsTravelRuleListDeliveriesParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Transactions.TravelRule.CreateUserLink(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleUserLinkRequest{\n\tChannel: didit.Some(didit.TravelRuleUserLinkRequestChannel(\"link\")),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
             "label": "Java",
-            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.transactions().travelRule().listDeliveries(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleUserLinkRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.transactions().travelRule().createUserLink(\"11111111-2222-3333-4444-555555555555\", TravelRuleUserLinkRequest.builder()\n        .channel(TravelRuleUserLinkRequest.Channel.of(\"link\"))\n        .build());\nSystem.out.println(result);"
           },
           {
             "lang": "php",
             "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\nforeach ($didit->transactions->travelRule->listDeliveries('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->transactions->travelRule->createUserLink('11111111-2222-3333-4444-555555555555', [\n    'channel' => 'link',\n]);\nprint_r($result->toArray());"
           },
           {
             "lang": "ruby",
             "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.transactions.travel_rule.list_deliveries(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.transactions.travel_rule.create_user_link(\n  \"11111111-2222-3333-4444-555555555555\",\n  channel: \"link\"\n)\nputs result.to_h"
           },
           {
             "lang": "csharp",
             "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Transactions.TravelRule.ListDeliveriesAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Transactions.TravelRule.CreateUserLinkAsync(\"11111111-2222-3333-4444-555555555555\", new TravelRuleUserLinkRequest\n{\n    Channel = new TravelRuleUserLinkRequestChannel(\"link\"),\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -93869,6 +94394,11 @@
             "description": "Allow the verification flow to run on desktop browsers.",
             "default": false
           },
+          "is_session_reference_enabled": {
+            "type": "boolean",
+            "description": "On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs.",
+            "default": false
+          },
           "max_retry_attempts": {
             "type": "integer",
             "minimum": 0,
@@ -93943,6 +94473,10 @@
           "is_desktop_allowed": {
             "type": "boolean",
             "description": "Allow the verification flow to run on desktop browsers."
+          },
+          "is_session_reference_enabled": {
+            "type": "boolean",
+            "description": "On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs."
           },
           "max_retry_attempts": {
             "type": "integer",
@@ -96539,6 +97073,34 @@
               "not_requested"
             ],
             "example": "not_requested"
+          },
+          "cancel_reason": {
+            "type": "string",
+            "description": "Recorded cancellation reason, empty when unspecified.",
+            "enum": [
+              "",
+              "user_cancelled",
+              "wrong_wallet",
+              "compliance_decision",
+              "other"
+            ]
+          },
+          "cancelled_by": {
+            "type": "string",
+            "description": "Recorded cancellation actor, or an empty string when none is recorded."
+          },
+          "notify_on_answer": {
+            "type": "boolean",
+            "description": "Saved team notification preference. Initially false."
+          },
+          "user_choice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleUserChoice"
+              }
+            ],
+            "nullable": true,
+            "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
           }
         }
       },
@@ -96561,7 +97123,7 @@
       },
       "TravelRuleTransferPatchRequest": {
         "type": "object",
-        "description": "Provide exactly one of: payment_txn_id (finish), action=cancel, action=resend, action=update_compliance_email with compliance_email, action=update_originator_wallet with wallet_address, or action=beneficiary_vasp with beneficiary_vasp.",
+        "description": "Provide exactly one of: payment_txn_id (finish), action=cancel, action=resend, action=update_compliance_email with compliance_email, action=update_originator_wallet with wallet_address, or action=beneficiary_vasp with beneficiary_vasp. Alternatively, provide action=add_vasp_hint with name and optional lei and country.",
         "properties": {
           "payment_txn_id": {
             "type": "string",
@@ -96574,15 +97136,16 @@
               "resend",
               "update_compliance_email",
               "update_originator_wallet",
-              "beneficiary_vasp"
+              "beneficiary_vasp",
+              "add_vasp_hint"
             ],
-            "description": "\"cancel\" cancels a non-terminal transfer. \"resend\" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. \"update_compliance_email\" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send \"resend\" afterwards. \"update_originator_wallet\" records the wallet the funds actually left from (`wallet_address`, `memo`). \"beneficiary_vasp\" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again."
+            "description": "\"cancel\" cancels a non-terminal transfer. \"resend\" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. \"update_compliance_email\" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send \"resend\" afterwards. \"update_originator_wallet\" records the wallet the funds actually left from (`wallet_address`, `memo`). \"beneficiary_vasp\" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again. \"add_vasp_hint\" saves a counterparty name and optional LEI and country, then re-runs discovery on an outbound transfer in a resendable status."
           },
           "compliance_email": {
             "type": "string",
             "format": "email",
             "maxLength": 254,
-            "description": "Required with `action: update_compliance_email`. Kept as this transfer's `beneficiary_data.counterparty_vasp_email`: it belongs to this transfer only and joins no directory entry and no contact list."
+            "description": "Required with action=update_compliance_email. Saved in beneficiary_data.counterparty_vasp_email. If the transfer has a known directory VASP, also saved as your application-private contact for that VASP."
           },
           "wallet_address": {
             "type": "string",
@@ -96598,6 +97161,46 @@
             "type": "string",
             "format": "uuid",
             "description": "Required with action=beneficiary_vasp: the `id` of a directory VASP, from `GET /v3/travel-rule/vasps/`. Your choice outranks every automatic discovery step, which never overrides it."
+          },
+          "reason": {
+            "type": "string",
+            "description": "With action=cancel: your cancellation reason. Omitted or empty means unspecified.",
+            "enum": [
+              "",
+              "user_cancelled",
+              "wrong_wallet",
+              "compliance_decision",
+              "other"
+            ],
+            "default": ""
+          },
+          "notify_on_answer": {
+            "type": "boolean",
+            "description": "With action=resend: whether your team should be notified when the counterparty answers. Initially false; omission preserves the saved preference."
+          },
+          "name": {
+            "type": "string",
+            "description": "Required with action=add_vasp_hint. Counterparty VASP name.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "lei": {
+            "type": "string",
+            "description": "With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint.",
+            "pattern": "^([A-Za-z0-9]{20})?$",
+            "default": ""
+          },
+          "country": {
+            "type": "string",
+            "description": "With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint.",
+            "maxLength": 3,
+            "default": ""
+          },
+          "vasp_name": {
+            "type": "string",
+            "description": "With action=update_compliance_email: optional counterparty name saved with the address when nonempty.",
+            "maxLength": 255,
+            "default": ""
           }
         }
       },
@@ -96616,7 +97219,7 @@
               "directory",
               "didit"
             ],
-            "description": "directory for an entry of the shared directory; didit for a member of the Didit network."
+            "description": "directory for a shared or application-private directory entry; didit for a Didit network member."
           },
           "name": {
             "type": "string"
@@ -97048,6 +97651,15 @@
               "$ref": "#/components/schemas/TravelRuleCounterpartyQuestionnaire"
             },
             "description": "Your application's due-diligence questionnaires with this VASP, newest first. Private to your application."
+          },
+          "source": {
+            "type": "string",
+            "description": "directory for a shared directory entry, added_by_you for your application-private entry, or didit_network for a directory entry linked to a Didit customer. Separate kind=didit member results may omit this field; use kind to identify them.",
+            "enum": [
+              "didit_network",
+              "directory",
+              "added_by_you"
+            ]
           }
         },
         "example": {
@@ -97206,7 +97818,8 @@
                 "data_protection": "Encrypted at rest and in transit, stored in the EU."
               }
             }
-          ]
+          ],
+          "source": "directory"
         }
       },
       "TravelRuleCounterpartyDecision": {
@@ -97719,545 +98332,6 @@
           }
         }
       },
-      "SandboxScenarioCatalog": {
-        "type": "object",
-        "required": [
-          "scenarios",
-          "magic_values",
-          "risk_cases",
-          "sample_identity",
-          "delivery_conventions",
-          "travel_rule"
-        ],
-        "properties": {
-          "scenarios": {
-            "type": "array",
-            "description": "The session scenarios Didit can arm. A session credential narrows this list to the scenarios its workflow can produce.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxScenario"
-            }
-          },
-          "magic_values": {
-            "type": "array",
-            "description": "Every magic value in the registry, with the risk and feature it triggers.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxMagicValue"
-            }
-          },
-          "risk_cases": {
-            "type": "array",
-            "description": "Every risk a sandbox session can be stamped with, and the status it maps to.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxRiskCase"
-            }
-          },
-          "sample_identity": {
-            "$ref": "#/components/schemas/SandboxSampleIdentity"
-          },
-          "delivery_conventions": {
-            "$ref": "#/components/schemas/SandboxDeliveryConventions"
-          },
-          "travel_rule": {
-            "$ref": "#/components/schemas/SandboxTestVasp"
-          }
-        }
-      },
-      "SandboxScenario": {
-        "type": "object",
-        "required": [
-          "slug",
-          "title",
-          "description",
-          "default_status",
-          "steps",
-          "group",
-          "magic_inputs",
-          "warnings"
-        ],
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Scenario slug, accepted by `sandbox_scenario` at session create and by `POST /v3/session/{sessionId}/sandbox/arm/`.",
-            "example": "decline_aml_hit"
-          },
-          "title": {
-            "type": "string",
-            "description": "Human-readable scenario name."
-          },
-          "description": {
-            "type": "string",
-            "description": "What the scenario makes the session do."
-          },
-          "default_status": {
-            "type": "string",
-            "enum": [
-              "Approved",
-              "Declined",
-              "In Review"
-            ],
-            "description": "The session status the scenario settles on."
-          },
-          "steps": {
-            "type": "array",
-            "description": "The workflow feature steps that produce the scenario. Empty when the scenario needs no feature step.",
-            "items": {
-              "type": "string"
-            }
-          },
-          "group": {
-            "type": "string",
-            "enum": [
-              "id_document",
-              "selfie",
-              "phone_email",
-              "address",
-              "questionnaire",
-              "database",
-              "aml",
-              "bank",
-              "location",
-              "signature",
-              "company",
-              "other"
-            ],
-            "description": "The picker group the scenario is listed under."
-          },
-          "magic_inputs": {
-            "type": "object",
-            "description": "The session input field values that arm the scenario, keyed by input field name.",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "warnings": {
-            "type": "array",
-            "description": "The registry entries the scenario's magic inputs resolve to.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxScenarioWarning"
-            }
-          }
-        }
-      },
-      "SandboxScenarioWarning": {
-        "type": "object",
-        "required": [
-          "risk",
-          "feature",
-          "input_field",
-          "magic_value"
-        ],
-        "properties": {
-          "risk": {
-            "type": "string",
-            "description": "The risk the magic value stamps on the session."
-          },
-          "feature": {
-            "type": "string",
-            "description": "The feature that raises the risk."
-          },
-          "input_field": {
-            "type": "string",
-            "description": "The session input field carrying the magic value."
-          },
-          "magic_value": {
-            "type": "string",
-            "description": "The value that triggers the risk."
-          }
-        }
-      },
-      "SandboxMagicValue": {
-        "type": "object",
-        "required": [
-          "risk",
-          "feature",
-          "input_field",
-          "magic_value",
-          "description"
-        ],
-        "properties": {
-          "risk": {
-            "type": "string",
-            "description": "The risk the value stamps on the session."
-          },
-          "feature": {
-            "type": "string",
-            "description": "The feature that raises the risk."
-          },
-          "input_field": {
-            "type": "string",
-            "description": "The session input field the value belongs to."
-          },
-          "magic_value": {
-            "type": "string",
-            "description": "The value to send for that input field."
-          },
-          "description": {
-            "type": "string",
-            "description": "What the value simulates."
-          }
-        }
-      },
-      "SandboxRiskCase": {
-        "type": "object",
-        "required": [
-          "risk",
-          "feature",
-          "status_path",
-          "default_status"
-        ],
-        "properties": {
-          "risk": {
-            "type": "string",
-            "description": "The risk code."
-          },
-          "feature": {
-            "type": "string",
-            "description": "The feature that owns the risk."
-          },
-          "status_path": {
-            "type": "string",
-            "description": "The decision path the status is read from, for example `aml.status`."
-          },
-          "default_status": {
-            "type": "string",
-            "description": "The status the risk resolves to when no rule changes it."
-          }
-        }
-      },
-      "SandboxSampleIdentity": {
-        "type": "object",
-        "required": [
-          "date_of_birth",
-          "date_of_issue",
-          "date_of_expiry",
-          "documents"
-        ],
-        "properties": {
-          "date_of_birth": {
-            "type": "string",
-            "description": "Date of birth shared by the sample documents."
-          },
-          "date_of_issue": {
-            "type": "string",
-            "description": "Date of issue shared by the sample documents."
-          },
-          "date_of_expiry": {
-            "type": "string",
-            "description": "Date of expiry shared by the sample documents."
-          },
-          "documents": {
-            "type": "array",
-            "description": "The pinned sandbox documents and the exact identity each one extracts.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxSampleDocument"
-            }
-          }
-        }
-      },
-      "SandboxSampleDocument": {
-        "type": "object",
-        "required": [
-          "sandbox_sample",
-          "document_name",
-          "is_default"
-        ],
-        "properties": {
-          "sandbox_sample": {
-            "type": "string",
-            "nullable": true,
-            "description": "The sample slug that selects this document, or `null` for the default document."
-          },
-          "document_name": {
-            "type": "string",
-            "description": "The document the sandbox OCR mock returns."
-          },
-          "is_default": {
-            "type": "boolean",
-            "description": "Whether this is the document returned when no sample is selected."
-          },
-          "first_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted given name, for `expected_details`."
-          },
-          "last_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted surname, for `expected_details`."
-          },
-          "date_of_birth": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted date of birth, for `expected_details`."
-          },
-          "gender": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted sex code, for `expected_details`."
-          },
-          "nationality": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted nationality code, for `expected_details`."
-          },
-          "id_country": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted issuing country code, for `expected_details`."
-          },
-          "identification_number": {
-            "type": "string",
-            "nullable": true,
-            "description": "Extracted document number, for `expected_details`."
-          }
-        }
-      },
-      "SandboxDeliveryConventions": {
-        "type": "object",
-        "required": [
-          "email_optin",
-          "phone_otp_code",
-          "email_otp_code"
-        ],
-        "properties": {
-          "email_optin": {
-            "type": "object",
-            "required": [
-              "description",
-              "patterns"
-            ],
-            "properties": {
-              "description": {
-                "type": "string",
-                "description": "How sandbox email delivery opt-in works."
-              },
-              "patterns": {
-                "type": "array",
-                "description": "Recipient address patterns that make sandbox deliver the email.",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "pattern",
-                    "example"
-                  ],
-                  "properties": {
-                    "pattern": {
-                      "type": "string",
-                      "description": "The pattern to match."
-                    },
-                    "example": {
-                      "type": "string",
-                      "description": "An address that matches the pattern."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "phone_otp_code": {
-            "$ref": "#/components/schemas/SandboxOtpConvention"
-          },
-          "email_otp_code": {
-            "$ref": "#/components/schemas/SandboxOtpConvention"
-          }
-        }
-      },
-      "SandboxOtpConvention": {
-        "type": "object",
-        "required": [
-          "description",
-          "value"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "description": "What the sandbox accepts."
-          },
-          "value": {
-            "type": "string",
-            "description": "The code to check with."
-          }
-        }
-      },
-      "SandboxTestVasp": {
-        "type": "object",
-        "required": [
-          "legal_name",
-          "lei",
-          "jurisdiction",
-          "compliance_email",
-          "travel_address",
-          "network_codes",
-          "routes",
-          "chain",
-          "timeout_window_seconds",
-          "default_scenario",
-          "inbound_scenarios",
-          "scenarios"
-        ],
-        "properties": {
-          "legal_name": {
-            "type": "string",
-            "description": "The Test VASP's legal name. A beneficiary name of this value, or `Didit Test VASP <suffix>`, selects a scenario.",
-            "example": "Didit Test VASP"
-          },
-          "lei": {
-            "type": "string",
-            "description": "A well-formed test LEI that is not registered with GLEIF.",
-            "example": "DIDITESTVASP00000001"
-          },
-          "jurisdiction": {
-            "type": "string",
-            "description": "The Test VASP's jurisdiction.",
-            "example": "GB"
-          },
-          "compliance_email": {
-            "type": "string",
-            "description": "The Test VASP's compliance address, under a `.test` domain. Sandbox never mails it.",
-            "example": "travel-rule-test-vasp@didit.test"
-          },
-          "travel_address": {
-            "type": "string",
-            "description": "The Test VASP's travel address, under a `.test` host. It is never reachable."
-          },
-          "network_codes": {
-            "type": "object",
-            "description": "The participant code the Test VASP is known by on each network. No message is ever sent to one.",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "routes": {
-            "type": "array",
-            "description": "The rails the Test VASP answers over. `TEST_VASP` runs in process inside Didit, with no network or email transport.",
-            "items": {
-              "type": "string",
-              "enum": [
-                "TEST_VASP"
-              ]
-            }
-          },
-          "chain": {
-            "type": "string",
-            "description": "The chain of the Test VASP's wallet addresses.",
-            "example": "ETH"
-          },
-          "timeout_window_seconds": {
-            "type": "integer",
-            "description": "How long the `timeout` scenario leaves the transfer waiting before the overdue sweeper expires it."
-          },
-          "default_scenario": {
-            "type": "string",
-            "enum": [
-              "accept",
-              "decline",
-              "name_mismatch",
-              "not_reachable",
-              "timeout",
-              "self_hosted"
-            ],
-            "description": "The scenario used when no trigger names one.",
-            "example": "accept"
-          },
-          "inbound_scenarios": {
-            "type": "array",
-            "description": "The scenarios `POST /v3/travel-rule/test-vasp/inbound/` accepts.",
-            "items": {
-              "type": "string",
-              "enum": [
-                "accept",
-                "name_mismatch"
-              ]
-            }
-          },
-          "scenarios": {
-            "type": "array",
-            "description": "Every Test VASP scenario, with its trigger values and the status it ends at.",
-            "items": {
-              "$ref": "#/components/schemas/SandboxTestVaspScenario"
-            }
-          }
-        }
-      },
-      "SandboxTestVaspScenario": {
-        "type": "object",
-        "required": [
-          "slug",
-          "route",
-          "title",
-          "description",
-          "beneficiary_name",
-          "beneficiary_wallet_address",
-          "chain",
-          "travel_rule_status",
-          "answers"
-        ],
-        "properties": {
-          "slug": {
-            "type": "string",
-            "enum": [
-              "accept",
-              "decline",
-              "name_mismatch",
-              "not_reachable",
-              "timeout",
-              "self_hosted"
-            ],
-            "description": "Scenario slug."
-          },
-          "route": {
-            "type": "string",
-            "enum": [
-              "TEST_VASP"
-            ],
-            "description": "The rail this scenario answers over. It is always `TEST_VASP`, which runs in process inside Didit."
-          },
-          "title": {
-            "type": "string",
-            "description": "Human-readable scenario name."
-          },
-          "description": {
-            "type": "string",
-            "description": "What the Test VASP does in this scenario."
-          },
-          "beneficiary_name": {
-            "type": "string",
-            "description": "The beneficiary legal name that triggers this scenario."
-          },
-          "beneficiary_wallet_address": {
-            "type": "string",
-            "description": "The beneficiary wallet address that triggers this scenario, compared case-insensitively."
-          },
-          "chain": {
-            "type": "string",
-            "description": "The chain of `beneficiary_wallet_address`.",
-            "example": "ETH"
-          },
-          "travel_rule_status": {
-            "type": "string",
-            "enum": [
-              "AWAITING_COUNTERPARTY",
-              "ON_HOLD",
-              "COMPLETED",
-              "FINISHED",
-              "CANCELLED",
-              "EXPIRED",
-              "COUNTERPARTY_MISMATCHED_DATA",
-              "COUNTERPARTY_VASP_NOT_FOUND",
-              "COUNTERPARTY_VASP_NOT_REACHABLE",
-              "UNCONFIRMED_OWNERSHIP",
-              "COUNTERPARTY_VASP_GENERAL_DECLINE",
-              "NOT_ENOUGH_COUNTERPARTY_DATA",
-              "NOT_APPLICABLE"
-            ],
-            "description": "The status the exchange ends at."
-          },
-          "answers": {
-            "type": "boolean",
-            "description": "Whether the Test VASP answers at all. `false` makes the real delivery queue retry and then fail the transfer."
-          }
-        }
-      },
       "TravelRuleTestVaspInboundRequest": {
         "type": "object",
         "required": [
@@ -98633,7 +98707,7 @@
       },
       "CaseContentConfig": {
         "type": "object",
-        "description": "The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.",
+        "description": "Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it.",
         "properties": {
           "checklist": {
             "type": "object",
@@ -98735,6 +98809,21 @@
               },
               "transactions": {
                 "type": "boolean"
+              }
+            }
+          },
+          "stages": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Ordered review stages. Omitted or empty items use the default Triage, Evidence review and Decision stages.",
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "$ref": "#/components/schemas/CaseBlueprintStage"
+                },
+                "description": "At most ten stages with distinct keys. Resolving a case is a status change, not a stage."
               }
             }
           }
@@ -98892,7 +98981,8 @@
             "enum": [
               "session",
               "business_session",
-              "transaction"
+              "transaction",
+              "network"
             ],
             "nullable": true
           },
@@ -98904,7 +98994,7 @@
           "linked_entity_summary": {
             "type": "object",
             "nullable": true,
-            "description": "session_id/session_number/status for session and business_session links; uuid/txn_id/status for transaction links."
+            "description": "session_id/session_number/status for session and business_session links; uuid/txn_id/status for transaction links. Network links return only {\"uuid\": \"<network-uuid>\"}, without network member details."
           },
           "created_at": {
             "type": "string",
@@ -99003,6 +99093,17 @@
             "nullable": true,
             "minimum": 1,
             "maximum": 8760
+          },
+          "applies_to": {
+            "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
+          },
+          "stages": {
+            "type": "array",
+            "readOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/CaseBlueprintStageDefinition"
+            },
+            "description": "Configured stages, or the default stages when none are configured."
           }
         }
       },
@@ -99078,113 +99179,7 @@
             "nullable": true
           },
           "content_config": {
-            "type": "object",
-            "description": "The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected.",
-            "properties": {
-              "checklist": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "optional": {
-                    "type": "boolean",
-                    "description": "When true, a case can be resolved with incomplete checklist items."
-                  },
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "label": {
-                          "type": "string",
-                          "maxLength": 255
-                        },
-                        "order": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "aml_control": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "financial": {
-                    "type": "boolean"
-                  },
-                  "identity": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "identity": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "personal_information": {
-                    "type": "boolean"
-                  },
-                  "applicant_tags": {
-                    "type": "boolean"
-                  },
-                  "contact_information": {
-                    "type": "boolean"
-                  },
-                  "risk_overview": {
-                    "type": "boolean"
-                  },
-                  "poi_documents": {
-                    "type": "boolean"
-                  },
-                  "poa_documents": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "verifications": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "summary": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "reporting": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "fiu_reports": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "financial": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "payment_methods": {
-                    "type": "boolean"
-                  },
-                  "transactions": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/schemas/CaseContentConfig"
           },
           "creation_sources": {
             "type": "array",
@@ -99237,6 +99232,17 @@
             "nullable": true,
             "minimum": 1,
             "maximum": 8760
+          },
+          "applies_to": {
+            "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
+          },
+          "stages": {
+            "type": "array",
+            "readOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/CaseBlueprintStageDefinition"
+            },
+            "description": "Configured stages, or the default stages when none are configured."
           }
         }
       },
@@ -106055,10 +106061,11 @@
         "enum": [
           "session",
           "business_session",
-          "transaction"
+          "transaction",
+          "network"
         ],
         "type": "string",
-        "description": "* `session` - Session\n* `business_session` - Business Session\n* `transaction` - Transaction"
+        "description": "* `session` - Session\n* `business_session` - Business Session\n* `transaction` - Transaction\n* `network` - Network containing the selected case subject"
       },
       "FraudClientCredentialsErrorMessage": {
         "type": "object",
@@ -107174,7 +107181,9 @@
           "require_resolution_note": {
             "type": "boolean"
           },
-          "content_config": {},
+          "content_config": {
+            "$ref": "#/components/schemas/CaseContentConfig"
+          },
           "version": {
             "type": "integer",
             "maximum": 2147483647,
@@ -107219,6 +107228,17 @@
             "type": "string",
             "format": "date-time",
             "readOnly": true
+          },
+          "applies_to": {
+            "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
+          },
+          "stages": {
+            "type": "array",
+            "readOnly": true,
+            "items": {
+              "$ref": "#/components/schemas/CaseBlueprintStageDefinition"
+            },
+            "description": "Configured stages, or the default stages when none are configured."
           }
         },
         "required": [
@@ -115847,6 +115867,42 @@
                     }
                   }
                 },
+                "listed_company_declaration": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "The company's own declaration that it is listed on a stock exchange, or owned by a listed company, made on the Key People screen instead of naming a beneficial owner. Present in every `key_people_checks` entry unless the workflow's Returned data settings leave it out, and `null` unless the company made the declaration, which it can only do where the workflow allows it (`kyb_key_people_allow_listed_company_declaration`). Didit does not check the declaration against a stock exchange: the workflow's `kyb_key_people_listed_company_action` decides the Key People outcome (Review by default) and the `KYB_LISTED_COMPANY_DECLARED` warning is added. The company must still name at least one person who manages or represents it (director, non-executive director, chairman, representative, authorized signatory or company officer).",
+                  "required": [
+                    "type",
+                    "stock_exchange",
+                    "isin",
+                    "listed_parent_company_name"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "listed_company",
+                        "subsidiary_of_listed_company"
+                      ],
+                      "description": "`listed_company`: the company itself is listed on a stock exchange. `subsidiary_of_listed_company`: the company is owned by a listed company."
+                    },
+                    "stock_exchange": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Name of the stock exchange, as typed by the company (for example `London Stock Exchange`). `null` when left empty."
+                    },
+                    "isin": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "ISIN of the listed security: 12 characters, upper-case, no spaces, with a valid check digit (for example `GBEXAMPLE002`). `null` when left empty."
+                    },
+                    "listed_parent_company_name": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Name of the listed parent company. Only set when `type` is `subsidiary_of_listed_company`; `null` otherwise."
+                    }
+                  }
+                },
                 "warnings": {
                   "type": "array",
                   "items": {
@@ -123244,6 +123300,15 @@
               "not_requested"
             ],
             "example": "not_requested"
+          },
+          "user_choice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleUserChoice"
+              }
+            ],
+            "nullable": true,
+            "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
           }
         }
       },
@@ -129483,6 +129548,708 @@
           }
         }
       },
+      "CaseBlueprintAppliesTo": {
+        "type": "array",
+        "maxItems": 6,
+        "items": {
+          "type": "string",
+          "enum": [
+            "GENERAL",
+            "VERIFICATION_REVIEW",
+            "BUSINESS_REVIEW",
+            "AML",
+            "TRANSACTION_MONITORING",
+            "DUPLICATES"
+          ]
+        },
+        "description": "Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.",
+        "example": [
+          "AML"
+        ]
+      },
+      "CaseBlueprintStage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]{1,64}$",
+            "description": "Unique within the policy. Omit to derive from the label. The key resolved is reserved.",
+            "example": "triage"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Nonblank stage label.",
+            "example": "Triage"
+          },
+          "sla_hours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8760,
+            "nullable": true,
+            "description": "Stage SLA in hours, or null for no SLA.",
+            "example": 24
+          },
+          "worked_by": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Optional review-team UUID. A non-null value must identify an active team in this application. Omit or use null for no stage team.",
+            "example": "a0000000-0000-4000-8000-000000000001"
+          }
+        }
+      },
+      "CaseBlueprintStageDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CaseBlueprintStage"
+          }
+        ],
+        "required": [
+          "key",
+          "label",
+          "sla_hours"
+        ],
+        "description": "Normalized stage definition. worked_by is returned only when configured."
+      },
+      "CasesLinksCreateParams": {
+        "type": "object",
+        "required": [
+          "entity_type",
+          "entity_uuid"
+        ],
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "enum": [
+              "session",
+              "business_session",
+              "transaction",
+              "network"
+            ],
+            "description": "Type of record to attach. A network must be visible and contain the selected case subject."
+          },
+          "entity_uuid": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CaseBlueprintAiDraft": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Unsaved, validated proposal. Fields are optional; review the result and select assignees, teams and routing before saving.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 24,
+            "description": "Max 24 characters, e.g. \"AML investigation\"."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "content_config": {
+            "$ref": "#/components/schemas/CaseContentConfig"
+          },
+          "require_resolution_note": {
+            "type": "boolean"
+          },
+          "assignment_method": {
+            "type": "string",
+            "enum": [
+              "MANUAL",
+              "AUTOMATIC"
+            ]
+          },
+          "max_active_cases": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Automatic-mode threshold: \"fewer than N cases of this blueprint assigned\"."
+          },
+          "default_deadline_hours": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 8760,
+            "description": "Default deadline for newly opened cases. Existing case deadlines are unchanged."
+          },
+          "applies_to": {
+            "$ref": "#/components/schemas/CaseBlueprintAppliesTo"
+          }
+        }
+      },
+      "CaseBlueprintAiDraftRequest": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "Nonblank description of the review policy to propose.",
+            "example": "Draft an AML review policy with triage and evidence review stages."
+          }
+        }
+      },
+      "CaseBlueprintAiDraftResponse": {
+        "type": "object",
+        "required": [
+          "draft"
+        ],
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/CaseBlueprintAiDraft"
+          }
+        }
+      },
+      "SandboxScenarioCatalog": {
+        "type": "object",
+        "required": [
+          "scenarios",
+          "magic_values",
+          "risk_cases",
+          "sample_identity",
+          "delivery_conventions",
+          "travel_rule"
+        ],
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "description": "The session scenarios Didit can arm. A session credential narrows this list to the scenarios its workflow can produce.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxScenario"
+            }
+          },
+          "magic_values": {
+            "type": "array",
+            "description": "Every magic value in the registry, with the risk and feature it triggers.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxMagicValue"
+            }
+          },
+          "risk_cases": {
+            "type": "array",
+            "description": "Every risk a sandbox session can be stamped with, and the status it maps to.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxRiskCase"
+            }
+          },
+          "sample_identity": {
+            "$ref": "#/components/schemas/SandboxSampleIdentity"
+          },
+          "delivery_conventions": {
+            "$ref": "#/components/schemas/SandboxDeliveryConventions"
+          },
+          "travel_rule": {
+            "$ref": "#/components/schemas/SandboxTestVasp"
+          }
+        }
+      },
+      "SandboxScenario": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "description",
+          "default_status",
+          "steps",
+          "group",
+          "magic_inputs",
+          "warnings"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Scenario slug, accepted by `sandbox_scenario` at session create and by `POST /v3/session/{sessionId}/sandbox/arm/`.",
+            "example": "decline_aml_hit"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable scenario name."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the scenario makes the session do."
+          },
+          "default_status": {
+            "type": "string",
+            "enum": [
+              "Approved",
+              "Declined",
+              "In Review"
+            ],
+            "description": "The session status the scenario settles on."
+          },
+          "steps": {
+            "type": "array",
+            "description": "The workflow feature steps that produce the scenario. Empty when the scenario needs no feature step.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "id_document",
+              "selfie",
+              "phone_email",
+              "address",
+              "questionnaire",
+              "database",
+              "aml",
+              "bank",
+              "location",
+              "signature",
+              "company",
+              "other"
+            ],
+            "description": "The picker group the scenario is listed under."
+          },
+          "magic_inputs": {
+            "type": "object",
+            "description": "The session input field values that arm the scenario, keyed by input field name.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "description": "The registry entries the scenario's magic inputs resolve to.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxScenarioWarning"
+            }
+          }
+        }
+      },
+      "SandboxScenarioWarning": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "input_field",
+          "magic_value"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk the magic value stamps on the session."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that raises the risk."
+          },
+          "input_field": {
+            "type": "string",
+            "description": "The session input field carrying the magic value."
+          },
+          "magic_value": {
+            "type": "string",
+            "description": "The value that triggers the risk."
+          }
+        }
+      },
+      "SandboxMagicValue": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "input_field",
+          "magic_value",
+          "description"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk the value stamps on the session."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that raises the risk."
+          },
+          "input_field": {
+            "type": "string",
+            "description": "The session input field the value belongs to."
+          },
+          "magic_value": {
+            "type": "string",
+            "description": "The value to send for that input field."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the value simulates."
+          }
+        }
+      },
+      "SandboxRiskCase": {
+        "type": "object",
+        "required": [
+          "risk",
+          "feature",
+          "status_path",
+          "default_status"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "The risk code."
+          },
+          "feature": {
+            "type": "string",
+            "description": "The feature that owns the risk."
+          },
+          "status_path": {
+            "type": "string",
+            "description": "The decision path the status is read from, for example `aml.status`."
+          },
+          "default_status": {
+            "type": "string",
+            "description": "The status the risk resolves to when no rule changes it."
+          }
+        }
+      },
+      "SandboxSampleIdentity": {
+        "type": "object",
+        "required": [
+          "date_of_birth",
+          "date_of_issue",
+          "date_of_expiry",
+          "documents"
+        ],
+        "properties": {
+          "date_of_birth": {
+            "type": "string",
+            "description": "Date of birth shared by the sample documents."
+          },
+          "date_of_issue": {
+            "type": "string",
+            "description": "Date of issue shared by the sample documents."
+          },
+          "date_of_expiry": {
+            "type": "string",
+            "description": "Date of expiry shared by the sample documents."
+          },
+          "documents": {
+            "type": "array",
+            "description": "The pinned sandbox documents and the exact identity each one extracts.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxSampleDocument"
+            }
+          }
+        }
+      },
+      "SandboxSampleDocument": {
+        "type": "object",
+        "required": [
+          "sandbox_sample",
+          "document_name",
+          "is_default"
+        ],
+        "properties": {
+          "sandbox_sample": {
+            "type": "string",
+            "nullable": true,
+            "description": "The sample slug that selects this document, or `null` for the default document."
+          },
+          "document_name": {
+            "type": "string",
+            "description": "The document the sandbox OCR mock returns."
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is the document returned when no sample is selected."
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted given name, for `expected_details`."
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted surname, for `expected_details`."
+          },
+          "date_of_birth": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted date of birth, for `expected_details`."
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted sex code, for `expected_details`."
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted nationality code, for `expected_details`."
+          },
+          "id_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted issuing country code, for `expected_details`."
+          },
+          "identification_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Extracted document number, for `expected_details`."
+          }
+        }
+      },
+      "SandboxDeliveryConventions": {
+        "type": "object",
+        "required": [
+          "email_optin",
+          "phone_otp_code",
+          "email_otp_code"
+        ],
+        "properties": {
+          "email_optin": {
+            "type": "object",
+            "required": [
+              "description",
+              "patterns"
+            ],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "How sandbox email delivery opt-in works."
+              },
+              "patterns": {
+                "type": "array",
+                "description": "Recipient address patterns that make sandbox deliver the email.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "pattern",
+                    "example"
+                  ],
+                  "properties": {
+                    "pattern": {
+                      "type": "string",
+                      "description": "The pattern to match."
+                    },
+                    "example": {
+                      "type": "string",
+                      "description": "An address that matches the pattern."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "phone_otp_code": {
+            "$ref": "#/components/schemas/SandboxOtpConvention"
+          },
+          "email_otp_code": {
+            "$ref": "#/components/schemas/SandboxOtpConvention"
+          }
+        }
+      },
+      "SandboxOtpConvention": {
+        "type": "object",
+        "required": [
+          "description",
+          "value"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "What the sandbox accepts."
+          },
+          "value": {
+            "type": "string",
+            "description": "The code to check with."
+          }
+        }
+      },
+      "SandboxTestVasp": {
+        "type": "object",
+        "required": [
+          "legal_name",
+          "lei",
+          "jurisdiction",
+          "compliance_email",
+          "travel_address",
+          "network_codes",
+          "routes",
+          "chain",
+          "timeout_window_seconds",
+          "default_scenario",
+          "inbound_scenarios",
+          "scenarios"
+        ],
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "The Test VASP's legal name. A beneficiary name of this value, or `Didit Test VASP <suffix>`, selects a scenario.",
+            "example": "Didit Test VASP"
+          },
+          "lei": {
+            "type": "string",
+            "description": "A well-formed test LEI that is not registered with GLEIF.",
+            "example": "DIDITESTVASP00000001"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "description": "The Test VASP's jurisdiction.",
+            "example": "GB"
+          },
+          "compliance_email": {
+            "type": "string",
+            "description": "The Test VASP's compliance address, under a `.test` domain. Sandbox never mails it.",
+            "example": "travel-rule-test-vasp@didit.test"
+          },
+          "travel_address": {
+            "type": "string",
+            "description": "The Test VASP's travel address, under a `.test` host. It is never reachable."
+          },
+          "network_codes": {
+            "type": "object",
+            "description": "The participant code the Test VASP is known by on each network. No message is ever sent to one.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "routes": {
+            "type": "array",
+            "description": "The rails the Test VASP answers over. `TEST_VASP` runs in process inside Didit, with no network or email transport.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TEST_VASP"
+              ]
+            }
+          },
+          "chain": {
+            "type": "string",
+            "description": "The chain of the Test VASP's wallet addresses.",
+            "example": "ETH"
+          },
+          "timeout_window_seconds": {
+            "type": "integer",
+            "description": "How long the `timeout` scenario leaves the transfer waiting before the overdue sweeper expires it."
+          },
+          "default_scenario": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "decline",
+              "name_mismatch",
+              "not_reachable",
+              "timeout",
+              "self_hosted"
+            ],
+            "description": "The scenario used when no trigger names one.",
+            "example": "accept"
+          },
+          "inbound_scenarios": {
+            "type": "array",
+            "description": "The scenarios `POST /v3/travel-rule/test-vasp/inbound/` accepts.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accept",
+                "name_mismatch"
+              ]
+            }
+          },
+          "scenarios": {
+            "type": "array",
+            "description": "Every Test VASP scenario, with its trigger values and the status it ends at.",
+            "items": {
+              "$ref": "#/components/schemas/SandboxTestVaspScenario"
+            }
+          }
+        }
+      },
+      "SandboxTestVaspScenario": {
+        "type": "object",
+        "required": [
+          "slug",
+          "route",
+          "title",
+          "description",
+          "beneficiary_name",
+          "beneficiary_wallet_address",
+          "chain",
+          "travel_rule_status",
+          "answers"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "decline",
+              "name_mismatch",
+              "not_reachable",
+              "timeout",
+              "self_hosted"
+            ],
+            "description": "Scenario slug."
+          },
+          "route": {
+            "type": "string",
+            "enum": [
+              "TEST_VASP"
+            ],
+            "description": "The rail this scenario answers over. It is always `TEST_VASP`, which runs in process inside Didit."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable scenario name."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the Test VASP does in this scenario."
+          },
+          "beneficiary_name": {
+            "type": "string",
+            "description": "The beneficiary legal name that triggers this scenario."
+          },
+          "beneficiary_wallet_address": {
+            "type": "string",
+            "description": "The beneficiary wallet address that triggers this scenario, compared case-insensitively."
+          },
+          "chain": {
+            "type": "string",
+            "description": "The chain of `beneficiary_wallet_address`.",
+            "example": "ETH"
+          },
+          "travel_rule_status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_COUNTERPARTY",
+              "ON_HOLD",
+              "COMPLETED",
+              "FINISHED",
+              "CANCELLED",
+              "EXPIRED",
+              "COUNTERPARTY_MISMATCHED_DATA",
+              "COUNTERPARTY_VASP_NOT_FOUND",
+              "COUNTERPARTY_VASP_NOT_REACHABLE",
+              "UNCONFIRMED_OWNERSHIP",
+              "COUNTERPARTY_VASP_GENERAL_DECLINE",
+              "NOT_ENOUGH_COUNTERPARTY_DATA",
+              "NOT_APPLICABLE"
+            ],
+            "description": "The status the exchange ends at."
+          },
+          "answers": {
+            "type": "boolean",
+            "description": "Whether the Test VASP answers at all. `false` makes the real delivery queue retry and then fail the transfer."
+          }
+        }
+      },
       "TransactionRuleOverlap": {
         "type": "object",
         "required": [
@@ -129761,6 +130528,15 @@
               "not_requested"
             ],
             "example": "not_requested"
+          },
+          "user_choice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleUserChoice"
+              }
+            ],
+            "nullable": true,
+            "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
           }
         }
       },
@@ -129903,6 +130679,126 @@
           "detail"
         ],
         "description": "Expired invitations include reason and sender_name, and may include sender_contact_email. Already-used and withdrawn invitations return detail only. No recipient address, request summary or pickup URL is returned."
+      },
+      "TravelRuleUserChoice": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "True when explicit user choice was requested."
+          },
+          "waiting": {
+            "type": "boolean",
+            "description": "True with no selected directory VASP while status is AWAITING_COUNTERPARTY, COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or UNCONFIRMED_OWNERSHIP."
+          },
+          "end_user_link": {
+            "type": "string",
+            "description": "Latest open end-user link, or an empty string when none is available."
+          },
+          "link_expires_at": {
+            "type": "string",
+            "description": "Expiry of the open link, or null.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "emailed_to": {
+            "type": "string",
+            "description": "Recorded recipient of the user-choice email, or an empty string."
+          },
+          "email_available": {
+            "type": "boolean",
+            "description": "Recorded availability of an end-user email for user choice."
+          }
+        },
+        "required": [
+          "active",
+          "waiting",
+          "end_user_link",
+          "link_expires_at",
+          "emailed_to",
+          "email_available"
+        ]
+      },
+      "TravelRuleVaspCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "VASP name, trimmed; must not be empty.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "description": "Compliance email saved as an application-private contact and used for an optional invitation.",
+            "format": "email",
+            "maxLength": 254
+          },
+          "lei": {
+            "type": "string",
+            "description": "Optional LEI, normalized to uppercase.",
+            "pattern": "^([A-Za-z0-9]{20})?$",
+            "default": ""
+          },
+          "jurisdiction": {
+            "type": "string",
+            "description": "Optional ISO 3166 alpha-2 or alpha-3 country code, normalized to uppercase.",
+            "maxLength": 3,
+            "default": ""
+          },
+          "invite": {
+            "type": "boolean",
+            "default": false,
+            "description": "Send an invitation to the supplied email."
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "TravelRuleUserLinkRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "description": "link returns a new link; email also attempts to send it to the end user's Didit-record email.",
+            "enum": [
+              "link",
+              "email"
+            ],
+            "default": "link"
+          }
+        }
+      },
+      "TravelRuleUserLinkResponse": {
+        "type": "object",
+        "properties": {
+          "end_user_link": {
+            "type": "string",
+            "description": "New end-user link. Previous open links for this transfer are revoked.",
+            "format": "uri"
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "Link expiry.",
+            "format": "date-time"
+          },
+          "emailed_to": {
+            "type": "string",
+            "description": "Recipient when sending succeeded, otherwise an empty string. An email failure still returns a usable link."
+          },
+          "email_available": {
+            "type": "boolean",
+            "description": "Whether the end user has an email on their Didit record."
+          }
+        },
+        "required": [
+          "end_user_link",
+          "expires_at",
+          "emailed_to",
+          "email_available"
+        ]
       }
     },
     "securitySchemes": {

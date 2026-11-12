@@ -5,95 +5,15 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.case_blueprint_applies_to import CaseBlueprintAppliesTo
+from didit.types.components.case_blueprint_stage_definition import CaseBlueprintStageDefinition
+from didit.types.components.case_content_config import CaseContentConfig
 
 __all__ = [
     "CaseBlueprintDetail",
-    "CaseBlueprintDetailContentConfig",
-    "CaseBlueprintDetailContentConfigAmlControl",
-    "CaseBlueprintDetailContentConfigChecklist",
-    "CaseBlueprintDetailContentConfigChecklistItems",
-    "CaseBlueprintDetailContentConfigFinancial",
-    "CaseBlueprintDetailContentConfigIdentity",
-    "CaseBlueprintDetailContentConfigReporting",
-    "CaseBlueprintDetailContentConfigVerifications",
     "CaseBlueprintDetailCreationSources",
     "CaseBlueprintDetailReceivesEscalationFrom",
 ]
-
-
-class CaseBlueprintDetailContentConfigAmlControl(BaseModel):
-    enabled: bool | None = None
-
-    financial: bool | None = None
-
-    identity: bool | None = None
-
-
-class CaseBlueprintDetailContentConfigChecklistItems(BaseModel):
-    label: str | None = None
-
-    order: int | None = None
-
-
-class CaseBlueprintDetailContentConfigChecklist(BaseModel):
-    enabled: bool | None = None
-
-    optional: bool | None = None
-    """When true, a case can be resolved with incomplete checklist items."""
-
-    items: list[CaseBlueprintDetailContentConfigChecklistItems] | None = None
-
-
-class CaseBlueprintDetailContentConfigFinancial(BaseModel):
-    enabled: bool | None = None
-
-    payment_methods: bool | None = None
-
-    transactions: bool | None = None
-
-
-class CaseBlueprintDetailContentConfigIdentity(BaseModel):
-    enabled: bool | None = None
-
-    personal_information: bool | None = None
-
-    applicant_tags: bool | None = None
-
-    contact_information: bool | None = None
-
-    risk_overview: bool | None = None
-
-    poi_documents: bool | None = None
-
-    poa_documents: bool | None = None
-
-
-class CaseBlueprintDetailContentConfigReporting(BaseModel):
-    enabled: bool | None = None
-
-    fiu_reports: bool | None = None
-
-
-class CaseBlueprintDetailContentConfigVerifications(BaseModel):
-    enabled: bool | None = None
-
-    summary: bool | None = None
-
-
-class CaseBlueprintDetailContentConfig(BaseModel):
-    """The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected."""
-
-    checklist: CaseBlueprintDetailContentConfigChecklist | None = None
-
-    aml_control: CaseBlueprintDetailContentConfigAmlControl | None = None
-
-    identity: CaseBlueprintDetailContentConfigIdentity | None = None
-
-    verifications: CaseBlueprintDetailContentConfigVerifications | None = None
-
-    reporting: CaseBlueprintDetailContentConfigReporting | None = None
-
-    financial: CaseBlueprintDetailContentConfigFinancial | None = None
 
 
 class CaseBlueprintDetailCreationSources(BaseModel):
@@ -143,8 +63,8 @@ class CaseBlueprintDetail(BaseModel):
 
     four_eyes_checker_blueprint_name: str | None = None
 
-    content_config: CaseBlueprintDetailContentConfig | None = None
-    """The six togglable sections that drive which tabs and fields appear on the case page. Unknown sections or keys are rejected."""
+    content_config: CaseContentConfig | None = None
+    """Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it."""
 
     creation_sources: list[CaseBlueprintDetailCreationSources] | None = None
     """Connectors currently routing new cases into this blueprint."""
@@ -157,3 +77,9 @@ class CaseBlueprintDetail(BaseModel):
     version: int | None = None
 
     default_deadline_hours: int | None = None
+
+    applies_to: CaseBlueprintAppliesTo | None = None
+    """Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot."""
+
+    stages: list[CaseBlueprintStageDefinition] | None = None
+    """Configured stages, or the default stages when none are configured."""

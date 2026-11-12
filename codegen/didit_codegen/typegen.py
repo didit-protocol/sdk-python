@@ -117,6 +117,8 @@ class Registry:
     def __init__(self) -> None:
         self.defs: dict[str, TypeDef] = {}
         self.modules: dict[str, list[str]] = {}
+        # (module, name): operation params modules that re-export a component declared elsewhere.
+        self.reexports: dict[str, str] = {}
 
     def add(self, td: TypeDef) -> None:
         existing = self.defs.get(td.name)

@@ -120,7 +120,7 @@ __all__ = [
 class TravelRule(SyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
     Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
@@ -386,7 +386,7 @@ class TravelRule(SyncAPIResource):
     ) -> SyncPage[VaspDirectoryEntry]:
         """Search the VASP directory.
 
-        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires.
+        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires. Includes entries your application added privately. The optional source field distinguishes their provenance; kind=didit member results may omit source.
 
         ``GET /v3/travel-rule/vasps/``
 
@@ -423,6 +423,57 @@ class TravelRule(SyncAPIResource):
                     "responsiveness": responsiveness,
                     "limit": limit,
                     "offset": offset,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def create_vasp(
+        self,
+        *,
+        name: str,
+        email: str,
+        lei: str | NotGiven = NOT_GIVEN,
+        jurisdiction: str | NotGiven = NOT_GIVEN,
+        invite: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> VaspDirectoryEntry:
+        """Create a private VASP directory entry.
+
+        Add a VASP privately to your application and optionally invite it. Requires write access to transactions. The response uses source=added_by_you. A matching visible name or LEI returns 409 with the existing vasp_id. See [Search the directory](/management-api/travel-rule/search-vasps).
+
+        ``POST /v3/travel-rule/vasps/``
+
+        Args:
+          name: VASP name, trimmed; must not be empty.
+          email: Compliance email saved as an application-private contact and used for an optional invitation.
+          lei: Optional LEI, normalized to uppercase.
+          jurisdiction: Optional ISO 3166 alpha-2 or alpha-3 country code, normalized to uppercase.
+          invite: Send an invitation to the supplied email.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "VaspDirectoryEntry",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/",
+                cast_to=VaspDirectoryEntry,
+                auth="api_key",
+                body={
+                    "name": name,
+                    "email": email,
+                    "lei": lei,
+                    "jurisdiction": jurisdiction,
+                    "invite": invite,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -868,7 +919,7 @@ class TravelRule(SyncAPIResource):
 class AsyncTravelRule(AsyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``clear_vasp_decision``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
     Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
@@ -1136,7 +1187,7 @@ class AsyncTravelRule(AsyncAPIResource):
     ) -> AsyncPaginator[VaspDirectoryEntry]:
         """Search the VASP directory.
 
-        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires.
+        Paginated, name-sorted search of the VASP directory: the shared directory entries, which Didit builds from the ESMA interim MiCA register, the public TRISA directory, the global LEI register and its own curation, plus the members of the Didit network. Each row carries the routes your application has to it today. Your own application's profile is never listed. Rows also carry the shared due-diligence assessment and your application's own decision, entity screening and questionnaires. Includes entries your application added privately. The optional source field distinguishes their provenance; kind=didit member results may omit source.
 
         ``GET /v3/travel-rule/vasps/``
 
@@ -1173,6 +1224,57 @@ class AsyncTravelRule(AsyncAPIResource):
                     "responsiveness": responsiveness,
                     "limit": limit,
                     "offset": offset,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def create_vasp(
+        self,
+        *,
+        name: str,
+        email: str,
+        lei: str | NotGiven = NOT_GIVEN,
+        jurisdiction: str | NotGiven = NOT_GIVEN,
+        invite: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> VaspDirectoryEntry:
+        """Create a private VASP directory entry.
+
+        Add a VASP privately to your application and optionally invite it. Requires write access to transactions. The response uses source=added_by_you. A matching visible name or LEI returns 409 with the existing vasp_id. See [Search the directory](/management-api/travel-rule/search-vasps).
+
+        ``POST /v3/travel-rule/vasps/``
+
+        Args:
+          name: VASP name, trimmed; must not be empty.
+          email: Compliance email saved as an application-private contact and used for an optional invitation.
+          lei: Optional LEI, normalized to uppercase.
+          jurisdiction: Optional ISO 3166 alpha-2 or alpha-3 country code, normalized to uppercase.
+          invite: Send an invitation to the supplied email.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "VaspDirectoryEntry",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/",
+                cast_to=VaspDirectoryEntry,
+                auth="api_key",
+                body={
+                    "name": name,
+                    "email": email,
+                    "lei": lei,
+                    "jurisdiction": jurisdiction,
+                    "invite": invite,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1624,6 +1726,7 @@ class TravelRuleWithRawResponse:
             resource.send_compliance_email_confirmation
         )
         self.list_vasps = to_raw_response_wrapper(resource.list_vasps)
+        self.create_vasp = to_raw_response_wrapper(resource.create_vasp)
         self.retrieve_vasp = to_raw_response_wrapper(resource.retrieve_vasp)
         self.retrieve_vasp_decision = to_raw_response_wrapper(resource.retrieve_vasp_decision)
         self.update_vasp_decision = to_raw_response_wrapper(resource.update_vasp_decision)
@@ -1693,6 +1796,7 @@ class AsyncTravelRuleWithRawResponse:
             resource.send_compliance_email_confirmation
         )
         self.list_vasps = async_to_raw_response_wrapper(resource.list_vasps)
+        self.create_vasp = async_to_raw_response_wrapper(resource.create_vasp)
         self.retrieve_vasp = async_to_raw_response_wrapper(resource.retrieve_vasp)
         self.retrieve_vasp_decision = async_to_raw_response_wrapper(resource.retrieve_vasp_decision)
         self.update_vasp_decision = async_to_raw_response_wrapper(resource.update_vasp_decision)
@@ -1774,6 +1878,7 @@ class TravelRuleWithStreamingResponse:
             resource.send_compliance_email_confirmation
         )
         self.list_vasps = to_streamed_response_wrapper(resource.list_vasps)
+        self.create_vasp = to_streamed_response_wrapper(resource.create_vasp)
         self.retrieve_vasp = to_streamed_response_wrapper(resource.retrieve_vasp)
         self.retrieve_vasp_decision = to_streamed_response_wrapper(resource.retrieve_vasp_decision)
         self.update_vasp_decision = to_streamed_response_wrapper(resource.update_vasp_decision)
@@ -1855,6 +1960,7 @@ class AsyncTravelRuleWithStreamingResponse:
             resource.send_compliance_email_confirmation
         )
         self.list_vasps = async_to_streamed_response_wrapper(resource.list_vasps)
+        self.create_vasp = async_to_streamed_response_wrapper(resource.create_vasp)
         self.retrieve_vasp = async_to_streamed_response_wrapper(resource.retrieve_vasp)
         self.retrieve_vasp_decision = async_to_streamed_response_wrapper(
             resource.retrieve_vasp_decision

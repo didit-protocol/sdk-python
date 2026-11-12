@@ -25,6 +25,7 @@ from didit.types.components.travel_rule_test_vasp_inbound_response import (
     TravelRuleTestVaspInboundResponse,
 )
 from didit.types.components.travel_rule_transfer_detail import TravelRuleTransferDetail
+from didit.types.components.travel_rule_user_link_response import TravelRuleUserLinkResponse
 
 __all__ = [
     "TransactionsTravelRule",
@@ -39,7 +40,7 @@ __all__ = [
 class TransactionsTravelRule(SyncAPIResource):
     """The ``transactions.travel_rule`` resource of the Didit API.
 
-    Methods: ``confirm_ownership``, ``create_message``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
+    Methods: ``confirm_ownership``, ``create_message``, ``create_user_link``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
     """
 
     @cached_property
@@ -63,6 +64,7 @@ class TransactionsTravelRule(SyncAPIResource):
             "update_compliance_email",
             "update_originator_wallet",
             "beneficiary_vasp",
+            "add_vasp_hint",
         ]
         | str
         | NotGiven = NOT_GIVEN,
@@ -70,25 +72,39 @@ class TransactionsTravelRule(SyncAPIResource):
         wallet_address: str | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
         beneficiary_vasp: str | NotGiven = NOT_GIVEN,
+        reason: Literal["", "user_cancelled", "wrong_wallet", "compliance_decision", "other"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        notify_on_answer: bool | NotGiven = NOT_GIVEN,
+        name: str | NotGiven = NOT_GIVEN,
+        lei: str | NotGiven = NOT_GIVEN,
+        country: str | NotGiven = NOT_GIVEN,
+        vasp_name: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> TravelRuleTransferDetail:
-        """Finish, cancel, resend, or update the originator wallet of a Travel Rule transfer.
+        """Update a Travel Rule transfer.
 
-        Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{"action": "cancel"}` to cancel a non-terminal transfer, or `{"action": "resend"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{"action": "update_compliance_email", "compliance_email": "desk@example.com"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{"action": "update_originator_wallet", "wallet_address": "..."}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{"action": "beneficiary_vasp", "beneficiary_vasp": "<directory VASP id>"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again.
+        Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{"action": "cancel"}` to cancel a non-terminal transfer, or `{"action": "resend"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{"action": "update_compliance_email", "compliance_email": "desk@example.com"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{"action": "update_originator_wallet", "wallet_address": "..."}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{"action": "beneficiary_vasp", "beneficiary_vasp": "<directory VASP id>"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again. Cancellation accepts an optional reason and returns cancel_reason and cancelled_by. Resend accepts notify_on_answer; omission preserves the saved preference, initially false. Resend invalidates the previous counterparty pickup link. action=add_vasp_hint requires name, accepts lei and country, saves the hint and re-runs discovery under the same outbound/status restrictions as resend. update_compliance_email also accepts vasp_name and saves the address as an application-private contact when the transfer has a known directory VASP.
 
         ``PATCH /v3/transactions/{transaction_id}/travel-rule/``
 
         Args:
           transaction_id: Didit-stable transaction UUID that owns the transfer.
           payment_txn_id: The on-chain transaction hash. Requires the transfer to be an outbound transfer in COMPLETED status.
-          action: "cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again.
-          compliance_email: Required with `action: update_compliance_email`. Kept as this transfer's `beneficiary_data.counterparty_vasp_email`: it belongs to this transfer only and joins no directory entry and no contact list.
+          action: "cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again. "add_vasp_hint" saves a counterparty name and optional LEI and country, then re-runs discovery on an outbound transfer in a resendable status.
+          compliance_email: Required with action=update_compliance_email. Saved in beneficiary_data.counterparty_vasp_email. If the transfer has a known directory VASP, also saved as your application-private contact for that VASP.
           wallet_address: With `action: update_originator_wallet`: the wallet the funds left from. When the transfer's UTXO inputs are known it must be one of them.
           memo: With `action: update_originator_wallet`: the wallet's memo or tag on a memo network. Optional.
           beneficiary_vasp: Required with action=beneficiary_vasp: the `id` of a directory VASP, from `GET /v3/travel-rule/vasps/`. Your choice outranks every automatic discovery step, which never overrides it.
+          reason: With action=cancel: your cancellation reason. Omitted or empty means unspecified.
+          notify_on_answer: With action=resend: whether your team should be notified when the counterparty answers. Initially false; omission preserves the saved preference.
+          name: Required with action=add_vasp_hint. Counterparty VASP name.
+          lei: With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint.
+          country: With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint.
+          vasp_name: With action=update_compliance_email: optional counterparty name saved with the address when nonempty.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -109,6 +125,12 @@ class TransactionsTravelRule(SyncAPIResource):
                     "wallet_address": wallet_address,
                     "memo": memo,
                     "beneficiary_vasp": beneficiary_vasp,
+                    "reason": reason,
+                    "notify_on_answer": notify_on_answer,
+                    "name": name,
+                    "lei": lei,
+                    "country": country,
+                    "vasp_name": vasp_name,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -347,11 +369,51 @@ class TransactionsTravelRule(SyncAPIResource):
             ),
         )
 
+    def create_user_link(
+        self,
+        transaction_id: str,
+        *,
+        channel: Literal["link", "email"] | str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleUserLinkResponse:
+        """Create or email a Travel Rule end-user link.
+
+        Issue a new link and revoke previous open links for this transfer. Requires write access to transactions and an outbound transfer in AWAITING_COUNTERPARTY, COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, UNCONFIRMED_OWNERSHIP or ON_HOLD. channel=email uses the end user's Didit-record email and verification-session language when available. A send failure returns the link with emailed_to empty; email_available reports address availability, not delivery. See [User links](/management-api/travel-rule/create-user-link).
+
+        ``POST /v3/transactions/{transaction_id}/travel-rule/user-link/``
+
+        Args:
+          transaction_id: Didit-stable transaction UUID that owns the transfer.
+          channel: link returns a new link; email also attempts to send it to the end user's Didit-record email.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleUserLinkResponse",
+            self._client.request(
+                "post",
+                "/v3/transactions/{transaction_id}/travel-rule/user-link/",
+                cast_to=TravelRuleUserLinkResponse,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                body={"channel": channel},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTransactionsTravelRule(AsyncAPIResource):
     """The ``transactions.travel_rule`` resource of the Didit API.
 
-    Methods: ``confirm_ownership``, ``create_message``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
+    Methods: ``confirm_ownership``, ``create_message``, ``create_user_link``, ``list_deliveries``, ``list_messages``, ``trigger_test_vasp_inbound``, ``update_transfer``.
     """
 
     @cached_property
@@ -375,6 +437,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
             "update_compliance_email",
             "update_originator_wallet",
             "beneficiary_vasp",
+            "add_vasp_hint",
         ]
         | str
         | NotGiven = NOT_GIVEN,
@@ -382,25 +445,39 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         wallet_address: str | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
         beneficiary_vasp: str | NotGiven = NOT_GIVEN,
+        reason: Literal["", "user_cancelled", "wrong_wallet", "compliance_decision", "other"]
+        | str
+        | NotGiven = NOT_GIVEN,
+        notify_on_answer: bool | NotGiven = NOT_GIVEN,
+        name: str | NotGiven = NOT_GIVEN,
+        lei: str | NotGiven = NOT_GIVEN,
+        country: str | NotGiven = NOT_GIVEN,
+        vasp_name: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> TravelRuleTransferDetail:
-        """Finish, cancel, resend, or update the originator wallet of a Travel Rule transfer.
+        """Update a Travel Rule transfer.
 
-        Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{"action": "cancel"}` to cancel a non-terminal transfer, or `{"action": "resend"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{"action": "update_compliance_email", "compliance_email": "desk@example.com"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{"action": "update_originator_wallet", "wallet_address": "..."}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{"action": "beneficiary_vasp", "beneficiary_vasp": "<directory VASP id>"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again.
+        Provide `payment_txn_id` to report the on-chain hash and move an outbound COMPLETED transfer to FINISHED (its INTERNAL-rail counterpart also moves to FINISHED), `{"action": "cancel"}` to cancel a non-terminal transfer, or `{"action": "resend"}` to route an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA again (improve the counterparty data first, e.g. add a travel_address to the destination wallet entry). resend applies to outbound transfers only. `{"action": "update_compliance_email", "compliance_email": "desk@example.com"}` replaces the compliance email of an outbound transfer in one of those three statuses, the fix for `reason: email_undeliverable`: the status does not change, and the next `resend` sends the request to that address. A resend is queued, not run inside the request: the response shows the transfer back in AWAITING_COUNTERPARTY with a `resend queued` timeline entry and a queued `delivery`, and where it went arrives as a `travel_rule.status.updated` webhook. When the transfer went over GTR, VerifyVASP or Sygna Bridge, the network learns the on-chain hash or the cancellation after the response, with retries; `delivery` shows how that message stands. `{"action": "update_originator_wallet", "wallet_address": "..."}` records the wallet the funds actually left from on an outbound transfer, for example the address a UTXO withdrawal was broadcast from rather than the main wallet you declared. It changes the record only: nothing is sent to the counterparty again and the status stays. The originator becomes `chain_details.originator` with `source: updated`, the change is added to the `timeline` with the previous and the new wallet, and the INTERNAL-rail counterpart of the transfer is updated the same way. `{"action": "beneficiary_vasp", "beneficiary_vasp": "<directory VASP id>"}` names the counterparty yourself when discovery could not, on an outbound transfer in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE or NOT_ENOUGH_COUNTERPARTY_DATA: the transfer is routed to that VASP and sent again. Cancellation accepts an optional reason and returns cancel_reason and cancelled_by. Resend accepts notify_on_answer; omission preserves the saved preference, initially false. Resend invalidates the previous counterparty pickup link. action=add_vasp_hint requires name, accepts lei and country, saves the hint and re-runs discovery under the same outbound/status restrictions as resend. update_compliance_email also accepts vasp_name and saves the address as an application-private contact when the transfer has a known directory VASP.
 
         ``PATCH /v3/transactions/{transaction_id}/travel-rule/``
 
         Args:
           transaction_id: Didit-stable transaction UUID that owns the transfer.
           payment_txn_id: The on-chain transaction hash. Requires the transfer to be an outbound transfer in COMPLETED status.
-          action: "cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again.
-          compliance_email: Required with `action: update_compliance_email`. Kept as this transfer's `beneficiary_data.counterparty_vasp_email`: it belongs to this transfer only and joins no directory entry and no contact list.
+          action: "cancel" cancels a non-terminal transfer. "resend" re-runs routing for an outbound transfer stuck in COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, or NOT_ENOUGH_COUNTERPARTY_DATA. "update_compliance_email" replaces the compliance email the request goes to, on an outbound transfer in one of those three statuses; send "resend" afterwards. "update_originator_wallet" records the wallet the funds actually left from (`wallet_address`, `memo`). "beneficiary_vasp" names the counterparty VASP yourself (requires `beneficiary_vasp`) for an outbound transfer in one of those statuses: it is routed to that VASP and sent again. "add_vasp_hint" saves a counterparty name and optional LEI and country, then re-runs discovery on an outbound transfer in a resendable status.
+          compliance_email: Required with action=update_compliance_email. Saved in beneficiary_data.counterparty_vasp_email. If the transfer has a known directory VASP, also saved as your application-private contact for that VASP.
           wallet_address: With `action: update_originator_wallet`: the wallet the funds left from. When the transfer's UTXO inputs are known it must be one of them.
           memo: With `action: update_originator_wallet`: the wallet's memo or tag on a memo network. Optional.
           beneficiary_vasp: Required with action=beneficiary_vasp: the `id` of a directory VASP, from `GET /v3/travel-rule/vasps/`. Your choice outranks every automatic discovery step, which never overrides it.
+          reason: With action=cancel: your cancellation reason. Omitted or empty means unspecified.
+          notify_on_answer: With action=resend: whether your team should be notified when the counterparty answers. Initially false; omission preserves the saved preference.
+          name: Required with action=add_vasp_hint. Counterparty VASP name.
+          lei: With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint.
+          country: With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint.
+          vasp_name: With action=update_compliance_email: optional counterparty name saved with the address when nonempty.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -421,6 +498,12 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                     "wallet_address": wallet_address,
                     "memo": memo,
                     "beneficiary_vasp": beneficiary_vasp,
+                    "reason": reason,
+                    "notify_on_answer": notify_on_answer,
+                    "name": name,
+                    "lei": lei,
+                    "country": country,
+                    "vasp_name": vasp_name,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -659,6 +742,46 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
             ),
         )
 
+    async def create_user_link(
+        self,
+        transaction_id: str,
+        *,
+        channel: Literal["link", "email"] | str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleUserLinkResponse:
+        """Create or email a Travel Rule end-user link.
+
+        Issue a new link and revoke previous open links for this transfer. Requires write access to transactions and an outbound transfer in AWAITING_COUNTERPARTY, COUNTERPARTY_VASP_NOT_FOUND, COUNTERPARTY_VASP_NOT_REACHABLE, UNCONFIRMED_OWNERSHIP or ON_HOLD. channel=email uses the end user's Didit-record email and verification-session language when available. A send failure returns the link with emailed_to empty; email_available reports address availability, not delivery. See [User links](/management-api/travel-rule/create-user-link).
+
+        ``POST /v3/transactions/{transaction_id}/travel-rule/user-link/``
+
+        Args:
+          transaction_id: Didit-stable transaction UUID that owns the transfer.
+          channel: link returns a new link; email also attempts to send it to the end user's Didit-record email.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleUserLinkResponse",
+            await self._client.request(
+                "post",
+                "/v3/transactions/{transaction_id}/travel-rule/user-link/",
+                cast_to=TravelRuleUserLinkResponse,
+                path_params={"transaction_id": transaction_id},
+                auth="api_key",
+                body={"channel": channel},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TransactionsTravelRuleWithRawResponse:
     def __init__(self, resource: TransactionsTravelRule) -> None:
@@ -669,6 +792,7 @@ class TransactionsTravelRuleWithRawResponse:
         self.create_message = to_raw_response_wrapper(resource.create_message)
         self.trigger_test_vasp_inbound = to_raw_response_wrapper(resource.trigger_test_vasp_inbound)
         self.list_deliveries = to_raw_response_wrapper(resource.list_deliveries)
+        self.create_user_link = to_raw_response_wrapper(resource.create_user_link)
 
 
 class AsyncTransactionsTravelRuleWithRawResponse:
@@ -682,6 +806,7 @@ class AsyncTransactionsTravelRuleWithRawResponse:
             resource.trigger_test_vasp_inbound
         )
         self.list_deliveries = async_to_raw_response_wrapper(resource.list_deliveries)
+        self.create_user_link = async_to_raw_response_wrapper(resource.create_user_link)
 
 
 class TransactionsTravelRuleWithStreamingResponse:
@@ -695,6 +820,7 @@ class TransactionsTravelRuleWithStreamingResponse:
             resource.trigger_test_vasp_inbound
         )
         self.list_deliveries = to_streamed_response_wrapper(resource.list_deliveries)
+        self.create_user_link = to_streamed_response_wrapper(resource.create_user_link)
 
 
 class AsyncTransactionsTravelRuleWithStreamingResponse:
@@ -708,3 +834,4 @@ class AsyncTransactionsTravelRuleWithStreamingResponse:
             resource.trigger_test_vasp_inbound
         )
         self.list_deliveries = async_to_streamed_response_wrapper(resource.list_deliveries)
+        self.create_user_link = async_to_streamed_response_wrapper(resource.create_user_link)

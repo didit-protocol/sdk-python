@@ -4,6 +4,9 @@ from __future__ import annotations
 import datetime as _dt
 
 from didit._models import BaseModel
+from didit.types.components.case_blueprint_applies_to import CaseBlueprintAppliesTo
+from didit.types.components.case_blueprint_stage_definition import CaseBlueprintStageDefinition
+from didit.types.components.case_content_config import CaseContentConfig
 from didit.types.components.case_publication_assignment_method_enum import (
     CasePublicationAssignmentMethodEnum,
 )
@@ -41,7 +44,8 @@ class CasePublicationCaseBlueprint(BaseModel):
 
     require_resolution_note: bool | None = None
 
-    content_config: object = None
+    content_config: CaseContentConfig | None = None
+    """Case content sections and optional review stages. Unknown sections or keys are rejected. Cases retain the policy snapshot accepted when opened; later blueprint edits do not rewrite it."""
 
     version: int | None = None
 
@@ -58,3 +62,9 @@ class CasePublicationCaseBlueprint(BaseModel):
     created_at: _dt.datetime
 
     updated_at: _dt.datetime
+
+    applies_to: CaseBlueprintAppliesTo | None = None
+    """Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot."""
+
+    stages: list[CaseBlueprintStageDefinition] | None = None
+    """Configured stages, or the default stages when none are configured."""

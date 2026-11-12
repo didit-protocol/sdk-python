@@ -50,6 +50,7 @@ class TravelRuleTransfers(SyncAPIResource):
     def list(
         self,
         *,
+        search: str | NotGiven = NOT_GIVEN,
         direction: str | NotGiven = NOT_GIVEN,
         status: str | NotGiven = NOT_GIVEN,
         rail: str | NotGiven = NOT_GIVEN,
@@ -72,6 +73,7 @@ class TravelRuleTransfers(SyncAPIResource):
         ``GET /v3/travel-rule/transfers/``
 
         Args:
+          search: Exact transfer or transaction UUID, or a case-insensitive fragment of txn_id, either side's declared or resolved wallet address, or VASP name. Whitespace is trimmed; only the first 255 characters are searched. Combines with the other filters.
           direction: INBOUND, OUTBOUND, or both comma-separated. Case-sensitive.
           status: One or more transfer statuses, comma-separated.
           rail: One or more of INTERNAL, TRP, GTR, TRUST, VERIFYVASP, SYGNA, EMAIL, TEST_VASP, comma-separated.
@@ -96,6 +98,7 @@ class TravelRuleTransfers(SyncAPIResource):
                 item_type=TravelRuleTransferRow,
                 auth="api_key",
                 query={
+                    "search": search,
                     "direction": direction,
                     "status": status,
                     "rail": rail,
@@ -134,6 +137,7 @@ class AsyncTravelRuleTransfers(AsyncAPIResource):
     def list(
         self,
         *,
+        search: str | NotGiven = NOT_GIVEN,
         direction: str | NotGiven = NOT_GIVEN,
         status: str | NotGiven = NOT_GIVEN,
         rail: str | NotGiven = NOT_GIVEN,
@@ -156,6 +160,7 @@ class AsyncTravelRuleTransfers(AsyncAPIResource):
         ``GET /v3/travel-rule/transfers/``
 
         Args:
+          search: Exact transfer or transaction UUID, or a case-insensitive fragment of txn_id, either side's declared or resolved wallet address, or VASP name. Whitespace is trimmed; only the first 255 characters are searched. Combines with the other filters.
           direction: INBOUND, OUTBOUND, or both comma-separated. Case-sensitive.
           status: One or more transfer statuses, comma-separated.
           rail: One or more of INTERNAL, TRP, GTR, TRUST, VERIFYVASP, SYGNA, EMAIL, TEST_VASP, comma-separated.
@@ -180,6 +185,7 @@ class AsyncTravelRuleTransfers(AsyncAPIResource):
                 item_type=TravelRuleTransferRow,
                 auth="api_key",
                 query={
+                    "search": search,
                     "direction": direction,
                     "status": status,
                     "rail": rail,

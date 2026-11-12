@@ -8,8 +8,11 @@ from typing_extensions import TypeAlias
 __all__ = ["CaseDuplicateEntityTypeEnum"]
 
 
-CaseDuplicateEntityTypeEnum: TypeAlias = Literal["session", "business_session", "transaction"] | str
+CaseDuplicateEntityTypeEnum: TypeAlias = (
+    Literal["session", "business_session", "transaction", "network"] | str
+)
 """* `session` - Session
 * `business_session` - Business Session
 * `transaction` - Transaction
+* `network` - Network containing the selected case subject
 """

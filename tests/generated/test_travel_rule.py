@@ -63,6 +63,51 @@ def test_travel_rule_clear_vasp_decision() -> None:
     )
 
 
+def test_travel_rule_create_vasp() -> None:
+    """``POST /v3/travel-rule/vasps/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/vasps/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "name": "Example VASP",
+                "email": "compliance@example.com",
+                "jurisdiction": "DE",
+                "invite": False,
+            },
+            status=201,
+            response_json={
+                "id": "11111111-2222-3333-4444-555555555555",
+                "kind": "directory",
+                "name": "Example VASP",
+                "lei": "",
+                "jurisdiction": "DE",
+                "source": "added_by_you",
+                "contacts": [
+                    {
+                        "id": "22222222-3333-4444-5555-666666666666",
+                        "email": "compliance@example.com",
+                        "name": "",
+                        "source": "application",
+                        "scope": "application",
+                        "verified_at": None,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.travel_rule.create_vasp(
+            name="Example VASP", email="compliance@example.com", jurisdiction="DE", invite=False
+        ),
+        lambda c: c.travel_rule.create_vasp(
+            name="Example VASP", email="compliance@example.com", jurisdiction="DE", invite=False
+        ),
+        lambda r: isinstance(r, VaspDirectoryEntry),
+        lambda r: isinstance(r, VaspDirectoryEntry),
+    )
+
+
 def test_travel_rule_create_widget_session() -> None:
     """``POST /v3/travel-rule/widget-session/``"""
     check_operation(
@@ -339,6 +384,7 @@ def test_travel_rule_list_vasps() -> None:
                                 },
                             }
                         ],
+                        "source": "directory",
                     }
                 ],
             },
@@ -510,6 +556,17 @@ def test_travel_rule_register_inbound() -> None:
                     "deliveries_truncated": True,
                     "not_required_reason": "below_threshold",
                     "proof_state": "not_required",
+                    "cancel_reason": "",
+                    "cancelled_by": "sample",
+                    "notify_on_answer": True,
+                    "user_choice": {
+                        "active": True,
+                        "waiting": True,
+                        "end_user_link": "sample",
+                        "link_expires_at": "2026-01-01T00:00:00Z",
+                        "emailed_to": "sample",
+                        "email_available": True,
+                    },
                 },
             },
             strict_type=TravelRuleInboundResponse,
@@ -789,6 +846,7 @@ def test_travel_rule_retrieve_vasp() -> None:
                         },
                     }
                 ],
+                "source": "directory",
             },
         ),
         lambda c: c.travel_rule.retrieve_vasp("00000000-0000-4000-8000-000000000001"),
@@ -1562,6 +1620,7 @@ def test_travel_rule_transfers_list() -> None:
             api="verification",
             auth="api_key",
             query={
+                "search": ["sample"],
                 "direction": ["sample"],
                 "status": ["sample"],
                 "rail": ["sample"],
@@ -1608,6 +1667,7 @@ def test_travel_rule_transfers_list() -> None:
             },
         ),
         lambda c: c.travel_rule.transfers.list(
+            search="sample",
             direction="sample",
             status="sample",
             rail="sample",
@@ -1620,6 +1680,7 @@ def test_travel_rule_transfers_list() -> None:
             offset=1,
         ),
         lambda c: c.travel_rule.transfers.list(
+            search="sample",
             direction="sample",
             status="sample",
             rail="sample",

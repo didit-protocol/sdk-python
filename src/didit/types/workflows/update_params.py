@@ -31,6 +31,9 @@ class WorkflowsUpdateParams(TypedDict, total=False):
     is_desktop_allowed: bool
     """Allow the verification flow to run on desktop browsers."""
 
+    is_session_reference_enabled: bool
+    """On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs."""
+
     max_retry_attempts: int
     """Maximum retry attempts allowed after a declined verification. `0` blocks the user after the first decline."""
 

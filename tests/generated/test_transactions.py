@@ -18,6 +18,7 @@ from didit.types.components.travel_rule_test_vasp_inbound_response import (
     TravelRuleTestVaspInboundResponse,
 )
 from didit.types.components.travel_rule_transfer_detail import TravelRuleTransferDetail
+from didit.types.components.travel_rule_user_link_response import TravelRuleUserLinkResponse
 from didit.types.transactions.create_sdk_token_response import TransactionsCreateSdkTokenResponse
 from didit.types.transactions.list_response import TransactionsListResponseResults
 from tests.harness import BINARY_BODY, Expect, check_operation
@@ -1523,6 +1524,17 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
                 "deliveries_truncated": True,
                 "not_required_reason": "below_threshold",
                 "proof_state": "not_required",
+                "cancel_reason": "",
+                "cancelled_by": "sample",
+                "notify_on_answer": True,
+                "user_choice": {
+                    "active": True,
+                    "waiting": True,
+                    "end_user_link": "sample",
+                    "link_expires_at": "2026-01-01T00:00:00Z",
+                    "emailed_to": "sample",
+                    "email_available": True,
+                },
             },
             strict_type=TravelRuleTransferDetail,
         ),
@@ -1593,6 +1605,35 @@ def test_transactions_travel_rule_create_message() -> None:
         ),
         lambda r: isinstance(r, TravelRuleMessage),
         lambda r: isinstance(r, TravelRuleMessage),
+    )
+
+
+def test_transactions_travel_rule_create_user_link() -> None:
+    """``POST /v3/transactions/{transaction_id}/travel-rule/user-link/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/transactions/00000000-0000-4000-8000-000000000001/travel-rule/user-link/",
+            api="verification",
+            auth="api_key",
+            json_body={"channel": "link"},
+            status=200,
+            response_json={
+                "end_user_link": "https://example.com/resource",
+                "expires_at": "2026-01-01T00:00:00Z",
+                "emailed_to": "sample",
+                "email_available": True,
+            },
+            strict_type=TravelRuleUserLinkResponse,
+        ),
+        lambda c: c.transactions.travel_rule.create_user_link(
+            "00000000-0000-4000-8000-000000000001", channel="link"
+        ),
+        lambda c: c.transactions.travel_rule.create_user_link(
+            "00000000-0000-4000-8000-000000000001", channel="link"
+        ),
+        lambda r: isinstance(r, TravelRuleUserLinkResponse),
+        lambda r: isinstance(r, TravelRuleUserLinkResponse),
     )
 
 
@@ -1817,6 +1858,17 @@ def test_transactions_travel_rule_trigger_test_vasp_inbound() -> None:
                     "deliveries_truncated": True,
                     "not_required_reason": "below_threshold",
                     "proof_state": "not_required",
+                    "cancel_reason": "",
+                    "cancelled_by": "sample",
+                    "notify_on_answer": True,
+                    "user_choice": {
+                        "active": True,
+                        "waiting": True,
+                        "end_user_link": "sample",
+                        "link_expires_at": "2026-01-01T00:00:00Z",
+                        "emailed_to": "sample",
+                        "email_available": True,
+                    },
                 },
             },
             strict_type=TravelRuleTestVaspInboundResponse,
@@ -1964,6 +2016,17 @@ def test_transactions_travel_rule_update_transfer() -> None:
                 "deliveries_truncated": True,
                 "not_required_reason": "below_threshold",
                 "proof_state": "not_required",
+                "cancel_reason": "",
+                "cancelled_by": "sample",
+                "notify_on_answer": True,
+                "user_choice": {
+                    "active": True,
+                    "waiting": True,
+                    "end_user_link": "sample",
+                    "link_expires_at": "2026-01-01T00:00:00Z",
+                    "emailed_to": "sample",
+                    "email_available": True,
+                },
             },
             strict_type=TravelRuleTransferDetail,
         ),
