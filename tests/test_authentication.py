@@ -1957,7 +1957,7 @@ def test_agent_consent_malformed_2xx_keeps_no_parser_cause(
             assertion={"id": credential},
         )
     assert info.value.__cause__ is None
-    assert info.value.__suppress_context__ or info.value.__context__ is None
+    assert info.value.__context__ is None
     assert credential not in repr(info.value)
 
 

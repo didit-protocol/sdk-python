@@ -370,7 +370,7 @@ class _AuthenticationBase:
             except Exception:  # a serializer's message may hold a credential
                 data = None
             if data is None:
-                raise TypeError(_ENCODE_FAILURE) from None
+                raise TypeError(_ENCODE_FAILURE)
             body["assertion"] = data
         if scopes is not None:
             if isinstance(scopes, str):
@@ -390,7 +390,7 @@ class _AuthenticationBase:
         except Exception:  # a serializer's message may hold a credential
             sent = None
         if sent is None:
-            raise TypeError(_ENCODE_FAILURE) from None
+            raise TypeError(_ENCODE_FAILURE)
         secrets = [token, challenge, *_string_values(sent.get("assertion"))]
         return _Call(
             "POST",
@@ -479,17 +479,24 @@ class _AuthenticationBase:
             raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
+        parse_error: ValueError | None = None
         try:
             return response.json()
         except ValueError as exc:
-            kept = _error_response(call, response)
-            raise APIResponseValidationError(
-                response=kept,
-                message=(
-                    f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
-                    f"got {kept.headers.get('content-type', 'no content type')}."
-                ),
-            ) from (None if call.private_body else exc)
+            parse_error = exc
+        # Raised outside the except block: the parser's error quotes the raw input, so for a consent
+        # call it is neither the cause nor the context.
+        kept = _error_response(call, response)
+        error = APIResponseValidationError(
+            response=kept,
+            message=(
+                f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
+                f"got {kept.headers.get('content-type', 'no content type')}."
+            ),
+        )
+        if call.private_body:
+            raise error
+        raise error from parse_error
 
     def _consent(self, call: _Call, response: httpx.Response) -> AgentConsentResponse:
         """The approved or the denied answer, told apart by shape (no discriminator)."""
