@@ -16,7 +16,7 @@ import subprocess
 import sys
 import threading
 import urllib.parse
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from typing import Any, TypeVar, cast
@@ -1554,6 +1554,463 @@ def test_agent_consent_redacts_every_string_of_the_assertion(
         assert leaked not in repr(info.value.body)
         assert leaked not in info.value.response.text
     assert info.value.response.status_code == 400
+
+
+def _consent_error(auth: Authentication, assertion: dict[str, Any]) -> APIStatusError:
+    with pytest.raises(APIStatusError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN, challenge=AGENT_CHALLENGE, decision="approve", assertion=assertion
+        )
+    return info.value
+
+
+def _shown(error: APIStatusError) -> str:
+    return "\n".join([str(error), repr(error), repr(error.body), error.response.text])
+
+
+def _reply_raw(issuer: FakeIssuer, status: int, content: bytes, content_type: str) -> None:
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(status, content=content, headers={"content-type": content_type}),
+    )
+
+
+def test_agent_consent_redaction_leaves_no_fragment_of_a_prefixed_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {
+            "detail": "bad abcCREDENTIALID0123456 and abcCREDENTIALID0123",
+            "o": "abcCREDENTIALID0123456",
+        },
+    )
+    error = _consent_error(
+        auth, {"id": "abcCREDENTIALID0123", "signature": "abcCREDENTIALID0123456"}
+    )
+    assert error.body == {"detail": "[redacted]", "o": "[redacted]"}
+    shown = _shown(error)
+    assert "abcCRED" not in shown
+    assert "456" not in shown
+
+
+def test_agent_consent_redacts_the_whole_string_that_contains_a_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"detail": "bad assertion xyzSECRET-0123456789abcdefxyz", "keep": "fine"},
+    )
+    error = _consent_error(auth, {"id": "SECRET-0123456789abcdef"})
+    assert error.body == {"detail": "[redacted]", "keep": "fine"}
+    assert str(error).startswith("HTTP 400: [redacted]")
+
+
+def test_agent_consent_redacts_a_secret_used_as_an_object_key(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {
+            "detail": "no",
+            "echo-SECRET-0123456789abcdef-1": "a",
+            "echo-SECRET-0123456789abcdef-2": "b",
+        },
+    )
+    error = _consent_error(auth, {"id": "SECRET-0123456789abcdef"})
+    assert error.body == {"detail": "no", "[redacted]": "a", "[redacted]2": "b"}
+    assert "SECRET-0123456789abcdef" not in _shown(error)
+
+
+def test_agent_consent_redacts_other_json_escape_spellings(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "a/b+\u00e9-padding0123456"
+    _reply_raw(
+        issuer, 400, b'{"detail":"x","echo":"a\\/b+\\u00E9-padding0123456"}', "application/json"
+    )
+    error = _consent_error(auth, {"id": secret})
+    assert error.body == {"detail": "x", "echo": "[redacted]"}
+    shown = _shown(error)
+    assert "a/b" not in shown
+    assert "00E9" not in shown
+    assert "padding0123456" not in shown
+
+
+def test_agent_consent_keeps_error_codes_and_short_assertion_strings(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    long = "Y3JlZGVudGlhbC1pZC0xMjM0NTY3ODkw"
+    issuer.reply(
+        "POST",
+        "/agents/consent/",
+        400,
+        {"error": "invalid_grant", "detail": f"id public-key {long}"},
+    )
+    error = _consent_error(auth, {"id": long, "type": "public-key"})
+    assert error.body == {"error": "invalid_grant", "detail": "[redacted]"}
+    assert "invalid_grant" in _shown(error)
+    assert long not in _shown(error)
+
+
+def test_agent_consent_redacts_strings_the_encoder_writes_from_native_values(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    listed = "nested-credential-string-0123456789"
+    keyed = "int-keyed-credential-string-0123456"
+    assertion: dict[str, Any] = {
+        "id": "short",
+        "clientExtensionResults": {"deep": (listed,), 5: keyed},
+    }
+    issuer.reply(
+        "POST", "/agents/consent/", 400, {"error": "invalid_grant", "a": listed, "b": keyed}
+    )
+    error = _consent_error(auth, assertion)
+    assert error.body == {"error": "invalid_grant", "a": "[redacted]", "b": "[redacted]"}
+    assert listed not in _shown(error)
+
+
+def test_agent_consent_reads_secrets_from_the_bytes_sent_not_a_second_serialization(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    sent = "credential-string-actually-sent-0123"
+
+    class Stateful(dict[str, Any]):
+        reads = 0
+
+        def items(self) -> Any:
+            type(self).reads += 1
+            if type(self).reads > 1:
+                raise RuntimeError("serialized twice")
+            return super().items()
+
+    extension = Stateful({"credProps": {"value": sent}})
+    issuer.reply("POST", "/agents/consent/", 400, {"error": "invalid_grant", "echo": sent})
+    error = _consent_error(auth, {"id": "short", "clientExtensionResults": extension})
+    assert error.body == {"error": "invalid_grant", "echo": "[redacted]"}
+    assert sent not in _shown(error)
+
+
+def test_agent_consent_error_response_carries_the_redacted_body(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "credential-string-0123456789"
+    issuer.reply(
+        "POST", "/agents/consent/", 400, {"error": "invalid_grant", "echo": f"x {secret} y"}
+    )
+    error = _consent_error(auth, {"id": secret})
+    assert error.response.text == '{"error":"invalid_grant","echo":"[redacted]"}'
+    assert error.response.status_code == 400
+    assert error.response.headers["content-length"] == str(len(error.response.content))
+    assert secret not in error.response.text
+    assert "credential-str" not in error.response.text
+
+
+def test_agent_consent_error_response_of_a_non_json_body_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 502, f"<html>{AGENT_CHALLENGE}</html>".encode(), "text/html")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.response.text == "[redacted]"
+
+
+def test_agent_consent_empty_body_is_redacted(auth: Authentication, issuer: FakeIssuer) -> None:
+    _reply_raw(issuer, 502, b"", "text/plain")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert error.response.text == "[redacted]"
+
+
+def test_agent_consent_keeps_a_safe_key_named_redacted_after_a_secret_key(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    secret = "SECRET-0123456789abcdef"
+    _reply_raw(
+        issuer,
+        400,
+        f'{{"a-{secret}":"x","[redacted]":"safe"}}'.encode(),
+        "application/json",
+    )
+    error = _consent_error(auth, {"id": secret})
+    assert error.body == {"[redacted]2": "x", "[redacted]": "safe"}
+
+
+def test_agent_consent_redacts_the_request_id_and_headers(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={"x-request-id": f"req-{credential}", "x-echo": credential},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.request_id == "[redacted]"
+    assert credential not in str(error)
+    assert credential not in str(error.response.headers)
+
+
+def test_agent_consent_drops_a_header_named_after_a_secret(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={f"x-{credential}": credential, "x-keep": "fine"},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.response.headers["x-keep"] == "fine"
+    assert credential not in str(error.response.headers)
+
+
+def test_agent_consent_malformed_2xx_keeps_the_request_id_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200,
+            content=f"not json {credential}".encode(),
+            headers={"x-request-id": f"req-{credential}", "content-type": "text/html"},
+        ),
+    )
+    with pytest.raises(APIResponseValidationError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in str(info.value)
+    assert info.value.response.headers["x-request-id"] == "[redacted]"
+    assert credential not in info.value.response.text
+
+
+def test_successful_approval_options_reach_the_caller_unchanged(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    issuer.reply(
+        "POST",
+        "/agents/consent/passkey/",
+        200,
+        {"options": {**AGENT_APPROVAL_OPTIONS["options"], "challenge": AGENT_CHALLENGE}},
+    )
+    result = auth.create_agent_approval_options(ACCESS_TOKEN, challenge=AGENT_CHALLENGE)
+    assert result.options is not None
+    assert result.options.challenge == AGENT_CHALLENGE
+
+
+def test_agent_consent_header_name_is_matched_case_insensitively(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "CredentialString-AbCdEf0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            400,
+            json={"error": "invalid_grant"},
+            headers={f"X-Echo-{credential}": "v", "x-keep": "fine"},
+        ),
+    )
+    error = _consent_error(auth, {"id": credential})
+    assert error.response.headers["x-keep"] == "fine"
+    assert "credentialstring" not in str(error.response.headers).lower()
+
+
+def test_agent_consent_encoding_failure_has_a_fixed_message(auth: Authentication) -> None:
+    class Boom(Mapping[str, Any]):
+        def __getitem__(self, key: str) -> Any:
+            raise RuntimeError("credential-string-0123456789")
+
+        def __iter__(self) -> Any:
+            raise RuntimeError("credential-string-0123456789")
+
+        def __len__(self) -> int:
+            return 1
+
+    with pytest.raises(TypeError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion=Boom(),
+        )
+    assert str(info.value) == "Could not encode the agent consent request."
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None or info.value.__suppress_context__
+    with pytest.raises(TypeError) as again:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": object()},
+        )
+    assert str(again.value) == "Could not encode the agent consent request."
+
+
+def test_agent_consent_body_read_failure_is_a_fixed_connection_error(clock: FakeClock) -> None:
+    class Broken(httpx.SyncByteStream):
+        def __iter__(self) -> Iterator[bytes]:
+            yield b"{"
+            raise httpx.ReadError("credential-string-0123456789 broken stream")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Broken(), request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
+        local = configure(Authentication(ISSUER, http_client=http), clock)
+        with pytest.raises(APIConnectionError) as info:
+            local.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion={"id": "x"},
+            )
+    assert "credential-string" not in str(info.value)
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None
+
+
+def test_agent_consent_debug_log_never_records_a_raw_request_id(
+    auth: Authentication, issuer: FakeIssuer, caplog: pytest.LogCaptureFixture
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200,
+            json=AGENT_CONSENT_APPROVED,
+            headers={"x-request-id": f"req-{credential}"},
+        ),
+    )
+    with caplog.at_level(logging.DEBUG, logger="didit"):
+        result = auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in caplog.text
+    assert "request id [redacted]" in caplog.text
+    assert result is not None
+
+
+def test_agent_consent_content_type_echo_stays_out_of_a_malformed_2xx_message(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200, content=b"not json", headers={"content-type": f"text/{credential}"}
+        ),
+    )
+    with pytest.raises(APIResponseValidationError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert credential not in str(info.value)
+
+
+def test_agent_consent_malformed_2xx_keeps_no_parser_cause(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    credential = "credential-string-0123456789"
+    issuer.route(
+        "POST",
+        "/agents/consent/",
+        lambda _: httpx.Response(
+            200,
+            content=f"{{not json {credential}".encode(),
+            headers={"content-type": "application/json"},
+        ),
+    )
+    with pytest.raises(APIResponseValidationError) as info:
+        auth.submit_agent_consent(
+            ACCESS_TOKEN,
+            challenge=AGENT_CHALLENGE,
+            decision="approve",
+            assertion={"id": credential},
+        )
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None
+    assert credential not in repr(info.value)
+
+
+def test_agent_consent_transport_failure_keeps_no_underlying_text(clock: FakeClock) -> None:
+    credential = 'cred"ential\\string-0123456789'
+
+    def fail(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError(f"write failed: {request.content.decode()}", request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(fail)) as http:
+        local = configure(Authentication(ISSUER, http_client=http), clock)
+        with pytest.raises(APIConnectionError) as info:
+            local.submit_agent_consent(
+                ACCESS_TOKEN,
+                challenge=AGENT_CHALLENGE,
+                decision="approve",
+                assertion={"id": credential},
+            )
+    error: BaseException | None = info.value
+    while error is not None:
+        assert "ential" not in str(error)
+        assert "write failed" not in repr(error)
+        error = error.__cause__ or error.__context__
+    assert info.value.__cause__ is None
+    assert info.value.__context__ is None
+
+
+def test_agent_consent_deeply_nested_body_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 400, b"[" * 10000 + b"]" * 10000, "application/json")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert error.response.text == "[redacted]"
+
+
+def test_agent_consent_non_json_body_is_redacted_whole(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    html = f"<html>Bad gateway {AGENT_CHALLENGE}</html>".encode()
+    _reply_raw(issuer, 502, html, "text/html")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert AGENT_CHALLENGE not in _shown(error)
+
+
+def test_agent_consent_secret_past_the_detail_cap_is_redacted(
+    auth: Authentication, issuer: FakeIssuer
+) -> None:
+    _reply_raw(issuer, 400, b"x" * 600 + AGENT_CHALLENGE.encode(), "text/plain")
+    error = _consent_error(auth, AGENT_ASSERTION)
+    assert error.body == "[redacted]"
+    assert AGENT_CHALLENGE not in _shown(error)
 
 
 def test_agent_consent_transport_errors_keep_no_body(clock: FakeClock, key: SigningKey) -> None:

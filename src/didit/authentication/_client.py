@@ -108,50 +108,88 @@ class _Call:
     errors and responses never keep it."""
 
 
-def response_for_error(call: _Call, response: httpx.Response) -> httpx.Response:
-    """The response an error may keep: for a private-body call, without its content.
-
-    The issuer may echo the challenge or the assertion, so the kept response carries the
-    status, the headers that identify it and no body.
-    """
-    if not call.private_body:
-        return response
-    headers = {
-        name: value
-        for name, value in response.headers.items()
-        if name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
-    }
-    return httpx.Response(
-        response.status_code, headers=headers, content=b"", request=response.request
-    )
+_REDACTED = "[redacted]"
+_ENCODE_FAILURE = "Could not encode the agent consent request."
 
 
 def _redacted(value: object, secrets: tuple[str, ...]) -> object:
-    """``value`` with every secret removed from its strings, at any depth."""
+    """``value`` with every string that contains a secret replaced whole, at any depth.
+
+    Object keys count as strings, and strings are compared as decoded, so the spelling of
+    the raw JSON text does not matter. A redacted key that collides with another key is
+    numbered (``[redacted]``, ``[redacted]2``, ...).
+    """
     if isinstance(value, str):
-        for secret in secrets:
-            if secret:
-                value = value.replace(secret, "[redacted]")
-        return value
+        return _REDACTED if any(secret and secret in value for secret in secrets) else value
     if isinstance(value, Mapping):
-        return {
-            key: _redacted(item, secrets)
-            for key, item in cast("Mapping[str, object]", value).items()
-        }
+        items = cast("Mapping[str, object]", value).items()
+        # Reserve every safe key name first, so a placeholder never takes one.
+        taken = {key for key, _ in items if _redacted(key, secrets) == key}
+        result: dict[str, object] = {}
+        number = 1
+        for key, item in items:
+            name = key
+            if _redacted(key, secrets) != key:
+                while True:
+                    name = _REDACTED if number == 1 else f"{_REDACTED}{number}"
+                    number += 1
+                    if name not in taken:
+                        break
+                taken.add(name)
+            result[name] = _redacted(item, secrets)
+        return result
     if isinstance(value, list):
         return [_redacted(item, secrets) for item in cast("list[object]", value)]
     return value
 
 
+def _error_response(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The response an error carries: a sanitized copy for a private-body call, else the response."""
+    return _sanitized_response(call, response) if call.private_body else response
+
+
+def _sanitized_response(call: _Call, response: httpx.Response) -> httpx.Response:
+    """The whole response of a private-body call, sanitized to build an error: the status code kept,
+    each header whose name contains a secret dropped, the other values redacted, and the body
+    redacted structurally (JSON serialised again; ``[redacted]`` when it is not JSON, was cut at the
+    size limit or is empty). Every error of these calls is built from this response only.
+    """
+    if not response.content:
+        content = _REDACTED.encode()
+    else:
+        try:
+            body = _redacted(response.json(), call.secrets)
+            content = json.dumps(body, separators=(",", ":")).encode("utf-8")
+        except (ValueError, RecursionError):
+            # Not JSON, or nested past the parser's or the walk's depth limit: not JSON.
+            content = _REDACTED.encode()
+    headers = {
+        name: cast("str", _redacted(value, call.secrets))
+        for name, value in response.headers.items()
+        if not any(secret and secret.lower() in name.lower() for secret in call.secrets)
+        and name.lower() not in ("content-length", "content-encoding", "transfer-encoding")
+    }
+    return httpx.Response(
+        response.status_code, headers=headers, content=content, request=response.request
+    )
+
+
+# Sensitive values are 16+ chars: user handles are 16-byte ids (22 base64url), credential ids 16+ bytes.
+_MIN_SECRET_LENGTH = 16
+"""Shorter assertion strings (``id``, ``type``, ``public-key``) are not secrets: matching them
+would erase error codes such as ``invalid_grant`` (docs/DESIGN.md section 10)."""
+
+
 def _string_values(value: object) -> list[str]:
-    """Every non-empty string in a nested JSON value, so none of it can leak into an error."""
+    """Every string of at least 16 characters in a nested JSON value (object keys and values),
+    so none of it can leak into an error."""
     if isinstance(value, str):
-        return [value] if value else []
+        return [value] if len(value) >= _MIN_SECRET_LENGTH else []
     if isinstance(value, Mapping):
         return [
             text
-            for item in cast("Mapping[str, object]", value).values()
-            for text in _string_values(item)
+            for key, item in cast("Mapping[str, object]", value).items()
+            for text in (*_string_values(key), *_string_values(item))
         ]
     if isinstance(value, (list, tuple)):
         return [text for item in cast("Sequence[object]", value) for text in _string_values(item)]
@@ -322,15 +360,18 @@ class _AuthenticationBase:
         if decision not in ("approve", "deny"):
             raise ValueError(f"decision must be 'approve' or 'deny', got {decision!r}.")
         body: dict[str, object] = {"challenge": challenge, "decision": decision}
-        secrets = [token, challenge]
         if assertion is not None:
-            data = (
-                assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
-                if isinstance(assertion, BaseModel)
-                else dict(assertion)
-            )
+            try:
+                data = (
+                    assertion.model_dump(mode="json", by_alias=True, exclude_none=True)
+                    if isinstance(assertion, BaseModel)
+                    else dict(assertion)
+                )
+            except Exception:  # a serializer's message may hold a credential
+                data = None
+            if data is None:
+                raise TypeError(_ENCODE_FAILURE)
             body["assertion"] = data
-            secrets += _string_values(data)
         if scopes is not None:
             if isinstance(scopes, str):
                 raise TypeError("scopes must be a list such as ['read', 'act'], not a string.")
@@ -341,11 +382,21 @@ class _AuthenticationBase:
             body["organization_ids"] = list(organization_ids)
         if lifetime is not None:
             body["lifetime"] = lifetime
+        # Encoded exactly once: the plain body decoded from these bytes is what is sent, and the secrets are
+        # read from it, so a caller's object is never serialized a second time.
+        sent: dict[str, object] | None
+        try:
+            sent = cast("dict[str, object]", json.loads(json.dumps(body, separators=(",", ":"))))
+        except Exception:  # a serializer's message may hold a credential
+            sent = None
+        if sent is None:
+            raise TypeError(_ENCODE_FAILURE)
+        secrets = [token, challenge, *_string_values(sent.get("assertion"))]
         return _Call(
             "POST",
             self._url(_AGENT_CONSENT_PATH),
             bearer=token,
-            json_body=body,
+            json_body=sent,
             secrets=tuple(secrets),
             private_body=True,
         )
@@ -390,40 +441,62 @@ class _AuthenticationBase:
         return APIConnectionError(request=request)
 
     @staticmethod
-    def _log(request: httpx.Request, response: httpx.Response, started: float) -> None:
+    def _log(
+        request: httpx.Request,
+        response: httpx.Response,
+        started: float,
+        call: _Call | None = None,
+    ) -> None:
         if log.isEnabledFor(logging.DEBUG):
+            request_id = _request_id(response.headers) or "-"
+            if call is not None and call.private_body:
+                # A consent answer may echo a secret in its request id: the log never records it.
+                request_id = cast("str", _redacted(request_id, call.secrets))
             log.debug(
                 "%s %s -> %d in %.0f ms (request id %s)",
                 request.method,
                 request.url.path,
                 response.status_code,
                 (time.monotonic() - started) * 1000,
-                _request_id(response.headers) or "-",
+                request_id,
             )
 
     @staticmethod
     def _read(call: _Call, response: httpx.Response) -> object:
         if not response.is_success:
+            if call.private_body:
+                # Every error of a consent call is built from a sanitized copy only.
+                response = _sanitized_response(call, response)
+                private_body: object = (
+                    _REDACTED if response.content == _REDACTED.encode() else response.json()
+                )
+                raise make_status_error(response, private_body)
             body: object
             try:
                 body = response.json()
             except ValueError:
                 body = response.text or None
-            if call.private_body:
-                body = _redacted(body, call.secrets)
-            raise make_status_error(response_for_error(call, response), body, redact=call.secrets)
+            raise make_status_error(response, body, redact=call.secrets)
         if response.status_code == 204 or not response.content:
             return None
+        parse_error: ValueError | None = None
         try:
             return response.json()
         except ValueError as exc:
-            raise APIResponseValidationError(
-                response=response_for_error(call, response),
-                message=(
-                    f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
-                    f"got {response.headers.get('content-type', 'no content type')}."
-                ),
-            ) from exc
+            parse_error = exc
+        # Raised outside the except block: the parser's error quotes the raw input, so for a consent
+        # call it is neither the cause nor the context.
+        kept = _error_response(call, response)
+        error = APIResponseValidationError(
+            response=kept,
+            message=(
+                f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
+                f"got {kept.headers.get('content-type', 'no content type')}."
+            ),
+        )
+        if call.private_body:
+            raise error
+        raise error from parse_error
 
     def _consent(self, call: _Call, response: httpx.Response) -> AgentConsentResponse:
         """The approved or the denied answer, told apart by shape (no discriminator)."""
@@ -435,7 +508,7 @@ class _AuthenticationBase:
             if "status" in fields:
                 return cast("AgentConsentResponse", validate_response(AgentConsentDenied, fields))
         raise APIResponseValidationError(
-            response=response_for_error(call, response),
+            response=_error_response(call, response),
             message=(
                 f"Expected an approved (code) or denied (status) answer from {call.method} "
                 f"{httpx.URL(call.url).path}."
@@ -446,7 +519,7 @@ class _AuthenticationBase:
         data = self._read(call, response)
         if not isinstance(data, dict):
             raise APIResponseValidationError(
-                response=response_for_error(call, response),
+                response=_error_response(call, response),
                 message=f"Expected a JSON object from {call.method} {httpx.URL(call.url).path}.",
             )
         return cast("ModelT", validate_response(model, cast("dict[str, Any]", data)))
@@ -823,11 +896,25 @@ class Authentication(_AuthenticationBase):
     def _send(self, call: _Call) -> httpx.Response:
         request = self._build(call, self._client)
         started = time.monotonic()
+        failure: APIConnectionError | None = None
+        response: httpx.Response | None = None
         try:
             response = self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, _kept_request(call, request)) from exc
-        self._log(request, response, started)
+            failure = self._transport_error(exc, _kept_request(call, request))
+            if not call.private_body:
+                raise failure from exc
+        except Exception:
+            if not call.private_body:
+                raise
+            failure = APIConnectionError(request=_kept_request(call, request))
+        if failure is not None:
+            # Raised outside the handler, so no context and no cause carry the transport's text, which
+            # may quote the serialized request.
+            raise failure from None
+        if response is None:  # pragma: no cover - a failure was raised above
+            raise RuntimeError("no response")
+        self._log(request, response, started, call)
         response.request = _kept_request(call, request)
         return response
 
@@ -1054,11 +1141,25 @@ class AsyncAuthentication(_AuthenticationBase):
     async def _send(self, call: _Call) -> httpx.Response:
         request = self._build(call, self._client)
         started = time.monotonic()
+        failure: APIConnectionError | None = None
+        response: httpx.Response | None = None
         try:
             response = await self._client.send(request, follow_redirects=False)
         except httpx.HTTPError as exc:
-            raise self._transport_error(exc, _kept_request(call, request)) from exc
-        self._log(request, response, started)
+            failure = self._transport_error(exc, _kept_request(call, request))
+            if not call.private_body:
+                raise failure from exc
+        except Exception:
+            if not call.private_body:
+                raise
+            failure = APIConnectionError(request=_kept_request(call, request))
+        if failure is not None:
+            # Raised outside the handler, so no context and no cause carry the transport's text, which
+            # may quote the serialized request.
+            raise failure from None
+        if response is None:  # pragma: no cover - a failure was raised above
+            raise RuntimeError("no response")
+        self._log(request, response, started, call)
         response.request = _kept_request(call, request)
         return response
 

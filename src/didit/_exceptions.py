@@ -243,7 +243,7 @@ def make_status_error(
     """Build the right :class:`APIStatusError` subclass for ``response``."""
     status = response.status_code
     message = _error_message(status, body)
-    for secret in redact:
+    for secret in sorted(redact, key=len, reverse=True):
         if secret and secret in message:
             message = message.replace(secret, "[redacted]")
     cls = _STATUS_ERRORS.get(status)

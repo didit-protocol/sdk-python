@@ -32,3 +32,15 @@ description = "Synthetic webhook secrets used by the test suite"
 regexes = [
   '''^whsec_test_[A-Za-z0-9_]+$''',
 ]
+
+# Synthetic consent-redaction test value: this one value, in this one test file, for this one rule.
+[[allowlists]]
+description = "Synthetic agent consent redaction test value"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^tests/test_authentication\.py$''',
+]
+regexes = [
+  '''^SECRET\-0123456789abcdef$''',
+]
