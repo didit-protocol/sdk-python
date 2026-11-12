@@ -489,7 +489,7 @@ class _AuthenticationBase:
                     f"Expected a JSON response from {call.method} {httpx.URL(call.url).path}, "
                     f"got {kept.headers.get('content-type', 'no content type')}."
                 ),
-            ) from exc
+            ) from (None if call.private_body else exc)
 
     def _consent(self, call: _Call, response: httpx.Response) -> AgentConsentResponse:
         """The approved or the denied answer, told apart by shape (no discriminator)."""
