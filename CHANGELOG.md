@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.14.1](https://github.com/didit-protocol/sdk-python/compare/v1.14.0...v1.14.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **authentication:** a body nested past the depth limit is not JSON ([77e8fbb](https://github.com/didit-protocol/sdk-python/commit/77e8fbb883f666c727dd1cf5adf49d06057075f5))
+* **authentication:** a consent validation error is raised outside the except block, so no parser context ([572a62a](https://github.com/didit-protocol/sdk-python/commit/572a62a3c2ed235834af38f883c02053555d264a))
+* **authentication:** a failure to encode a consent request has a fixed message ([dee0b02](https://github.com/didit-protocol/sdk-python/commit/dee0b02bdd3abd76d54fdeef6361f8dead001912))
+* **authentication:** a malformed 2xx consent error keeps no parser exception as its cause ([82ec3ee](https://github.com/didit-protocol/sdk-python/commit/82ec3ee437ff05f9d00283917e52799a544ea0e5))
+* **authentication:** a malformed 2xx consent message reads the content type from the sanitized response ([97ab037](https://github.com/didit-protocol/sdk-python/commit/97ab037fc4d8684c201711016e96a60d5a6462ff))
+* **authentication:** collect consent secrets from the JSON the request carries ([c92755b](https://github.com/didit-protocol/sdk-python/commit/c92755b1cfef53dd5c670e02a093e9bbcc0ae2b9))
+* **authentication:** keep the redacted body on the error response ([df2df88](https://github.com/didit-protocol/sdk-python/commit/df2df881dd16a95ab4e907ce34d34d014a9c22aa))
+* **authentication:** read consent secrets from the bytes that were sent ([28fc93d](https://github.com/didit-protocol/sdk-python/commit/28fc93de9fcdea23e8413b91bb0b57c7c4152f98))
+* **authentication:** redact the parsed agent-consent response structurally ([2c8ccc6](https://github.com/didit-protocol/sdk-python/commit/2c8ccc6819f5f51a05f04534eeb964eea14c28e8))
+* **authentication:** redact the parsed agent-consent response, not its raw text ([bead54b](https://github.com/didit-protocol/sdk-python/commit/bead54bd7d61c5f727a5f67243c3f8988b191271))
+* **authentication:** sanitize the whole consent response once on receipt ([3de0743](https://github.com/didit-protocol/sdk-python/commit/3de07439ef011443ebb46a09445acdbaa5c0eca7))
+* **authentication:** successful consent responses reach the caller unchanged; fold header-name case ([fba4d2c](https://github.com/didit-protocol/sdk-python/commit/fba4d2cf52654bafa8080cdc2c20e2ddb5f1c5c2))
+* **authentication:** the debug log of a consent call never records a raw request id ([83279a3](https://github.com/didit-protocol/sdk-python/commit/83279a39b8584a65a06090bc4b5145ccc217e745))
+* **authentication:** treat only assertion strings of 16+ characters as secrets ([49554e5](https://github.com/didit-protocol/sdk-python/commit/49554e59c54cfcabdd5358911919825c14a4aa51))
+* **authentication:** withhold transport text, redact empty bodies, headers and request id, keep safe key names ([cf51bff](https://github.com/didit-protocol/sdk-python/commit/cf51bff3855c7f9f64e70325ba6a40265448f8cd))
+
+
+### Documentation
+
+* **authentication:** cite why the secret length minimum is 16 ([02063ff](https://github.com/didit-protocol/sdk-python/commit/02063ffe9b8306cbcd9d73bf76c0f1cc985d6794))
+
 ## [1.14.0](https://github.com/didit-protocol/sdk-python/compare/v1.13.0...v1.14.0) (2026-11-11)
 
 
