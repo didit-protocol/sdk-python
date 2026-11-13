@@ -7,6 +7,8 @@ Use a sandbox application while you try them.
 |---|---|
 | `quickstart.py` | Create a KYC session, read its decision, verify a webhook (needs `DIDIT_WORKFLOW_ID`) |
 | `async_quickstart.py` | The same with `AsyncDidit`, and `async for` auto-pagination |
+| `poll_decision.py` | Poll a session decision until it is final, with a deadline and backoff (takes a session id) |
+| `reconcile_session.py` | Verify a webhook and re-fetch the decision from the API to reconcile it (needs `DIDIT_WEBHOOK_SECRET` and a captured body/headers) |
 | `id_verification.py` | Standalone ID verification with file uploads |
 | `aml_screening.py` | AML screening with an idempotency key, and error handling |
 | `transaction_screening.py` | Transactions (KYT): submit one, then list with auto-pagination |
