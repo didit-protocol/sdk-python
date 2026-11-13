@@ -779,7 +779,7 @@
     "/v3/session/": {
       "post": {
         "summary": "Create a verification session",
-        "description": "Create a User Verification (KYC) or Business Verification (KYB) session and receive a hosted verification `url` plus a `session_token` to redirect or embed for your end user. The `workflow_id` selects which verification steps run and whether the session is KYC or KYB.\n\nCall this from your backend (never the browser — the API key is a secret) whenever a user or business needs to be verified: at signup, before a sensitive action, or when re-verification is required. Prerequisites: a published workflow (created in the Console [Workflows](https://docs.didit.me/console/workflows) page) and an application API key with available credits. Sandbox applications bypass the credit check.\n\n**Idempotency:** when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate — with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused.\n\n**Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.",
+        "description": "Create a User Verification (KYC) or Business Verification (KYB) session and receive a hosted verification `url` plus a `session_token` to redirect or embed for your end user. The `workflow_id` selects which verification steps run and whether the session is KYC or KYB.\n\nCall this from your backend (never the browser — the API key is a secret) whenever a user or business needs to be verified: at signup, before a sensitive action, or when re-verification is required. Prerequisites: a published workflow (created in the Console [Workflows](https://docs.didit.me/console/workflows) page) and an application API key with available credits. Sandbox applications bypass the credit check.\n\n**Idempotency:** for a User Verification workflow, when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate — with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused. A Business Verification workflow creates a new session on every call.\n\n**Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after `session_expiration_time` seconds when the request sets it, otherwise after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.",
         "operationId": "post_v3_session_create",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -792,7 +792,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Session created (or returned, if an unfinished session with the same `vendor_data` already exists on the workflow's latest published version). The response is the serialized session, including the hosted verification `url` to redirect the user to.",
+            "description": "Session created (or, for a User Verification workflow, returned if an unfinished session with the same `vendor_data` already exists on the workflow's latest published version). The response is the serialized session, including the hosted verification `url` to redirect the user to.",
             "content": {
               "application/json": {
                 "schema": {
@@ -856,6 +856,12 @@
                         "ONBOARDING Q4"
                       ]
                     },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the session's link stops being valid: the start of its current validity window (its creation, or the last reset by `session_expiration_time`) plus the lifetime in force.",
+                      "example": "2026-11-19T10:00:00Z"
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -870,7 +876,7 @@
                         "Resubmitted",
                         "Awaiting User"
                       ],
-                      "description": "Current status of the session. Newly created sessions return `Not Started`. If a non-finished session already existed for the same `vendor_data` on the workflow's latest published version, the returned status reflects that existing session.",
+                      "description": "Current status of the session. Newly created sessions return `Not Started`. For a User Verification workflow, if a non-finished session already existed for the same `vendor_data` on the workflow's latest published version, the returned status reflects that existing session.",
                       "example": "Not Started"
                     },
                     "callback": {
@@ -1223,6 +1229,13 @@
                       "VIP",
                       "ONBOARDING Q4"
                     ]
+                  },
+                  "session_expiration_time": {
+                    "type": "integer",
+                    "minimum": 3600,
+                    "maximum": 2419200,
+                    "description": "Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`.",
+                    "example": 86400
                   },
                   "language": {
                     "type": "string",
@@ -16964,7 +16977,7 @@
     "/v3/bank/account-check/": {
       "post": {
         "summary": "Check a bank account",
-        "description": "Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.\n\n**What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.\n\n**What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.\n\n**Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.\n\n**Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.\n\n**Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.\n\n**API keys.** A scoped API key needs write access to sessions.",
+        "description": "Check that a bank account belongs to the person or company you name, before you send money to it. No session and no sign-in: send the name and the account, read the result. It is the [account check](/core-technology/bank-verification/account-check) of the Bank Verification step, run from your backend.\n\n**What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.\n\n**What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `name_match_score` is the 0 to 100 similarity `result` was decided on, so you can apply your own threshold; `result` stays authoritative, decided with the default thresholds (a `match` from 85, a `close_match` from 70). It is `null` when no name was compared: a `cannot_verify`, or a `no_match` for an account that does not exist. `account` comes back masked to its last 4 characters.\n\n**Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.\n\n**Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.\n\n**Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one (`name_match_score` 78), `0003` a `no_match` (`name_match_score` 0), `0006` a `no_match` for an account that does not exist (`name_match_score` null), `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match` (`name_match_score` 100).\n\n**API keys.** A scoped API key needs write access to sessions.",
         "operationId": "post_v3_bank_account_check",
         "tags": [
           "Standalone APIs"
@@ -17037,6 +17050,7 @@
                       "request_id": "c2f4a9e0-7b1d-4c3a-9e55-1d0a6b8f2a47",
                       "result": "close_match",
                       "holder_name": "MARIA R OLIVEIRA",
+                      "name_match_score": 83,
                       "account": "****0001",
                       "vendor_data": "payout_20481",
                       "created_at": "2026-10-21T14:32:08Z"
@@ -17048,6 +17062,7 @@
                       "request_id": "5b0e2d7c-41a8-4f6e-9c3b-8e7d1a2f6c90",
                       "result": "match",
                       "holder_name": null,
+                      "name_match_score": 100,
                       "account": "****6789",
                       "vendor_data": null,
                       "created_at": "2026-10-21T14:35:41Z"
@@ -87959,7 +87974,7 @@
     "/v3/address-validation/": {
       "post": {
         "summary": "Validate an address",
-        "description": "Confirm that an address exists and get it back normalised: its delivery lines, components and coordinates. It confirms the address only; it never links the address to a person.\n\n**Request.** Send the address on one line (`address`) or as structured fields (`address_line_1` and, optionally, `address_line_2`, `city`, `region`, `postal_code`), never both, and always its `country` (ISO 3166-1 alpha-2 or alpha-3).\n\n**Result.** `address_validation.status` is `verified` (confirmed to the building), `partially_verified` (confirmed only to the street or above), `not_verified` (only the region or city matched, or nothing did) or `unavailable` (the validation could not run). HTTP is `200` for every completed request, `unavailable` included; retry an `unavailable` result later.\n\n**Billing.** A live call costs $0.10 per validated address. An `unavailable` result is not charged. Nothing is stored apart from the usage record: no session is created and the result is returned only in this response.\n\n**Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, without consuming credits.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).",
+        "description": "Confirm that an address exists and get it back normalised: its delivery lines, components and coordinates. It confirms the address only; it never links the address to a person.\n\n**Request.** Send the address on one line (`address`) or as structured fields (`address_line_1` and, optionally, `address_line_2`, `city`, `region`, `postal_code`), never both, and always its `country` (ISO 3166-1 alpha-2 or alpha-3).\n\n**Result.** `address_validation.status` is `verified` (confirmed to the building), `partially_verified` (confirmed only to the street or above), `not_verified` (only the region or city matched, or nothing did) or `unavailable` (the validation could not run). HTTP is `200` for every completed request, `unavailable` included; retry an `unavailable` result later.\n\n**Billing.** A live call costs $0.10 per validated address. An `unavailable` result is not charged. Nothing is stored apart from the usage record: no session is created and the result is returned only in this response.\n\n**Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, with `address_type` and `is_residential` always `null` (the keys are present), without consuming credits.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).",
         "operationId": "post_v3_address_validation",
         "x-didit-sdk": {
           "resource": "address_validation",
@@ -88072,7 +88087,9 @@
                         },
                         "formatted_address": "1600 Amphitheatre Pkwy, Mountain View CA 94043-1351",
                         "latitude": 37.422022,
-                        "longitude": -122.08429
+                        "longitude": -122.08429,
+                        "address_type": "street",
+                        "is_residential": false
                       },
                       "created_at": "2026-10-27T11:20:00.000000+00:00"
                     }
@@ -88094,7 +88111,9 @@
                         },
                         "formatted_address": "Calle Inventada Que No Existe 99999 28046, Madrid, MADRID, SPAIN",
                         "latitude": 40.42603054,
-                        "longitude": -3.68645331
+                        "longitude": -3.68645331,
+                        "address_type": null,
+                        "is_residential": null
                       },
                       "created_at": "2026-10-27T11:21:00.000000+00:00"
                     }
@@ -88109,7 +88128,9 @@
                         "address": null,
                         "formatted_address": null,
                         "latitude": null,
-                        "longitude": null
+                        "longitude": null,
+                        "address_type": null,
+                        "is_residential": null
                       },
                       "created_at": "2026-10-27T11:22:00.000000+00:00"
                     }
@@ -126305,6 +126326,7 @@
           "request_id",
           "result",
           "holder_name",
+          "name_match_score",
           "account",
           "vendor_data",
           "created_at"
@@ -126329,6 +126351,13 @@
             "type": "string",
             "nullable": true,
             "description": "Only on a `close_match`, and only when the bank returned it: the name on the account, as the bank holds it. `null` otherwise."
+          },
+          "name_match_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "The 0 to 100 similarity between the holder name you sent and the name on the account: the score `result` was decided on, so you can apply your own threshold. `result` stays authoritative and is decided with the default thresholds, a `match` from 85 and a `close_match` from 70 up to 84; they are the workflow settings `bank_name_match_threshold` and `bank_partial_match_floor` in a verification session. A name with nothing in common scores `0`. `null` when no name was compared: `cannot_verify`, a `no_match` for an account that does not exist, or a bank that answered with its own verdict and no holder name or score."
           },
           "account": {
             "type": "string",
@@ -127916,7 +127945,9 @@
           "address",
           "formatted_address",
           "latitude",
-          "longitude"
+          "longitude",
+          "address_type",
+          "is_residential"
         ],
         "properties": {
           "status": {
@@ -127997,6 +128028,26 @@
             "type": "number",
             "nullable": true,
             "example": -122.08429
+          },
+          "address_type": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "street",
+              "po_box",
+              "high_rise",
+              "rural_route",
+              "general_delivery",
+              "firm",
+              "building",
+              null
+            ],
+            "description": "The kind of delivery point the address is, for United States and Canadian addresses: `street`, `po_box` (a PO box or lock box), `high_rise` (a high-rise or business complex), `rural_route`, `general_delivery`, `firm` (a firm or company address) or `building`. `null` for addresses in other countries, when the address has no type on record, and when `status` is `unavailable`."
+          },
+          "is_residential": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "`true` when the address is a residence, `false` when it is a business. `null` when this is unknown, when it is not available for the address's country, and when `status` is `unavailable`. Available for addresses in the United States, Great Britain, the Netherlands and Ireland."
           }
         }
       },

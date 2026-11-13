@@ -50,3 +50,15 @@ class AddressValidationResult(BaseModel):
     latitude: float | None
 
     longitude: float | None
+
+    address_type: (
+        Literal[
+            "street", "po_box", "high_rise", "rural_route", "general_delivery", "firm", "building"
+        ]
+        | str
+        | None
+    )
+    """The kind of delivery point the address is, for United States and Canadian addresses: `street`, `po_box` (a PO box or lock box), `high_rise` (a high-rise or business complex), `rural_route`, `general_delivery`, `firm` (a firm or company address) or `building`. `null` for addresses in other countries, when the address has no type on record, and when `status` is `unavailable`."""
+
+    is_residential: bool | None
+    """`true` when the address is a residence, `false` when it is a business. `null` when this is unknown, when it is not available for the address's country, and when `status` is `unavailable`. Available for addresses in the United States, Great Britain, the Netherlands and Ireland."""

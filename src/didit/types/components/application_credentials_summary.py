@@ -22,7 +22,7 @@ class ApplicationCredentialsSummary(BaseModel):
     """Use this as `x-api-key` on every verification API call. New keys start with `sk_live_` (live application) or `sk_test_` (sandbox application), followed by 43 URL-safe characters (letters, digits, `-` and `_`). Keys created before this format have no prefix and keep working unchanged."""
 
     data_location: ApplicationDataLocation | None = None
-    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico) and `ae` (United Arab Emirates) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""
+    """Where the application's verification data is stored and processed, chosen when the application is created. `eu` is the European Union (Ireland), the default. `au` (Australia, Sydney), `mx` (Mexico), `ae` (United Arab Emirates) and `us` (United States, N. Virginia) are coming soon: a request that names them answers 400 `This data location is not available yet.` An organization's Sandbox application is always in the European Union."""
 
     mode: Literal["live", "sandbox"] | str | None = None
     """The application's environment. A `live` application bills every verification session and check created with its key. A `sandbox` application mocks every check and is never billed, so it is where you test (each sandbox application can create 500 test sessions every 24 hours). Read this field to pick the application: never infer the environment from the name."""

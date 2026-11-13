@@ -65,13 +65,13 @@ class Bank(SyncAPIResource):
 
         **What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.
 
-        **What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.
+        **What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `name_match_score` is the 0 to 100 similarity `result` was decided on, so you can apply your own threshold; `result` stays authoritative, decided with the default thresholds (a `match` from 85, a `close_match` from 70). It is `null` when no name was compared: a `cannot_verify`, or a `no_match` for an account that does not exist. `account` comes back masked to its last 4 characters.
 
         **Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.
 
         **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
-        **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
+        **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one (`name_match_score` 78), `0003` a `no_match` (`name_match_score` 0), `0006` a `no_match` for an account that does not exist (`name_match_score` null), `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match` (`name_match_score` 100).
 
         **API keys.** A scoped API key needs write access to sessions.
 
@@ -145,13 +145,13 @@ class AsyncBank(AsyncAPIResource):
 
         **What you send.** The account's `country` (ISO 3166-1 alpha-3), the `account` the way that country writes it, and the `holder` name: `full_name` for a person or `business_name` for a company. A business name checks a business account.
 
-        **What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `account` comes back masked to its last 4 characters.
+        **What you get back.** `result` is `match`, `close_match`, `no_match` or `cannot_verify`. On a `close_match`, `holder_name` is the name the bank holds the account under, when the bank returned it. `name_match_score` is the 0 to 100 similarity `result` was decided on, so you can apply your own threshold; `result` stays authoritative, decided with the default thresholds (a `match` from 85, a `close_match` from 70). It is `null` when no name was compared: a `cannot_verify`, or a `no_match` for an account that does not exist. `account` comes back masked to its last 4 characters.
 
         **Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.
 
         **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
-        **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one, `0003` and `0006` a `no_match`, `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match`.
+        **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one (`name_match_score` 78), `0003` a `no_match` (`name_match_score` 0), `0006` a `no_match` for an account that does not exist (`name_match_score` null), `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match` (`name_match_score` 100).
 
         **API keys.** A scoped API key needs write access to sessions.
 

@@ -69,7 +69,7 @@ class AddressValidation(SyncAPIResource):
 
         **Billing.** A live call costs $0.10 per validated address. An `unavailable` result is not charged. Nothing is stored apart from the usage record: no session is created and the result is returned only in this response.
 
-        **Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, without consuming credits.
+        **Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, with `address_type` and `is_residential` always `null` (the keys are present), without consuming credits.
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
@@ -155,7 +155,7 @@ class AsyncAddressValidation(AsyncAPIResource):
 
         **Billing.** A live call costs $0.10 per validated address. An `unavailable` result is not charged. Nothing is stored apart from the usage record: no session is created and the result is returned only in this response.
 
-        **Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, without consuming credits.
+        **Sandbox.** Sandbox keys validate the request and always return a deterministic `verified` result that echoes the address sent, with `address_type` and `is_residential` always `null` (the keys are present), without consuming credits.
 
         **Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.
 
