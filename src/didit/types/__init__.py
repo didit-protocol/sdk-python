@@ -1915,6 +1915,9 @@ if TYPE_CHECKING:
         SignatureResultValidationDocumentsCertificate as SignatureResultValidationDocumentsCertificate,
     )
     from didit.types.components.signature_result import (
+        SignatureResultValidationDocumentsCertificateQualifiedStatements as SignatureResultValidationDocumentsCertificateQualifiedStatements,
+    )
+    from didit.types.components.signature_result import (
         SignatureResultValidationDocumentsTimestamp as SignatureResultValidationDocumentsTimestamp,
     )
     from didit.types.components.signature_result import (
@@ -2143,8 +2146,14 @@ if TYPE_CHECKING:
         TravelRuleDataUnmasked as TravelRuleDataUnmasked,
     )
     from didit.types.components.travel_rule_delivery import TravelRuleDelivery as TravelRuleDelivery
+    from didit.types.components.travel_rule_delivery import (
+        TravelRuleDeliveryFailure as TravelRuleDeliveryFailure,
+    )
     from didit.types.components.travel_rule_delivery_log_entry import (
         TravelRuleDeliveryLogEntry as TravelRuleDeliveryLogEntry,
+    )
+    from didit.types.components.travel_rule_delivery_log_entry import (
+        TravelRuleDeliveryLogEntryFailure as TravelRuleDeliveryLogEntryFailure,
     )
     from didit.types.components.travel_rule_delivery_log_page import (
         TravelRuleDeliveryLogPage as TravelRuleDeliveryLogPage,
@@ -2259,11 +2268,17 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_utxo_entry import (
         TravelRuleUtxoEntryParam as TravelRuleUtxoEntryParam,
     )
+    from didit.types.components.travel_rule_wallet_lookup import (
+        TravelRuleWalletLookup as TravelRuleWalletLookup,
+    )
     from didit.types.components.travel_rule_wallet_proof_failure_reason import (
         TravelRuleWalletProofFailureReason as TravelRuleWalletProofFailureReason,
     )
     from didit.types.components.travel_rule_wallet_proof_review import (
         TravelRuleWalletProofReview as TravelRuleWalletProofReview,
+    )
+    from didit.types.components.travel_rule_wallet_transfer import (
+        TravelRuleWalletTransfer as TravelRuleWalletTransfer,
     )
     from didit.types.components.travel_rule_widget_session_response import (
         TravelRuleWidgetSessionResponse as TravelRuleWidgetSessionResponse,
@@ -3346,6 +3361,9 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.wallet_addresses.list_response import (
         TravelRuleWalletAddressesListResponse as TravelRuleWalletAddressesListResponse,
+    )
+    from didit.types.travel_rule.wallet_addresses.list_transfers_response import (
+        TravelRuleWalletAddressesListTransfersResponse as TravelRuleWalletAddressesListTransfersResponse,
     )
     from didit.types.travel_rule.wallet_addresses.update_params import (
         TravelRuleWalletAddressesUpdateParams as TravelRuleWalletAddressesUpdateParams,
@@ -4448,6 +4466,7 @@ _MODULES: dict[str, str] = {
     "SignatureResultValidation": "components.signature_result",
     "SignatureResultValidationDocuments": "components.signature_result",
     "SignatureResultValidationDocumentsCertificate": "components.signature_result",
+    "SignatureResultValidationDocumentsCertificateQualifiedStatements": "components.signature_result",
     "SignatureResultValidationDocumentsTimestamp": "components.signature_result",
     "SignatureResultValidationDocumentsTrustedList": "components.signature_result",
     "SignatureResultWarnings": "components.signature_result",
@@ -4568,7 +4587,9 @@ _MODULES: dict[str, str] = {
     "TravelRuleDataSharingFieldsParam": "components.travel_rule_data_sharing_fields",
     "TravelRuleDataUnmasked": "components.travel_rule_data_unmasked",
     "TravelRuleDelivery": "components.travel_rule_delivery",
+    "TravelRuleDeliveryFailure": "components.travel_rule_delivery",
     "TravelRuleDeliveryLogEntry": "components.travel_rule_delivery_log_entry",
+    "TravelRuleDeliveryLogEntryFailure": "components.travel_rule_delivery_log_entry",
     "TravelRuleDeliveryLogPage": "components.travel_rule_delivery_log_page",
     "TravelRuleDiscoveryStep": "components.travel_rule_discovery_step",
     "TravelRuleInboundResponse": "components.travel_rule_inbound_response",
@@ -4624,11 +4645,14 @@ _MODULES: dict[str, str] = {
     "TravelRuleWalletAddressesBulkImportParamsVariant1": "travel_rule.wallet_addresses.bulk_import_params",
     "TravelRuleWalletAddressesCreateParams": "travel_rule.wallet_addresses.create_params",
     "TravelRuleWalletAddressesListResponse": "travel_rule.wallet_addresses.list_response",
+    "TravelRuleWalletAddressesListTransfersResponse": "travel_rule.wallet_addresses.list_transfers_response",
     "TravelRuleWalletAddressesUpdateParams": "travel_rule.wallet_addresses.update_params",
+    "TravelRuleWalletLookup": "components.travel_rule_wallet_lookup",
     "TravelRuleWalletProofFailureReason": "components.travel_rule_wallet_proof_failure_reason",
     "TravelRuleWalletProofReview": "components.travel_rule_wallet_proof_review",
     "TravelRuleWalletProofsDecideParams": "travel_rule.wallet_proofs.decide_params",
     "TravelRuleWalletProofsListResponse": "travel_rule.wallet_proofs.list_response",
+    "TravelRuleWalletTransfer": "components.travel_rule_wallet_transfer",
     "TravelRuleWidgetSessionResponse": "components.travel_rule_widget_session_response",
     "TravelRuleWorkspace": "components.travel_rule_workspace",
     "TravelRuleWorkspaceClaim": "components.travel_rule_workspace",
@@ -5715,6 +5739,7 @@ __all__ = [
     "SignatureResultValidation",
     "SignatureResultValidationDocuments",
     "SignatureResultValidationDocumentsCertificate",
+    "SignatureResultValidationDocumentsCertificateQualifiedStatements",
     "SignatureResultValidationDocumentsTimestamp",
     "SignatureResultValidationDocumentsTrustedList",
     "SignatureResultWarnings",
@@ -5835,7 +5860,9 @@ __all__ = [
     "TravelRuleDataSharingFieldsParam",
     "TravelRuleDataUnmasked",
     "TravelRuleDelivery",
+    "TravelRuleDeliveryFailure",
     "TravelRuleDeliveryLogEntry",
+    "TravelRuleDeliveryLogEntryFailure",
     "TravelRuleDeliveryLogPage",
     "TravelRuleDiscoveryStep",
     "TravelRuleInboundResponse",
@@ -5891,11 +5918,14 @@ __all__ = [
     "TravelRuleWalletAddressesBulkImportParamsVariant1",
     "TravelRuleWalletAddressesCreateParams",
     "TravelRuleWalletAddressesListResponse",
+    "TravelRuleWalletAddressesListTransfersResponse",
     "TravelRuleWalletAddressesUpdateParams",
+    "TravelRuleWalletLookup",
     "TravelRuleWalletProofFailureReason",
     "TravelRuleWalletProofReview",
     "TravelRuleWalletProofsDecideParams",
     "TravelRuleWalletProofsListResponse",
+    "TravelRuleWalletTransfer",
     "TravelRuleWidgetSessionResponse",
     "TravelRuleWorkspace",
     "TravelRuleWorkspaceClaim",

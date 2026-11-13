@@ -10,7 +10,7 @@ __all__ = ["TravelRuleTransferRow"]
 
 
 class TravelRuleTransferRow(BaseModel):
-    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets and memos only, never the originator or beneficiary person data."""
+    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount. It never carries the counterparty's person data."""
 
     id: str | None = None
     """The transfer's id."""
@@ -22,6 +22,12 @@ class TravelRuleTransferRow(BaseModel):
     """Your own id for the transaction. Transfers Didit books for you, such as a Didit Test VASP inbound transfer, carry a generated one."""
 
     txn_date: _dt.datetime | None = None
+
+    review_status: Literal["APPROVED", "IN_REVIEW", "DECLINED", "AWAITING_USER"] | str | None = None
+    """The transaction's own review decision, which can differ from the transfer's `status`: a transfer may wait on its counterparty while its transaction is approved, or be stuck while its transaction is in review."""
+
+    person_name: str | None = None
+    """Your own end user (the transaction's applicant), exactly as the transaction detail stores it: masked with the first letter of each name part while the transfer's data is masked, and never the counterparty's person data. Empty when the transaction has no applicant party."""
 
     kind: Literal["withdrawal", "deposit", "message"] | str | None = None
     """withdrawal: outbound. message: an inbound transfer a rail created from a counterparty's message (a TRP inquiry, the INTERNAL inbound leg, or a GTR, VerifyVASP or Sygna Bridge message). deposit: any other inbound transfer."""
@@ -60,14 +66,26 @@ class TravelRuleTransferRow(BaseModel):
     asset: str | None = None
     """The transaction's currency."""
 
+    chain: str | None = None
+    """The chain the transfer moved on, as a canonical code for example `ETH`, `BTC` or `SOL`; empty when the transfer names no chain."""
+
     amount: str | None = None
     """The amount as a plain decimal, for example "1.25"."""
+
+    fiat_amount: str | None = None
+    """The transfer's fiat value as a plain decimal, in `fiat_currency`: Didit's calculated conversion when it has one, otherwise the amount you supplied in your own default currency. Null when neither is known, for example on a sandbox transfer with no supplied conversion."""
+
+    fiat_currency: str | None = None
+    """The currency `fiat_amount` is expressed in, or null."""
 
     originator_vasp: str | None = None
     """Outbound: your VASP's legal name. Inbound: the counterparty's name, from its directory entry, the Didit network member, the TRP sender, the Didit Test VASP, or the name the transfer declared. Empty when none is known."""
 
     beneficiary_vasp: str | None = None
     """Outbound: the counterparty's name, worked out the same way. Inbound: your VASP's legal name."""
+
+    counterparty_jurisdiction: str | None = None
+    """The other VASP's jurisdiction, from its directory entry or, for a Didit network member, its profile or Travel Rule settings. Empty when the transfer names no VASP or the VASP has no jurisdiction on record."""
 
     originator_wallet: str | None = None
 

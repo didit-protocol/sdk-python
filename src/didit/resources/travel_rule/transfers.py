@@ -68,7 +68,7 @@ class TravelRuleTransfers(SyncAPIResource):
     ) -> SyncPage[TravelRuleTransferRow]:
         """List Travel Rule transfers.
 
-        Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets and memos only, never person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{"direction": ["Unknown value(s): inbound."]}`.
+        Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount; they never carry the counterparty's person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{"direction": ["Unknown value(s): inbound."]}`.
 
         ``GET /v3/travel-rule/transfers/``
 
@@ -155,7 +155,7 @@ class AsyncTravelRuleTransfers(AsyncAPIResource):
     ) -> AsyncPaginator[TravelRuleTransferRow]:
         """List Travel Rule transfers.
 
-        Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets and memos only, never person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{"direction": ["Unknown value(s): inbound."]}`.
+        Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount; they never carry the counterparty's person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{"direction": ["Unknown value(s): inbound."]}`.
 
         ``GET /v3/travel-rule/transfers/``
 

@@ -19,7 +19,7 @@ class WorkflowDetailSignatureAvailability(BaseModel):
     """Whether Advanced (AES) can sign now. While it is `false`, saving a new step at `signature_level: "aes"` is refused with `aes_not_available`."""
 
     qes: bool | None = None
-    """Whether Qualified (QES) can sign now. It is `false` until a qualified provider is connected."""
+    """Whether Qualified (QES) can be chosen now. While it is `false`, saving a new `qes` step returns `400` `qes_not_available` or `qes_provider_not_configured`."""
 
 
 class WorkflowDetail(BaseModel):

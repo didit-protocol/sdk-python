@@ -38214,6 +38214,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "An existing active proof link for the wallet address book entry, returned again (`wallet_entry_id` requests only).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleWidgetSessionResponse"
+                }
+              }
+            }
+          },
           "201": {
             "description": "The minted widget session.",
             "content": {
@@ -38225,7 +38235,7 @@
             }
           },
           "400": {
-            "description": "Invalid body: `callback_url` is not an absolute http(s) URL, `expires_in_minutes` is outside 5 to 10080, `transaction_id` is not a UUID, or a field is longer than its limit.",
+            "description": "Invalid body: `callback_url` is not an absolute http(s) URL, `expires_in_minutes` is outside 5 to 10080, `transaction_id` is not a UUID, or a field is longer than its limit. With `wallet_entry_id`: the entry is not a customer wallet with a holder, lacks an address or chain, `wallet_entry_id` is combined with `transaction_id`, `request_key` is missing or misplaced, or a supplied wallet field differs from the saved wallet.",
             "content": {
               "application/json": {
                 "examples": {
@@ -38241,7 +38251,10 @@
             }
           },
           "404": {
-            "description": "`transaction_id` does not name a Travel Rule transfer in this application."
+            "description": "`transaction_id` does not name a Travel Rule transfer in this application, or `wallet_entry_id` does not name an address book entry of it."
+          },
+          "410": {
+            "description": "The link created with this `request_key` was revoked or has expired."
           }
         }
       }
@@ -85845,7 +85858,7 @@
     "/v3/travel-rule/transfers/": {
       "get": {
         "summary": "List Travel Rule transfers",
-        "description": "Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets and memos only, never person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{\"direction\": [\"Unknown value(s): inbound.\"]}`.",
+        "description": "Your application's Travel Rule transfers, newest first, paginated with `limit` (default 50) and `offset`. Rows carry VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount; they never carry the counterparty's person data. Comma-separated values select several. An unknown value answers 400 naming the parameter, for example `{\"direction\": [\"Unknown value(s): inbound.\"]}`.",
         "operationId": "listTravelRuleTransfers",
         "x-didit-sdk": {
           "resource": "travel_rule.transfers",
@@ -93093,6 +93106,266 @@
           }
         ]
       }
+    },
+    "/v3/travel-rule/wallet-addresses/lookup/": {
+      "get": {
+        "summary": "Look up a wallet address",
+        "description": "Checks one exact address, chain and memo against your own wallet address book and then against wallets proven by other Didit Travel Rule participants. It never screens the wallet, never sends a message and never returns holder data from another application. `directory_checked` is always `false`: the lookup does not search a public directory, so `none` means the wallet is neither in your book nor proven on Didit, not that it is unknown elsewhere.",
+        "operationId": "lookupTravelRuleWalletAddress",
+        "x-didit-sdk": {
+          "resource": "travel_rule.wallet_addresses",
+          "method": "lookup",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            },
+            "description": "The wallet address."
+          },
+          {
+            "name": "chain",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 32
+            },
+            "description": "Chain token, for example `ETH`, `BTC` or `SOL`."
+          },
+          {
+            "name": "memo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "description": "Destination tag or memo, for chains that use one."
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -G https://verification.didit.me/v3/travel-rule/wallet-addresses/lookup/ \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  --data-urlencode 'address=0xd3b62acb76fb27a7f8961ec40fa11746b113aca9' \\\n  --data-urlencode 'chain=ETH'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.wallet_addresses.lookup(\n    address=\"your-address\",\n    chain=\"your-chain\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.walletAddresses.lookup({\n  address: \"your-address\",\n  chain: \"your-chain\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.WalletAddresses.Lookup(ctx, didit.TravelRuleWalletAddressesLookupParams{\n\tAddress: \"your-address\",\n\tChain:   \"your-chain\",\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleWalletAddressesLookupParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().walletAddresses().lookup(TravelRuleWalletAddressesLookupParams.builder()\n        .address(\"your-address\")\n        .chain(\"your-chain\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->walletAddresses->lookup([\n    'address' => 'your-address',\n    'chain' => 'your-chain',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.wallet_addresses.lookup(\n  address: \"your-address\",\n  chain: \"your-chain\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.WalletAddresses.LookupAsync(new TravelRuleWalletAddressesLookupParams\n{\n    Address = \"your-address\",\n    Chain = \"your-chain\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The lookup result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleWalletLookup"
+                },
+                "examples": {
+                  "Book": {
+                    "value": {
+                      "match": "book",
+                      "directory_checked": false,
+                      "entry_id": "11111111-2222-4333-8444-555555555555"
+                    }
+                  },
+                  "Didit": {
+                    "value": {
+                      "match": "didit",
+                      "directory_checked": false,
+                      "vasp_name": "Example Exchange Ltd",
+                      "proof_state": "verified"
+                    }
+                  },
+                  "None": {
+                    "value": {
+                      "match": "none",
+                      "directory_checked": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`address` or `chain` is missing, or a value is longer than its limit."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/": {
+      "get": {
+        "summary": "List the transfers that used a wallet address",
+        "description": "Paginated list of your Travel Rule transfers whose originator or beneficiary wallet is this address book entry, newest first. The endpoint answers 404 once the entry is deleted.",
+        "operationId": "listTravelRuleWalletAddressTransfers",
+        "x-didit-sdk": {
+          "resource": "travel_rule.wallet_addresses",
+          "method": "list_transfers",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entry_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/wallet-addresses/ENTRY_UUID/transfers/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nfor item in client.travel_rule.wallet_addresses.list_transfers(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.travelRule.walletAddresses.listTransfers(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.TravelRule.WalletAddresses.ListTransfersAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleWalletAddressesListTransfersParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.travelRule().walletAddresses().listTransfers(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\nforeach ($didit->travelRule->walletAddresses->listTransfers('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.wallet_addresses.list_transfers(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.TravelRule.WalletAddresses.ListTransfersAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated transfers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TravelRuleWalletTransfer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or deleted entry."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -94563,7 +94836,7 @@
           },
           "config": {
             "type": "object",
-            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed) and `aes` for now, and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`.",
+            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed), `aes` and `qes` (Qualified, an add-on that is refused with `qes_not_available` while `signature_availability.qes` is `false`), and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`.",
             "additionalProperties": true
           },
           "label": {
@@ -98471,6 +98744,26 @@
             "default": 60,
             "minimum": 5,
             "maximum": 10080
+          },
+          "wallet_entry_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional. Request the ownership proof of this address book entry instead of passing `wallet_address` and `chain`. The entry must be a customer wallet with a holder (`holder_vendor_data`), an address and a chain; the saved wallet and holder are always used and a conflicting `wallet_address`, `chain`, `holder_name` or `vendor_data` is rejected. Cannot be combined with `transaction_id`."
+          },
+          "request_action": {
+            "type": "string",
+            "enum": [
+              "ensure",
+              "resend",
+              "new"
+            ],
+            "default": "ensure",
+            "description": "Only with `wallet_entry_id`. `ensure` and `resend` return the entry's active link when it has one (`200`) and create one otherwise (`201`). `new` revokes the active link and creates another; it needs `request_key`."
+          },
+          "request_key": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Only with `request_action: new`. An idempotency key: repeating the call with the same key returns the same link while it is active, and `410` once it has been revoked or has expired."
           }
         }
       },
@@ -108367,7 +108660,7 @@
               "aes",
               "qes"
             ],
-            "description": "`simple` (default) or `aes`. `qes` (Qualified Electronic Signature, QES) is an add-on that is not available yet."
+            "description": "`simple` (default), `aes` or `qes` (Qualified electronic signature, QES, an add-on: a qualified trust service provider issues the signer a qualified certificate and signs after the signer enters the code it texts them)."
           },
           "format": {
             "type": "string",
@@ -108375,12 +108668,12 @@
               "pdf",
               "pades"
             ],
-            "description": "`pdf` for a Simple signature, `pades` for Advanced (AES)."
+            "description": "`pdf` for a Simple signature, `pades` for Advanced (AES) and Qualified (QES)."
           },
           "profile": {
             "type": "string",
             "nullable": true,
-            "description": "`PAdES-B-LT` once an Advanced (AES) signature is signed, otherwise null."
+            "description": "The PAdES profile of the signed documents: `PAdES-B-LT` once an Advanced (AES) or Qualified (QES) signature is signed, otherwise null."
           },
           "signer": {
             "type": "object",
@@ -108471,6 +108764,15 @@
           "confirmation": {
             "type": "object",
             "properties": {
+              "sent_by": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "didit",
+                  "qualified_provider"
+                ],
+                "description": "Who sent the code: `didit`, or `qualified_provider` for a Qualified (QES) signature, whose code comes by SMS from the qualified trust service provider and authorizes the signer's qualified certificate. `null` for a Simple signature."
+              },
               "channel": {
                 "type": "string",
                 "nullable": true,
@@ -108478,7 +108780,7 @@
                   "email",
                   "sms"
                 ],
-                "description": "`null` for a Simple signature, which has no code."
+                "description": "`null` for a Simple signature, which has no code. Always `sms` for a Qualified (QES) signature."
               },
               "destination": {
                 "type": "string",
@@ -108733,7 +109035,7 @@
               },
               "reason": {
                 "type": "string",
-                "description": "Set when `valid` is `null`: `signature_provider_outcome_unknown`."
+                "description": "`signature_provider_outcome_unknown` while `valid` is `null` (the signing outcome is not known yet); `signature_provider_failed` when the qualified trust service provider ended a Qualified (QES) signing without a signature: the attempt is back at review and the signer can ask for a new code."
               },
               "checked_at": {
                 "type": "string",
@@ -108769,7 +109071,7 @@
                     },
                     "trusted_list": {
                       "type": "object",
-                      "description": "EU Trusted List check. For AES: `{\"status\": \"not_applicable\", \"reason\": \"aes_not_qualified\"}`.",
+                      "description": "EU Trusted List check. AES: `{\"status\": \"not_applicable\", \"reason\": \"aes_not_qualified\"}`. QES: `{\"status\": \"granted\"}` when the certificate is a qualified certificate for electronic signatures issued under the qualified trust service provider's Trusted List entry, else `{\"status\": \"not_granted\", ...}`. A sandbox session's qualified level is sealed by Didit: `{\"status\": \"not_applicable\", \"reason\": \"sandbox\"}`.",
                       "properties": {
                         "status": {
                           "type": "string"
@@ -108801,13 +109103,31 @@
                         "valid_until": {
                           "type": "string",
                           "format": "date-time"
+                        },
+                        "qualified_statements": {
+                          "type": "object",
+                          "description": "QES: which ETSI EN 319 412-5 statements the certificate carries.",
+                          "properties": {
+                            "qc_compliance": {
+                              "type": "boolean",
+                              "description": "An EU qualified certificate."
+                            },
+                            "qc_sscd": {
+                              "type": "boolean",
+                              "description": "The key is in a qualified signature creation device."
+                            },
+                            "qc_type_esign": {
+                              "type": "boolean",
+                              "description": "A certificate for electronic signatures."
+                            }
+                          }
                         }
                       }
                     },
                     "timestamp": {
                       "type": "object",
                       "nullable": true,
-                      "description": "The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature.",
+                      "description": "The RFC 3161 timestamp in the signature: issued by Didit for AES, by the qualified trust service provider for QES. `null` until signed, and always `null` for a Simple signature.",
                       "properties": {
                         "time": {
                           "type": "string",
@@ -108815,15 +109135,46 @@
                         },
                         "qualified": {
                           "type": "boolean",
-                          "description": "Always `false` for AES."
+                          "description": "`false` for AES; `true` for a valid QES time stamp."
                         },
                         "valid": {
                           "type": "boolean"
                         }
                       }
+                    },
+                    "qualified": {
+                      "type": "boolean",
+                      "description": "QES: `true` only when every qualified check passed. `false` in the sandbox."
+                    },
+                    "profile": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "QES: the PAdES profile of this document's signature."
+                    },
+                    "failed_checks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "integrity",
+                          "trusted",
+                          "not_revoked",
+                          "coverage",
+                          "timestamp",
+                          "qualified_certificate",
+                          "signer_named",
+                          "original_kept"
+                        ]
+                      },
+                      "description": "QES: the checks that did not pass (empty when `valid` is `true`): the PDF signature's integrity, its chain to the qualified trust anchors, revocation, coverage of the document, the qualified time stamp, the certificate's qualified statements, the verified signer named in it, and the signed file extending exactly what was sent for signature."
                     }
                   }
                 }
+              },
+              "profile": {
+                "type": "string",
+                "nullable": true,
+                "description": "The PAdES profile every signed document reached."
               }
             }
           },
@@ -116655,7 +117006,7 @@
               },
               "qes": {
                 "type": "boolean",
-                "description": "Whether Qualified (QES) can sign now. It is `false` until a qualified provider is connected."
+                "description": "Whether Qualified (QES) can be chosen now. While it is `false`, saving a new `qes` step returns `400` `qes_not_available` or `qes_provider_not_configured`."
               }
             }
           },
@@ -123014,7 +123365,10 @@
           "attempts",
           "last_error",
           "next_attempt_at",
-          "delivered_at"
+          "delivered_at",
+          "updated_at",
+          "failure",
+          "route"
         ],
         "properties": {
           "kind": {
@@ -123049,6 +123403,7 @@
               "VERIFYVASP",
               "SYGNA",
               "EMAIL",
+              "TEST_VASP",
               ""
             ],
             "description": "The rail that carries the message. Empty until Didit has chosen one for a first message."
@@ -123060,7 +123415,7 @@
           },
           "last_error": {
             "type": "string",
-            "description": "The kind of failure the last attempt hit, `\"\"` when none did: for example `email undeliverable`, `trp identity endpoint unreachable` or `trp transfer inquiry delivery failed`. It never carries the counterparty's own answer, which stays on the transfer's `timeline`.\nWhen GTR answers with an error, its own status code and message are included. Response bodies are never included.",
+            "description": "A short customer-safe reason for the last failure, `\"\"` when there is none: `email undeliverable`, `trp identity endpoint unreachable`, `trp transfer inquiry delivery failed` or `The message could not be delivered.` It never carries the counterparty's own answer, which stays on the transfer's `timeline`, and never a response body.",
             "example": "email undeliverable"
           },
           "next_attempt_at": {
@@ -123074,6 +123429,41 @@
             "format": "date-time",
             "nullable": true,
             "description": "When the other side took the message."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the delivery last changed."
+          },
+          "failure": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "code",
+              "message"
+            ],
+            "description": "Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error.",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "email_undeliverable",
+                  "delivery_failed"
+                ],
+                "description": "`email_undeliverable`: the email bounced or the address does not accept mail. `delivery_failed`: any other failure."
+              },
+              "message": {
+                "type": "string",
+                "description": "Customer-safe description of the failure.",
+                "example": "The message could not be delivered."
+              }
+            }
+          },
+          "route": {
+            "type": "string",
+            "nullable": true,
+            "description": "Readable name of the route that carried the message: `Email`, `TRP`, `Didit`, `Didit Test VASP`, the name of a network listed in the Marketplace, or `Network` for any other network. Null until a route is chosen.",
+            "example": "Email"
           }
         }
       },
@@ -126056,7 +126446,7 @@
       },
       "TravelRuleTransferRow": {
         "type": "object",
-        "description": "One Travel Rule transfer as the transfers list shows it: VASP names, wallets and memos only, never the originator or beneficiary person data.",
+        "description": "One Travel Rule transfer as the transfers list shows it: VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount. It never carries the counterparty's person data.",
         "properties": {
           "id": {
             "type": "string",
@@ -126076,6 +126466,20 @@
           "txn_date": {
             "type": "string",
             "format": "date-time"
+          },
+          "review_status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "IN_REVIEW",
+              "DECLINED",
+              "AWAITING_USER"
+            ],
+            "description": "The transaction's own review decision, which can differ from the transfer's `status`: a transfer may wait on its counterparty while its transaction is approved, or be stuck while its transaction is in review."
+          },
+          "person_name": {
+            "type": "string",
+            "description": "Your own end user (the transaction's applicant), exactly as the transaction detail stores it: masked with the first letter of each name part while the transfer's data is masked, and never the counterparty's person data. Empty when the transaction has no applicant party."
           },
           "kind": {
             "type": "string",
@@ -126134,9 +126538,23 @@
             "type": "string",
             "description": "The transaction's currency."
           },
+          "chain": {
+            "type": "string",
+            "description": "The chain the transfer moved on, as a canonical code for example `ETH`, `BTC` or `SOL`; empty when the transfer names no chain."
+          },
           "amount": {
             "type": "string",
             "description": "The amount as a plain decimal, for example \"1.25\"."
+          },
+          "fiat_amount": {
+            "type": "string",
+            "nullable": true,
+            "description": "The transfer's fiat value as a plain decimal, in `fiat_currency`: Didit's calculated conversion when it has one, otherwise the amount you supplied in your own default currency. Null when neither is known, for example on a sandbox transfer with no supplied conversion."
+          },
+          "fiat_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "The currency `fiat_amount` is expressed in, or null."
           },
           "originator_vasp": {
             "type": "string",
@@ -126145,6 +126563,10 @@
           "beneficiary_vasp": {
             "type": "string",
             "description": "Outbound: the counterparty's name, worked out the same way. Inbound: your VASP's legal name."
+          },
+          "counterparty_jurisdiction": {
+            "type": "string",
+            "description": "The other VASP's jurisdiction, from its directory entry or, for a Didit network member, its profile or Travel Rule settings. Empty when the transfer names no VASP or the VASP has no jurisdiction on record."
           },
           "originator_wallet": {
             "type": "string"
@@ -130343,7 +130765,12 @@
           "rail",
           "created_at",
           "delivered_at",
-          "detail_lines"
+          "detail_lines",
+          "attempts",
+          "updated_at",
+          "next_attempt_at",
+          "failure",
+          "route"
         ],
         "properties": {
           "uuid": {
@@ -130402,6 +130829,52 @@
               "type": "string"
             },
             "description": "Human-readable message kind and delivery status. Does not expose transport payloads or raw errors."
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Attempts made so far for this message."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the delivery last changed."
+          },
+          "next_attempt_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the next attempt runs while the message is `QUEUED` or `RETRYING`."
+          },
+          "failure": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "code",
+              "message"
+            ],
+            "description": "Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error.",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "email_undeliverable",
+                  "delivery_failed"
+                ],
+                "description": "`email_undeliverable`: the email bounced or the address does not accept mail. `delivery_failed`: any other failure."
+              },
+              "message": {
+                "type": "string",
+                "description": "Customer-safe description of the failure.",
+                "example": "The message could not be delivered."
+              }
+            }
+          },
+          "route": {
+            "type": "string",
+            "nullable": true,
+            "description": "Readable name of the route that carried the message: `Email`, `TRP`, `Didit`, `Didit Test VASP`, the name of a network listed in the Marketplace, or `Network` for any other network. Null until a route is chosen.",
+            "example": "Email"
           }
         },
         "example": {
@@ -130414,7 +130887,12 @@
           "detail_lines": [
             "Send",
             "Delivered"
-          ]
+          ],
+          "attempts": 1,
+          "updated_at": "2026-11-01T10:00:01Z",
+          "next_attempt_at": null,
+          "failure": null,
+          "route": "Network"
         }
       },
       "TransactionListTravelRule": {
@@ -130850,6 +131328,82 @@
           "emailed_to",
           "email_available"
         ]
+      },
+      "TravelRuleWalletLookup": {
+        "type": "object",
+        "required": [
+          "match",
+          "directory_checked"
+        ],
+        "properties": {
+          "match": {
+            "type": "string",
+            "enum": [
+              "book",
+              "didit",
+              "ambiguous",
+              "none"
+            ],
+            "description": "`book`: the wallet is in your address book (`entry_id`). `didit`: exactly one other Didit participant has proven ownership of it (`vasp_name`, `proof_state`). `ambiguous`: more than one other participant has proven it, so nothing about them is returned. `none`: no match."
+          },
+          "directory_checked": {
+            "type": "boolean",
+            "description": "Always `false`: no public directory is searched."
+          },
+          "entry_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Your address book entry. Only with `match: book`."
+          },
+          "vasp_name": {
+            "type": "string",
+            "description": "Legal name of the participant that proved the wallet. Only with `match: didit`."
+          },
+          "proof_state": {
+            "type": "string",
+            "enum": [
+              "verified"
+            ],
+            "description": "Only with `match: didit`."
+          }
+        }
+      },
+      "TravelRuleWalletTransfer": {
+        "type": "object",
+        "required": [
+          "transfer_id",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "transfer_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Travel Rule transfer."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_COUNTERPARTY",
+              "ON_HOLD",
+              "COMPLETED",
+              "FINISHED",
+              "CANCELLED",
+              "EXPIRED",
+              "COUNTERPARTY_MISMATCHED_DATA",
+              "COUNTERPARTY_VASP_NOT_FOUND",
+              "COUNTERPARTY_VASP_NOT_REACHABLE",
+              "UNCONFIRMED_OWNERSHIP",
+              "COUNTERPARTY_VASP_GENERAL_DECLINE",
+              "NOT_ENOUGH_COUNTERPARTY_DATA",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     },
     "securitySchemes": {

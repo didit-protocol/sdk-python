@@ -866,6 +866,9 @@ class TravelRule(SyncAPIResource):
         satoshi_deposit_address: str | NotGiven = NOT_GIVEN,
         callback_url: str | NotGiven = NOT_GIVEN,
         expires_in_minutes: int | NotGiven = NOT_GIVEN,
+        wallet_entry_id: str | NotGiven = NOT_GIVEN,
+        request_action: Literal["ensure", "resend", "new"] | str | NotGiven = NOT_GIVEN,
+        request_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -886,6 +889,9 @@ class TravelRule(SyncAPIResource):
           satoshi_deposit_address: Optional. A deposit address you control; supplying it enables the SATOSHI_TEST proof method.
           callback_url: Optional. Absolute http(s) URL where the widget returns the customer after completion.
           expires_in_minutes: Optional. Lifetime of the minted link, in minutes. Automatically extended to cover the Satoshi test window when SATOSHI_TEST is offered.
+          wallet_entry_id: Optional. Request the ownership proof of this address book entry instead of passing `wallet_address` and `chain`. The entry must be a customer wallet with a holder (`holder_vendor_data`), an address and a chain; the saved wallet and holder are always used and a conflicting `wallet_address`, `chain`, `holder_name` or `vendor_data` is rejected. Cannot be combined with `transaction_id`.
+          request_action: Only with `wallet_entry_id`. `ensure` and `resend` return the entry's active link when it has one (`200`) and create one otherwise (`201`). `new` revokes the active link and creates another; it needs `request_key`.
+          request_key: Only with `request_action: new`. An idempotency key: repeating the call with the same key returns the same link while it is active, and `410` once it has been revoked or has expired.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -907,6 +913,9 @@ class TravelRule(SyncAPIResource):
                     "satoshi_deposit_address": satoshi_deposit_address,
                     "callback_url": callback_url,
                     "expires_in_minutes": expires_in_minutes,
+                    "wallet_entry_id": wallet_entry_id,
+                    "request_action": request_action,
+                    "request_key": request_key,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1667,6 +1676,9 @@ class AsyncTravelRule(AsyncAPIResource):
         satoshi_deposit_address: str | NotGiven = NOT_GIVEN,
         callback_url: str | NotGiven = NOT_GIVEN,
         expires_in_minutes: int | NotGiven = NOT_GIVEN,
+        wallet_entry_id: str | NotGiven = NOT_GIVEN,
+        request_action: Literal["ensure", "resend", "new"] | str | NotGiven = NOT_GIVEN,
+        request_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1687,6 +1699,9 @@ class AsyncTravelRule(AsyncAPIResource):
           satoshi_deposit_address: Optional. A deposit address you control; supplying it enables the SATOSHI_TEST proof method.
           callback_url: Optional. Absolute http(s) URL where the widget returns the customer after completion.
           expires_in_minutes: Optional. Lifetime of the minted link, in minutes. Automatically extended to cover the Satoshi test window when SATOSHI_TEST is offered.
+          wallet_entry_id: Optional. Request the ownership proof of this address book entry instead of passing `wallet_address` and `chain`. The entry must be a customer wallet with a holder (`holder_vendor_data`), an address and a chain; the saved wallet and holder are always used and a conflicting `wallet_address`, `chain`, `holder_name` or `vendor_data` is rejected. Cannot be combined with `transaction_id`.
+          request_action: Only with `wallet_entry_id`. `ensure` and `resend` return the entry's active link when it has one (`200`) and create one otherwise (`201`). `new` revokes the active link and creates another; it needs `request_key`.
+          request_key: Only with `request_action: new`. An idempotency key: repeating the call with the same key returns the same link while it is active, and `410` once it has been revoked or has expired.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1708,6 +1723,9 @@ class AsyncTravelRule(AsyncAPIResource):
                     "satoshi_deposit_address": satoshi_deposit_address,
                     "callback_url": callback_url,
                     "expires_in_minutes": expires_in_minutes,
+                    "wallet_entry_id": wallet_entry_id,
+                    "request_action": request_action,
+                    "request_key": request_key,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,

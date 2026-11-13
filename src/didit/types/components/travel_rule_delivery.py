@@ -6,7 +6,17 @@ from typing import Literal
 
 from didit._models import BaseModel
 
-__all__ = ["TravelRuleDelivery"]
+__all__ = ["TravelRuleDelivery", "TravelRuleDeliveryFailure"]
+
+
+class TravelRuleDeliveryFailure(BaseModel):
+    """Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error."""
+
+    code: Literal["email_undeliverable", "delivery_failed"] | str
+    """`email_undeliverable`: the email bounced or the address does not accept mail. `delivery_failed`: any other failure."""
+
+    message: str
+    """Customer-safe description of the failure."""
 
 
 class TravelRuleDelivery(BaseModel):
@@ -18,19 +28,29 @@ class TravelRuleDelivery(BaseModel):
     status: Literal["QUEUED", "SENDING", "RETRYING", "DELIVERED", "FAILED"] | str
     """`QUEUED`: waiting to be sent. `SENDING`: an attempt is running. `RETRYING`: an attempt failed and the next one runs at `next_attempt_at`. `DELIVERED`: the other side took the message. `FAILED`: the other side refused it, or the last attempt failed."""
 
-    rail: Literal["INTERNAL", "TRP", "GTR", "TRUST", "VERIFYVASP", "SYGNA", "EMAIL", ""] | str
+    rail: (
+        Literal["INTERNAL", "TRP", "GTR", "TRUST", "VERIFYVASP", "SYGNA", "EMAIL", "TEST_VASP", ""]
+        | str
+    )
     """The rail that carries the message. Empty until Didit has chosen one for a first message."""
 
     attempts: int
     """Attempts made so far for this message. A message that is not a status poll is attempted at most 6 times."""
 
     last_error: str
-    """The kind of failure the last attempt hit, `""` when none did: for example `email undeliverable`, `trp identity endpoint unreachable` or `trp transfer inquiry delivery failed`. It never carries the counterparty's own answer, which stays on the transfer's `timeline`.
-    When GTR answers with an error, its own status code and message are included. Response bodies are never included.
-    """
+    """A short customer-safe reason for the last failure, `""` when there is none: `email undeliverable`, `trp identity endpoint unreachable`, `trp transfer inquiry delivery failed` or `The message could not be delivered.` It never carries the counterparty's own answer, which stays on the transfer's `timeline`, and never a response body."""
 
     next_attempt_at: _dt.datetime | None
     """When the next attempt runs while the message is `QUEUED` or `RETRYING`."""
 
     delivered_at: _dt.datetime | None
     """When the other side took the message."""
+
+    updated_at: _dt.datetime
+    """When the delivery last changed."""
+
+    failure: TravelRuleDeliveryFailure | None
+    """Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error."""
+
+    route: str | None
+    """Readable name of the route that carried the message: `Email`, `TRP`, `Didit`, `Didit Test VASP`, the name of a network listed in the Marketplace, or `Network` for any other network. Null until a route is chosen."""

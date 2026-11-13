@@ -17,6 +17,8 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.travel_rule_wallet_lookup import TravelRuleWalletLookup
+from didit.types.components.travel_rule_wallet_transfer import TravelRuleWalletTransfer
 from didit.types.components.wallet_address_entry import WalletAddressEntry
 from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
 from didit.types.components.wallet_address_import_report import WalletAddressImportReport
@@ -26,6 +28,9 @@ from didit.types.travel_rule.wallet_addresses.bulk_import_params import (
 )
 from didit.types.travel_rule.wallet_addresses.list_response import (
     TravelRuleWalletAddressesListResponse,
+)
+from didit.types.travel_rule.wallet_addresses.list_transfers_response import (
+    TravelRuleWalletAddressesListTransfersResponse,
 )
 
 __all__ = [
@@ -41,7 +46,7 @@ __all__ = [
 class TravelRuleWalletAddresses(SyncAPIResource):
     """The ``travel_rule.wallet_addresses`` resource of the Didit API.
 
-    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``update``.
+    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``list_transfers``, ``lookup``, ``update``.
     """
 
     @cached_property
@@ -281,11 +286,95 @@ class TravelRuleWalletAddresses(SyncAPIResource):
             ),
         )
 
+    def lookup(
+        self,
+        *,
+        address: str,
+        chain: str,
+        memo: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleWalletLookup:
+        """Look up a wallet address.
+
+        Checks one exact address, chain and memo against your own wallet address book and then against wallets proven by other Didit Travel Rule participants. It never screens the wallet, never sends a message and never returns holder data from another application. `directory_checked` is always `false`: the lookup does not search a public directory, so `none` means the wallet is neither in your book nor proven on Didit, not that it is unknown elsewhere.
+
+        ``GET /v3/travel-rule/wallet-addresses/lookup/``
+
+        Args:
+          address: The wallet address.
+          chain: Chain token, for example `ETH`, `BTC` or `SOL`.
+          memo: Destination tag or memo, for chains that use one.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleWalletLookup",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/wallet-addresses/lookup/",
+                cast_to=TravelRuleWalletLookup,
+                auth="api_key",
+                query={"address": address, "chain": chain, "memo": memo},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_transfers(
+        self,
+        entry_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[TravelRuleWalletTransfer]:
+        """List the transfers that used a wallet address.
+
+        Paginated list of your Travel Rule transfers whose originator or beneficiary wallet is this address book entry, newest first. The endpoint answers 404 once the entry is deleted.
+
+        ``GET /v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/``
+
+        Args:
+          entry_uuid
+          limit
+          offset
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[TravelRuleWalletTransfer]",
+            self._client.request_page(
+                "get",
+                "/v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/",
+                cast_to=TravelRuleWalletAddressesListTransfersResponse,
+                item_type=TravelRuleWalletTransfer,
+                path_params={"entry_uuid": entry_uuid},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
     """The ``travel_rule.wallet_addresses`` resource of the Didit API.
 
-    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``update``.
+    Methods: ``bulk_import``, ``create``, ``delete``, ``list``, ``list_transfers``, ``lookup``, ``update``.
     """
 
     @cached_property
@@ -525,6 +614,90 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
             ),
         )
 
+    async def lookup(
+        self,
+        *,
+        address: str,
+        chain: str,
+        memo: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleWalletLookup:
+        """Look up a wallet address.
+
+        Checks one exact address, chain and memo against your own wallet address book and then against wallets proven by other Didit Travel Rule participants. It never screens the wallet, never sends a message and never returns holder data from another application. `directory_checked` is always `false`: the lookup does not search a public directory, so `none` means the wallet is neither in your book nor proven on Didit, not that it is unknown elsewhere.
+
+        ``GET /v3/travel-rule/wallet-addresses/lookup/``
+
+        Args:
+          address: The wallet address.
+          chain: Chain token, for example `ETH`, `BTC` or `SOL`.
+          memo: Destination tag or memo, for chains that use one.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleWalletLookup",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/wallet-addresses/lookup/",
+                cast_to=TravelRuleWalletLookup,
+                auth="api_key",
+                query={"address": address, "chain": chain, "memo": memo},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_transfers(
+        self,
+        entry_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[TravelRuleWalletTransfer]:
+        """List the transfers that used a wallet address.
+
+        Paginated list of your Travel Rule transfers whose originator or beneficiary wallet is this address book entry, newest first. The endpoint answers 404 once the entry is deleted.
+
+        ``GET /v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/``
+
+        Args:
+          entry_uuid
+          limit
+          offset
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[TravelRuleWalletTransfer]",
+            self._client.request_page(
+                "get",
+                "/v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/",
+                cast_to=TravelRuleWalletAddressesListTransfersResponse,
+                item_type=TravelRuleWalletTransfer,
+                path_params={"entry_uuid": entry_uuid},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TravelRuleWalletAddressesWithRawResponse:
     def __init__(self, resource: TravelRuleWalletAddresses) -> None:
@@ -534,6 +707,8 @@ class TravelRuleWalletAddressesWithRawResponse:
         self.delete = to_raw_response_wrapper(resource.delete)
         self.update = to_raw_response_wrapper(resource.update)
         self.bulk_import = to_raw_response_wrapper(resource.bulk_import)
+        self.lookup = to_raw_response_wrapper(resource.lookup)
+        self.list_transfers = to_raw_response_wrapper(resource.list_transfers)
 
 
 class AsyncTravelRuleWalletAddressesWithRawResponse:
@@ -544,6 +719,8 @@ class AsyncTravelRuleWalletAddressesWithRawResponse:
         self.delete = async_to_raw_response_wrapper(resource.delete)
         self.update = async_to_raw_response_wrapper(resource.update)
         self.bulk_import = async_to_raw_response_wrapper(resource.bulk_import)
+        self.lookup = async_to_raw_response_wrapper(resource.lookup)
+        self.list_transfers = async_to_raw_response_wrapper(resource.list_transfers)
 
 
 class TravelRuleWalletAddressesWithStreamingResponse:
@@ -554,6 +731,8 @@ class TravelRuleWalletAddressesWithStreamingResponse:
         self.delete = to_streamed_response_wrapper(resource.delete)
         self.update = to_streamed_response_wrapper(resource.update)
         self.bulk_import = to_streamed_response_wrapper(resource.bulk_import)
+        self.lookup = to_streamed_response_wrapper(resource.lookup)
+        self.list_transfers = to_streamed_response_wrapper(resource.list_transfers)
 
 
 class AsyncTravelRuleWalletAddressesWithStreamingResponse:
@@ -564,3 +743,5 @@ class AsyncTravelRuleWalletAddressesWithStreamingResponse:
         self.delete = async_to_streamed_response_wrapper(resource.delete)
         self.update = async_to_streamed_response_wrapper(resource.update)
         self.bulk_import = async_to_streamed_response_wrapper(resource.bulk_import)
+        self.lookup = async_to_streamed_response_wrapper(resource.lookup)
+        self.list_transfers = async_to_streamed_response_wrapper(resource.list_transfers)

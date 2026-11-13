@@ -27,7 +27,9 @@ from didit.types.components.travel_rule_network_questionnaire import TravelRuleN
 from didit.types.components.travel_rule_networks_overview import TravelRuleNetworksOverview
 from didit.types.components.travel_rule_settings_detail import TravelRuleSettingsDetail
 from didit.types.components.travel_rule_transfer_row import TravelRuleTransferRow
+from didit.types.components.travel_rule_wallet_lookup import TravelRuleWalletLookup
 from didit.types.components.travel_rule_wallet_proof_review import TravelRuleWalletProofReview
+from didit.types.components.travel_rule_wallet_transfer import TravelRuleWalletTransfer
 from didit.types.components.travel_rule_widget_session_response import (
     TravelRuleWidgetSessionResponse,
 )
@@ -124,7 +126,7 @@ def test_travel_rule_create_widget_session() -> None:
                 "transaction_id": "99999999-aaaa-bbbb-cccc-dddddddddddd",
                 "expires_in_minutes": 60,
             },
-            status=201,
+            status=200,
             response_json={
                 "widget_session_id": "00000000-0000-4000-8000-000000000003",
                 "token": "sample-token",
@@ -509,6 +511,12 @@ def test_travel_rule_register_inbound() -> None:
                         "last_error": "email undeliverable",
                         "next_attempt_at": "2026-01-01T00:00:00Z",
                         "delivered_at": "2026-01-01T00:00:00Z",
+                        "updated_at": "2026-01-01T00:00:00Z",
+                        "failure": {
+                            "code": "email_undeliverable",
+                            "message": "The message could not be delivered.",
+                        },
+                        "route": "Email",
                     },
                     "discovery": [
                         {
@@ -551,6 +559,11 @@ def test_travel_rule_register_inbound() -> None:
                             "created_at": "2026-11-01T10:00:00Z",
                             "delivered_at": "2026-11-01T10:00:01Z",
                             "detail_lines": ["Send", "Delivered"],
+                            "attempts": 1,
+                            "updated_at": "2026-11-01T10:00:01Z",
+                            "next_attempt_at": None,
+                            "failure": None,
+                            "route": "Network",
                         }
                     ],
                     "deliveries_truncated": True,
@@ -2084,6 +2097,73 @@ def test_travel_rule_wallet_addresses_list() -> None:
         lambda r: (
             isinstance(r, AsyncPage) and all(isinstance(x1, WalletAddressEntry) for x1 in r.results)
         ),
+    )
+
+
+def test_travel_rule_wallet_addresses_list_transfers() -> None:
+    """``GET /v3/travel-rule/wallet-addresses/{entry_uuid}/transfers/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/wallet-addresses/00000000-0000-4000-8000-000000000001/transfers/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": "sample",
+                "previous": "sample",
+                "results": [
+                    {
+                        "transfer_id": "00000000-0000-4000-8000-000000000005",
+                        "status": "AWAITING_COUNTERPARTY",
+                        "created_at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.travel_rule.wallet_addresses.list_transfers(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda c: c.travel_rule.wallet_addresses.list_transfers(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, TravelRuleWalletTransfer) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, TravelRuleWalletTransfer) for x1 in r.results)
+        ),
+    )
+
+
+def test_travel_rule_wallet_addresses_lookup() -> None:
+    """``GET /v3/travel-rule/wallet-addresses/lookup/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/wallet-addresses/lookup/",
+            api="verification",
+            auth="api_key",
+            query={"address": ["samplexx"], "chain": ["sample"], "memo": ["sample"]},
+            status=200,
+            response_json={
+                "match": "book",
+                "directory_checked": False,
+                "entry_id": "11111111-2222-4333-8444-555555555555",
+            },
+        ),
+        lambda c: c.travel_rule.wallet_addresses.lookup(
+            address="samplexx", chain="sample", memo="sample"
+        ),
+        lambda c: c.travel_rule.wallet_addresses.lookup(
+            address="samplexx", chain="sample", memo="sample"
+        ),
+        lambda r: isinstance(r, TravelRuleWalletLookup),
+        lambda r: isinstance(r, TravelRuleWalletLookup),
     )
 
 

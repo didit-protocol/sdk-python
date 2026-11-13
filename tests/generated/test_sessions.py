@@ -4475,6 +4475,7 @@ def test_sessions_signatures_validate() -> None:
                             "valid_until": "2026-01-01T00:00:00Z",
                         },
                         "confirmation": {
+                            "sent_by": "didit",
                             "channel": "email",
                             "destination": "sample",
                             "confirmed_at": "2026-01-01T00:00:00Z",
@@ -4540,8 +4541,12 @@ def test_sessions_signatures_validate() -> None:
                                     "trusted_list": {},
                                     "certificate": {},
                                     "timestamp": {},
+                                    "qualified": True,
+                                    "profile": "sample",
+                                    "failed_checks": [],
                                 }
                             ],
+                            "profile": "sample",
                         },
                         "declined_at": "2026-01-01T00:00:00Z",
                         "declined_action": "DECLINE",
