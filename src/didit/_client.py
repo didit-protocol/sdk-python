@@ -13,6 +13,7 @@ from ._base_client import (
     DEFAULT_BASE_URL,
     DEFAULT_MAX_RETRIES,
     DEFAULT_TIMEOUT,
+    validate_idempotency_key,
 )
 from ._types import NOT_GIVEN, NotGiven, Timeout
 from ._utils import env
@@ -98,9 +99,15 @@ class Didit(SyncRootResources):
         timeout: Timeout | NotGiven = NOT_GIVEN,
         max_retries: int | NotGiven = NOT_GIVEN,
         default_headers: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
     ) -> Self:
         """A copy of this client with some options changed. It shares the
-        connection pool, so it is cheap: ``client.with_options(max_retries=5).sessions.list()``."""
+        connection pool, so it is cheap: ``client.with_options(max_retries=5).sessions.list()``.
+
+        ``idempotency_key`` (1 to 255 characters) exists only here, never on the
+        constructor: ``client.with_options(idempotency_key=key).sessions.create(...)``
+        sends it as the ``Idempotency-Key`` header on ``POST``, ``PUT``, ``PATCH`` and
+        ``DELETE`` requests, and a ``POST`` or ``PATCH`` with a key is retried like a ``GET``."""
         copy = type(self).__new__(type(self))
         SyncRootResources.__init__(
             copy,
@@ -117,6 +124,9 @@ class Didit(SyncRootResources):
             default_headers=self.default_headers
             if isinstance(default_headers, NotGiven)
             else default_headers,
+            idempotency_key=self.idempotency_key
+            if isinstance(idempotency_key, NotGiven)
+            else validate_idempotency_key(idempotency_key),
         )
         copy._client = self._client
         copy._owns_client = False
@@ -185,6 +195,7 @@ class AsyncDidit(AsyncRootResources):
         timeout: Timeout | NotGiven = NOT_GIVEN,
         max_retries: int | NotGiven = NOT_GIVEN,
         default_headers: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
     ) -> Self:
         """A copy of this client with some options changed, sharing the connection pool."""
         copy = type(self).__new__(type(self))
@@ -203,6 +214,9 @@ class AsyncDidit(AsyncRootResources):
             default_headers=self.default_headers
             if isinstance(default_headers, NotGiven)
             else default_headers,
+            idempotency_key=self.idempotency_key
+            if isinstance(idempotency_key, NotGiven)
+            else validate_idempotency_key(idempotency_key),
         )
         copy._client = self._client
         copy._owns_client = False

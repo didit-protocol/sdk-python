@@ -159,6 +159,17 @@ A response that does not match the published schema never raises: the SDK return
 
 Failed requests are retried up to `max_retries` times (default 2) with exponential backoff (from 0.5 s, capped at 8 s, with jitter), honouring `Retry-After`. `GET`, `HEAD`, `PUT` and `DELETE` are retried on connection errors, timeouts, 408, 429 and 5xx. `POST` and `PATCH` are retried only when the connection failed before the request was sent, or on 429, so a create is never sent twice. Where an endpoint accepts an idempotency key (`idempotency_key=`), use it.
 
+### Idempotency
+
+`with_options(idempotency_key=...)` sends your key as the `Idempotency-Key` header on that request (`POST`, `PUT`, `PATCH` and `DELETE`), so repeating the same operation with the same key never runs it twice.
+
+```python
+# Chosen by you, 1 to 255 characters, the same on every repeat of this operation.
+session = client.with_options(idempotency_key="order-123").sessions.create(workflow_id="...")
+```
+
+With a key, POST and PATCH are retried like GET.
+
 ## Pagination
 
 List methods return a page with `count`, `next`, `previous` and `results`. Iterating it walks every item of every page:
