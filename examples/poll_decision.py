@@ -1,23 +1,25 @@
 """Poll a Didit session decision until it is final.
 
-pip install didit-sdk
 DIDIT_API_KEY=... python examples/poll_decision.py <session_id>
+
+The async client has the same method; use ``await`` and ``asyncio.sleep``.
 """
 
 from __future__ import annotations
 
-import argparse
+import sys
 import time
 from collections.abc import Callable
 
 import didit
+from didit import Didit
 from didit.types import SessionDecision
 
 TERMINAL_STATUSES = frozenset({"Approved", "Declined", "Expired", "Abandoned"})
 
 
 def poll_decision(
-    client: didit.Didit,
+    client: Didit,
     session_id: str,
     *,
     timeout: float = 300.0,
@@ -50,24 +52,21 @@ def poll_decision(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("session_id")
-    parser.add_argument("--timeout", type=float, default=300.0)
-    parser.add_argument("--stop-on-review", action="store_true")
-    args = parser.parse_args()
+    if len(sys.argv) != 2:
+        raise SystemExit("usage: python examples/poll_decision.py <session_id>")
+    session_id = sys.argv[1]
 
-    with didit.Didit() as client:
-        try:
-            decision = poll_decision(
-                client,
-                args.session_id,
-                timeout=args.timeout,
-                stop_on_review=args.stop_on_review,
-            )
-        except TimeoutError as err:
-            raise SystemExit(str(err)) from err
+    try:
+        with Didit() as client:
+            decision = poll_decision(client, session_id)
+    except TimeoutError as err:
+        raise SystemExit(str(err)) from err
+    except didit.APIStatusError as err:
+        raise SystemExit(f"API error {err.status} (request {err.request_id})") from err
+    except didit.DiditError as err:
+        raise SystemExit(str(err)) from err
 
-    print(args.session_id, decision.status)
+    print("Session:", session_id, "status:", decision.status)
 
 
 if __name__ == "__main__":
