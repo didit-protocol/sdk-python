@@ -9,7 +9,7 @@ __all__ = ["TravelRuleManualMatchResponse"]
 
 class TravelRuleManualMatchResponse(BaseModel):
     deposit: TravelRuleTransferRow
-    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets and memos only, never the originator or beneficiary person data."""
+    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount. It never carries the counterparty's person data."""
 
     message: TravelRuleTransferRow
-    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets and memos only, never the originator or beneficiary person data."""
+    """One Travel Rule transfer as the transfers list shows it: VASP names, wallets, memos, the transaction's review decision, your own end user's name (masked exactly as the transaction detail masks it), the counterparty VASP's jurisdiction, the chain and the fiat amount. It never carries the counterparty's person data."""

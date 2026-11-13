@@ -6,7 +6,17 @@ from typing import Literal
 
 from didit._models import BaseModel
 
-__all__ = ["TravelRuleDeliveryLogEntry"]
+__all__ = ["TravelRuleDeliveryLogEntry", "TravelRuleDeliveryLogEntryFailure"]
+
+
+class TravelRuleDeliveryLogEntryFailure(BaseModel):
+    """Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error."""
+
+    code: Literal["email_undeliverable", "delivery_failed"] | str
+    """`email_undeliverable`: the email bounced or the address does not accept mail. `delivery_failed`: any other failure."""
+
+    message: str
+    """Customer-safe description of the failure."""
 
 
 class TravelRuleDeliveryLogEntry(BaseModel):
@@ -32,3 +42,18 @@ class TravelRuleDeliveryLogEntry(BaseModel):
 
     detail_lines: list[str]
     """Human-readable message kind and delivery status. Does not expose transport payloads or raw errors."""
+
+    attempts: int
+    """Attempts made so far for this message."""
+
+    updated_at: _dt.datetime
+    """When the delivery last changed."""
+
+    next_attempt_at: _dt.datetime | None
+    """When the next attempt runs while the message is `QUEUED` or `RETRYING`."""
+
+    failure: TravelRuleDeliveryLogEntryFailure | None
+    """Why the last attempt failed, or null while the message has not failed. The message is a fixed customer-safe sentence: it never carries the counterparty's own text or a transport error."""
+
+    route: str | None
+    """Readable name of the route that carried the message: `Email`, `TRP`, `Didit`, `Didit Test VASP`, the name of a network listed in the Marketplace, or `Network` for any other network. Null until a route is chosen."""

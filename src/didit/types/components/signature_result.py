@@ -22,6 +22,7 @@ __all__ = [
     "SignatureResultValidation",
     "SignatureResultValidationDocuments",
     "SignatureResultValidationDocumentsCertificate",
+    "SignatureResultValidationDocumentsCertificateQualifiedStatements",
     "SignatureResultValidationDocumentsTimestamp",
     "SignatureResultValidationDocumentsTrustedList",
     "SignatureResultWarnings",
@@ -56,8 +57,11 @@ class SignatureResultCertificate(BaseModel):
 
 
 class SignatureResultConfirmation(BaseModel):
+    sent_by: Literal["didit", "qualified_provider"] | str | None = None
+    """Who sent the code: `didit`, or `qualified_provider` for a Qualified (QES) signature, whose code comes by SMS from the qualified trust service provider and authorizes the signer's qualified certificate. `null` for a Simple signature."""
+
     channel: Literal["email", "sms"] | str | None = None
-    """`null` for a Simple signature, which has no code."""
+    """`null` for a Simple signature, which has no code. Always `sms` for a Qualified (QES) signature."""
 
     destination: str | None = None
     """The masked contact the code went to."""
@@ -190,6 +194,19 @@ class SignatureResultTimestamp(BaseModel):
     valid: bool | None = None
 
 
+class SignatureResultValidationDocumentsCertificateQualifiedStatements(BaseModel):
+    """QES: which ETSI EN 319 412-5 statements the certificate carries."""
+
+    qc_compliance: bool | None = None
+    """An EU qualified certificate."""
+
+    qc_sscd: bool | None = None
+    """The key is in a qualified signature creation device."""
+
+    qc_type_esign: bool | None = None
+    """A certificate for electronic signatures."""
+
+
 class SignatureResultValidationDocumentsCertificate(BaseModel):
     """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
@@ -204,20 +221,25 @@ class SignatureResultValidationDocumentsCertificate(BaseModel):
 
     valid_until: _dt.datetime | None = None
 
+    qualified_statements: (
+        SignatureResultValidationDocumentsCertificateQualifiedStatements | None
+    ) = None
+    """QES: which ETSI EN 319 412-5 statements the certificate carries."""
+
 
 class SignatureResultValidationDocumentsTimestamp(BaseModel):
-    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
+    """The RFC 3161 timestamp in the signature: issued by Didit for AES, by the qualified trust service provider for QES. `null` until signed, and always `null` for a Simple signature."""
 
     time: _dt.datetime | None = None
 
     qualified: bool | None = None
-    """Always `false` for AES."""
+    """`false` for AES; `true` for a valid QES time stamp."""
 
     valid: bool | None = None
 
 
 class SignatureResultValidationDocumentsTrustedList(BaseModel):
-    """EU Trusted List check. For AES: `{"status": "not_applicable", "reason": "aes_not_qualified"}`."""
+    """EU Trusted List check. AES: `{"status": "not_applicable", "reason": "aes_not_qualified"}`. QES: `{"status": "granted"}` when the certificate is a qualified certificate for electronic signatures issued under the qualified trust service provider's Trusted List entry, else `{"status": "not_granted", ...}`. A sandbox session's qualified level is sealed by Didit: `{"status": "not_applicable", "reason": "sandbox"}`."""
 
     status: str | None = None
 
@@ -241,13 +263,37 @@ class SignatureResultValidationDocuments(BaseModel):
     revoked: bool | None = None
 
     trusted_list: SignatureResultValidationDocumentsTrustedList | None = None
-    """EU Trusted List check. For AES: `{"status": "not_applicable", "reason": "aes_not_qualified"}`."""
+    """EU Trusted List check. AES: `{"status": "not_applicable", "reason": "aes_not_qualified"}`. QES: `{"status": "granted"}` when the certificate is a qualified certificate for electronic signatures issued under the qualified trust service provider's Trusted List entry, else `{"status": "not_granted", ...}`. A sandbox session's qualified level is sealed by Didit: `{"status": "not_applicable", "reason": "sandbox"}`."""
 
     certificate: SignatureResultValidationDocumentsCertificate | None = None
     """The certificate the documents were signed with. `null` until signed, and always `null` for a Simple signature."""
 
     timestamp: SignatureResultValidationDocumentsTimestamp | None = None
-    """The RFC 3161 timestamp in the signature, issued by Didit. `null` until signed, and always `null` for a Simple signature."""
+    """The RFC 3161 timestamp in the signature: issued by Didit for AES, by the qualified trust service provider for QES. `null` until signed, and always `null` for a Simple signature."""
+
+    qualified: bool | None = None
+    """QES: `true` only when every qualified check passed. `false` in the sandbox."""
+
+    profile: str | None = None
+    """QES: the PAdES profile of this document's signature."""
+
+    failed_checks: (
+        list[
+            Literal[
+                "integrity",
+                "trusted",
+                "not_revoked",
+                "coverage",
+                "timestamp",
+                "qualified_certificate",
+                "signer_named",
+                "original_kept",
+            ]
+            | str
+        ]
+        | None
+    ) = None
+    """QES: the checks that did not pass (empty when `valid` is `true`): the PDF signature's integrity, its chain to the qualified trust anchors, revocation, coverage of the document, the qualified time stamp, the certificate's qualified statements, the verified signer named in it, and the signed file extending exactly what was sent for signature."""
 
 
 class SignatureResultValidation(BaseModel):
@@ -257,11 +303,14 @@ class SignatureResultValidation(BaseModel):
     """`true` when every document is valid. `null` when the outcome of signing couldn't be confirmed."""
 
     reason: str | None = None
-    """Set when `valid` is `null`: `signature_provider_outcome_unknown`."""
+    """`signature_provider_outcome_unknown` while `valid` is `null` (the signing outcome is not known yet); `signature_provider_failed` when the qualified trust service provider ended a Qualified (QES) signing without a signature: the attempt is back at review and the signer can ask for a new code."""
 
     checked_at: _dt.datetime | None = None
 
     documents: list[SignatureResultValidationDocuments] | None = None
+
+    profile: str | None = None
+    """The PAdES profile every signed document reached."""
 
 
 class SignatureResultWarnings(BaseModel):
@@ -297,13 +346,13 @@ class SignatureResult(BaseModel):
     """The step's outcome. A warning sets it through its rule; custom status rules apply after."""
 
     level: Literal["simple", "aes", "qes"] | str | None = None
-    """`simple` (default) or `aes`. `qes` (Qualified Electronic Signature, QES) is an add-on that is not available yet."""
+    """`simple` (default), `aes` or `qes` (Qualified electronic signature, QES, an add-on: a qualified trust service provider issues the signer a qualified certificate and signs after the signer enters the code it texts them)."""
 
     format: Literal["pdf", "pades"] | str | None = None
-    """`pdf` for a Simple signature, `pades` for Advanced (AES)."""
+    """`pdf` for a Simple signature, `pades` for Advanced (AES) and Qualified (QES)."""
 
     profile: str | None = None
-    """`PAdES-B-LT` once an Advanced (AES) signature is signed, otherwise null."""
+    """The PAdES profile of the signed documents: `PAdES-B-LT` once an Advanced (AES) or Qualified (QES) signature is signed, otherwise null."""
 
     signer: SignatureResultSigner | None = None
 

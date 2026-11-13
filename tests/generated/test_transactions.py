@@ -1480,6 +1480,12 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
                     "last_error": "email undeliverable",
                     "next_attempt_at": "2026-01-01T00:00:00Z",
                     "delivered_at": "2026-01-01T00:00:00Z",
+                    "updated_at": "2026-01-01T00:00:00Z",
+                    "failure": {
+                        "code": "email_undeliverable",
+                        "message": "The message could not be delivered.",
+                    },
+                    "route": "Email",
                 },
                 "discovery": [
                     {
@@ -1519,6 +1525,11 @@ def test_transactions_travel_rule_confirm_ownership() -> None:
                         "created_at": "2026-11-01T10:00:00Z",
                         "delivered_at": "2026-11-01T10:00:01Z",
                         "detail_lines": ["Send", "Delivered"],
+                        "attempts": 1,
+                        "updated_at": "2026-11-01T10:00:01Z",
+                        "next_attempt_at": None,
+                        "failure": None,
+                        "route": "Network",
                     }
                 ],
                 "deliveries_truncated": True,
@@ -1811,6 +1822,12 @@ def test_transactions_travel_rule_trigger_test_vasp_inbound() -> None:
                         "last_error": "email undeliverable",
                         "next_attempt_at": "2026-01-01T00:00:00Z",
                         "delivered_at": "2026-01-01T00:00:00Z",
+                        "updated_at": "2026-01-01T00:00:00Z",
+                        "failure": {
+                            "code": "email_undeliverable",
+                            "message": "The message could not be delivered.",
+                        },
+                        "route": "Email",
                     },
                     "discovery": [
                         {
@@ -1853,6 +1870,11 @@ def test_transactions_travel_rule_trigger_test_vasp_inbound() -> None:
                             "created_at": "2026-11-01T10:00:00Z",
                             "delivered_at": "2026-11-01T10:00:01Z",
                             "detail_lines": ["Send", "Delivered"],
+                            "attempts": 1,
+                            "updated_at": "2026-11-01T10:00:01Z",
+                            "next_attempt_at": None,
+                            "failure": None,
+                            "route": "Network",
                         }
                     ],
                     "deliveries_truncated": True,
@@ -1972,6 +1994,12 @@ def test_transactions_travel_rule_update_transfer() -> None:
                     "last_error": "email undeliverable",
                     "next_attempt_at": "2026-01-01T00:00:00Z",
                     "delivered_at": "2026-01-01T00:00:00Z",
+                    "updated_at": "2026-01-01T00:00:00Z",
+                    "failure": {
+                        "code": "email_undeliverable",
+                        "message": "The message could not be delivered.",
+                    },
+                    "route": "Email",
                 },
                 "discovery": [
                     {
@@ -2011,6 +2039,11 @@ def test_transactions_travel_rule_update_transfer() -> None:
                         "created_at": "2026-11-01T10:00:00Z",
                         "delivered_at": "2026-11-01T10:00:01Z",
                         "detail_lines": ["Send", "Delivered"],
+                        "attempts": 1,
+                        "updated_at": "2026-11-01T10:00:01Z",
+                        "next_attempt_at": None,
+                        "failure": None,
+                        "route": "Network",
                     }
                 ],
                 "deliveries_truncated": True,
