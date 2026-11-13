@@ -68,6 +68,10 @@ Scope = Literal["application"]
 Multipart = Literal[False, True, "auto"]
 
 _IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "PUT", "DELETE", "OPTIONS"})
+_KEY_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+IDEMPOTENCY_KEY_HEADER = "Idempotency-Key"
+MAX_IDEMPOTENCY_KEY_LENGTH = 255
+_KEY_HEADER_LOWER = IDEMPOTENCY_KEY_HEADER.lower()
 # Errors raised before any byte of the request left this process.
 _NOT_SENT_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout, httpx.ProxyError)
 
@@ -101,29 +105,54 @@ def origin_of(url: httpx.URL | str) -> str:
     return f"{parsed.scheme}://{netloc}"
 
 
-def should_retry_status(method: str, status: int) -> bool:
+def validate_idempotency_key(key: object) -> str:
+    """The key if it is a string of 1 to 255 characters, else :class:`ConfigurationError`."""
+    if not isinstance(key, str) or not 1 <= len(key) <= MAX_IDEMPOTENCY_KEY_LENGTH:
+        raise ConfigurationError(
+            f"idempotency_key must be a string of 1 to {MAX_IDEMPOTENCY_KEY_LENGTH} characters."
+        )
+    return key
+
+
+def is_idempotency_key_in_progress(response: httpx.Response) -> bool:
+    """Whether a (fully read) 409 says the first request with this key is still running."""
+    try:
+        body = response.json()
+    except ValueError:
+        return False
+    if not isinstance(body, dict):
+        return False
+    return cast("dict[str, Any]", body).get("code") == "idempotency_key_in_progress"
+
+
+def _has_idempotency_key(request: httpx.Request) -> bool:
+    return _KEY_HEADER_LOWER in request.headers
+
+
+def should_retry_status(method: str, status: int, keyed: bool = False) -> bool:
     """Whether a response with ``status`` may be retried (docs/DESIGN.md section 7).
 
     ``POST`` and ``PATCH`` reached the server, so only 429 (which guarantees the
-    request was not processed) is retried for them.
+    request was not processed) is retried for them, unless they carry an
+    idempotency key (``keyed``): then they are safe to repeat and follow the ``GET`` rule.
     """
     if status == 429:
         return True
-    if method.upper() not in _IDEMPOTENT_METHODS:
+    if method.upper() not in _IDEMPOTENT_METHODS and not keyed:
         return False
     return status == 408 or status >= 500
 
 
-def should_retry_exception(method: str, exc: Exception) -> bool:
+def should_retry_exception(method: str, exc: Exception, keyed: bool = False) -> bool:
     """Whether a transport error may be retried.
 
     A connection that failed before sending is always safe to retry. Anything
     later (a read timeout, a dropped connection) may have reached the server, so
-    it is retried only for idempotent methods.
+    it is retried only for idempotent methods or a request with an idempotency key.
     """
     if isinstance(exc, _NOT_SENT_ERRORS):
         return True
-    if method.upper() not in _IDEMPOTENT_METHODS:
+    if method.upper() not in _IDEMPOTENT_METHODS and not keyed:
         return False
     return isinstance(exc, (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError))
 
@@ -178,6 +207,7 @@ class BaseClient:
     timeout: Timeout
     max_retries: int
     default_headers: Mapping[str, str]
+    idempotency_key: str | None
 
     def __init__(
         self,
@@ -191,6 +221,7 @@ class BaseClient:
         timeout: Timeout,
         max_retries: int,
         default_headers: Mapping[str, str] | None,
+        idempotency_key: str | None = None,
     ) -> None:
         if max_retries < 0:
             raise ConfigurationError("max_retries must be 0 or more.")
@@ -203,6 +234,9 @@ class BaseClient:
         self.timeout = timeout
         self.max_retries = max_retries
         self.default_headers = dict(default_headers or {})
+        self.idempotency_key = (
+            None if idempotency_key is None else validate_idempotency_key(idempotency_key)
+        )
 
     def __repr__(self) -> str:
         return (
@@ -274,11 +308,24 @@ class BaseClient:
                 )
             json_content = encode_json(body)
 
-        merged_headers: dict[str, str | None] = {
-            k: v for k, v in (headers or {}).items() if not isinstance(v, NotGiven)
-        }
-        if extra_headers:
-            merged_headers.update(extra_headers)
+        # The effective idempotency key: generated parameter, then raw per-request
+        # headers, then the option (names compared case-insensitively, last wins).
+        merged_headers: dict[str, str | None] = {}
+        effective_key: object = None
+        for source in (headers or {}, extra_headers or {}):
+            for name, value in source.items():
+                if isinstance(value, NotGiven):
+                    continue
+                if name.lower() == _KEY_HEADER_LOWER:
+                    effective_key = value
+                else:
+                    merged_headers[name] = value
+        if self.idempotency_key is not None:
+            effective_key = self.idempotency_key
+        if effective_key is not None:
+            checked = validate_idempotency_key(effective_key)
+            if method.upper() in _KEY_METHODS:
+                merged_headers[IDEMPOTENCY_KEY_HEADER] = checked
         return PreparedRequest(
             method=method.upper(),
             url=url,
@@ -342,6 +389,8 @@ class BaseClient:
         put("User-Agent", user_agent())
         put("X-Didit-Client", client_header())
         for name, default in self.default_headers.items():
+            if name.lower() == _KEY_HEADER_LOWER:
+                continue  # a client-wide default never counts as an idempotency key
             put(name, default)
         # Credentials are only ever attached for the origin the request was built for.
         if prepared.auth == "api_key" and self.api_key:
@@ -518,11 +567,21 @@ class SyncAPIClient(BaseClient):
                 response = self._client.send(request, stream=True, follow_redirects=False)
                 elapsed = time.monotonic() - started
                 self._log_response(request, response, started)
+                keyed = _has_idempotency_key(request)
                 retry_status = (
                     not response.is_success
                     and retries_taken < self.max_retries
-                    and should_retry_status(request.method, response.status_code)
+                    and should_retry_status(request.method, response.status_code, keyed)
                 )
+                if (
+                    not retry_status
+                    and keyed
+                    and response.status_code == 409
+                    and retries_taken < self.max_retries
+                ):
+                    # A 409 is retried only while the first request with this key still runs.
+                    response.read()
+                    retry_status = is_idempotency_key_in_progress(response)
                 if retry_status:
                     response.close()
                 elif mode != "stream" or not response.is_success:
@@ -533,7 +592,9 @@ class SyncAPIClient(BaseClient):
                     finally:
                         response.close()
             except httpx.HTTPError as exc:
-                if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
+                if retries_taken < self.max_retries and should_retry_exception(
+                    request.method, exc, _has_idempotency_key(request)
+                ):
                     delay = retry_delay(retries_taken, None)
                     self._log_retry(
                         request, _describe(exc), delay, self.max_retries - retries_taken
@@ -641,11 +702,21 @@ class AsyncAPIClient(BaseClient):
                 response = await self._client.send(request, stream=True, follow_redirects=False)
                 elapsed = time.monotonic() - started
                 self._log_response(request, response, started)
+                keyed = _has_idempotency_key(request)
                 retry_status = (
                     not response.is_success
                     and retries_taken < self.max_retries
-                    and should_retry_status(request.method, response.status_code)
+                    and should_retry_status(request.method, response.status_code, keyed)
                 )
+                if (
+                    not retry_status
+                    and keyed
+                    and response.status_code == 409
+                    and retries_taken < self.max_retries
+                ):
+                    # A 409 is retried only while the first request with this key still runs.
+                    await response.aread()
+                    retry_status = is_idempotency_key_in_progress(response)
                 if retry_status:
                     await response.aclose()
                 elif mode != "stream" or not response.is_success:
@@ -656,7 +727,9 @@ class AsyncAPIClient(BaseClient):
                     finally:
                         await response.aclose()
             except httpx.HTTPError as exc:
-                if retries_taken < self.max_retries and should_retry_exception(request.method, exc):
+                if retries_taken < self.max_retries and should_retry_exception(
+                    request.method, exc, _has_idempotency_key(request)
+                ):
                     delay = retry_delay(retries_taken, None)
                     self._log_retry(
                         request, _describe(exc), delay, self.max_retries - retries_taken

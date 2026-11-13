@@ -436,3 +436,267 @@ def test_async_retry_policy(no_sleep: list[float]) -> None:
     assert len(api.requests) == 3
     assert len(post.requests) == 1
     assert len(no_sleep) == 3
+
+
+# Idempotency key option (DESIGN 6 and 7) ------------------------------------------------
+
+KEY = "order-1042"
+
+
+def _conflict(code: str, **headers: str) -> httpx.Response:
+    return httpx.Response(409, json={"detail": "x", "code": code}, headers=headers)
+
+
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+def test_idempotency_key_header_is_sent_on_writes(method: str) -> None:
+    api = MockAPI().json(200, {})
+    client = api.client().with_options(idempotency_key=KEY)
+    client.request(method, "/v3/x/", cast_to=None)
+    assert api.last.headers["idempotency-key"] == KEY
+
+
+@pytest.mark.parametrize("method", ["GET", "HEAD"])
+def test_idempotency_key_header_is_left_out_of_reads(method: str) -> None:
+    api = MockAPI().json(200, {})
+    api.client().with_options(idempotency_key=KEY).request(method, "/v3/x/", cast_to=None)
+    assert "idempotency-key" not in api.last.headers
+
+
+def test_idempotency_key_is_not_a_constructor_option() -> None:
+    with pytest.raises(TypeError):
+        didit.Didit(api_key=API_KEY, idempotency_key=KEY)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        didit.AsyncDidit(api_key=API_KEY, idempotency_key=KEY)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize("bad", ["", "k" * 256, 12, None, b"key"])
+def test_idempotency_key_is_validated_before_any_request(bad: Any) -> None:
+    api = MockAPI().json(201, SESSION)
+    with pytest.raises(didit.ConfigurationError):
+        api.client().with_options(idempotency_key=bad)
+    with pytest.raises(didit.ConfigurationError):
+        api.async_client().with_options(idempotency_key=bad)
+    assert api.requests == []
+
+
+def test_idempotency_key_boundary_lengths_are_accepted() -> None:
+    api = MockAPI().json(201, SESSION).json(201, SESSION)
+    client = api.client()
+    client.with_options(idempotency_key="k").sessions.create(workflow_id="w")
+    client.with_options(idempotency_key="k" * 255).sessions.create(workflow_id="w")
+    assert len(api.requests) == 2
+
+
+def test_idempotency_key_survives_further_with_options() -> None:
+    api = MockAPI().json(201, SESSION)
+    client = api.client().with_options(idempotency_key=KEY).with_options(max_retries=0)
+    client.sessions.create(workflow_id="w")
+    assert api.last.headers["idempotency-key"] == KEY
+
+
+@pytest.mark.parametrize(
+    "failure", [httpx.Response(500), httpx.Response(503), httpx.ReadTimeout("slow")]
+)
+def test_post_with_a_key_is_retried_with_the_same_key(failure: Any) -> None:
+    api = MockAPI().add(failure, failure).json(201, SESSION)
+    client = api.client().with_options(idempotency_key=KEY)
+    assert client.sessions.create(workflow_id="w").session_id == SESSION["session_id"]
+    assert [r.headers["idempotency-key"] for r in api.requests] == [KEY] * 3
+
+
+def test_post_with_a_key_stops_at_max_retries() -> None:
+    api = MockAPI().add(httpx.Response(500), httpx.Response(500), httpx.Response(500))
+    with pytest.raises(didit.InternalServerError):
+        api.client(max_retries=1).with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert len(api.requests) == 2
+
+
+def test_patch_with_a_key_is_retried_and_without_a_key_is_not() -> None:
+    api = MockAPI().add(httpx.Response(502), httpx.ReadTimeout("slow")).json(200, {})
+    client = api.client().with_options(idempotency_key=KEY)
+    client.request("PATCH", "/v3/x/", cast_to=None)
+    assert len(api.requests) == 3
+    assert {r.headers["idempotency-key"] for r in api.requests} == {KEY}
+    api = MockAPI().add(httpx.Response(502)).json(200, {})
+    with pytest.raises(didit.InternalServerError):
+        api.client().request("PATCH", "/v3/x/", cast_to=None)
+    assert len(api.requests) == 1
+
+
+def test_async_post_with_a_key_is_retried() -> None:
+    api = (
+        MockAPI()
+        .add(
+            httpx.Response(500), httpx.ReadTimeout("slow"), _conflict("idempotency_key_in_progress")
+        )
+        .json(201, SESSION)
+    )
+
+    async def run() -> Any:
+        return (
+            await api.async_client(max_retries=3)
+            .with_options(idempotency_key=KEY)
+            .sessions.create(workflow_id="w")
+        )
+
+    assert asyncio.run(run()).session_id == SESSION["session_id"]
+    assert len(api.requests) == 4
+    assert {r.headers["idempotency-key"] for r in api.requests} == {KEY}
+
+
+def test_in_progress_conflict_is_retried_honouring_retry_after(no_sleep: list[float]) -> None:
+    api = (
+        MockAPI()
+        .add(_conflict("idempotency_key_in_progress", **{"Retry-After": "1"}))
+        .json(201, SESSION)
+    )
+    client = api.client().with_options(idempotency_key=KEY)
+    assert client.sessions.create(workflow_id="w").session_id == SESSION["session_id"]
+    assert len(api.requests) == 2
+    assert no_sleep == [1.0]
+
+
+def test_reused_key_conflict_is_raised_at_once() -> None:
+    api = MockAPI().add(_conflict("idempotency_key_reused")).json(201, SESSION)
+    with pytest.raises(didit.ConflictError) as info:
+        api.client().with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert info.value.body == {"detail": "x", "code": "idempotency_key_reused"}
+    assert len(api.requests) == 1
+
+
+def test_in_progress_conflict_without_a_key_or_with_a_plain_409_is_not_retried() -> None:
+    api = MockAPI().add(_conflict("idempotency_key_in_progress")).json(201, SESSION)
+    with pytest.raises(didit.ConflictError):
+        api.client().sessions.create(workflow_id="w")
+    assert len(api.requests) == 1
+    api = MockAPI().add(httpx.Response(409, text="busy")).json(201, SESSION)
+    with pytest.raises(didit.ConflictError):
+        api.client().with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert len(api.requests) == 1
+
+
+def test_option_wins_over_a_generated_header_parameter() -> None:
+    api = MockAPI().json(200, {})
+    client = api.client().with_options(idempotency_key=KEY)
+    client.aml.screen(full_name="Jane Doe", idempotency_key="from-parameter")
+    assert api.last.headers.get_list("idempotency-key") == [KEY]
+    api = MockAPI().json(200, {})
+    api.client().aml.screen(full_name="Jane Doe", idempotency_key="from-parameter")
+    assert api.last.headers["idempotency-key"] == "from-parameter"
+
+
+def test_the_key_is_never_logged(caplog: pytest.LogCaptureFixture) -> None:
+    import logging
+
+    api = MockAPI().add(httpx.Response(500)).json(201, SESSION)
+    with caplog.at_level(logging.DEBUG, logger="didit"):
+        api.client().with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert "retrying" in caplog.text
+    assert KEY not in caplog.text
+
+
+def test_retry_policy_functions_with_a_key() -> None:
+    assert should_retry_status("POST", 500, keyed=True)
+    assert should_retry_status("PATCH", 408, keyed=True)
+    assert not should_retry_status("POST", 400, keyed=True)
+    assert not should_retry_status("POST", 500)
+    assert should_retry_exception("POST", httpx.ReadTimeout("x"), keyed=True)
+    assert not should_retry_exception("POST", httpx.ReadTimeout("x"))
+
+
+def test_idempotency_key_is_never_sent_on_other_methods() -> None:
+    api = MockAPI().json(200, {}).json(200, {})
+    client = api.client().with_options(idempotency_key=KEY)
+    client.request("OPTIONS", "/v3/x/", cast_to=None)
+    assert "idempotency-key" not in api.last.headers
+    client.request("OPTIONS", "/v3/x/", cast_to=None, extra_headers={"Idempotency-Key": "raw"})
+    assert "idempotency-key" not in api.last.headers
+
+
+def test_a_client_default_idempotency_key_header_is_ignored() -> None:
+    api = MockAPI().add(httpx.Response(500)).json(201, SESSION)
+    client = api.client(default_headers={"idempotency-key": "default"})
+    with pytest.raises(didit.InternalServerError):
+        client.sessions.create(workflow_id="w")
+    assert len(api.requests) == 1
+    assert "idempotency-key" not in api.last.headers
+    api = MockAPI().add(httpx.Response(500)).json(201, SESSION)
+    derived = api.client(default_headers={"Idempotency-Key": "default"}).with_options(max_retries=3)
+    with pytest.raises(didit.InternalServerError):
+        derived.sessions.create(workflow_id="w")
+    assert len(api.requests) == 1
+    assert "idempotency-key" not in api.last.headers
+
+
+def test_the_option_still_works_on_a_client_with_a_default_key_header() -> None:
+    api = MockAPI().add(httpx.Response(500)).json(201, SESSION)
+    client = api.client(default_headers={"Idempotency-Key": "default"})
+    client.with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert [r.headers.get_list("idempotency-key") for r in api.requests] == [[KEY], [KEY]]
+
+
+def test_a_lowercase_raw_header_is_one_header_and_makes_a_post_retryable() -> None:
+    api = MockAPI().add(httpx.Response(500)).json(201, SESSION)
+    api.client().sessions.create(workflow_id="w", extra_headers={"idempotency-key": KEY})
+    assert [r.headers.get_list("idempotency-key") for r in api.requests] == [[KEY], [KEY]]
+    assert sum(1 for k, _ in api.requests[0].headers.raw if k.lower() == b"idempotency-key") == 1
+
+
+@pytest.mark.parametrize("bad", ["", "k" * 256])
+def test_an_invalid_generated_parameter_or_raw_header_is_a_configuration_error(bad: str) -> None:
+    api = MockAPI().json(200, {}).json(201, SESSION)
+    with pytest.raises(didit.ConfigurationError):
+        api.client().aml.screen(full_name="Jane Doe", idempotency_key=bad)
+    with pytest.raises(didit.ConfigurationError):
+        api.client().sessions.create(workflow_id="w", extra_headers={"Idempotency-Key": bad})
+    with pytest.raises(didit.ConfigurationError):
+        asyncio.run(api.async_client().aml.screen(full_name="Jane Doe", idempotency_key=bad))
+    assert api.requests == []
+
+
+def test_a_valid_generated_parameter_makes_the_post_retryable() -> None:
+    api = MockAPI().add(httpx.Response(503)).json(200, {})
+    api.client().aml.screen(full_name="Jane Doe", idempotency_key=KEY)
+    assert [r.headers["idempotency-key"] for r in api.requests] == [KEY, KEY]
+
+
+def test_option_raw_header_and_parameter_together_send_one_header() -> None:
+    api = MockAPI().json(200, {})
+    client = api.client().with_options(idempotency_key=KEY)
+    client.aml.screen(
+        full_name="Jane Doe",
+        idempotency_key="from-parameter",
+        extra_headers={"idempotency-key": "from-raw"},
+    )
+    assert api.last.headers.get_list("idempotency-key") == [KEY]
+    assert sum(1 for k, _ in api.last.headers.raw if k.lower() == b"idempotency-key") == 1
+
+
+def test_a_raw_header_beats_the_generated_parameter() -> None:
+    api = MockAPI().json(200, {})
+    api.client().aml.screen(
+        full_name="Jane Doe",
+        idempotency_key="from-parameter",
+        extra_headers={"idempotency-key": "raw"},
+    )
+    assert api.last.headers.get_list("idempotency-key") == ["raw"]
+
+
+def test_a_raw_key_header_is_dropped_on_a_non_write_method() -> None:
+    api = MockAPI().json(200, {})
+    api.client().request("GET", "/v3/x/", cast_to=None, extra_headers={"Idempotency-Key": KEY})
+    assert "idempotency-key" not in api.last.headers
+
+
+def test_a_409_with_a_key_and_a_non_json_body_is_raised_at_once() -> None:
+    api = MockAPI().add(httpx.Response(409, text="idempotency_key_in_progress")).json(201, SESSION)
+    with pytest.raises(didit.ConflictError):
+        api.client().with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert len(api.requests) == 1
+
+
+def test_in_progress_conflicts_count_against_max_retries() -> None:
+    api = MockAPI().add(*[_conflict("idempotency_key_in_progress") for _ in range(3)])
+    with pytest.raises(didit.ConflictError):
+        api.client(max_retries=2).with_options(idempotency_key=KEY).sessions.create(workflow_id="w")
+    assert len(api.requests) == 3

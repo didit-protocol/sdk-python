@@ -5,7 +5,7 @@ It is the contract that keeps the seven SDKs consistent.
 A change to it is made in all seven repositories, in the same words.
 Where this document and an SDK disagree, the SDK is wrong.
 
-Version 1, 2026-10-17.
+Version 2, 2026-11-13.
 
 ## 1. Goal
 
@@ -135,6 +135,7 @@ Didit(api_key, base_url?, organization_id?, application_id?, timeout = 60s, max_
 - `api_key` falls back to the `DIDIT_API_KEY` environment variable; `organization_id` and `application_id` to `DIDIT_ORGANIZATION_ID` and `DIDIT_APPLICATION_ID`.
 - `base_url` defaults to `https://verification.didit.me`; `account_base_url` to `https://apx.didit.me/auth/v2`.
 - Every option can be overridden per request (`with_options(...)` or a request options argument).
+- `idempotency_key` exists only per request, never on the client constructor: it sends the `Idempotency-Key` header on that request. It is sent on `POST`, `PUT`, `PATCH` and `DELETE` only, never on another method. A client-wide default header of that name is ignored. It must be 1 to 255 characters; anything else raises `ConfigurationError` before a request is sent. The SDK never invents a key: the caller chooses one per operation and passes the same key when it repeats that operation. On an operation whose contract declares the header as its own parameter, the option and the parameter set the same header and the option wins.
 - Headers on every request: `x-api-key`, `User-Agent: didit-<language>/<version> (<runtime> <version>; <os>)`, `X-Didit-Client: <language>/<version>`, `Accept: application/json`.
 - The API key is never logged, never included in an error message and never sent to any origin other than `base_url` (a pagination `next` URL on another origin is refused).
 - Optional debug logging (`DIDIT_LOG=debug`) prints method, path, status, duration and request id, never bodies or headers.
@@ -154,6 +155,8 @@ Didit(api_key, base_url?, organization_id?, application_id?, timeout = 60s, max_
 Retries: up to `max_retries` (default 2), exponential backoff starting at 0.5 s with full jitter, capped at 8 s, honouring `Retry-After` (seconds or HTTP date, capped at 60 s).
 Retry on connection errors, timeouts, 408, 429 and 5xx for `GET`, `HEAD`, `PUT` and `DELETE`.
 Never retry `POST` or `PATCH` after the request may have reached the server (a 5xx or a read timeout); retry them only on a connection that failed before sending, or on 429.
+A `POST` or `PATCH` that carries an `Idempotency-Key` header is safe to repeat, so it follows the `GET` rule, sending the same key on every attempt.
+With a key, a 409 whose `code` is `idempotency_key_in_progress` is retried too, honouring `Retry-After`; every other 409, `idempotency_key_reused` included, is raised as `ConflictError` at once.
 Every response exposes the raw HTTP response (status, headers, request id) through the language's usual pattern (`with_raw_response`, `.asResponse()`, a `Response` field).
 
 ## 8. Lists, files and binary responses
@@ -245,7 +248,7 @@ Tests use a locally generated ES256 key pair and a stubbed issuer; never call a 
 
 ## 11. Tests and quality gates
 
-- Unit tests for the core: configuration, headers, errors per status, retry policy (including the no-retry cases for `POST`), `Retry-After`, timeouts, pagination, multipart, binary responses, origin check, redaction.
+- Unit tests for the core: configuration, headers, errors per status, the idempotency key option, retry policy (including the no-retry cases for `POST` and the cases with an idempotency key), `Retry-After`, timeouts, pagination, multipart, binary responses, origin check, redaction.
 - Generated tests: one test per server operation from the spec's examples, with a mocked HTTP layer, asserting method, path (ids filled, application scope expanded), query, body encoding and response parsing.
 - Contract test: every `server: true` operation in `openapi/` has exactly one SDK method, and nothing else exists. For `authentication.json` the methods are the hand-written ones of section 10, so a spec sync that adds, removes or renames an Authentication operation fails until the module follows.
 - Webhook vectors (9.3) and Authentication token tests (10).
