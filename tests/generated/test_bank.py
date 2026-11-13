@@ -26,6 +26,7 @@ def test_bank_account_check() -> None:
                 "request_id": "c2f4a9e0-7b1d-4c3a-9e55-1d0a6b8f2a47",
                 "result": "close_match",
                 "holder_name": "MARIA R OLIVEIRA",
+                "name_match_score": 83,
                 "account": "****0001",
                 "vendor_data": "payout_20481",
                 "created_at": "2026-10-21T14:32:08Z",

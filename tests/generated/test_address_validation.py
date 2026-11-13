@@ -39,6 +39,8 @@ def test_address_validation_validate() -> None:
                     "formatted_address": "1600 Amphitheatre Pkwy, Mountain View CA 94043-1351",
                     "latitude": 37.422022,
                     "longitude": -122.08429,
+                    "address_type": "street",
+                    "is_residential": False,
                 },
                 "created_at": "2026-10-27T11:20:00.000000+00:00",
             },

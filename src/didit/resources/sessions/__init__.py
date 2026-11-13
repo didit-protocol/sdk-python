@@ -182,6 +182,7 @@ class Sessions(SyncAPIResource):
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
+        session_expiration_time: int | NotGiven = NOT_GIVEN,
         language: Literal[
             "en",
             "ar",
@@ -258,9 +259,9 @@ class Sessions(SyncAPIResource):
 
         Call this from your backend (never the browser - the API key is a secret) whenever a user or business needs to be verified: at signup, before a sensitive action, or when re-verification is required. Prerequisites: a published workflow (created in the Console [Workflows](https://docs.didit.me/console/workflows) page) and an application API key with available credits. Sandbox applications bypass the credit check.
 
-        **Idempotency:** when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate - with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused.
+        **Idempotency:** for a User Verification workflow, when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate - with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused. A Business Verification workflow creates a new session on every call.
 
-        **Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.
+        **Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after `session_expiration_time` seconds when the request sets it, otherwise after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.
 
         ``POST /v3/session/``
 
@@ -272,6 +273,7 @@ class Sessions(SyncAPIResource):
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
           tags: Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them.
+          session_expiration_time: Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
@@ -300,6 +302,7 @@ class Sessions(SyncAPIResource):
                     "callback_method": callback_method,
                     "metadata": metadata,
                     "tags": tags,
+                    "session_expiration_time": session_expiration_time,
                     "language": language,
                     "contact_details": contact_details,
                     "expected_details": expected_details,
@@ -2835,6 +2838,7 @@ class AsyncSessions(AsyncAPIResource):
         callback_method: Literal["initiator", "completer", "both"] | str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
+        session_expiration_time: int | NotGiven = NOT_GIVEN,
         language: Literal[
             "en",
             "ar",
@@ -2911,9 +2915,9 @@ class AsyncSessions(AsyncAPIResource):
 
         Call this from your backend (never the browser - the API key is a secret) whenever a user or business needs to be verified: at signup, before a sensitive action, or when re-verification is required. Prerequisites: a published workflow (created in the Console [Workflows](https://docs.didit.me/console/workflows) page) and an application API key with available credits. Sandbox applications bypass the credit check.
 
-        **Idempotency:** when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate - with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused.
+        **Idempotency:** for a User Verification workflow, when `vendor_data` is provided and an unfinished session (`Not Started`, `In Progress`, `Resubmitted`, or `Awaiting User`) with the same `vendor_data` already exists on the workflow's **current latest published version** (and that session already has a hosted verification URL), the existing session is returned (still `201`) instead of creating a duplicate - with its `callback` and `metadata` updated to the newly provided values. An unfinished session created on an older version of the workflow (one that has since been republished) is **not** reused; a new session pinned to the latest published version is created instead. Sessions in `Approved`, `Declined`, `In Review`, `Expired`, `Abandoned`, or `Kyc Expired` are never reused. A Business Verification workflow creates a new session on every call.
 
-        **Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.
+        **Side effects:** the hosted verification URL is generated and stored; if `contact_details.send_notification_emails` is `true` and an email is provided, a verification invite email is sent. The session expires after `session_expiration_time` seconds when the request sets it, otherwise after the workflow's configured session expiration time. For KYB workflows, `contact_details.phone` and `expected_details` are ignored.
 
         ``POST /v3/session/``
 
@@ -2925,6 +2929,7 @@ class AsyncSessions(AsyncAPIResource):
           callback_method: Determines which device should handle the redirect to the provided callback URL. Use `initiator` to redirect only the device that started the flow, `completer` for the device that finishes it, or `both` to allow either device to trigger the callback. If you ever notice the callback not triggering reliably, we recommend setting this value to `both`.
           metadata: Arbitrary JSON stored with the session and echoed back in the response and webhooks. Any JSON value is accepted (object, string, number, array), but a JSON object of key/value pairs is recommended. Not shown to the end user. Use it to pass your own correlation ids, A/B variants, or business context.
           tags: Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them.
+          session_expiration_time: Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
           expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
@@ -2953,6 +2958,7 @@ class AsyncSessions(AsyncAPIResource):
                     "callback_method": callback_method,
                     "metadata": metadata,
                     "tags": tags,
+                    "session_expiration_time": session_expiration_time,
                     "language": language,
                     "contact_details": contact_details,
                     "expected_details": expected_details,

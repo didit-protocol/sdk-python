@@ -181,6 +181,9 @@ class SessionsCreateParams(TypedDict, total=False):
     tags: Sequence[str]
     """Tags added to the session when it is created, by name. Up to 10, each up to 50 characters. Names are case-insensitive and stored in upper case. A name that does not exist yet in the application is created as a new tag. The tags show on the session in the console, where you can filter by them."""
 
+    session_expiration_time: int
+    """Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`."""
+
     language: (
         Literal[
             "en",
