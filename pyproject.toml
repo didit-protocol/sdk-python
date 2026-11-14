@@ -1,6 +1,6 @@
 [project]
 name = "didit-sdk"
-version = "1.20.0"
+version = "1.21.0"
 description = "The official Didit Python library: identity verification (KYC), business verification (KYB), AML, liveness, transaction monitoring, Travel Rule and customer authentication."
 readme = "README.md"
 license = "MIT"
