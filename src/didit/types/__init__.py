@@ -522,6 +522,12 @@ if TYPE_CHECKING:
         ApplicationInitiateLoginURI as ApplicationInitiateLoginURI,
     )
     from didit.types.components.application_product import ApplicationProduct as ApplicationProduct
+    from didit.types.components.async_report import AsyncReport as AsyncReport
+    from didit.types.components.async_report_file import AsyncReportFile as AsyncReportFile
+    from didit.types.components.async_report_list import AsyncReportList as AsyncReportList
+    from didit.types.components.async_report_list import (
+        AsyncReportListCounts as AsyncReportListCounts,
+    )
     from didit.types.components.bank_account_check_business_holder import (
         BankAccountCheckBusinessHolder as BankAccountCheckBusinessHolder,
     )
@@ -2455,6 +2461,12 @@ if TYPE_CHECKING:
     from didit.types.components.webhook_config_destination import (
         WebhookConfigDestination as WebhookConfigDestination,
     )
+    from didit.types.components.webhook_destination_activity import (
+        WebhookDestinationActivity as WebhookDestinationActivity,
+    )
+    from didit.types.components.webhook_destination_activity_list import (
+        WebhookDestinationActivityList as WebhookDestinationActivityList,
+    )
     from didit.types.components.webhook_destination_delivery import (
         WebhookDestinationDelivery as WebhookDestinationDelivery,
     )
@@ -2968,6 +2980,7 @@ if TYPE_CHECKING:
     from didit.types.report_templates.update_params import (
         ReportTemplatesUpdateParams as ReportTemplatesUpdateParams,
     )
+    from didit.types.reports.retry_params import ReportsRetryParams as ReportsRetryParams
     from didit.types.sessions.add_images_params import (
         SessionsAddImagesParams as SessionsAddImagesParams,
     )
@@ -3659,6 +3672,10 @@ _MODULES: dict[str, str] = {
     "ApplicationDataLocation": "components.application_data_location",
     "ApplicationInitiateLoginURI": "components.application_initiate_login_uri",
     "ApplicationProduct": "components.application_product",
+    "AsyncReport": "components.async_report",
+    "AsyncReportFile": "components.async_report_file",
+    "AsyncReportList": "components.async_report_list",
+    "AsyncReportListCounts": "components.async_report_list",
     "BankAccountCheckBusinessHolder": "components.bank_account_check_business_holder",
     "BankAccountCheckHolder": "components.bank_account_check_holder",
     "BankAccountCheckParams": "bank.account_check_params",
@@ -4255,6 +4272,7 @@ _MODULES: dict[str, str] = {
     "ReportTemplatesCreateParams": "report_templates.create_params",
     "ReportTemplatesListResponse": "report_templates.list_response",
     "ReportTemplatesUpdateParams": "report_templates.update_params",
+    "ReportsRetryParams": "reports.retry_params",
     "ReviewItem": "components.review_item",
     "RiskLifecycleEvent": "components.risk_lifecycle_event",
     "RiskSignals": "components.risk_signals",
@@ -4816,6 +4834,8 @@ _MODULES: dict[str, str] = {
     "WebhookConfig": "components.webhook_config",
     "WebhookConfigAvailableEvents": "components.webhook_config",
     "WebhookConfigDestination": "components.webhook_config_destination",
+    "WebhookDestinationActivity": "components.webhook_destination_activity",
+    "WebhookDestinationActivityList": "components.webhook_destination_activity_list",
     "WebhookDestinationDelivery": "components.webhook_destination_delivery",
     "WebhookDestinationDeliveryDetail": "components.webhook_destination_delivery_detail",
     "WebhookEvent": "components.webhook_event",
@@ -4954,6 +4974,10 @@ __all__ = [
     "ApplicationDataLocation",
     "ApplicationInitiateLoginURI",
     "ApplicationProduct",
+    "AsyncReport",
+    "AsyncReportFile",
+    "AsyncReportList",
+    "AsyncReportListCounts",
     "BankAccountCheckBusinessHolder",
     "BankAccountCheckHolder",
     "BankAccountCheckParams",
@@ -5550,6 +5574,7 @@ __all__ = [
     "ReportTemplatesCreateParams",
     "ReportTemplatesListResponse",
     "ReportTemplatesUpdateParams",
+    "ReportsRetryParams",
     "ReviewItem",
     "RiskLifecycleEvent",
     "RiskSignals",
@@ -6111,6 +6136,8 @@ __all__ = [
     "WebhookConfig",
     "WebhookConfigAvailableEvents",
     "WebhookConfigDestination",
+    "WebhookDestinationActivity",
+    "WebhookDestinationActivityList",
     "WebhookDestinationDelivery",
     "WebhookDestinationDeliveryDetail",
     "WebhookEvent",
