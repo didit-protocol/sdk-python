@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/didit-protocol/sdk-python/compare/v1.23.0...v1.23.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* an idempotency key neither starts nor ends with a space ([#85](https://github.com/didit-protocol/sdk-python/issues/85)) ([b02e024](https://github.com/didit-protocol/sdk-python/commit/b02e02435ac46ed7d1e82187fb399d8bc0395a74))
+
 ## [1.23.0](https://github.com/didit-protocol/sdk-python/compare/v1.22.0...v1.23.0) (2026-11-14)
 
 
