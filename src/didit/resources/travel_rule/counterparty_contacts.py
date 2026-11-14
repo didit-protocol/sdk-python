@@ -35,7 +35,7 @@ __all__ = [
 class TravelRuleCounterpartyContacts(SyncAPIResource):
     """The ``travel_rule.counterparty_contacts`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``.
+    Methods: ``create``, ``delete``, ``list``, ``update``.
     """
 
     @cached_property
@@ -96,6 +96,9 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
         counterparty: str,
         email: str,
         name: str | NotGiven = NOT_GIVEN,
+        role: str | NotGiven = NOT_GIVEN,
+        phone: str | NotGiven = NOT_GIVEN,
+        receives_requests: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -111,6 +114,9 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
           counterparty: The directory entry's `id`.
           email
           name: Optional label.
+          role: Optional. The contact's role.
+          phone: Optional. The contact's phone number.
+          receives_requests: Whether due-diligence requests and reminders go to this contact.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -123,7 +129,14 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
                 "/v3/travel-rule/counterparty-contacts/",
                 cast_to=TravelRuleCounterpartyContact,
                 auth="api_key",
-                body={"counterparty": counterparty, "email": email, "name": name},
+                body={
+                    "counterparty": counterparty,
+                    "email": email,
+                    "name": name,
+                    "role": role,
+                    "phone": phone,
+                    "receives_requests": receives_requests,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -168,11 +181,65 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
             ),
         )
 
+    def update(
+        self,
+        contact_uuid: str,
+        *,
+        name: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        role: str | NotGiven = NOT_GIVEN,
+        phone: str | NotGiven = NOT_GIVEN,
+        receives_requests: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyContact:
+        """Edit a counterparty contact.
+
+        Edits one of your application's own contacts. Changing the email address clears its verification and invalid state. Platform contacts cannot be edited.
+
+        ``PATCH /v3/travel-rule/counterparty-contacts/{contact_uuid}/``
+
+        Args:
+          contact_uuid
+          name
+          email
+          role
+          phone
+          receives_requests
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyContact",
+            self._client.request(
+                "patch",
+                "/v3/travel-rule/counterparty-contacts/{contact_uuid}/",
+                cast_to=TravelRuleCounterpartyContact,
+                path_params={"contact_uuid": contact_uuid},
+                auth="api_key",
+                body={
+                    "name": name,
+                    "email": email,
+                    "role": role,
+                    "phone": phone,
+                    "receives_requests": receives_requests,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
     """The ``travel_rule.counterparty_contacts`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``.
+    Methods: ``create``, ``delete``, ``list``, ``update``.
     """
 
     @cached_property
@@ -233,6 +300,9 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
         counterparty: str,
         email: str,
         name: str | NotGiven = NOT_GIVEN,
+        role: str | NotGiven = NOT_GIVEN,
+        phone: str | NotGiven = NOT_GIVEN,
+        receives_requests: bool | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -248,6 +318,9 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
           counterparty: The directory entry's `id`.
           email
           name: Optional label.
+          role: Optional. The contact's role.
+          phone: Optional. The contact's phone number.
+          receives_requests: Whether due-diligence requests and reminders go to this contact.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -260,7 +333,14 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
                 "/v3/travel-rule/counterparty-contacts/",
                 cast_to=TravelRuleCounterpartyContact,
                 auth="api_key",
-                body={"counterparty": counterparty, "email": email, "name": name},
+                body={
+                    "counterparty": counterparty,
+                    "email": email,
+                    "name": name,
+                    "role": role,
+                    "phone": phone,
+                    "receives_requests": receives_requests,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -305,6 +385,60 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
             ),
         )
 
+    async def update(
+        self,
+        contact_uuid: str,
+        *,
+        name: str | NotGiven = NOT_GIVEN,
+        email: str | NotGiven = NOT_GIVEN,
+        role: str | NotGiven = NOT_GIVEN,
+        phone: str | NotGiven = NOT_GIVEN,
+        receives_requests: bool | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleCounterpartyContact:
+        """Edit a counterparty contact.
+
+        Edits one of your application's own contacts. Changing the email address clears its verification and invalid state. Platform contacts cannot be edited.
+
+        ``PATCH /v3/travel-rule/counterparty-contacts/{contact_uuid}/``
+
+        Args:
+          contact_uuid
+          name
+          email
+          role
+          phone
+          receives_requests
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleCounterpartyContact",
+            await self._client.request(
+                "patch",
+                "/v3/travel-rule/counterparty-contacts/{contact_uuid}/",
+                cast_to=TravelRuleCounterpartyContact,
+                path_params={"contact_uuid": contact_uuid},
+                auth="api_key",
+                body={
+                    "name": name,
+                    "email": email,
+                    "role": role,
+                    "phone": phone,
+                    "receives_requests": receives_requests,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TravelRuleCounterpartyContactsWithRawResponse:
     def __init__(self, resource: TravelRuleCounterpartyContacts) -> None:
@@ -312,6 +446,7 @@ class TravelRuleCounterpartyContactsWithRawResponse:
         self.list = to_raw_response_wrapper(resource.list)
         self.create = to_raw_response_wrapper(resource.create)
         self.delete = to_raw_response_wrapper(resource.delete)
+        self.update = to_raw_response_wrapper(resource.update)
 
 
 class AsyncTravelRuleCounterpartyContactsWithRawResponse:
@@ -320,6 +455,7 @@ class AsyncTravelRuleCounterpartyContactsWithRawResponse:
         self.list = async_to_raw_response_wrapper(resource.list)
         self.create = async_to_raw_response_wrapper(resource.create)
         self.delete = async_to_raw_response_wrapper(resource.delete)
+        self.update = async_to_raw_response_wrapper(resource.update)
 
 
 class TravelRuleCounterpartyContactsWithStreamingResponse:
@@ -328,6 +464,7 @@ class TravelRuleCounterpartyContactsWithStreamingResponse:
         self.list = to_streamed_response_wrapper(resource.list)
         self.create = to_streamed_response_wrapper(resource.create)
         self.delete = to_streamed_response_wrapper(resource.delete)
+        self.update = to_streamed_response_wrapper(resource.update)
 
 
 class AsyncTravelRuleCounterpartyContactsWithStreamingResponse:
@@ -336,3 +473,4 @@ class AsyncTravelRuleCounterpartyContactsWithStreamingResponse:
         self.list = async_to_streamed_response_wrapper(resource.list)
         self.create = async_to_streamed_response_wrapper(resource.create)
         self.delete = async_to_streamed_response_wrapper(resource.delete)
+        self.update = async_to_streamed_response_wrapper(resource.update)

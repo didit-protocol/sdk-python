@@ -5,8 +5,20 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_document_kind import TravelRuleDocumentKind
 
-__all__ = ["TravelRuleCounterpartyQuestionnaire"]
+__all__ = ["TravelRuleCounterpartyQuestionnaire", "TravelRuleCounterpartyQuestionnaireDocuments"]
+
+
+class TravelRuleCounterpartyQuestionnaireDocuments(BaseModel):
+    id: str | None = None
+
+    name: str | None = None
+
+    kind: TravelRuleDocumentKind | None = None
+    """`questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure."""
+
+    received_at: _dt.datetime | None = None
 
 
 class TravelRuleCounterpartyQuestionnaire(BaseModel):
@@ -37,3 +49,12 @@ class TravelRuleCounterpartyQuestionnaire(BaseModel):
 
     answers: dict[str, str] | None = None
     """The answers keyed by question id: legal_name, licensing, jurisdictions, aml_program, compliance_officer, sanctions_screening, transaction_monitoring, travel_rule, custody, ownership, record_keeping, data_protection. Each answer is up to 2,000 characters. Empty until answered."""
+
+    requested_items: list[TravelRuleDocumentKind] | None = None
+    """What the request asked for."""
+
+    reminder_sent_at: _dt.datetime | None = None
+    """When Didit last reminded the counterparty, or null."""
+
+    documents: list[TravelRuleCounterpartyQuestionnaireDocuments] | None = None
+    """The documents the counterparty uploaded."""
