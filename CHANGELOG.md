@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0](https://github.com/didit-protocol/sdk-python/compare/v1.18.0...v1.19.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([3a5ad77](https://github.com/didit-protocol/sdk-python/commit/3a5ad77c3574926669ab405e3bb7d2b02536402d))
+
+
+### Documentation
+
+* add polling and reconciliation examples ([#70](https://github.com/didit-protocol/sdk-python/issues/70)) ([3b6c79a](https://github.com/didit-protocol/sdk-python/commit/3b6c79a7ec57f20ea8e3b2f02acdee57e8df7ede))
+
 ## [1.18.0](https://github.com/didit-protocol/sdk-python/compare/v1.17.0...v1.18.0) (2026-11-14)
 
 
