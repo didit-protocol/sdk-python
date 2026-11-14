@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from didit.resources.questionnaires import AsyncQuestionnaires, Questionnaires
     from didit.resources.regulatory_reports import AsyncRegulatoryReports, RegulatoryReports
     from didit.resources.report_templates import AsyncReportTemplates, ReportTemplates
+    from didit.resources.reports import AsyncReports, Reports
     from didit.resources.sandbox import AsyncSandbox, Sandbox
     from didit.resources.sessions import AsyncSessions, Sessions
     from didit.resources.transactions import AsyncTransactions, Transactions
@@ -268,6 +269,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.report_templates import ReportTemplates
 
         return ReportTemplates(self)
+
+    @cached_property
+    def reports(self) -> Reports:
+        from didit.resources.reports import Reports
+
+        return Reports(self)
 
     @cached_property
     def sandbox(self) -> Sandbox:
@@ -530,6 +537,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.report_templates import AsyncReportTemplates
 
         return AsyncReportTemplates(self)
+
+    @cached_property
+    def reports(self) -> AsyncReports:
+        from didit.resources.reports import AsyncReports
+
+        return AsyncReports(self)
 
     @cached_property
     def sandbox(self) -> AsyncSandbox:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
 from didit.types.components.webhook_config import WebhookConfig
+from didit.types.components.webhook_destination_activity import WebhookDestinationActivity
 from didit.types.components.webhook_destination_delivery import WebhookDestinationDelivery
 from didit.types.components.webhook_destination_delivery_detail import (
     WebhookDestinationDeliveryDetail,
@@ -361,6 +362,47 @@ def test_webhooks_destinations_list() -> None:
         lambda r: (
             isinstance(r, list)
             and all(isinstance(x1, WebhooksDestinationsListResponseItem) for x1 in r)
+        ),
+    )
+
+
+def test_webhooks_destinations_list_activity() -> None:
+    """``GET /v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/webhook/destinations/00000000-0000-4000-8000-000000000001/activity/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000003",
+                        "type": "failure_alert",
+                        "occurred_at": "2026-11-11T01:00:00Z",
+                        "failure_count": 3,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.webhooks.destinations.list_activity(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda c: c.webhooks.destinations.list_activity(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, WebhookDestinationActivity) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, WebhookDestinationActivity) for x1 in r.results)
         ),
     )
 

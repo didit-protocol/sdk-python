@@ -19,6 +19,8 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.webhook_destination_activity import WebhookDestinationActivity
+from didit.types.components.webhook_destination_activity_list import WebhookDestinationActivityList
 from didit.types.components.webhook_destination_delivery import WebhookDestinationDelivery
 from didit.types.components.webhook_destination_delivery_detail import (
     WebhookDestinationDeliveryDetail,
@@ -48,7 +50,7 @@ __all__ = [
 class WebhooksDestinations(SyncAPIResource):
     """The ``webhooks.destinations`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
+    Methods: ``create``, ``delete``, ``list``, ``list_activity``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
     """
 
     @cached_property
@@ -446,11 +448,55 @@ class WebhooksDestinations(SyncAPIResource):
             ),
         )
 
+    def list_activity(
+        self,
+        destination_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[WebhookDestinationActivity]:
+        """List webhook destination activity.
+
+        Lists recorded failure alerts for one destination, newest first. Requires read:webhooks. Application/API-key credentials must belong to the application in the path; member Bearer tokens must have access to that application. These are failure alert events, not individual delivery attempts or outbound webhook event types. See [Webhooks](https://docs.didit.me/integration/webhooks#retry-policy).
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/``
+
+        Args:
+          destination_uuid: Destination uuid.
+          limit: Maximum results per page.
+          offset: Number of results to skip.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[WebhookDestinationActivity]",
+            self._client.request_page(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/",
+                cast_to=WebhookDestinationActivityList,
+                item_type=WebhookDestinationActivity,
+                path_params={"destination_uuid": destination_uuid},
+                scope="application",
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncWebhooksDestinations(AsyncAPIResource):
     """The ``webhooks.destinations`` resource of the Didit API.
 
-    Methods: ``create``, ``delete``, ``list``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
+    Methods: ``create``, ``delete``, ``list``, ``list_activity``, ``list_deliveries``, ``resend_delivery``, ``retrieve``, ``retrieve_analytics``, ``retrieve_delivery``, ``update``.
     """
 
     @cached_property
@@ -848,6 +894,50 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
             ),
         )
 
+    def list_activity(
+        self,
+        destination_uuid: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[WebhookDestinationActivity]:
+        """List webhook destination activity.
+
+        Lists recorded failure alerts for one destination, newest first. Requires read:webhooks. Application/API-key credentials must belong to the application in the path; member Bearer tokens must have access to that application. These are failure alert events, not individual delivery attempts or outbound webhook event types. See [Webhooks](https://docs.didit.me/integration/webhooks#retry-policy).
+
+        ``GET /v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/``
+
+        Args:
+          destination_uuid: Destination uuid.
+          limit: Maximum results per page.
+          offset: Number of results to skip.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[WebhookDestinationActivity]",
+            self._client.request_page(
+                "get",
+                "/v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/",
+                cast_to=WebhookDestinationActivityList,
+                item_type=WebhookDestinationActivity,
+                path_params={"destination_uuid": destination_uuid},
+                scope="application",
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class WebhooksDestinationsWithRawResponse:
     def __init__(self, resource: WebhooksDestinations) -> None:
@@ -861,6 +951,7 @@ class WebhooksDestinationsWithRawResponse:
         self.list_deliveries = to_raw_response_wrapper(resource.list_deliveries)
         self.retrieve_delivery = to_raw_response_wrapper(resource.retrieve_delivery)
         self.resend_delivery = to_raw_response_wrapper(resource.resend_delivery)
+        self.list_activity = to_raw_response_wrapper(resource.list_activity)
 
 
 class AsyncWebhooksDestinationsWithRawResponse:
@@ -875,6 +966,7 @@ class AsyncWebhooksDestinationsWithRawResponse:
         self.list_deliveries = async_to_raw_response_wrapper(resource.list_deliveries)
         self.retrieve_delivery = async_to_raw_response_wrapper(resource.retrieve_delivery)
         self.resend_delivery = async_to_raw_response_wrapper(resource.resend_delivery)
+        self.list_activity = async_to_raw_response_wrapper(resource.list_activity)
 
 
 class WebhooksDestinationsWithStreamingResponse:
@@ -889,6 +981,7 @@ class WebhooksDestinationsWithStreamingResponse:
         self.list_deliveries = to_streamed_response_wrapper(resource.list_deliveries)
         self.retrieve_delivery = to_streamed_response_wrapper(resource.retrieve_delivery)
         self.resend_delivery = to_streamed_response_wrapper(resource.resend_delivery)
+        self.list_activity = to_streamed_response_wrapper(resource.list_activity)
 
 
 class AsyncWebhooksDestinationsWithStreamingResponse:
@@ -903,3 +996,4 @@ class AsyncWebhooksDestinationsWithStreamingResponse:
         self.list_deliveries = async_to_streamed_response_wrapper(resource.list_deliveries)
         self.retrieve_delivery = async_to_streamed_response_wrapper(resource.retrieve_delivery)
         self.resend_delivery = async_to_streamed_response_wrapper(resource.resend_delivery)
+        self.list_activity = async_to_streamed_response_wrapper(resource.list_activity)
