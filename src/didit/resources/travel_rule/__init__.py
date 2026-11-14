@@ -41,9 +41,14 @@ from didit.types.components.travel_rule_widget_session_response import (
     TravelRuleWidgetSessionResponse,
 )
 from didit.types.components.vasp_directory_entry import VaspDirectoryEntry
+from didit.types.travel_rule.assign_vasp_response import TravelRuleAssignVaspResponse
+from didit.types.travel_rule.list_vasp_reviewers_response import TravelRuleListVaspReviewersResponse
 from didit.types.travel_rule.list_vasps_response import TravelRuleListVaspsResponse
 from didit.types.travel_rule.register_inbound_params import (
     TravelRuleRegisterInboundParamsOriginatingVasp,
+)
+from didit.types.travel_rule.review_vasp_screening_hit_response import (
+    TravelRuleReviewVaspScreeningHitResponse,
 )
 from didit.types.travel_rule.send_compliance_email_confirmation_response import (
     TravelRuleSendComplianceEmailConfirmationResponse,
@@ -120,7 +125,7 @@ __all__ = [
 class TravelRule(SyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
     Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
@@ -712,6 +717,58 @@ class TravelRule(SyncAPIResource):
             ),
         )
 
+    def review_vasp_screening_hit(
+        self,
+        vasp_id: str,
+        *,
+        screening_id: str,
+        hit_id: str,
+        review_status: Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"]
+        | str,
+        reason: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleReviewVaspScreeningHitResponse:
+        """Review a screening hit.
+
+        Records your review of one possible match of a screening. The screening score and status are recomputed from the reviewed hits, but the counterparty's decision is never changed for you: decide it with `PUT /v3/travel-rule/vasps/{vasp_id}/decision/`. Repeating the same review changes nothing (`changed: false`). Needs the transactions write privilege.
+
+        ``PATCH /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          screening_id: The screening the hit belongs to, as returned by the screening endpoints.
+          hit_id: The hit's `id`.
+          review_status
+          reason
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleReviewVaspScreeningHitResponse",
+            self._client.request(
+                "patch",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleReviewVaspScreeningHitResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={
+                    "screening_id": screening_id,
+                    "hit_id": hit_id,
+                    "review_status": review_status,
+                    "reason": reason,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     def list_vasp_questionnaires(
         self,
         vasp_id: str,
@@ -924,11 +981,85 @@ class TravelRule(SyncAPIResource):
             ),
         )
 
+    def list_vasp_reviewers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleListVaspReviewersResponse:
+        """List the members who can be assigned a VASP.
+
+        The application members who can review Travel Rule counterparties. Use one `email` as `assignee_email` of `POST /v3/travel-rule/vasps/{vasp_id}/assign/`. Needs the transactions read privilege.
+
+        ``GET /v3/travel-rule/vasps/reviewers/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleListVaspReviewersResponse",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/reviewers/",
+                cast_to=TravelRuleListVaspReviewersResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def assign_vasp(
+        self,
+        vasp_id: str,
+        *,
+        assignee_email: str | None,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleAssignVaspResponse:
+        """Assign a VASP to a member.
+
+        Assigns the counterparty to one application member, or unassigns it with `assignee_email: null`. Repeating the same assignment changes nothing (`changed: false`). The assignment is private to your application. Needs the transactions write privilege.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/assign/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          assignee_email: Email of an application member. null or an empty string unassigns.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleAssignVaspResponse",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/assign/",
+                cast_to=TravelRuleAssignVaspResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"assignee_email": assignee_email},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncTravelRule(AsyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
 
     Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
@@ -1522,6 +1653,58 @@ class AsyncTravelRule(AsyncAPIResource):
             ),
         )
 
+    async def review_vasp_screening_hit(
+        self,
+        vasp_id: str,
+        *,
+        screening_id: str,
+        hit_id: str,
+        review_status: Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"]
+        | str,
+        reason: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleReviewVaspScreeningHitResponse:
+        """Review a screening hit.
+
+        Records your review of one possible match of a screening. The screening score and status are recomputed from the reviewed hits, but the counterparty's decision is never changed for you: decide it with `PUT /v3/travel-rule/vasps/{vasp_id}/decision/`. Repeating the same review changes nothing (`changed: false`). Needs the transactions write privilege.
+
+        ``PATCH /v3/travel-rule/vasps/{vasp_id}/screening/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          screening_id: The screening the hit belongs to, as returned by the screening endpoints.
+          hit_id: The hit's `id`.
+          review_status
+          reason
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleReviewVaspScreeningHitResponse",
+            await self._client.request(
+                "patch",
+                "/v3/travel-rule/vasps/{vasp_id}/screening/",
+                cast_to=TravelRuleReviewVaspScreeningHitResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={
+                    "screening_id": screening_id,
+                    "hit_id": hit_id,
+                    "review_status": review_status,
+                    "reason": reason,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     async def list_vasp_questionnaires(
         self,
         vasp_id: str,
@@ -1734,6 +1917,80 @@ class AsyncTravelRule(AsyncAPIResource):
             ),
         )
 
+    async def list_vasp_reviewers(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleListVaspReviewersResponse:
+        """List the members who can be assigned a VASP.
+
+        The application members who can review Travel Rule counterparties. Use one `email` as `assignee_email` of `POST /v3/travel-rule/vasps/{vasp_id}/assign/`. Needs the transactions read privilege.
+
+        ``GET /v3/travel-rule/vasps/reviewers/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleListVaspReviewersResponse",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/reviewers/",
+                cast_to=TravelRuleListVaspReviewersResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def assign_vasp(
+        self,
+        vasp_id: str,
+        *,
+        assignee_email: str | None,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleAssignVaspResponse:
+        """Assign a VASP to a member.
+
+        Assigns the counterparty to one application member, or unassigns it with `assignee_email: null`. Repeating the same assignment changes nothing (`changed: false`). The assignment is private to your application. Needs the transactions write privilege.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/assign/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          assignee_email: Email of an application member. null or an empty string unassigns.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleAssignVaspResponse",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/assign/",
+                cast_to=TravelRuleAssignVaspResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"assignee_email": assignee_email},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class TravelRuleWithRawResponse:
     def __init__(self, resource: TravelRule) -> None:
@@ -1751,10 +2008,13 @@ class TravelRuleWithRawResponse:
         self.clear_vasp_decision = to_raw_response_wrapper(resource.clear_vasp_decision)
         self.retrieve_vasp_screening = to_raw_response_wrapper(resource.retrieve_vasp_screening)
         self.screen_vasp = to_raw_response_wrapper(resource.screen_vasp)
+        self.review_vasp_screening_hit = to_raw_response_wrapper(resource.review_vasp_screening_hit)
         self.list_vasp_questionnaires = to_raw_response_wrapper(resource.list_vasp_questionnaires)
         self.send_vasp_questionnaire = to_raw_response_wrapper(resource.send_vasp_questionnaire)
         self.register_inbound = to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_raw_response_wrapper(resource.create_widget_session)
+        self.list_vasp_reviewers = to_raw_response_wrapper(resource.list_vasp_reviewers)
+        self.assign_vasp = to_raw_response_wrapper(resource.assign_vasp)
 
     @cached_property
     def counterparty_contacts(self) -> TravelRuleCounterpartyContactsWithRawResponse:
@@ -1823,6 +2083,9 @@ class AsyncTravelRuleWithRawResponse:
             resource.retrieve_vasp_screening
         )
         self.screen_vasp = async_to_raw_response_wrapper(resource.screen_vasp)
+        self.review_vasp_screening_hit = async_to_raw_response_wrapper(
+            resource.review_vasp_screening_hit
+        )
         self.list_vasp_questionnaires = async_to_raw_response_wrapper(
             resource.list_vasp_questionnaires
         )
@@ -1831,6 +2094,8 @@ class AsyncTravelRuleWithRawResponse:
         )
         self.register_inbound = async_to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = async_to_raw_response_wrapper(resource.create_widget_session)
+        self.list_vasp_reviewers = async_to_raw_response_wrapper(resource.list_vasp_reviewers)
+        self.assign_vasp = async_to_raw_response_wrapper(resource.assign_vasp)
 
     @cached_property
     def counterparty_contacts(self) -> AsyncTravelRuleCounterpartyContactsWithRawResponse:
@@ -1905,6 +2170,9 @@ class TravelRuleWithStreamingResponse:
             resource.retrieve_vasp_screening
         )
         self.screen_vasp = to_streamed_response_wrapper(resource.screen_vasp)
+        self.review_vasp_screening_hit = to_streamed_response_wrapper(
+            resource.review_vasp_screening_hit
+        )
         self.list_vasp_questionnaires = to_streamed_response_wrapper(
             resource.list_vasp_questionnaires
         )
@@ -1913,6 +2181,8 @@ class TravelRuleWithStreamingResponse:
         )
         self.register_inbound = to_streamed_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_streamed_response_wrapper(resource.create_widget_session)
+        self.list_vasp_reviewers = to_streamed_response_wrapper(resource.list_vasp_reviewers)
+        self.assign_vasp = to_streamed_response_wrapper(resource.assign_vasp)
 
     @cached_property
     def counterparty_contacts(self) -> TravelRuleCounterpartyContactsWithStreamingResponse:
@@ -1991,6 +2261,9 @@ class AsyncTravelRuleWithStreamingResponse:
             resource.retrieve_vasp_screening
         )
         self.screen_vasp = async_to_streamed_response_wrapper(resource.screen_vasp)
+        self.review_vasp_screening_hit = async_to_streamed_response_wrapper(
+            resource.review_vasp_screening_hit
+        )
         self.list_vasp_questionnaires = async_to_streamed_response_wrapper(
             resource.list_vasp_questionnaires
         )
@@ -2001,6 +2274,8 @@ class AsyncTravelRuleWithStreamingResponse:
         self.create_widget_session = async_to_streamed_response_wrapper(
             resource.create_widget_session
         )
+        self.list_vasp_reviewers = async_to_streamed_response_wrapper(resource.list_vasp_reviewers)
+        self.assign_vasp = async_to_streamed_response_wrapper(resource.assign_vasp)
 
     @cached_property
     def counterparty_contacts(self) -> AsyncTravelRuleCounterpartyContactsWithStreamingResponse:

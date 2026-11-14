@@ -60,3 +60,9 @@ class TravelRuleNetworkParticipant(BaseModel):
 
     history: list[TravelRuleNetworkParticipantHistory] | None = None
     """Every status change, oldest first."""
+
+    notify_status_changes: bool | None = None
+    """Whether the signed-in member asked for an email when this participant's status changes. Always false for API-key calls, which cannot set the preference."""
+
+    notification_email: str | None = None
+    """The verified account email the notifications go to; null when there is none."""
