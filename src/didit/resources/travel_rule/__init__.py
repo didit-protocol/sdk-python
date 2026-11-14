@@ -33,6 +33,9 @@ from didit.types.components.travel_rule_counterparty_screening_status import (
     TravelRuleCounterpartyScreeningStatus,
 )
 from didit.types.components.travel_rule_data_sharing_fields import TravelRuleDataSharingFieldsParam
+from didit.types.components.travel_rule_decision_event import TravelRuleDecisionEvent
+from didit.types.components.travel_rule_document_kind import TravelRuleDocumentKind
+from didit.types.components.travel_rule_document_share import TravelRuleDocumentShare
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse
 from didit.types.components.travel_rule_matching_rules import TravelRuleMatchingRulesParam
 from didit.types.components.travel_rule_settings_detail import TravelRuleSettingsDetail
@@ -42,7 +45,13 @@ from didit.types.components.travel_rule_widget_session_response import (
 )
 from didit.types.components.vasp_directory_entry import VaspDirectoryEntry
 from didit.types.travel_rule.assign_vasp_response import TravelRuleAssignVaspResponse
+from didit.types.travel_rule.list_vasp_decision_history_response import (
+    TravelRuleListVaspDecisionHistoryResponse,
+)
 from didit.types.travel_rule.list_vasp_reviewers_response import TravelRuleListVaspReviewersResponse
+from didit.types.travel_rule.list_vasp_shared_documents_response import (
+    TravelRuleListVaspSharedDocumentsResponse,
+)
 from didit.types.travel_rule.list_vasps_response import TravelRuleListVaspsResponse
 from didit.types.travel_rule.register_inbound_params import (
     TravelRuleRegisterInboundParamsOriginatingVasp,
@@ -62,6 +71,14 @@ if TYPE_CHECKING:
         TravelRuleCounterpartyContacts,
         TravelRuleCounterpartyContactsWithRawResponse,
         TravelRuleCounterpartyContactsWithStreamingResponse,
+    )
+    from didit.resources.travel_rule.documents import (
+        AsyncTravelRuleDocuments,
+        AsyncTravelRuleDocumentsWithRawResponse,
+        AsyncTravelRuleDocumentsWithStreamingResponse,
+        TravelRuleDocuments,
+        TravelRuleDocumentsWithRawResponse,
+        TravelRuleDocumentsWithStreamingResponse,
     )
     from didit.resources.travel_rule.networks import (
         AsyncTravelRuleNetworks,
@@ -125,9 +142,9 @@ __all__ = [
 class TravelRule(SyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_decision_history``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasp_shared_documents``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``share_vasp_documents``, ``update_settings``, ``update_vasp_decision``, ``withdraw_vasp_documents``, ``withdraw_vasp_questionnaire``.
 
-    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``documents``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -135,6 +152,12 @@ class TravelRule(SyncAPIResource):
         from didit.resources.travel_rule.counterparty_contacts import TravelRuleCounterpartyContacts
 
         return TravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def documents(self) -> TravelRuleDocuments:
+        from didit.resources.travel_rule.documents import TravelRuleDocuments
+
+        return TravelRuleDocuments(self._client)
 
     @cached_property
     def networks(self) -> TravelRuleNetworks:
@@ -811,6 +834,8 @@ class TravelRule(SyncAPIResource):
         vasp_id: str,
         *,
         sent_to: str | NotGiven = NOT_GIVEN,
+        answer_by_days: int | NotGiven = NOT_GIVEN,
+        requested_items: Sequence[TravelRuleDocumentKind] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -825,6 +850,8 @@ class TravelRule(SyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
+          answer_by_days: Optional. Days the counterparty has to answer. Default: the standard answer window.
+          requested_items: Optional. What the counterparty must provide: the questionnaire answers and/or PDF documents.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -838,7 +865,11 @@ class TravelRule(SyncAPIResource):
                 cast_to=TravelRuleCounterpartyQuestionnaire,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
-                body={"sent_to": sent_to},
+                body={
+                    "sent_to": sent_to,
+                    "answer_by_days": answer_by_days,
+                    "requested_items": requested_items,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -981,6 +1012,204 @@ class TravelRule(SyncAPIResource):
             ),
         )
 
+    def list_vasp_shared_documents(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleListVaspSharedDocumentsResponse:
+        """List the documents shared with a VASP.
+
+        The documents currently shared with the counterparty.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleListVaspSharedDocumentsResponse",
+            self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=TravelRuleListVaspSharedDocumentsResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def share_vasp_documents(
+        self,
+        vasp_id: str,
+        *,
+        document_ids: Sequence[str],
+        sent_to: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleDocumentShare:
+        """Share documents with a VASP.
+
+        Emails the counterparty a private link to the selected documents. Sharing again replaces the earlier share: the earlier link stops working for good. Sharing exactly what is already shared with the same address changes nothing and answers `200` with `url: null`. Needs the transactions write privilege.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          document_ids: Documents of your own inventory, each once.
+          sent_to: Optional. A compliance address on record for the counterparty, chosen the way `sent_to` of the questionnaire request is. Default: the address a Travel Rule email to the counterparty goes to.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleDocumentShare",
+            self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=TravelRuleDocumentShare,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"document_ids": document_ids, "sent_to": sent_to},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def withdraw_vasp_documents(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Withdraw the documents shared with a VASP.
+
+        Revokes every active link to your documents for this counterparty. Withdrawal is permanent: the links never work again, and sharing again creates a new link.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=None,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def withdraw_vasp_questionnaire(
+        self,
+        vasp_id: str,
+        questionnaire_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Withdraw a due-diligence request.
+
+        Withdraws the request and erases the documents and answers collected with it. Its answer link stops working. Deletion is irreversible. Needs the transactions write privilege.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          questionnaire_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/",
+                cast_to=None,
+                path_params={"vasp_id": vasp_id, "questionnaire_id": questionnaire_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_vasp_decision_history(
+        self,
+        vasp_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SyncPage[TravelRuleDecisionEvent]:
+        """List a VASP's decision history.
+
+        Your application's own decision changes for the counterparty, newest first. Only changes made after this history existed are listed. Needs the transactions read privilege.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/decision-history/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          limit
+          offset
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SyncPage[TravelRuleDecisionEvent]",
+            self._client.request_page(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/decision-history/",
+                cast_to=TravelRuleListVaspDecisionHistoryResponse,
+                item_type=TravelRuleDecisionEvent,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     def list_vasp_reviewers(
         self,
         *,
@@ -1059,9 +1288,9 @@ class TravelRule(SyncAPIResource):
 class AsyncTravelRule(AsyncAPIResource):
     """The ``travel_rule`` resource of the Didit API.
 
-    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``update_settings``, ``update_vasp_decision``.
+    Methods: ``assign_vasp``, ``clear_vasp_decision``, ``create_vasp``, ``create_widget_session``, ``list_vasp_decision_history``, ``list_vasp_questionnaires``, ``list_vasp_reviewers``, ``list_vasp_shared_documents``, ``list_vasps``, ``register_inbound``, ``retrieve_settings``, ``retrieve_vasp``, ``retrieve_vasp_decision``, ``retrieve_vasp_screening``, ``review_vasp_screening_hit``, ``screen_vasp``, ``send_compliance_email_confirmation``, ``send_vasp_questionnaire``, ``share_vasp_documents``, ``update_settings``, ``update_vasp_decision``, ``withdraw_vasp_documents``, ``withdraw_vasp_questionnaire``.
 
-    Nested resources: ``counterparty_contacts``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
+    Nested resources: ``counterparty_contacts``, ``documents``, ``networks``, ``transfers``, ``unmatched_deposits``, ``wallet_addresses``, ``wallet_proofs``, ``workspace``.
     """
 
     @cached_property
@@ -1071,6 +1300,12 @@ class AsyncTravelRule(AsyncAPIResource):
         )
 
         return AsyncTravelRuleCounterpartyContacts(self._client)
+
+    @cached_property
+    def documents(self) -> AsyncTravelRuleDocuments:
+        from didit.resources.travel_rule.documents import AsyncTravelRuleDocuments
+
+        return AsyncTravelRuleDocuments(self._client)
 
     @cached_property
     def networks(self) -> AsyncTravelRuleNetworks:
@@ -1747,6 +1982,8 @@ class AsyncTravelRule(AsyncAPIResource):
         vasp_id: str,
         *,
         sent_to: str | NotGiven = NOT_GIVEN,
+        answer_by_days: int | NotGiven = NOT_GIVEN,
+        requested_items: Sequence[TravelRuleDocumentKind] | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1761,6 +1998,8 @@ class AsyncTravelRule(AsyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
+          answer_by_days: Optional. Days the counterparty has to answer. Default: the standard answer window.
+          requested_items: Optional. What the counterparty must provide: the questionnaire answers and/or PDF documents.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1774,7 +2013,11 @@ class AsyncTravelRule(AsyncAPIResource):
                 cast_to=TravelRuleCounterpartyQuestionnaire,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
-                body={"sent_to": sent_to},
+                body={
+                    "sent_to": sent_to,
+                    "answer_by_days": answer_by_days,
+                    "requested_items": requested_items,
+                },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1917,6 +2160,204 @@ class AsyncTravelRule(AsyncAPIResource):
             ),
         )
 
+    async def list_vasp_shared_documents(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleListVaspSharedDocumentsResponse:
+        """List the documents shared with a VASP.
+
+        The documents currently shared with the counterparty.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleListVaspSharedDocumentsResponse",
+            await self._client.request(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=TravelRuleListVaspSharedDocumentsResponse,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def share_vasp_documents(
+        self,
+        vasp_id: str,
+        *,
+        document_ids: Sequence[str],
+        sent_to: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> TravelRuleDocumentShare:
+        """Share documents with a VASP.
+
+        Emails the counterparty a private link to the selected documents. Sharing again replaces the earlier share: the earlier link stops working for good. Sharing exactly what is already shared with the same address changes nothing and answers `200` with `url: null`. Needs the transactions write privilege.
+
+        ``POST /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          document_ids: Documents of your own inventory, each once.
+          sent_to: Optional. A compliance address on record for the counterparty, chosen the way `sent_to` of the questionnaire request is. Default: the address a Travel Rule email to the counterparty goes to.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "TravelRuleDocumentShare",
+            await self._client.request(
+                "post",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=TravelRuleDocumentShare,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                body={"document_ids": document_ids, "sent_to": sent_to},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def withdraw_vasp_documents(
+        self,
+        vasp_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Withdraw the documents shared with a VASP.
+
+        Revokes every active link to your documents for this counterparty. Withdrawal is permanent: the links never work again, and sharing again creates a new link.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/shared-documents/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            await self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/shared-documents/",
+                cast_to=None,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def withdraw_vasp_questionnaire(
+        self,
+        vasp_id: str,
+        questionnaire_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> None:
+        """Withdraw a due-diligence request.
+
+        Withdraws the request and erases the documents and answers collected with it. Its answer link stops working. Deletion is irreversible. Needs the transactions write privilege.
+
+        ``DELETE /v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          questionnaire_id
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "None",
+            await self._client.request(
+                "delete",
+                "/v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/",
+                cast_to=None,
+                path_params={"vasp_id": vasp_id, "questionnaire_id": questionnaire_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def list_vasp_decision_history(
+        self,
+        vasp_id: str,
+        *,
+        limit: int | NotGiven = NOT_GIVEN,
+        offset: int | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> AsyncPaginator[TravelRuleDecisionEvent]:
+        """List a VASP's decision history.
+
+        Your application's own decision changes for the counterparty, newest first. Only changes made after this history existed are listed. Needs the transactions read privilege.
+
+        ``GET /v3/travel-rule/vasps/{vasp_id}/decision-history/``
+
+        Args:
+          vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          limit
+          offset
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "AsyncPaginator[TravelRuleDecisionEvent]",
+            self._client.request_page(
+                "get",
+                "/v3/travel-rule/vasps/{vasp_id}/decision-history/",
+                cast_to=TravelRuleListVaspDecisionHistoryResponse,
+                item_type=TravelRuleDecisionEvent,
+                path_params={"vasp_id": vasp_id},
+                auth="api_key",
+                query={"limit": limit, "offset": offset},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     async def list_vasp_reviewers(
         self,
         *,
@@ -2013,6 +2454,17 @@ class TravelRuleWithRawResponse:
         self.send_vasp_questionnaire = to_raw_response_wrapper(resource.send_vasp_questionnaire)
         self.register_inbound = to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_raw_response_wrapper(resource.create_widget_session)
+        self.list_vasp_shared_documents = to_raw_response_wrapper(
+            resource.list_vasp_shared_documents
+        )
+        self.share_vasp_documents = to_raw_response_wrapper(resource.share_vasp_documents)
+        self.withdraw_vasp_documents = to_raw_response_wrapper(resource.withdraw_vasp_documents)
+        self.withdraw_vasp_questionnaire = to_raw_response_wrapper(
+            resource.withdraw_vasp_questionnaire
+        )
+        self.list_vasp_decision_history = to_raw_response_wrapper(
+            resource.list_vasp_decision_history
+        )
         self.list_vasp_reviewers = to_raw_response_wrapper(resource.list_vasp_reviewers)
         self.assign_vasp = to_raw_response_wrapper(resource.assign_vasp)
 
@@ -2023,6 +2475,12 @@ class TravelRuleWithRawResponse:
         )
 
         return TravelRuleCounterpartyContactsWithRawResponse(self._resource.counterparty_contacts)
+
+    @cached_property
+    def documents(self) -> TravelRuleDocumentsWithRawResponse:
+        from didit.resources.travel_rule.documents import TravelRuleDocumentsWithRawResponse
+
+        return TravelRuleDocumentsWithRawResponse(self._resource.documents)
 
     @cached_property
     def networks(self) -> TravelRuleNetworksWithRawResponse:
@@ -2094,6 +2552,19 @@ class AsyncTravelRuleWithRawResponse:
         )
         self.register_inbound = async_to_raw_response_wrapper(resource.register_inbound)
         self.create_widget_session = async_to_raw_response_wrapper(resource.create_widget_session)
+        self.list_vasp_shared_documents = async_to_raw_response_wrapper(
+            resource.list_vasp_shared_documents
+        )
+        self.share_vasp_documents = async_to_raw_response_wrapper(resource.share_vasp_documents)
+        self.withdraw_vasp_documents = async_to_raw_response_wrapper(
+            resource.withdraw_vasp_documents
+        )
+        self.withdraw_vasp_questionnaire = async_to_raw_response_wrapper(
+            resource.withdraw_vasp_questionnaire
+        )
+        self.list_vasp_decision_history = async_to_raw_response_wrapper(
+            resource.list_vasp_decision_history
+        )
         self.list_vasp_reviewers = async_to_raw_response_wrapper(resource.list_vasp_reviewers)
         self.assign_vasp = async_to_raw_response_wrapper(resource.assign_vasp)
 
@@ -2106,6 +2577,12 @@ class AsyncTravelRuleWithRawResponse:
         return AsyncTravelRuleCounterpartyContactsWithRawResponse(
             self._resource.counterparty_contacts
         )
+
+    @cached_property
+    def documents(self) -> AsyncTravelRuleDocumentsWithRawResponse:
+        from didit.resources.travel_rule.documents import AsyncTravelRuleDocumentsWithRawResponse
+
+        return AsyncTravelRuleDocumentsWithRawResponse(self._resource.documents)
 
     @cached_property
     def networks(self) -> AsyncTravelRuleNetworksWithRawResponse:
@@ -2181,6 +2658,19 @@ class TravelRuleWithStreamingResponse:
         )
         self.register_inbound = to_streamed_response_wrapper(resource.register_inbound)
         self.create_widget_session = to_streamed_response_wrapper(resource.create_widget_session)
+        self.list_vasp_shared_documents = to_streamed_response_wrapper(
+            resource.list_vasp_shared_documents
+        )
+        self.share_vasp_documents = to_streamed_response_wrapper(resource.share_vasp_documents)
+        self.withdraw_vasp_documents = to_streamed_response_wrapper(
+            resource.withdraw_vasp_documents
+        )
+        self.withdraw_vasp_questionnaire = to_streamed_response_wrapper(
+            resource.withdraw_vasp_questionnaire
+        )
+        self.list_vasp_decision_history = to_streamed_response_wrapper(
+            resource.list_vasp_decision_history
+        )
         self.list_vasp_reviewers = to_streamed_response_wrapper(resource.list_vasp_reviewers)
         self.assign_vasp = to_streamed_response_wrapper(resource.assign_vasp)
 
@@ -2193,6 +2683,12 @@ class TravelRuleWithStreamingResponse:
         return TravelRuleCounterpartyContactsWithStreamingResponse(
             self._resource.counterparty_contacts
         )
+
+    @cached_property
+    def documents(self) -> TravelRuleDocumentsWithStreamingResponse:
+        from didit.resources.travel_rule.documents import TravelRuleDocumentsWithStreamingResponse
+
+        return TravelRuleDocumentsWithStreamingResponse(self._resource.documents)
 
     @cached_property
     def networks(self) -> TravelRuleNetworksWithStreamingResponse:
@@ -2274,6 +2770,21 @@ class AsyncTravelRuleWithStreamingResponse:
         self.create_widget_session = async_to_streamed_response_wrapper(
             resource.create_widget_session
         )
+        self.list_vasp_shared_documents = async_to_streamed_response_wrapper(
+            resource.list_vasp_shared_documents
+        )
+        self.share_vasp_documents = async_to_streamed_response_wrapper(
+            resource.share_vasp_documents
+        )
+        self.withdraw_vasp_documents = async_to_streamed_response_wrapper(
+            resource.withdraw_vasp_documents
+        )
+        self.withdraw_vasp_questionnaire = async_to_streamed_response_wrapper(
+            resource.withdraw_vasp_questionnaire
+        )
+        self.list_vasp_decision_history = async_to_streamed_response_wrapper(
+            resource.list_vasp_decision_history
+        )
         self.list_vasp_reviewers = async_to_streamed_response_wrapper(resource.list_vasp_reviewers)
         self.assign_vasp = async_to_streamed_response_wrapper(resource.assign_vasp)
 
@@ -2286,6 +2797,14 @@ class AsyncTravelRuleWithStreamingResponse:
         return AsyncTravelRuleCounterpartyContactsWithStreamingResponse(
             self._resource.counterparty_contacts
         )
+
+    @cached_property
+    def documents(self) -> AsyncTravelRuleDocumentsWithStreamingResponse:
+        from didit.resources.travel_rule.documents import (
+            AsyncTravelRuleDocumentsWithStreamingResponse,
+        )
+
+        return AsyncTravelRuleDocumentsWithStreamingResponse(self._resource.documents)
 
     @cached_property
     def networks(self) -> AsyncTravelRuleNetworksWithStreamingResponse:

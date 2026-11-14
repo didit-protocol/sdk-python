@@ -2118,6 +2118,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_counterparty_questionnaire import (
         TravelRuleCounterpartyQuestionnaire as TravelRuleCounterpartyQuestionnaire,
     )
+    from didit.types.components.travel_rule_counterparty_questionnaire import (
+        TravelRuleCounterpartyQuestionnaireDocuments as TravelRuleCounterpartyQuestionnaireDocuments,
+    )
     from didit.types.components.travel_rule_counterparty_questionnaire_list import (
         TravelRuleCounterpartyQuestionnaireList as TravelRuleCounterpartyQuestionnaireList,
     )
@@ -2154,6 +2157,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_data_unmasked import (
         TravelRuleDataUnmasked as TravelRuleDataUnmasked,
     )
+    from didit.types.components.travel_rule_decision_event import (
+        TravelRuleDecisionEvent as TravelRuleDecisionEvent,
+    )
     from didit.types.components.travel_rule_delivery import TravelRuleDelivery as TravelRuleDelivery
     from didit.types.components.travel_rule_delivery import (
         TravelRuleDeliveryFailure as TravelRuleDeliveryFailure,
@@ -2169,6 +2175,13 @@ if TYPE_CHECKING:
     )
     from didit.types.components.travel_rule_discovery_step import (
         TravelRuleDiscoveryStep as TravelRuleDiscoveryStep,
+    )
+    from didit.types.components.travel_rule_document import TravelRuleDocument as TravelRuleDocument
+    from didit.types.components.travel_rule_document_kind import (
+        TravelRuleDocumentKind as TravelRuleDocumentKind,
+    )
+    from didit.types.components.travel_rule_document_share import (
+        TravelRuleDocumentShare as TravelRuleDocumentShare,
     )
     from didit.types.components.travel_rule_inbound_response import (
         TravelRuleInboundResponse as TravelRuleInboundResponse,
@@ -3332,14 +3345,29 @@ if TYPE_CHECKING:
     from didit.types.travel_rule.counterparty_contacts.list_response import (
         TravelRuleCounterpartyContactsListResponse as TravelRuleCounterpartyContactsListResponse,
     )
+    from didit.types.travel_rule.counterparty_contacts.update_params import (
+        TravelRuleCounterpartyContactsUpdateParams as TravelRuleCounterpartyContactsUpdateParams,
+    )
     from didit.types.travel_rule.create_vasp_params import (
         TravelRuleCreateVaspParams as TravelRuleCreateVaspParams,
     )
     from didit.types.travel_rule.create_widget_session_params import (
         TravelRuleCreateWidgetSessionParams as TravelRuleCreateWidgetSessionParams,
     )
+    from didit.types.travel_rule.documents.create_params import (
+        TravelRuleDocumentsCreateParams as TravelRuleDocumentsCreateParams,
+    )
+    from didit.types.travel_rule.documents.list_response import (
+        TravelRuleDocumentsListResponse as TravelRuleDocumentsListResponse,
+    )
+    from didit.types.travel_rule.list_vasp_decision_history_response import (
+        TravelRuleListVaspDecisionHistoryResponse as TravelRuleListVaspDecisionHistoryResponse,
+    )
     from didit.types.travel_rule.list_vasp_reviewers_response import (
         TravelRuleListVaspReviewersResponse as TravelRuleListVaspReviewersResponse,
+    )
+    from didit.types.travel_rule.list_vasp_shared_documents_response import (
+        TravelRuleListVaspSharedDocumentsResponse as TravelRuleListVaspSharedDocumentsResponse,
     )
     from didit.types.travel_rule.list_vasps_response import (
         TravelRuleListVaspsResponse as TravelRuleListVaspsResponse,
@@ -3370,6 +3398,9 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.send_vasp_questionnaire_params import (
         TravelRuleSendVaspQuestionnaireParams as TravelRuleSendVaspQuestionnaireParams,
+    )
+    from didit.types.travel_rule.share_vasp_documents_params import (
+        TravelRuleShareVaspDocumentsParams as TravelRuleShareVaspDocumentsParams,
     )
     from didit.types.travel_rule.transfers.list_response import (
         TravelRuleTransfersListResponse as TravelRuleTransfersListResponse,
@@ -4606,10 +4637,12 @@ _MODULES: dict[str, str] = {
     "TravelRuleCounterpartyContact": "components.travel_rule_counterparty_contact",
     "TravelRuleCounterpartyContactsCreateParams": "travel_rule.counterparty_contacts.create_params",
     "TravelRuleCounterpartyContactsListResponse": "travel_rule.counterparty_contacts.list_response",
+    "TravelRuleCounterpartyContactsUpdateParams": "travel_rule.counterparty_contacts.update_params",
     "TravelRuleCounterpartyDecision": "components.travel_rule_counterparty_decision",
     "TravelRuleCounterpartyDecisionInheritedFrom": "components.travel_rule_counterparty_decision",
     "TravelRuleCounterpartyDecisionResponse": "components.travel_rule_counterparty_decision_response",
     "TravelRuleCounterpartyQuestionnaire": "components.travel_rule_counterparty_questionnaire",
+    "TravelRuleCounterpartyQuestionnaireDocuments": "components.travel_rule_counterparty_questionnaire",
     "TravelRuleCounterpartyQuestionnaireList": "components.travel_rule_counterparty_questionnaire_list",
     "TravelRuleCounterpartyScreening": "components.travel_rule_counterparty_screening",
     "TravelRuleCounterpartyScreeningHits": "components.travel_rule_counterparty_screening",
@@ -4624,14 +4657,22 @@ _MODULES: dict[str, str] = {
     "TravelRuleDataSharingFields": "components.travel_rule_data_sharing_fields",
     "TravelRuleDataSharingFieldsParam": "components.travel_rule_data_sharing_fields",
     "TravelRuleDataUnmasked": "components.travel_rule_data_unmasked",
+    "TravelRuleDecisionEvent": "components.travel_rule_decision_event",
     "TravelRuleDelivery": "components.travel_rule_delivery",
     "TravelRuleDeliveryFailure": "components.travel_rule_delivery",
     "TravelRuleDeliveryLogEntry": "components.travel_rule_delivery_log_entry",
     "TravelRuleDeliveryLogEntryFailure": "components.travel_rule_delivery_log_entry",
     "TravelRuleDeliveryLogPage": "components.travel_rule_delivery_log_page",
     "TravelRuleDiscoveryStep": "components.travel_rule_discovery_step",
+    "TravelRuleDocument": "components.travel_rule_document",
+    "TravelRuleDocumentKind": "components.travel_rule_document_kind",
+    "TravelRuleDocumentShare": "components.travel_rule_document_share",
+    "TravelRuleDocumentsCreateParams": "travel_rule.documents.create_params",
+    "TravelRuleDocumentsListResponse": "travel_rule.documents.list_response",
     "TravelRuleInboundResponse": "components.travel_rule_inbound_response",
+    "TravelRuleListVaspDecisionHistoryResponse": "travel_rule.list_vasp_decision_history_response",
     "TravelRuleListVaspReviewersResponse": "travel_rule.list_vasp_reviewers_response",
+    "TravelRuleListVaspSharedDocumentsResponse": "travel_rule.list_vasp_shared_documents_response",
     "TravelRuleListVaspsResponse": "travel_rule.list_vasps_response",
     "TravelRuleManualMatchResponse": "components.travel_rule_manual_match_response",
     "TravelRuleMatchingRules": "components.travel_rule_matching_rules",
@@ -4668,6 +4709,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleSettingsDetail": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailDiditNetwork": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailNetworks": "components.travel_rule_settings_detail",
+    "TravelRuleShareVaspDocumentsParams": "travel_rule.share_vasp_documents_params",
     "TravelRuleTestVaspInboundResponse": "components.travel_rule_test_vasp_inbound_response",
     "TravelRuleTransferDetail": "components.travel_rule_transfer_detail",
     "TravelRuleTransferDetailCounterpartyVasp": "components.travel_rule_transfer_detail",
@@ -5890,10 +5932,12 @@ __all__ = [
     "TravelRuleCounterpartyContact",
     "TravelRuleCounterpartyContactsCreateParams",
     "TravelRuleCounterpartyContactsListResponse",
+    "TravelRuleCounterpartyContactsUpdateParams",
     "TravelRuleCounterpartyDecision",
     "TravelRuleCounterpartyDecisionInheritedFrom",
     "TravelRuleCounterpartyDecisionResponse",
     "TravelRuleCounterpartyQuestionnaire",
+    "TravelRuleCounterpartyQuestionnaireDocuments",
     "TravelRuleCounterpartyQuestionnaireList",
     "TravelRuleCounterpartyScreening",
     "TravelRuleCounterpartyScreeningHits",
@@ -5908,14 +5952,22 @@ __all__ = [
     "TravelRuleDataSharingFields",
     "TravelRuleDataSharingFieldsParam",
     "TravelRuleDataUnmasked",
+    "TravelRuleDecisionEvent",
     "TravelRuleDelivery",
     "TravelRuleDeliveryFailure",
     "TravelRuleDeliveryLogEntry",
     "TravelRuleDeliveryLogEntryFailure",
     "TravelRuleDeliveryLogPage",
     "TravelRuleDiscoveryStep",
+    "TravelRuleDocument",
+    "TravelRuleDocumentKind",
+    "TravelRuleDocumentShare",
+    "TravelRuleDocumentsCreateParams",
+    "TravelRuleDocumentsListResponse",
     "TravelRuleInboundResponse",
+    "TravelRuleListVaspDecisionHistoryResponse",
     "TravelRuleListVaspReviewersResponse",
+    "TravelRuleListVaspSharedDocumentsResponse",
     "TravelRuleListVaspsResponse",
     "TravelRuleManualMatchResponse",
     "TravelRuleMatchingRules",
@@ -5952,6 +6004,7 @@ __all__ = [
     "TravelRuleSettingsDetail",
     "TravelRuleSettingsDetailDiditNetwork",
     "TravelRuleSettingsDetailNetworks",
+    "TravelRuleShareVaspDocumentsParams",
     "TravelRuleTestVaspInboundResponse",
     "TravelRuleTransferDetail",
     "TravelRuleTransferDetailCounterpartyVasp",

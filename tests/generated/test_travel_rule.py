@@ -20,6 +20,9 @@ from didit.types.components.travel_rule_counterparty_screening_result import (
 from didit.types.components.travel_rule_counterparty_screening_status import (
     TravelRuleCounterpartyScreeningStatus,
 )
+from didit.types.components.travel_rule_decision_event import TravelRuleDecisionEvent
+from didit.types.components.travel_rule_document import TravelRuleDocument
+from didit.types.components.travel_rule_document_share import TravelRuleDocumentShare
 from didit.types.components.travel_rule_inbound_response import TravelRuleInboundResponse
 from didit.types.components.travel_rule_manual_match_response import TravelRuleManualMatchResponse
 from didit.types.components.travel_rule_network_participant import TravelRuleNetworkParticipant
@@ -43,13 +46,16 @@ from didit.types.components.wallet_address_entry_update import WalletAddressEntr
 from didit.types.components.wallet_address_import_report import WalletAddressImportReport
 from didit.types.travel_rule.assign_vasp_response import TravelRuleAssignVaspResponse
 from didit.types.travel_rule.list_vasp_reviewers_response import TravelRuleListVaspReviewersResponse
+from didit.types.travel_rule.list_vasp_shared_documents_response import (
+    TravelRuleListVaspSharedDocumentsResponse,
+)
 from didit.types.travel_rule.review_vasp_screening_hit_response import (
     TravelRuleReviewVaspScreeningHitResponse,
 )
 from didit.types.travel_rule.send_compliance_email_confirmation_response import (
     TravelRuleSendComplianceEmailConfirmationResponse,
 )
-from tests.harness import Expect, check_operation
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_travel_rule_assign_vasp() -> None:
@@ -194,6 +200,48 @@ def test_travel_rule_create_widget_session() -> None:
     )
 
 
+def test_travel_rule_list_vasp_decision_history() -> None:
+    """``GET /v3/travel-rule/vasps/{vasp_id}/decision-history/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/decision-history/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": "sample",
+                "previous": "sample",
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "decision": "sample",
+                        "reason": "sample",
+                        "actor": "sample",
+                        "created_at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.travel_rule.list_vasp_decision_history(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda c: c.travel_rule.list_vasp_decision_history(
+            "00000000-0000-4000-8000-000000000001", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, TravelRuleDecisionEvent) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, TravelRuleDecisionEvent) for x1 in r.results)
+        ),
+    )
+
+
 def test_travel_rule_list_vasp_questionnaires() -> None:
     """``GET /v3/travel-rule/vasps/{vasp_id}/questionnaires/``"""
     check_operation(
@@ -277,6 +325,36 @@ def test_travel_rule_list_vasp_reviewers() -> None:
         lambda c: c.travel_rule.list_vasp_reviewers(),
         lambda r: isinstance(r, TravelRuleListVaspReviewersResponse),
         lambda r: isinstance(r, TravelRuleListVaspReviewersResponse),
+    )
+
+
+def test_travel_rule_list_vasp_shared_documents() -> None:
+    """``GET /v3/travel-rule/vasps/{vasp_id}/shared-documents/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/shared-documents/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "documents": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "name": "sample",
+                        "kind": "questionnaire",
+                        "uploaded_at": "2026-01-01T00:00:00Z",
+                        "received_at": "2026-01-01T00:00:00Z",
+                        "content_type": "application/pdf",
+                    }
+                ]
+            },
+            strict_type=TravelRuleListVaspSharedDocumentsResponse,
+        ),
+        lambda c: c.travel_rule.list_vasp_shared_documents("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.travel_rule.list_vasp_shared_documents("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, TravelRuleListVaspSharedDocumentsResponse),
+        lambda r: isinstance(r, TravelRuleListVaspSharedDocumentsResponse),
     )
 
 
@@ -1136,6 +1214,37 @@ def test_travel_rule_send_vasp_questionnaire() -> None:
     )
 
 
+def test_travel_rule_share_vasp_documents() -> None:
+    """``POST /v3/travel-rule/vasps/{vasp_id}/shared-documents/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/shared-documents/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "document_ids": ["11111111-2222-4333-8444-555555555555"],
+                "sent_to": "travelrule@counterparty.example",
+            },
+            status=200,
+            response_json={"shared_with": "user@example.com", "url": "sample"},
+            strict_type=TravelRuleDocumentShare,
+        ),
+        lambda c: c.travel_rule.share_vasp_documents(
+            "00000000-0000-4000-8000-000000000001",
+            document_ids=["11111111-2222-4333-8444-555555555555"],
+            sent_to="travelrule@counterparty.example",
+        ),
+        lambda c: c.travel_rule.share_vasp_documents(
+            "00000000-0000-4000-8000-000000000001",
+            document_ids=["11111111-2222-4333-8444-555555555555"],
+            sent_to="travelrule@counterparty.example",
+        ),
+        lambda r: isinstance(r, TravelRuleDocumentShare),
+        lambda r: isinstance(r, TravelRuleDocumentShare),
+    )
+
+
 def test_travel_rule_update_settings() -> None:
     """``PUT /v3/travel-rule/settings/``"""
     check_operation(
@@ -1338,6 +1447,44 @@ def test_travel_rule_update_vasp_decision() -> None:
     )
 
 
+def test_travel_rule_withdraw_vasp_documents() -> None:
+    """``DELETE /v3/travel-rule/vasps/{vasp_id}/shared-documents/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/shared-documents/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.travel_rule.withdraw_vasp_documents("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.travel_rule.withdraw_vasp_documents("00000000-0000-4000-8000-000000000001"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_travel_rule_withdraw_vasp_questionnaire() -> None:
+    """``DELETE /v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/questionnaires/00000000-0000-4000-8000-000000000002/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.travel_rule.withdraw_vasp_questionnaire(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda c: c.travel_rule.withdraw_vasp_questionnaire(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
 def test_travel_rule_counterparty_contacts_create() -> None:
     """``POST /v3/travel-rule/counterparty-contacts/``"""
     check_operation(
@@ -1456,6 +1603,153 @@ def test_travel_rule_counterparty_contacts_list() -> None:
         lambda r: (
             isinstance(r, AsyncPage)
             and all(isinstance(x1, TravelRuleCounterpartyContact) for x1 in r.results)
+        ),
+    )
+
+
+def test_travel_rule_counterparty_contacts_update() -> None:
+    """``PATCH /v3/travel-rule/counterparty-contacts/{contact_uuid}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/travel-rule/counterparty-contacts/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            json_body={"role": "Compliance officer", "receives_requests": True},
+            status=200,
+            response_json={
+                "uuid": "00000000-0000-4000-8000-000000000003",
+                "counterparty": "00000000-0000-4000-8000-000000000003",
+                "counterparty_name": "sample",
+                "email": "user@example.com",
+                "name": "sample",
+                "source": "staff",
+                "scope": "platform",
+                "created_by": "sample",
+                "verified_at": "2026-01-01T00:00:00Z",
+                "is_invalid": True,
+                "invalid_reason": "",
+                "invalid_detail": "sample",
+                "invalid_at": "2026-01-01T00:00:00Z",
+                "created_at": "2026-01-01T00:00:00Z",
+                "role": "sample",
+                "phone": "sample",
+                "receives_requests": True,
+            },
+            strict_type=TravelRuleCounterpartyContact,
+        ),
+        lambda c: c.travel_rule.counterparty_contacts.update(
+            "00000000-0000-4000-8000-000000000001",
+            role="Compliance officer",
+            receives_requests=True,
+        ),
+        lambda c: c.travel_rule.counterparty_contacts.update(
+            "00000000-0000-4000-8000-000000000001",
+            role="Compliance officer",
+            receives_requests=True,
+        ),
+        lambda r: isinstance(r, TravelRuleCounterpartyContact),
+        lambda r: isinstance(r, TravelRuleCounterpartyContact),
+    )
+
+
+def test_travel_rule_documents_create() -> None:
+    """``POST /v3/travel-rule/documents/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/documents/",
+            api="verification",
+            auth="api_key",
+            multipart_fields=["kind"],
+            multipart_files=["file"],
+            status=201,
+            response_json={
+                "id": "00000000-0000-4000-8000-000000000003",
+                "name": "sample",
+                "kind": "questionnaire",
+                "uploaded_at": "2026-01-01T00:00:00Z",
+                "received_at": "2026-01-01T00:00:00Z",
+                "content_type": "application/pdf",
+            },
+            strict_type=TravelRuleDocument,
+        ),
+        lambda c: c.travel_rule.documents.create(kind="questionnaire", file=b"file-content"),
+        lambda c: c.travel_rule.documents.create(kind="questionnaire", file=b"file-content"),
+        lambda r: isinstance(r, TravelRuleDocument),
+        lambda r: isinstance(r, TravelRuleDocument),
+    )
+
+
+def test_travel_rule_documents_delete() -> None:
+    """``DELETE /v3/travel-rule/documents/{document_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/travel-rule/documents/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.travel_rule.documents.delete("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.travel_rule.documents.delete("00000000-0000-4000-8000-000000000001"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_travel_rule_documents_download() -> None:
+    """``GET /v3/travel-rule/documents/{document_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/documents/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="application/pdf",
+        ),
+        lambda c: c.travel_rule.documents.download("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.travel_rule.documents.download("00000000-0000-4000-8000-000000000001"),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
+def test_travel_rule_documents_list() -> None:
+    """``GET /v3/travel-rule/documents/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/documents/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": "sample",
+                "previous": "sample",
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000005",
+                        "name": "sample",
+                        "kind": "questionnaire",
+                        "uploaded_at": "2026-01-01T00:00:00Z",
+                        "received_at": "2026-01-01T00:00:00Z",
+                        "content_type": "application/pdf",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.travel_rule.documents.list(limit=1, offset=1),
+        lambda c: c.travel_rule.documents.list(limit=1, offset=1),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, TravelRuleDocument) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, TravelRuleDocument) for x1 in r.results)
         ),
     )
 

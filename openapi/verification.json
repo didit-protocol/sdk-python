@@ -85998,6 +85998,132 @@
             "description": "No contact of your application has this id. A platform contact answers 404 too."
           }
         }
+      },
+      "patch": {
+        "summary": "Edit a counterparty contact",
+        "description": "Edits one of your application's own contacts. Changing the email address clears its verification and invalid state. Platform contacts cannot be edited.",
+        "operationId": "updateTravelRuleCounterpartyContact",
+        "x-didit-sdk": {
+          "resource": "travel_rule.counterparty_contacts",
+          "method": "update",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "role": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "receives_requests": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "role": "Compliance officer",
+                "receives_requests": true
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X PATCH https://verification.didit.me/v3/travel-rule/counterparty-contacts/CONTACT_UUID/ \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"role\":\"Compliance officer\"}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.counterparty_contacts.update(\n    \"11111111-2222-3333-4444-555555555555\",\n    role=\"Compliance officer\",\n    receives_requests=True,\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.counterpartyContacts.update(\"11111111-2222-3333-4444-555555555555\", {\n  role: \"Compliance officer\",\n  receives_requests: true,\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.CounterpartyContacts.Update(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleCounterpartyContactsUpdateParams{\n\tRole:             didit.String(\"Compliance officer\"),\n\tReceivesRequests: didit.Bool(true),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleCounterpartyContactsUpdateParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().counterpartyContacts().update(\"11111111-2222-3333-4444-555555555555\", TravelRuleCounterpartyContactsUpdateParams.builder()\n        .role(\"Compliance officer\")\n        .receivesRequests(true)\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->counterpartyContacts->update('11111111-2222-3333-4444-555555555555', [\n    'role' => 'Compliance officer',\n    'receives_requests' => true,\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.counterparty_contacts.update(\n  \"11111111-2222-3333-4444-555555555555\",\n  role: \"Compliance officer\",\n  receives_requests: true\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.CounterpartyContacts.UpdateAsync(\"11111111-2222-3333-4444-555555555555\", new TravelRuleCounterpartyContactsUpdateParams\n{\n    Role = \"Compliance officer\",\n    ReceivesRequests = true,\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The edited contact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleCounterpartyContact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The email is invalid or this contact already exists."
+          },
+          "404": {
+            "description": "No contact of your application has this id."
+          }
+        }
       }
     },
     "/v3/travel-rule/transfers/": {
@@ -93512,6 +93638,1115 @@
         }
       }
     },
+    "/v3/travel-rule/documents/": {
+      "get": {
+        "summary": "List your Travel Rule documents",
+        "description": "Paginated inventory of the PDF documents you uploaded to share with counterparties, newest first. Documents counterparties sent you with a questionnaire are not listed here: they appear on the questionnaire. Needs the transactions read privilege.",
+        "operationId": "listTravelRuleDocuments",
+        "x-didit-sdk": {
+          "resource": "travel_rule.documents",
+          "method": "list",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/documents/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nfor item in client.travel_rule.documents.list():\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.travelRule.documents.list()) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.TravelRule.Documents.ListAutoPaging(ctx, didit.TravelRuleDocumentsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.travelRule().documents().list()) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\nforeach ($didit->travelRule->documents->list() as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.documents.list.auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.TravelRule.Documents.ListAsync())\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TravelRuleDocument"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload a Travel Rule document",
+        "description": "Stores a PDF in your inventory so you can share it with counterparties. The file must be a PDF of at most 5 MiB. Uploading identical content of the same kind again returns the existing document. Needs the transactions write privilege.",
+        "operationId": "uploadTravelRuleDocument",
+        "x-didit-sdk": {
+          "resource": "travel_rule.documents",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "file"
+                ],
+                "properties": {
+                  "kind": {
+                    "$ref": "#/components/schemas/TravelRuleDocumentKind"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "A PDF of at most 5 MiB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST https://verification.didit.me/v3/travel-rule/documents/ \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -F kind=incorporation -F file=@incorporation.pdf"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.documents.create(\n    kind=\"questionnaire\",\n    file=open(\"document.pdf\", \"rb\"),\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit, { fileFromPath } from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.documents.create({\n  kind: \"questionnaire\",\n  file: await fileFromPath(\"document.pdf\"),\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.Documents.Create(ctx, didit.TravelRuleDocumentsCreateParams{\n\tKind: didit.TravelRuleDocumentKind(\"questionnaire\"),\n\tFile: didit.FileFromPath(\"document.pdf\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.nio.file.Path;\nimport me.didit.Didit;\nimport me.didit.types.TravelRuleDocumentKind;\nimport me.didit.types.TravelRuleDocumentsCreateParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().documents().create(TravelRuleDocumentsCreateParams.builder()\n        .kind(TravelRuleDocumentKind.of(\"questionnaire\"))\n        .file(Path.of(\"document.pdf\"))\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\nuse Didit\\File;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->documents->create([\n    'kind' => 'questionnaire',\n    'file' => File::fromPath('document.pdf'),\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.documents.create(\n  kind: \"questionnaire\",\n  file: Pathname(\"document.pdf\")\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.Documents.CreateAsync(new TravelRuleDocumentsCreateParams\n{\n    Kind = \"questionnaire\",\n    File = FileUpload.FromPath(\"document.pdf\"),\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The stored document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`kind` is not one of the document kinds, or the file is not a PDF or is larger than 5 MiB."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/documents/{document_id}/": {
+      "get": {
+        "summary": "Download a Travel Rule document",
+        "description": "Returns the PDF, as an attachment, for a document you uploaded or one a counterparty sent you with a questionnaire. Needs the transactions read privilege.",
+        "operationId": "downloadTravelRuleDocument",
+        "x-didit-sdk": {
+          "resource": "travel_rule.documents",
+          "method": "download",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/documents/DOCUMENT_ID/ \\\n  -H 'x-api-key: YOUR_API_KEY' -o document.pdf"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\ncontent = client.travel_rule.documents.download(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nwith open(\"download.pdf\", \"wb\") as file:\n    file.write(content)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import { writeFile } from \"node:fs/promises\";\nimport Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst content = await didit.travelRule.documents.download(\"11111111-2222-3333-4444-555555555555\");\nawait writeFile(\"download.pdf\", Buffer.from(await content.arrayBuffer()));"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresp, err := client.TravelRule.Documents.Download(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer resp.Body.Close()\nfile, err := os.Create(\"download.pdf\")\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer file.Close()\nif _, err := io.Copy(file, resp.Body); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.nio.file.Path;\nimport me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nclient.travelRule().documents().download(\"11111111-2222-3333-4444-555555555555\")\n        .writeTo(Path.of(\"download.pdf\"));"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$content = $didit->travelRule->documents->download('11111111-2222-3333-4444-555555555555');\n$content->saveTo('download.pdf');"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ncontent = didit.travel_rule.documents.download(\"11111111-2222-3333-4444-555555555555\")\nFile.binwrite(\"download.pdf\", content)"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar content = await client.TravelRule.Documents.DownloadAsync(\"11111111-2222-3333-4444-555555555555\");\nawait content.SaveToAsync(\"download.pdf\");"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF, as an attachment.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown document, or the link was withdrawn."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a Travel Rule document",
+        "description": "Deletes the document and every link that shared it. Deletion is irreversible and takes effect at once: shared links stop working.",
+        "operationId": "deleteTravelRuleDocument",
+        "x-didit-sdk": {
+          "resource": "travel_rule.documents",
+          "method": "delete",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X DELETE https://verification.didit.me/v3/travel-rule/documents/DOCUMENT_ID/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nclient.travel_rule.documents.delete(\n    \"11111111-2222-3333-4444-555555555555\",\n)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nawait didit.travelRule.documents.delete(\"11111111-2222-3333-4444-555555555555\");"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nif err := client.TravelRule.Documents.Delete(ctx, \"11111111-2222-3333-4444-555555555555\"); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nclient.travelRule().documents().delete(\"11111111-2222-3333-4444-555555555555\");"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$didit->travelRule->documents->delete('11111111-2222-3333-4444-555555555555');"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.documents.delete(\"11111111-2222-3333-4444-555555555555\")"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait client.TravelRule.Documents.DeleteAsync(\"11111111-2222-3333-4444-555555555555\");"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/vasps/{vasp_id}/shared-documents/": {
+      "get": {
+        "summary": "List the documents shared with a VASP",
+        "description": "The documents currently shared with the counterparty.",
+        "operationId": "listTravelRuleVaspSharedDocuments",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "list_vasp_shared_documents",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/shared-documents/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.list_vasp_shared_documents(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.listVaspSharedDocuments(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.ListVASPSharedDocuments(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().listVaspSharedDocuments(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->listVaspSharedDocuments('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.list_vasp_shared_documents(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.ListVaspSharedDocumentsAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shared documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TravelRuleDocument"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No directory entry or listed Didit network member has this id."
+          }
+        }
+      },
+      "post": {
+        "summary": "Share documents with a VASP",
+        "description": "Emails the counterparty a private link to the selected documents. Sharing again replaces the earlier share: the earlier link stops working for good. Sharing exactly what is already shared with the same address changes nothing and answers `200` with `url: null`. Needs the transactions write privilege.",
+        "operationId": "shareTravelRuleVaspDocuments",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "share_vasp_documents",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "document_ids"
+                ],
+                "properties": {
+                  "document_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Documents of your own inventory, each once."
+                  },
+                  "sent_to": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Optional. A compliance address on record for the counterparty, chosen the way `sent_to` of the questionnaire request is. Default: the address a Travel Rule email to the counterparty goes to."
+                  }
+                }
+              },
+              "example": {
+                "document_ids": [
+                  "11111111-2222-4333-8444-555555555555"
+                ],
+                "sent_to": "travelrule@counterparty.example"
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/shared-documents/ \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"document_ids\":[\"DOCUMENT_ID\"]}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.share_vasp_documents(\n    \"11111111-2222-3333-4444-555555555555\",\n    document_ids=[\"11111111-2222-4333-8444-555555555555\"],\n    sent_to=\"travelrule@counterparty.example\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.shareVaspDocuments(\"11111111-2222-3333-4444-555555555555\", {\n  document_ids: [\"11111111-2222-4333-8444-555555555555\"],\n  sent_to: \"travelrule@counterparty.example\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.ShareVASPDocuments(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleShareVASPDocumentsParams{\n\tDocumentIDs: []string{\"11111111-2222-4333-8444-555555555555\"},\n\tSentTo:      didit.String(\"travelrule@counterparty.example\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.TravelRuleShareVaspDocumentsParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().shareVaspDocuments(\"11111111-2222-3333-4444-555555555555\", TravelRuleShareVaspDocumentsParams.builder()\n        .documentIds(List.of(\"11111111-2222-4333-8444-555555555555\"))\n        .sentTo(\"travelrule@counterparty.example\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->shareVaspDocuments('11111111-2222-3333-4444-555555555555', [\n    'document_ids' => ['11111111-2222-4333-8444-555555555555'],\n    'sent_to' => 'travelrule@counterparty.example',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.share_vasp_documents(\n  \"11111111-2222-3333-4444-555555555555\",\n  document_ids: [\"11111111-2222-4333-8444-555555555555\"],\n  sent_to: \"travelrule@counterparty.example\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.ShareVaspDocumentsAsync(\"11111111-2222-3333-4444-555555555555\", new TravelRuleShareVaspDocumentsParams\n{\n    DocumentIds = new string[] { \"11111111-2222-4333-8444-555555555555\" },\n    SentTo = \"travelrule@counterparty.example\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The documents were shared.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleDocumentShare"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The same documents were already shared with this address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleDocumentShare"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A document is not in your inventory, is repeated, or the address is not one on record for the counterparty."
+          },
+          "404": {
+            "description": "No directory entry or listed Didit network member has this id."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Withdraw the documents shared with a VASP",
+        "description": "Revokes every active link to your documents for this counterparty. Withdrawal is permanent: the links never work again, and sharing again creates a new link.",
+        "operationId": "withdrawTravelRuleVaspDocuments",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "withdraw_vasp_documents",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X DELETE https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/shared-documents/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nclient.travel_rule.withdraw_vasp_documents(\n    \"11111111-2222-3333-4444-555555555555\",\n)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nawait didit.travelRule.withdrawVaspDocuments(\"11111111-2222-3333-4444-555555555555\");"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nif err := client.TravelRule.WithdrawVASPDocuments(ctx, \"11111111-2222-3333-4444-555555555555\"); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nclient.travelRule().withdrawVaspDocuments(\"11111111-2222-3333-4444-555555555555\");"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$didit->travelRule->withdrawVaspDocuments('11111111-2222-3333-4444-555555555555');"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.withdraw_vasp_documents(\"11111111-2222-3333-4444-555555555555\")"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait client.TravelRule.WithdrawVaspDocumentsAsync(\"11111111-2222-3333-4444-555555555555\");"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Withdrawn."
+          },
+          "404": {
+            "description": "No directory entry or listed Didit network member has this id."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/shared-documents/{token}/": {
+      "get": {
+        "summary": "List the documents shared with you",
+        "description": "Opened by the counterparty from the sharing email, without an API key. Lists the shared documents with a download path for each; a browser (`Accept: text/html`) gets a download page instead. Answers 404 once the sender withdrew the share.",
+        "operationId": "listTravelRuleSharedDocuments",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "list_shared_documents",
+          "auth": "public",
+          "server": false
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The opaque token of the link."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shared documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/TravelRuleDocument"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "download": {
+                                "type": "string",
+                                "description": "Path that downloads this document."
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The link is unknown or was withdrawn."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/shared-documents/{token}/{document_id}/": {
+      "get": {
+        "summary": "Download a shared document",
+        "description": "Downloads one document of a share, as a PDF attachment, without an API key.",
+        "operationId": "downloadTravelRuleSharedDocument",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "download_shared_document",
+          "auth": "public",
+          "server": false
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The opaque token of the link."
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF, as an attachment.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown document, or the link was withdrawn."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/questionnaires/{token}/documents/": {
+      "post": {
+        "summary": "Upload a requested document",
+        "description": "Used by the counterparty answering a due-diligence request, without an API key. Uploads one PDF of a kind the request asked for; a second upload of the same kind replaces the first. Answers 404 once the request is answered, expired or withdrawn.",
+        "operationId": "uploadTravelRuleQuestionnaireDocument",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "upload_questionnaire_document",
+          "auth": "public",
+          "server": false
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The opaque token of the link."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "file"
+                ],
+                "properties": {
+                  "kind": {
+                    "$ref": "#/components/schemas/TravelRuleDocumentKind"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "A PDF of at most 5 MiB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelRuleDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The kind was not requested, or the file is not a PDF or is larger than 5 MiB."
+          },
+          "404": {
+            "description": "The link is unknown, answered, expired or withdrawn."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/vasps/{vasp_id}/questionnaires/{questionnaire_id}/": {
+      "delete": {
+        "summary": "Withdraw a due-diligence request",
+        "description": "Withdraws the request and erases the documents and answers collected with it. Its answer link stops working. Deletion is irreversible. Needs the transactions write privilege.",
+        "operationId": "withdrawTravelRuleVaspQuestionnaire",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "withdraw_vasp_questionnaire",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          },
+          {
+            "name": "questionnaire_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X DELETE https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/questionnaires/QUESTIONNAIRE_ID/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nclient.travel_rule.withdraw_vasp_questionnaire(\n    \"11111111-2222-3333-4444-555555555555\",\n    \"11111111-2222-3333-4444-555555555555\",\n)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nawait didit.travelRule.withdrawVaspQuestionnaire(\n  \"11111111-2222-3333-4444-555555555555\",\n  \"11111111-2222-3333-4444-555555555555\",\n);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nif err := client.TravelRule.WithdrawVASPQuestionnaire(ctx, \"11111111-2222-3333-4444-555555555555\", \"11111111-2222-3333-4444-555555555555\"); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nclient.travelRule().withdrawVaspQuestionnaire(\"11111111-2222-3333-4444-555555555555\", \"11111111-2222-3333-4444-555555555555\");"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$didit->travelRule->withdrawVaspQuestionnaire('11111111-2222-3333-4444-555555555555', '11111111-2222-3333-4444-555555555555');"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.withdraw_vasp_questionnaire(\n  \"11111111-2222-3333-4444-555555555555\",\n  \"11111111-2222-3333-4444-555555555555\"\n)"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait client.TravelRule.WithdrawVaspQuestionnaireAsync(\"11111111-2222-3333-4444-555555555555\", \"11111111-2222-3333-4444-555555555555\");"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Withdrawn and erased."
+          },
+          "404": {
+            "description": "No such request for this counterparty."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/vasps/{vasp_id}/decision-history/": {
+      "get": {
+        "summary": "List a VASP's decision history",
+        "description": "Your application's own decision changes for the counterparty, newest first. Only changes made after this history existed are listed. Needs the transactions read privilege.",
+        "operationId": "listTravelRuleVaspDecisionHistory",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "list_vasp_decision_history",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/decision-history/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nfor item in client.travel_rule.list_vasp_decision_history(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nfor await (const item of didit.travelRule.listVaspDecisionHistory(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\niter := client.TravelRule.ListVASPDecisionHistoryAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleListVASPDecisionHistoryParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nfor (var item : client.travelRule().listVaspDecisionHistory(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\nforeach ($didit->travelRule->listVaspDecisionHistory('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\ndidit.travel_rule.list_vasp_decision_history(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.TravelRule.ListVaspDecisionHistoryAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated decision changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TravelRuleDecisionEvent"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No directory entry or listed Didit network member has this id."
+          }
+        }
+      }
+    },
     "/v3/travel-rule/vasps/reviewers/": {
       "get": {
         "summary": "List the members who can be assigned a VASP",
@@ -98776,6 +100011,42 @@
               "type": "string"
             },
             "description": "The answers keyed by question id: legal_name, licensing, jurisdictions, aml_program, compliance_officer, sanctions_screening, transaction_monitoring, travel_rule, custody, ownership, record_keeping, data_protection. Each answer is up to 2,000 characters. Empty until answered."
+          },
+          "requested_items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDocumentKind"
+            },
+            "description": "What the request asked for."
+          },
+          "reminder_sent_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When Didit last reminded the counterparty, or null."
+          },
+          "documents": {
+            "type": "array",
+            "description": "The documents the counterparty uploaded.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "$ref": "#/components/schemas/TravelRuleDocumentKind"
+                },
+                "received_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
           }
         }
       },
@@ -98786,6 +100057,28 @@
             "type": "string",
             "format": "email",
             "description": "Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address)."
+          },
+          "answer_by_days": {
+            "type": "integer",
+            "enum": [
+              14,
+              30,
+              60
+            ],
+            "description": "Optional. Days the counterparty has to answer. Default: the standard answer window."
+          },
+          "requested_items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/TravelRuleDocumentKind"
+            },
+            "default": [
+              "questionnaire"
+            ],
+            "description": "Optional. What the counterparty must provide: the questionnaire answers and/or PDF documents."
           }
         }
       },
@@ -126783,6 +128076,21 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Optional. The contact's role."
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional. The contact's phone number."
+          },
+          "receives_requests": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether due-diligence requests and reminders go to this contact."
           }
         }
       },
@@ -126807,6 +128115,21 @@
             "type": "string",
             "description": "Optional label.",
             "maxLength": 255
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Optional. The contact's role."
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional. The contact's phone number."
+          },
+          "receives_requests": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether due-diligence requests and reminders go to this contact."
           }
         }
       },
@@ -131881,6 +133204,94 @@
               "NOT_ENOUGH_COUNTERPARTY_DATA",
               "NOT_APPLICABLE"
             ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleDocumentKind": {
+        "type": "string",
+        "enum": [
+          "questionnaire",
+          "incorporation",
+          "licence",
+          "aml_policy",
+          "ownership"
+        ],
+        "description": "`questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure."
+      },
+      "TravelRuleDocument": {
+        "type": "object",
+        "description": "A PDF document. Never carries the file content.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "content_type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The uploaded file name."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TravelRuleDocumentKind"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When you uploaded it. Present on your own inventory."
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a counterparty uploaded it. Present on documents received with a questionnaire."
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "application/pdf"
+            ]
+          }
+        }
+      },
+      "TravelRuleDocumentShare": {
+        "type": "object",
+        "properties": {
+          "shared_with": {
+            "type": "string",
+            "format": "email"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "The private link, returned once when the share is created. null when nothing changed."
+          }
+        }
+      },
+      "TravelRuleDecisionEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "decision": {
+            "type": "string",
+            "description": "The decision recorded, as in `decision.decision` of the VASP."
+          },
+          "reason": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Who recorded it."
           },
           "created_at": {
             "type": "string",

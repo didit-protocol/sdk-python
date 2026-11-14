@@ -14,3 +14,12 @@ class TravelRuleCounterpartyContactsCreateParams(TypedDict, total=False):
 
     name: str
     """Optional label."""
+
+    role: str
+    """Optional. The contact's role."""
+
+    phone: str
+    """Optional. The contact's phone number."""
+
+    receives_requests: bool
+    """Whether due-diligence requests and reminders go to this contact."""
