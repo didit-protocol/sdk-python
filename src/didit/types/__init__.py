@@ -2283,6 +2283,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_transfer_detail import (
         TravelRuleTransferDetailTimeline as TravelRuleTransferDetailTimeline,
     )
+    from didit.types.components.travel_rule_transfer_proof_request import (
+        TravelRuleTransferProofRequest as TravelRuleTransferProofRequest,
+    )
     from didit.types.components.travel_rule_transfer_row import (
         TravelRuleTransferRow as TravelRuleTransferRow,
     )
@@ -2308,11 +2311,23 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_wallet_lookup import (
         TravelRuleWalletLookup as TravelRuleWalletLookup,
     )
+    from didit.types.components.travel_rule_wallet_ownership_proof import (
+        TravelRuleWalletOwnershipProof as TravelRuleWalletOwnershipProof,
+    )
+    from didit.types.components.travel_rule_wallet_proof import (
+        TravelRuleWalletProof as TravelRuleWalletProof,
+    )
     from didit.types.components.travel_rule_wallet_proof_failure_reason import (
         TravelRuleWalletProofFailureReason as TravelRuleWalletProofFailureReason,
     )
     from didit.types.components.travel_rule_wallet_proof_review import (
         TravelRuleWalletProofReview as TravelRuleWalletProofReview,
+    )
+    from didit.types.components.travel_rule_wallet_proof_summary import (
+        TravelRuleWalletProofSummary as TravelRuleWalletProofSummary,
+    )
+    from didit.types.components.travel_rule_wallet_proof_totals import (
+        TravelRuleWalletProofTotals as TravelRuleWalletProofTotals,
     )
     from didit.types.components.travel_rule_wallet_transfer import (
         TravelRuleWalletTransfer as TravelRuleWalletTransfer,
@@ -2427,8 +2442,8 @@ if TYPE_CHECKING:
         VerifyEmailResponse as VerifyEmailResponse,
     )
     from didit.types.components.wallet_address_entry import WalletAddressEntry as WalletAddressEntry
-    from didit.types.components.wallet_address_entry_update import (
-        WalletAddressEntryUpdate as WalletAddressEntryUpdate,
+    from didit.types.components.wallet_address_entry_update_response import (
+        WalletAddressEntryUpdateResponse as WalletAddressEntryUpdateResponse,
     )
     from didit.types.components.wallet_address_import_report import (
         WalletAddressImportReport as WalletAddressImportReport,
@@ -4733,6 +4748,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleTransferDetailCounterpartyVasp": "components.travel_rule_transfer_detail",
     "TravelRuleTransferDetailCounterpartyVaspDdScoreBreakdownValue": "components.travel_rule_transfer_detail",
     "TravelRuleTransferDetailTimeline": "components.travel_rule_transfer_detail",
+    "TravelRuleTransferProofRequest": "components.travel_rule_transfer_proof_request",
     "TravelRuleTransferRow": "components.travel_rule_transfer_row",
     "TravelRuleTransfersListResponse": "travel_rule.transfers.list_response",
     "TravelRuleUnmatchedDepositsListResponse": "travel_rule.unmatched_deposits.list_response",
@@ -4752,8 +4768,12 @@ _MODULES: dict[str, str] = {
     "TravelRuleWalletAddressesListTransfersResponse": "travel_rule.wallet_addresses.list_transfers_response",
     "TravelRuleWalletAddressesUpdateParams": "travel_rule.wallet_addresses.update_params",
     "TravelRuleWalletLookup": "components.travel_rule_wallet_lookup",
+    "TravelRuleWalletOwnershipProof": "components.travel_rule_wallet_ownership_proof",
+    "TravelRuleWalletProof": "components.travel_rule_wallet_proof",
     "TravelRuleWalletProofFailureReason": "components.travel_rule_wallet_proof_failure_reason",
     "TravelRuleWalletProofReview": "components.travel_rule_wallet_proof_review",
+    "TravelRuleWalletProofSummary": "components.travel_rule_wallet_proof_summary",
+    "TravelRuleWalletProofTotals": "components.travel_rule_wallet_proof_totals",
     "TravelRuleWalletProofsDecideParams": "travel_rule.wallet_proofs.decide_params",
     "TravelRuleWalletProofsListResponse": "travel_rule.wallet_proofs.list_response",
     "TravelRuleWalletTransfer": "components.travel_rule_wallet_transfer",
@@ -4816,7 +4836,7 @@ _MODULES: dict[str, str] = {
     "VaspDirectoryEntryUmbrella": "components.vasp_directory_entry",
     "VerifyEmailResponse": "components.verify_email_response",
     "WalletAddressEntry": "components.wallet_address_entry",
-    "WalletAddressEntryUpdate": "components.wallet_address_entry_update",
+    "WalletAddressEntryUpdateResponse": "components.wallet_address_entry_update_response",
     "WalletAddressImportReport": "components.wallet_address_import_report",
     "WalletAddressImportReportRows": "components.wallet_address_import_report",
     "WalletAddressImportRow": "components.wallet_address_import_row",
@@ -6035,6 +6055,7 @@ __all__ = [
     "TravelRuleTransferDetailCounterpartyVasp",
     "TravelRuleTransferDetailCounterpartyVaspDdScoreBreakdownValue",
     "TravelRuleTransferDetailTimeline",
+    "TravelRuleTransferProofRequest",
     "TravelRuleTransferRow",
     "TravelRuleTransfersListResponse",
     "TravelRuleUnmatchedDepositsListResponse",
@@ -6054,8 +6075,12 @@ __all__ = [
     "TravelRuleWalletAddressesListTransfersResponse",
     "TravelRuleWalletAddressesUpdateParams",
     "TravelRuleWalletLookup",
+    "TravelRuleWalletOwnershipProof",
+    "TravelRuleWalletProof",
     "TravelRuleWalletProofFailureReason",
     "TravelRuleWalletProofReview",
+    "TravelRuleWalletProofSummary",
+    "TravelRuleWalletProofTotals",
     "TravelRuleWalletProofsDecideParams",
     "TravelRuleWalletProofsListResponse",
     "TravelRuleWalletTransfer",
@@ -6118,7 +6143,7 @@ __all__ = [
     "VaspDirectoryEntryUmbrella",
     "VerifyEmailResponse",
     "WalletAddressEntry",
-    "WalletAddressEntryUpdate",
+    "WalletAddressEntryUpdateResponse",
     "WalletAddressImportReport",
     "WalletAddressImportReportRows",
     "WalletAddressImportRow",

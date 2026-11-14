@@ -13,6 +13,8 @@ __all__ = ["TravelRuleWalletProofReview"]
 
 
 class TravelRuleWalletProofReview(BaseModel):
+    """Uploaded screenshot proof returned by the review queue and decision endpoint. Submitter attribution is independent of the current wallet holder."""
+
     proof_id: str | None = None
 
     method: Literal["SCREENSHOT"] | str | None = None
@@ -25,6 +27,7 @@ class TravelRuleWalletProofReview(BaseModel):
     """Canonical chain identifier, e.g. ETH, BTC, SOL, TRX."""
 
     holder_name: str | None = None
+    """Holder name from the submitting widget, never a reassigned holder. Empty when the submitting widget was deleted."""
 
     is_ownership_verified: bool | None = None
     """Whether the address book entry is ownership-verified, by this proof or another one."""
@@ -37,13 +40,13 @@ class TravelRuleWalletProofReview(BaseModel):
     content_type: str | None = None
 
     screenshot_url: str | None = None
-    """Time-limited link to the uploaded screenshot. List the queue again for a fresh link."""
+    """Authorized /v3/media/preview/ URL with an expiring signed source for this proof screenshot. Returns a recompressed preview, not the original upload or an arbitrary public URL. Null when no eligible screenshot exists. Read the proof again for a fresh link."""
 
     attempts: int | None = None
     """How many files the end user uploaded for this proof."""
 
     failure_reason: TravelRuleWalletProofFailureReason | None = None
-    """REVIEW_REJECTED after a rejection, OWNERSHIP_CHANGED when the wallet changed holder or was deleted before a decision. Empty otherwise."""
+    """Fixed failure code for this proof or its last attempt; empty when no documented failure applies. REVIEW_REJECTED identifies a rejected screenshot. History can also carry expiry, ownership-change or abandonment codes."""
 
     method_chosen_at: _dt.datetime | None = None
     """When the end user picked the screenshot method."""
@@ -57,3 +60,15 @@ class TravelRuleWalletProofReview(BaseModel):
     """The note sent with the decision. Empty when none."""
 
     created_at: _dt.datetime | None = None
+
+    application_id: str | None = None
+    """Application that owns the wallet and proof."""
+
+    user_id: str | None = None
+    """User in this application matching the submitting widget vendor_data. Null when no matching current user exists, or the submitting widget was deleted. Never the reassigned wallet holder."""
+
+    holder_vendor_data: str | None = None
+    """Holder identifier from the submitting widget, not the current wallet holder. Empty when the submitting widget was deleted."""
+
+    wallet_label: str | None = None
+    """Exact current wallet label, including an empty string when no label is set. Not a name inferred from the holder or address."""

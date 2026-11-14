@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_wallet_proof_totals import TravelRuleWalletProofTotals
 from didit.types.components.wallet_address_entry import WalletAddressEntry
 
 __all__ = ["TravelRuleWalletAddressesListResponse"]
@@ -9,9 +10,13 @@ __all__ = ["TravelRuleWalletAddressesListResponse"]
 
 class TravelRuleWalletAddressesListResponse(BaseModel):
     count: int | None = None
+    """Exact total of application-scoped wallets, equal to proof_totals.wallets, independent of limit and offset."""
 
     next: str | None = None
 
     previous: str | None = None
 
     results: list[WalletAddressEntry] | None = None
+
+    proof_totals: TravelRuleWalletProofTotals | None = None
+    """Exact totals over the entire application-scoped wallet set before limit/offset pagination. Method counts overlap and must not be summed to obtain distinct verified wallets."""

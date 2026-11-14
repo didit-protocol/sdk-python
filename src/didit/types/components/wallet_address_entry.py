@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import datetime as _dt
+from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.travel_rule_wallet_ownership_proof import TravelRuleWalletOwnershipProof
 
 __all__ = ["WalletAddressEntry"]
 
@@ -42,3 +44,11 @@ class WalletAddressEntry(BaseModel):
 
     receiving_travel_address: str | None = None
     """Your per-wallet travel address for this wallet: give it to the sending VASP so its TRP inquiry names this wallet. Empty for a wallet recorded as another VASP's, while Travel Rule is off, and before your VASP profile is saved."""
+
+    ownership_proof: TravelRuleWalletOwnershipProof | None = None
+
+    label: str | None = None
+    """Current wallet label, exactly as saved."""
+
+    owner_type: Literal["customer", "internal", "vasp"] | str | None = None
+    """Wallet owner type."""

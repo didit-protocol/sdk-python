@@ -13,6 +13,7 @@ from didit.types.components.travel_rule_delivery_log_entry import TravelRuleDeli
 from didit.types.components.travel_rule_discovery_step import TravelRuleDiscoveryStep
 from didit.types.components.travel_rule_name_match import TravelRuleNameMatch
 from didit.types.components.travel_rule_next_action import TravelRuleNextAction
+from didit.types.components.travel_rule_transfer_proof_request import TravelRuleTransferProofRequest
 from didit.types.components.travel_rule_user_choice import TravelRuleUserChoice
 
 __all__ = [
@@ -183,3 +184,6 @@ class TravelRuleTransferDetail(BaseModel):
 
     user_choice: TravelRuleUserChoice | None = None
     """Explicit user-choice state, or null when counterparty_choice=user was not requested."""
+
+    proof_request: TravelRuleTransferProofRequest | None = None
+    """Latest application- and subject-scoped request if it matches this transfer counterparty wallet and chain; otherwise null. A standalone request is not attached to a transfer. Request status and proof verdict are separate from the saved transfer decision."""

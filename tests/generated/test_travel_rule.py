@@ -42,7 +42,9 @@ from didit.types.components.travel_rule_workspace_domain_code_response import (
 )
 from didit.types.components.vasp_directory_entry import VaspDirectoryEntry
 from didit.types.components.wallet_address_entry import WalletAddressEntry
-from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
+from didit.types.components.wallet_address_entry_update_response import (
+    WalletAddressEntryUpdateResponse,
+)
 from didit.types.components.wallet_address_import_report import WalletAddressImportReport
 from didit.types.travel_rule.assign_vasp_response import TravelRuleAssignVaspResponse
 from didit.types.travel_rule.list_vasp_reviewers_response import TravelRuleListVaspReviewersResponse
@@ -723,6 +725,12 @@ def test_travel_rule_register_inbound() -> None:
                         "link_expires_at": "2026-01-01T00:00:00Z",
                         "emailed_to": "sample",
                         "email_available": True,
+                    },
+                    "proof_request": {
+                        "request_id": "00000000-0000-4000-8000-000000000007",
+                        "status": "PENDING",
+                        "expires_at": "2026-01-01T00:00:00Z",
+                        "proof": {},
                     },
                 },
             },
@@ -2450,6 +2458,22 @@ def test_travel_rule_wallet_addresses_create() -> None:
                 "address_hash": "sample",
                 "memo": "sample",
                 "receiving_travel_address": "sample",
+                "ownership_proof": {
+                    "proof_id": "00000000-0000-4000-8000-000000000005",
+                    "method": "MESSAGE_SIGNING",
+                    "status": "PENDING",
+                    "failure_reason": "",
+                    "latest_attempt": {
+                        "proof_id": "00000000-0000-4000-8000-000000000007",
+                        "method": "MESSAGE_SIGNING",
+                        "status": "PENDING",
+                        "failure_reason": "",
+                    },
+                    "network_eligible": False,
+                    "reuse_status": "NOT_LINKED",
+                },
+                "label": "sample",
+                "owner_type": "customer",
             },
             strict_type=WalletAddressEntry,
         ),
@@ -2517,8 +2541,33 @@ def test_travel_rule_wallet_addresses_list() -> None:
                         "address_hash": "sample",
                         "memo": "sample",
                         "receiving_travel_address": "sample",
+                        "ownership_proof": {
+                            "proof_id": "00000000-0000-4000-8000-000000000007",
+                            "method": "MESSAGE_SIGNING",
+                            "status": "PENDING",
+                            "failure_reason": "",
+                            "latest_attempt": {
+                                "proof_id": "00000000-0000-4000-8000-000000000009",
+                                "method": "MESSAGE_SIGNING",
+                                "status": "PENDING",
+                                "failure_reason": "",
+                            },
+                            "network_eligible": False,
+                            "reuse_status": "NOT_LINKED",
+                        },
+                        "label": "sample",
+                        "owner_type": "customer",
                     }
                 ],
+                "proof_totals": {
+                    "wallets": 0,
+                    "customer_wallets": 0,
+                    "verified_control_wallets": 0,
+                    "MESSAGE_SIGNING": 0,
+                    "SATOSHI_TEST": 0,
+                    "SCREENSHOT": 0,
+                    "SELF_DECLARATION": 0,
+                },
             },
         ),
         lambda c: c.travel_rule.wallet_addresses.list(limit=1, offset=1),
@@ -2617,8 +2666,25 @@ def test_travel_rule_wallet_addresses_update() -> None:
                 "holder_vendor_data": "sample",
                 "entity_type": "sample",
                 "travel_address": "sample",
+                "receiving_travel_address": "sample",
+                "label": "sample",
+                "owner_type": "customer",
+                "ownership_proof": {
+                    "proof_id": "00000000-0000-4000-8000-000000000005",
+                    "method": "MESSAGE_SIGNING",
+                    "status": "PENDING",
+                    "failure_reason": "",
+                    "latest_attempt": {
+                        "proof_id": "00000000-0000-4000-8000-000000000007",
+                        "method": "MESSAGE_SIGNING",
+                        "status": "PENDING",
+                        "failure_reason": "",
+                    },
+                    "network_eligible": False,
+                    "reuse_status": "NOT_LINKED",
+                },
             },
-            strict_type=WalletAddressEntryUpdate,
+            strict_type=WalletAddressEntryUpdateResponse,
         ),
         lambda c: c.travel_rule.wallet_addresses.update(
             "00000000-0000-4000-8000-000000000001",
@@ -2630,8 +2696,8 @@ def test_travel_rule_wallet_addresses_update() -> None:
             holder_name="Ana Updated",
             travel_address="ta2ih1MicegQ3JqiKz9xT89KsSuwaDJYw8DgzmeSEp1h9tduJcNDZ5SgKLEHeyGMcS1s2HgbM6undFrMQknhM5aTXw3G9KBzi16hx",
         ),
-        lambda r: isinstance(r, WalletAddressEntryUpdate),
-        lambda r: isinstance(r, WalletAddressEntryUpdate),
+        lambda r: isinstance(r, WalletAddressEntryUpdateResponse),
+        lambda r: isinstance(r, WalletAddressEntryUpdateResponse),
     )
 
 
@@ -2664,6 +2730,10 @@ def test_travel_rule_wallet_proofs_decide() -> None:
                 "decided_by": "sample",
                 "review_note": "sample",
                 "created_at": "2026-01-01T00:00:00Z",
+                "application_id": "00000000-0000-4000-8000-000000000003",
+                "user_id": "00000000-0000-4000-8000-000000000003",
+                "holder_vendor_data": "sample",
+                "wallet_label": "sample",
             },
             strict_type=TravelRuleWalletProofReview,
         ),
@@ -2716,6 +2786,10 @@ def test_travel_rule_wallet_proofs_list() -> None:
                         "decided_by": "sample",
                         "review_note": "sample",
                         "created_at": "2026-01-01T00:00:00Z",
+                        "application_id": "00000000-0000-4000-8000-000000000005",
+                        "user_id": "00000000-0000-4000-8000-000000000005",
+                        "holder_vendor_data": "sample",
+                        "wallet_label": "sample",
                     }
                 ],
             },
