@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/didit-protocol/sdk-python/compare/v1.22.0...v1.23.0) (2026-11-14)
+
+
+### Features
+
+* per-request idempotency key ([#64](https://github.com/didit-protocol/sdk-python/issues/64)) ([5e05d60](https://github.com/didit-protocol/sdk-python/commit/5e05d60066bbe8623a3f278195aaab1552e5603c))
+
 ## [1.22.0](https://github.com/didit-protocol/sdk-python/compare/v1.21.0...v1.22.0) (2026-11-14)
 
 
