@@ -20,7 +20,9 @@ from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.travel_rule_wallet_lookup import TravelRuleWalletLookup
 from didit.types.components.travel_rule_wallet_transfer import TravelRuleWalletTransfer
 from didit.types.components.wallet_address_entry import WalletAddressEntry
-from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
+from didit.types.components.wallet_address_entry_update_response import (
+    WalletAddressEntryUpdateResponse,
+)
 from didit.types.components.wallet_address_import_report import WalletAddressImportReport
 from didit.types.components.wallet_address_import_row import WalletAddressImportRow
 from didit.types.travel_rule.wallet_addresses.bulk_import_params import (
@@ -208,10 +210,10 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> WalletAddressEntryUpdate:
+    ) -> WalletAddressEntryUpdateResponse:
         """Update wallet address holder metadata.
 
-        Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response echoes only these four fields.
+        Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response returns the updated entry: its label, owner type, receiving travel address and ownership proof summary, with the writable fields.
 
         ``PATCH /v3/travel-rule/wallet-addresses/{entry_uuid}/``
 
@@ -227,11 +229,11 @@ class TravelRuleWalletAddresses(SyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "WalletAddressEntryUpdate",
+            "WalletAddressEntryUpdateResponse",
             self._client.request(
                 "patch",
                 "/v3/travel-rule/wallet-addresses/{entry_uuid}/",
-                cast_to=WalletAddressEntryUpdate,
+                cast_to=WalletAddressEntryUpdateResponse,
                 path_params={"entry_uuid": entry_uuid},
                 auth="api_key",
                 body={
@@ -536,10 +538,10 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> WalletAddressEntryUpdate:
+    ) -> WalletAddressEntryUpdateResponse:
         """Update wallet address holder metadata.
 
-        Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response echoes only these four fields.
+        Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response returns the updated entry: its label, owner type, receiving travel address and ownership proof summary, with the writable fields.
 
         ``PATCH /v3/travel-rule/wallet-addresses/{entry_uuid}/``
 
@@ -555,11 +557,11 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
           timeout: Overrides the client's timeout for this request, in seconds.
         """
         return cast(
-            "WalletAddressEntryUpdate",
+            "WalletAddressEntryUpdateResponse",
             await self._client.request(
                 "patch",
                 "/v3/travel-rule/wallet-addresses/{entry_uuid}/",
-                cast_to=WalletAddressEntryUpdate,
+                cast_to=WalletAddressEntryUpdateResponse,
                 path_params={"entry_uuid": entry_uuid},
                 auth="api_key",
                 body={

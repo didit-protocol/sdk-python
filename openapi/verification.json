@@ -36393,7 +36393,8 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "Exact total of application-scoped wallets, equal to proof_totals.wallets, independent of limit and offset."
                     },
                     "next": {
                       "type": "string",
@@ -36408,6 +36409,9 @@
                       "items": {
                         "$ref": "#/components/schemas/WalletAddressEntry"
                       }
+                    },
+                    "proof_totals": {
+                      "$ref": "#/components/schemas/TravelRuleWalletProofTotals"
                     }
                   }
                 }
@@ -36543,7 +36547,7 @@
     "/v3/travel-rule/wallet-addresses/{entry_uuid}/": {
       "patch": {
         "summary": "Update wallet address holder metadata",
-        "description": "Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response echoes only these four fields.",
+        "description": "Partial update of holder_name, holder_vendor_data, entity_type, and travel_address. Setting travel_address attaches a TRP routing address to the entry; invalid values are rejected with 400. The response returns the updated entry: its label, owner type, receiving travel address and ownership proof summary, with the writable fields.",
         "operationId": "updateTravelRuleWalletAddress",
         "x-didit-sdk": {
           "resource": "travel_rule.wallet_addresses",
@@ -36603,7 +36607,7 @@
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.WalletAddresses.Update(ctx, \"11111111-2222-3333-4444-555555555555\", didit.WalletAddressEntryUpdateParam{\n\tHolderName:    didit.String(\"Ana Updated\"),\n\tTravelAddress: didit.String(\"ta2ih1MicegQ3JqiKz9xT89KsSuwaDJYw8DgzmeSEp1h9tduJcNDZ5SgKLEHeyGMcS1s2HgbM6undFrMQknhM5aTXw3G9KBzi16hx\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.WalletAddresses.Update(ctx, \"11111111-2222-3333-4444-555555555555\", didit.WalletAddressEntryUpdate{\n\tHolderName:    didit.String(\"Ana Updated\"),\n\tTravelAddress: didit.String(\"ta2ih1MicegQ3JqiKz9xT89KsSuwaDJYw8DgzmeSEp1h9tduJcNDZ5SgKLEHeyGMcS1s2HgbM6undFrMQknhM5aTXw3G9KBzi16hx\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -36628,11 +36632,11 @@
         ],
         "responses": {
           "200": {
-            "description": "The updated fields.",
+            "description": "The updated entry, including its label, owner type, receiving travel address and ownership proof summary.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WalletAddressEntryUpdate"
+                  "$ref": "#/components/schemas/WalletAddressEntryUpdateResponse"
                 }
               }
             }
@@ -95623,559 +95627,6 @@
         }
       }
     },
-    "/v3/organization/{organization_id}/application/{application_id}/reports/": {
-      "get": {
-        "summary": "List async reports",
-        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. Returns readable reports newest first. These async export jobs are separate from the Regulatory Reports API. See [Export verification data](https://docs.didit.me/console/export-pdf-csv).",
-        "operationId": "list_reports",
-        "tags": [
-          "Reports"
-        ],
-        "x-didit-sdk": {
-          "resource": "reports",
-          "method": "list",
-          "auth": "api_key",
-          "server": true,
-          "scope": "application"
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "organization_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Organization id."
-          },
-          {
-            "name": "application_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Application id."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 50
-            },
-            "description": "Maximum results per page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0
-            },
-            "description": "Number of results to skip."
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Comma-separated or repeated status values: PENDING, PROCESSING, READY, FAILED."
-          },
-          {
-            "name": "report_type",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Comma-separated or repeated report_type values."
-          },
-          {
-            "name": "q",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search by report ID fragment or requester name/email (at most 255 characters)."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List async reports.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AsyncReportList"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or expired credentials."
-          },
-          "403": {
-            "description": "Caller lacks access to this application or the required permissions."
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitedRead"
-          },
-          "400": {
-            "description": "Invalid status, report_type or search filter."
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nfor item in client.reports.list():\n    print(item)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nfor await (const item of didit.reports.list()) {\n  console.log(item);\n}"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\niter := client.Reports.ListAutoPaging(ctx, didit.ReportsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nfor (var item : client.reports().list()) {\n    System.out.println(item);\n}"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\nforeach ($didit->reports->list() as $item) {\n    print_r($item->toArray());\n}"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\ndidit.reports.list.auto_paging_each do |item|\n  puts item.to_h\nend"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Reports.ListAsync())\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
-          }
-        ]
-      }
-    },
-    "/v3/organization/{organization_id}/application/{application_id}/reports/{report_uuid}/": {
-      "get": {
-        "summary": "Retrieve async report",
-        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. failed_item_ids excludes deleted sessions; failed_count is its length.",
-        "operationId": "retrieve_reports",
-        "tags": [
-          "Reports"
-        ],
-        "x-didit-sdk": {
-          "resource": "reports",
-          "method": "retrieve",
-          "auth": "api_key",
-          "server": true,
-          "scope": "application"
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "organization_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Organization id."
-          },
-          {
-            "name": "application_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Application id."
-          },
-          {
-            "name": "report_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Report uuid."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Retrieve async report.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AsyncReport"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or expired credentials."
-          },
-          "403": {
-            "description": "Caller lacks access to this application or the required permissions."
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitedRead"
-          },
-          "404": {
-            "description": "Report not found in this application."
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.reports.retrieve(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.reports.retrieve(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Reports.Retrieve(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.reports().retrieve(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->reports->retrieve('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.reports.retrieve(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Reports.RetrieveAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
-          }
-        ]
-      }
-    },
-    "/v3/organization/{organization_id}/application/{application_id}/reports/{report_uuid}/retry/": {
-      "post": {
-        "summary": "Retry async report",
-        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. Also requires write permissions for the resources being exported. Omit item_ids to run the original export again, optionally over a replacement date range. A report created as a failed-item retry requires an explicit item_ids selection for further retries. With item_ids, only the original requester (a non-null requested_by_user_id matching the authenticated user) can retry a READY or FAILED SESSION_EXPORT. An API key or application token without that user identity receives 403 for a selective retry. Select only live failed sessions from the original export; deleted sessions cannot be re-exported. The original report remains unchanged. The first selection creates a new report (201); replaying the identical selected set returns the existing retry report (200). Overlapping or different selections already assigned to another retry return 400. See [Retry failed export items](https://docs.didit.me/console/export-pdf-csv#retry-failed-export-items).",
-        "operationId": "retry_reports",
-        "tags": [
-          "Reports"
-        ],
-        "x-didit-sdk": {
-          "resource": "reports",
-          "method": "retry",
-          "auth": "api_key",
-          "server": true,
-          "scope": "application"
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "organization_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Organization id."
-          },
-          {
-            "name": "application_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Application id."
-          },
-          {
-            "name": "report_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Report uuid."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Identical failed-item selection replay; returns the existing retry report without queuing another.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AsyncReport"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or expired credentials."
-          },
-          "403": {
-            "description": "Missing read/write permissions or selective retry attempted by someone other than the original requester, including a caller without a user identity."
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitedWrite"
-          },
-          "201": {
-            "description": "New export queued.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AsyncReport"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or empty selection, more than 1000 IDs, IDs not among this report's live failed sessions, non-completed/non-session export, conflicting retry selection, or invalid/mixed date range."
-          },
-          "404": {
-            "description": "Report not found in this application."
-          },
-          "409": {
-            "description": "The report is being deleted; it cannot be retried."
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AsyncReportRetryRequest"
-              },
-              "example": {}
-            }
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.reports.retry(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.reports.retry(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Reports.Retry(ctx, \"11111111-2222-3333-4444-555555555555\", didit.AsyncReportRetryRequest{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import me.didit.Didit;\nimport me.didit.types.AsyncReportRetryRequest;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.reports().retry(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->reports->retry('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.reports.retry(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Reports.RetryAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
-          }
-        ]
-      }
-    },
-    "/v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/": {
-      "get": {
-        "summary": "List webhook destination activity",
-        "description": "Lists recorded failure alerts for one destination, newest first. Requires read:webhooks. Application/API-key credentials must belong to the application in the path; member Bearer tokens must have access to that application. These are failure alert events, not individual delivery attempts or outbound webhook event types. See [Webhooks](https://docs.didit.me/integration/webhooks#retry-policy).",
-        "operationId": "list_activity_webhooks_destinations",
-        "tags": [
-          "Webhook"
-        ],
-        "x-didit-sdk": {
-          "resource": "webhooks.destinations",
-          "method": "list_activity",
-          "auth": "api_key",
-          "server": true,
-          "scope": "application"
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "organization_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Organization id."
-          },
-          {
-            "name": "application_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Application id."
-          },
-          {
-            "name": "destination_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Destination uuid."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 50
-            },
-            "description": "Maximum results per page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0
-            },
-            "description": "Number of results to skip."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List webhook destination activity.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebhookDestinationActivityList"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or expired credentials."
-          },
-          "403": {
-            "description": "Caller lacks access to this application or the required permissions."
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitedRead"
-          },
-          "404": {
-            "description": "Webhook destination not found."
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "python",
-            "label": "Python",
-            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nfor item in client.webhooks.destinations.list_activity(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
-          },
-          {
-            "lang": "javascript",
-            "label": "Node.js",
-            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nfor await (const item of didit.webhooks.destinations.listActivity(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
-          },
-          {
-            "lang": "go",
-            "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\niter := client.Webhooks.Destinations.ListActivityAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.WebhooksDestinationsListActivityParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
-          },
-          {
-            "lang": "java",
-            "label": "Java",
-            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nfor (var item : client.webhooks().destinations().listActivity(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
-          },
-          {
-            "lang": "php",
-            "label": "PHP",
-            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\nforeach ($didit->webhooks->destinations->listActivity('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
-          },
-          {
-            "lang": "ruby",
-            "label": "Ruby",
-            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\ndidit.webhooks.destinations.list_activity(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
-          },
-          {
-            "lang": "csharp",
-            "label": ".NET",
-            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Webhooks.Destinations.ListActivityAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
-          }
-        ]
-      }
-    },
     "/v3/travel-rule/documents/": {
       "get": {
         "summary": "List your Travel Rule documents",
@@ -97498,6 +96949,559 @@
             "description": "No directory entry or listed Didit network member has this id."
           }
         }
+      }
+    },
+    "/v3/organization/{organization_id}/application/{application_id}/reports/": {
+      "get": {
+        "summary": "List async reports",
+        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. Returns readable reports newest first. These async export jobs are separate from the Regulatory Reports API. See [Export verification data](https://docs.didit.me/console/export-pdf-csv).",
+        "operationId": "list_reports",
+        "tags": [
+          "Reports"
+        ],
+        "x-didit-sdk": {
+          "resource": "reports",
+          "method": "list",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization id."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application id."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50
+            },
+            "description": "Maximum results per page."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of results to skip."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated or repeated status values: PENDING, PROCESSING, READY, FAILED."
+          },
+          {
+            "name": "report_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated or repeated report_type values."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by report ID fragment or requester name/email (at most 255 characters)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List async reports.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncReportList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials."
+          },
+          "403": {
+            "description": "Caller lacks access to this application or the required permissions."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          },
+          "400": {
+            "description": "Invalid status, report_type or search filter."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nfor item in client.reports.list():\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nfor await (const item of didit.reports.list()) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\niter := client.Reports.ListAutoPaging(ctx, didit.ReportsListParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nfor (var item : client.reports().list()) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\nforeach ($didit->reports->list() as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\ndidit.reports.list.auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Reports.ListAsync())\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ]
+      }
+    },
+    "/v3/organization/{organization_id}/application/{application_id}/reports/{report_uuid}/": {
+      "get": {
+        "summary": "Retrieve async report",
+        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. failed_item_ids excludes deleted sessions; failed_count is its length.",
+        "operationId": "retrieve_reports",
+        "tags": [
+          "Reports"
+        ],
+        "x-didit-sdk": {
+          "resource": "reports",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization id."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application id."
+          },
+          {
+            "name": "report_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Report uuid."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieve async report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials."
+          },
+          "403": {
+            "description": "Caller lacks access to this application or the required permissions."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          },
+          "404": {
+            "description": "Report not found in this application."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.reports.retrieve(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.reports.retrieve(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Reports.Retrieve(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.reports().retrieve(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->reports->retrieve('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.reports.retrieve(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Reports.RetrieveAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/organization/{organization_id}/application/{application_id}/reports/{report_uuid}/retry/": {
+      "post": {
+        "summary": "Retry async report",
+        "description": "Requires read permissions for every resource covered by the report. Application/API-key credentials must belong to the application in the path. Member Bearer tokens must have access to the application. Also requires write permissions for the resources being exported. Omit item_ids to run the original export again, optionally over a replacement date range. A report created as a failed-item retry requires an explicit item_ids selection for further retries. With item_ids, only the original requester (a non-null requested_by_user_id matching the authenticated user) can retry a READY or FAILED SESSION_EXPORT. An API key or application token without that user identity receives 403 for a selective retry. Select only live failed sessions from the original export; deleted sessions cannot be re-exported. The original report remains unchanged. The first selection creates a new report (201); replaying the identical selected set returns the existing retry report (200). Overlapping or different selections already assigned to another retry return 400. See [Retry failed export items](https://docs.didit.me/console/export-pdf-csv#retry-failed-export-items).",
+        "operationId": "retry_reports",
+        "tags": [
+          "Reports"
+        ],
+        "x-didit-sdk": {
+          "resource": "reports",
+          "method": "retry",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization id."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application id."
+          },
+          {
+            "name": "report_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Report uuid."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identical failed-item selection replay; returns the existing retry report without queuing another.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials."
+          },
+          "403": {
+            "description": "Missing read/write permissions or selective retry attempted by someone other than the original requester, including a caller without a user identity."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          },
+          "201": {
+            "description": "New export queued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or empty selection, more than 1000 IDs, IDs not among this report's live failed sessions, non-completed/non-session export, conflicting retry selection, or invalid/mixed date range."
+          },
+          "404": {
+            "description": "Report not found in this application."
+          },
+          "409": {
+            "description": "The report is being deleted; it cannot be retried."
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsyncReportRetryRequest"
+              },
+              "example": {}
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.reports.retry(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.reports.retry(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Reports.Retry(ctx, \"11111111-2222-3333-4444-555555555555\", didit.AsyncReportRetryRequest{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.AsyncReportRetryRequest;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.reports().retry(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->reports->retry('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.reports.retry(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Reports.RetryAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/organization/{organization_id}/application/{application_id}/webhook/destinations/{destination_uuid}/activity/": {
+      "get": {
+        "summary": "List webhook destination activity",
+        "description": "Lists recorded failure alerts for one destination, newest first. Requires read:webhooks. Application/API-key credentials must belong to the application in the path; member Bearer tokens must have access to that application. These are failure alert events, not individual delivery attempts or outbound webhook event types. See [Webhooks](https://docs.didit.me/integration/webhooks#retry-policy).",
+        "operationId": "list_activity_webhooks_destinations",
+        "tags": [
+          "Webhook"
+        ],
+        "x-didit-sdk": {
+          "resource": "webhooks.destinations",
+          "method": "list_activity",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization id."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application id."
+          },
+          {
+            "name": "destination_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Destination uuid."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50
+            },
+            "description": "Maximum results per page."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of results to skip."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List webhook destination activity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDestinationActivityList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials."
+          },
+          "403": {
+            "description": "Caller lacks access to this application or the required permissions."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          },
+          "404": {
+            "description": "Webhook destination not found."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nfor item in client.webhooks.destinations.list_activity(\n    \"11111111-2222-3333-4444-555555555555\",\n):\n    print(item)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nfor await (const item of didit.webhooks.destinations.listActivity(\"11111111-2222-3333-4444-555555555555\")) {\n  console.log(item);\n}"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\niter := client.Webhooks.Destinations.ListActivityAutoPaging(ctx, \"11111111-2222-3333-4444-555555555555\", didit.WebhooksDestinationsListActivityParams{})\nfor iter.Next() {\n\tfmt.Printf(\"%+v\\n\", iter.Current())\n}\nif err := iter.Err(); err != nil {\n\tlog.Fatal(err)\n}"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nfor (var item : client.webhooks().destinations().listActivity(\"11111111-2222-3333-4444-555555555555\")) {\n    System.out.println(item);\n}"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\nforeach ($didit->webhooks->destinations->listActivity('11111111-2222-3333-4444-555555555555') as $item) {\n    print_r($item->toArray());\n}"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\ndidit.webhooks.destinations.list_activity(\"11111111-2222-3333-4444-555555555555\").auto_paging_each do |item|\n  puts item.to_h\nend"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nawait foreach (var item in await client.Webhooks.Destinations.ListActivityAsync(\"11111111-2222-3333-4444-555555555555\"))\n{\n    Console.WriteLine(JsonSerializer.Serialize(item));\n}"
+          }
+        ]
       }
     }
   },
@@ -101185,6 +101189,27 @@
             "type": "string",
             "readOnly": true,
             "description": "Your per-wallet travel address for this wallet: give it to the sending VASP so its TRP inquiry names this wallet. Empty for a wallet recorded as another VASP's, while Travel Rule is off, and before your VASP profile is saved."
+          },
+          "ownership_proof": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletOwnershipProof"
+              }
+            ],
+            "readOnly": true
+          },
+          "label": {
+            "type": "string",
+            "description": "Current wallet label, exactly as saved."
+          },
+          "owner_type": {
+            "type": "string",
+            "description": "Wallet owner type.",
+            "enum": [
+              "customer",
+              "internal",
+              "vasp"
+            ]
           }
         }
       },
@@ -101254,7 +101279,7 @@
             "maxLength": 512
           }
         },
-        "description": "PATCH is a partial update; the response echoes only holder_name, holder_vendor_data, entity_type, travel_address, receiving_travel_address, label, and owner_type."
+        "description": "PATCH is a partial update. The response includes read-only ownership metadata; see WalletAddressEntryUpdateResponse."
       },
       "TravelRuleTransferDetail": {
         "type": "object",
@@ -101528,6 +101553,15 @@
             ],
             "nullable": true,
             "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
+          },
+          "proof_request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleTransferProofRequest"
+              }
+            ],
+            "nullable": true,
+            "description": "Latest application- and subject-scoped request if it matches this transfer counterparty wallet and chain; otherwise null. A standalone request is not attached to a transfer. Request status and proof verdict are separate from the saved transfer decision."
           }
         }
       },
@@ -127985,6 +128019,15 @@
             ],
             "nullable": true,
             "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
+          },
+          "proof_request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleTransferProofRequest"
+              }
+            ],
+            "nullable": true,
+            "description": "Latest application- and subject-scoped request if it matches this transfer counterparty wallet and chain; otherwise null. A standalone request is not attached to a transfer. Request status and proof verdict are separate from the saved transfer decision."
           }
         }
       },
@@ -132894,6 +132937,7 @@
           "",
           "SIGNATURE_INVALID",
           "SIGNATURE_UNSUPPORTED_SCHEME",
+          "SIGNATURE_LOOKUP_FAILED",
           "DEPOSIT_NOT_FOUND",
           "DEPOSIT_UNCONFIRMED",
           "DEPOSIT_LOOKUP_FAILED",
@@ -132907,7 +132951,7 @@
           "REVIEW_REJECTED",
           "ABANDONED"
         ],
-        "description": "Why a wallet-ownership proof, or its last attempt, fell short of VERIFIED. Empty when nothing failed. A PENDING proof can carry one: the last attempt failed and the end user can try again. DEPOSIT_MISMATCH, DEPOSIT_STALE, TXID_REUSED and REVIEW_REJECTED close the proof as REJECTED. SIGNATURE_INVALID: the signature does not match the wallet and challenge. SIGNATURE_UNSUPPORTED_SCHEME: the wallet signed in a format Didit does not verify. DEPOSIT_NOT_FOUND, DEPOSIT_UNCONFIRMED, DEPOSIT_LOOKUP_FAILED: the test deposit is not readable or not confirmed yet; Didit keeps checking it until the test window closes. DEPOSIT_MISMATCH: the transaction does not send the expected amount from the wallet to the deposit address. DEPOSIT_STALE: the transaction predates the challenge. TXID_REUSED: the transaction already proved another wallet. CHAIN_UNSUPPORTED: the method is not available on this chain. WINDOW_EXPIRED: the test window closed. OWNERSHIP_CHANGED: the wallet's holder changed, or the wallet was deleted from your address book, after the widget session was minted. METHOD_SWITCHED: the end user picked another method before finishing this one. REVIEW_REJECTED: your reviewer rejected the screenshot. ABANDONED: the widget session lapsed before the end user finished."
+        "description": "Why a wallet-ownership proof, or its last attempt, fell short of VERIFIED. Empty when nothing failed. A PENDING proof can carry one: the last attempt failed and the end user can try again. DEPOSIT_MISMATCH, DEPOSIT_STALE, TXID_REUSED and REVIEW_REJECTED close the proof as REJECTED. SIGNATURE_INVALID: the signature does not match the wallet and challenge. SIGNATURE_UNSUPPORTED_SCHEME: the wallet signed in a format Didit does not verify. DEPOSIT_NOT_FOUND, DEPOSIT_UNCONFIRMED, DEPOSIT_LOOKUP_FAILED: the test deposit is not readable or not confirmed yet; Didit keeps checking it until the test window closes. DEPOSIT_MISMATCH: the transaction does not send the expected amount from the wallet to the deposit address. DEPOSIT_STALE: the transaction predates the challenge. TXID_REUSED: the transaction already proved another wallet. CHAIN_UNSUPPORTED: the method is not available on this chain. WINDOW_EXPIRED: the test window closed. OWNERSHIP_CHANGED: the wallet's holder changed, or the wallet was deleted from your address book, after the widget session was minted. METHOD_SWITCHED: the end user picked another method before finishing this one. REVIEW_REJECTED: your reviewer rejected the screenshot. ABANDONED: the widget session lapsed before the end user finished. SIGNATURE_LOOKUP_FAILED: the chain could not be checked for a smart-contract wallet signature; retry verification."
       },
       "TravelRuleWidgetProofError": {
         "type": "object",
@@ -133069,7 +133113,8 @@
             "description": "Canonical chain identifier, e.g. ETH, BTC, SOL, TRX."
           },
           "holder_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Holder name from the submitting widget, never a reassigned holder. Empty when the submitting widget was deleted."
           },
           "is_ownership_verified": {
             "type": "boolean",
@@ -133092,7 +133137,7 @@
           "screenshot_url": {
             "type": "string",
             "nullable": true,
-            "description": "Time-limited link to the uploaded screenshot. List the queue again for a fresh link."
+            "description": "Authorized /v3/media/preview/ URL with an expiring signed source for this proof screenshot. Returns a recompressed preview, not the original upload or an arbitrary public URL. Null when no eligible screenshot exists. Read the proof again for a fresh link."
           },
           "attempts": {
             "type": "integer",
@@ -133104,7 +133149,7 @@
                 "$ref": "#/components/schemas/TravelRuleWalletProofFailureReason"
               }
             ],
-            "description": "REVIEW_REJECTED after a rejection, OWNERSHIP_CHANGED when the wallet changed holder or was deleted before a decision. Empty otherwise."
+            "description": "Fixed failure code for this proof or its last attempt; empty when no documented failure applies. REVIEW_REJECTED identifies a rejected screenshot. History can also carry expiry, ownership-change or abandonment codes."
           },
           "method_chosen_at": {
             "type": "string",
@@ -133128,8 +133173,28 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "application_id": {
+            "type": "string",
+            "description": "Application that owns the wallet and proof.",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "User in this application matching the submitting widget vendor_data. Null when no matching current user exists, or the submitting widget was deleted. Never the reassigned wallet holder.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "holder_vendor_data": {
+            "type": "string",
+            "description": "Holder identifier from the submitting widget, not the current wallet holder. Empty when the submitting widget was deleted."
+          },
+          "wallet_label": {
+            "type": "string",
+            "description": "Exact current wallet label, including an empty string when no label is set. Not a name inferred from the holder or address."
           }
-        }
+        },
+        "description": "Uploaded screenshot proof returned by the review queue and decision endpoint. Submitter attribution is independent of the current wallet holder."
       },
       "TravelRuleWalletProofDecision": {
         "type": "object",
@@ -135410,6 +135475,15 @@
             ],
             "nullable": true,
             "description": "Explicit user-choice state, or null when counterparty_choice=user was not requested."
+          },
+          "proof_request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleTransferProofRequest"
+              }
+            ],
+            "nullable": true,
+            "description": "Latest application- and subject-scoped request if it matches this transfer counterparty wallet and chain; otherwise null. A standalone request is not attached to a transfer. Request status and proof verdict are separate from the saved transfer decision."
           }
         }
       },
@@ -135746,6 +135820,541 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleWalletProofSummary": {
+        "type": "object",
+        "required": [
+          "proof_id",
+          "method",
+          "status",
+          "failure_reason"
+        ],
+        "properties": {
+          "proof_id": {
+            "type": "string",
+            "description": "Selected proof identifier, or null when no proof exists.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "description": "Proof method, or null when no proof exists.",
+            "enum": [
+              "MESSAGE_SIGNING",
+              "SATOSHI_TEST",
+              "SCREENSHOT",
+              "SELF_DECLARATION",
+              null
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Proof status, or null when no proof exists.",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "REJECTED",
+              "EXPIRED",
+              null
+            ],
+            "nullable": true
+          },
+          "failure_reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletProofFailureReason"
+              }
+            ],
+            "description": "Fixed failure code, or an empty string when no documented failure applies. Never raw diagnostic text."
+          }
+        }
+      },
+      "TravelRuleWalletOwnershipProof": {
+        "type": "object",
+        "description": "Current valid proof, preferring the most recently verified proof; otherwise the latest attempt. A failed retry does not replace a current valid proof. This metadata is read-only.",
+        "required": [
+          "proof_id",
+          "method",
+          "status",
+          "failure_reason",
+          "latest_attempt",
+          "network_eligible",
+          "reuse_status"
+        ],
+        "properties": {
+          "proof_id": {
+            "type": "string",
+            "description": "Selected proof identifier, or null when no proof exists.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "description": "Proof method, or null when no proof exists.",
+            "enum": [
+              "MESSAGE_SIGNING",
+              "SATOSHI_TEST",
+              "SCREENSHOT",
+              "SELF_DECLARATION",
+              null
+            ],
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Proof status, or null when no proof exists.",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "REJECTED",
+              "EXPIRED",
+              null
+            ],
+            "nullable": true
+          },
+          "failure_reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletProofFailureReason"
+              }
+            ],
+            "description": "Fixed failure code, or an empty string when no documented failure applies. Never raw diagnostic text."
+          },
+          "latest_attempt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletProofSummary"
+              }
+            ],
+            "nullable": true,
+            "description": "Most recently created proof, even when a different current valid proof is selected above. Null when no proof exists."
+          },
+          "network_eligible": {
+            "type": "boolean",
+            "description": "Current discoverability for this wallet on its stored chain and memo. Requires a current control proof, a live application with Travel Rule enabled, and a discoverable VASP profile. Does not report historical network use or guarantee future transfer acceptance.",
+            "example": false
+          },
+          "reuse_status": {
+            "type": "string",
+            "description": "NOT_LINKED when holder_vendor_data is empty; otherwise OWNERSHIP_CHANGED after reassignment without a current proof; VERIFIED for a current proof on a verified wallet; otherwise the latest REJECTED or EXPIRED status, or AWAITING_PROOF.",
+            "enum": [
+              "NOT_LINKED",
+              "OWNERSHIP_CHANGED",
+              "VERIFIED",
+              "REJECTED",
+              "EXPIRED",
+              "AWAITING_PROOF"
+            ],
+            "example": "AWAITING_PROOF"
+          }
+        },
+        "example": {
+          "proof_id": "11111111-2222-4333-8444-555555555555",
+          "method": "MESSAGE_SIGNING",
+          "status": "VERIFIED",
+          "failure_reason": "",
+          "latest_attempt": {
+            "proof_id": "66666666-7777-4888-8999-000000000000",
+            "method": "SCREENSHOT",
+            "status": "REJECTED",
+            "failure_reason": "REVIEW_REJECTED"
+          },
+          "network_eligible": true,
+          "reuse_status": "VERIFIED"
+        }
+      },
+      "TravelRuleWalletProofTotals": {
+        "type": "object",
+        "description": "Exact totals over the entire application-scoped wallet set before limit/offset pagination. Method counts overlap and must not be summed to obtain distinct verified wallets.",
+        "required": [
+          "wallets",
+          "customer_wallets",
+          "verified_control_wallets",
+          "MESSAGE_SIGNING",
+          "SATOSHI_TEST",
+          "SCREENSHOT",
+          "SELF_DECLARATION"
+        ],
+        "properties": {
+          "wallets": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Exact number of wallet entries in the application-scoped set, including every owner type. Equal to count.",
+            "example": 0
+          },
+          "customer_wallets": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of entries whose owner_type is customer.",
+            "example": 0
+          },
+          "verified_control_wallets": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of verified customer wallets with a current MESSAGE_SIGNING or SATOSHI_TEST proof. Each wallet counts once, even with both methods.",
+            "example": 0
+          },
+          "MESSAGE_SIGNING": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of verified customer wallets with a current MESSAGE_SIGNING proof. A wallet can count under more than one method.",
+            "example": 0
+          },
+          "SATOSHI_TEST": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of verified customer wallets with a current SATOSHI_TEST proof. A wallet can count under more than one method.",
+            "example": 0
+          },
+          "SCREENSHOT": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of verified customer wallets with a current SCREENSHOT proof. A wallet can count under more than one method.",
+            "example": 0
+          },
+          "SELF_DECLARATION": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of verified customer wallets with a current SELF_DECLARATION proof. A wallet can count under more than one method.",
+            "example": 0
+          }
+        }
+      },
+      "WalletAddressEntryUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "holder_name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "holder_vendor_data": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "entity_type": {
+            "type": "string",
+            "maxLength": 16
+          },
+          "travel_address": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "receiving_travel_address": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Your per-wallet travel address for this wallet: give it to the sending VASP so its TRP inquiry names this wallet. Empty for a wallet recorded as another VASP's, while Travel Rule is off, and before your VASP profile is saved."
+          },
+          "label": {
+            "type": "string",
+            "description": "Current wallet label, exactly as saved."
+          },
+          "owner_type": {
+            "type": "string",
+            "description": "Wallet owner type.",
+            "enum": [
+              "customer",
+              "internal",
+              "vasp"
+            ]
+          },
+          "ownership_proof": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletOwnershipProof"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "description": "Updated holder metadata and read-only ownership metadata. This is a partial wallet representation, not the full list/create entry."
+      },
+      "TravelRuleWalletProof": {
+        "type": "object",
+        "properties": {
+          "proof_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "MESSAGE_SIGNING",
+              "SATOSHI_TEST",
+              "SCREENSHOT",
+              "SELF_DECLARATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "REJECTED",
+              "EXPIRED"
+            ]
+          },
+          "wallet_address": {
+            "type": "string"
+          },
+          "chain": {
+            "type": "string",
+            "description": "Canonical chain identifier, e.g. ETH, BTC, SOL, TRX."
+          },
+          "holder_name": {
+            "type": "string",
+            "description": "Holder name from the submitting widget, never a reassigned holder. Empty when the submitting widget was deleted."
+          },
+          "is_ownership_verified": {
+            "type": "boolean",
+            "description": "Whether the address book entry is ownership-verified, by this proof or another one."
+          },
+          "transaction_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The transaction whose Travel Rule transfer the widget session was minted for. Null for a session minted without a transaction_id."
+          },
+          "file_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "content_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "screenshot_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Authorized /v3/media/preview/ URL with an expiring signed source for this proof screenshot. Returns a recompressed preview, not the original upload or an arbitrary public URL. Null when no eligible screenshot exists. Read the proof again for a fresh link."
+          },
+          "attempts": {
+            "type": "integer",
+            "description": "Number of attempts made for this proof."
+          },
+          "failure_reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletProofFailureReason"
+              }
+            ],
+            "description": "Fixed failure code for this proof or its last attempt; empty when no documented failure applies. A PENDING proof can carry a failure code while another attempt remains possible."
+          },
+          "method_chosen_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the end user chose this proof method, or null when unavailable."
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "decided_by": {
+            "type": "string",
+            "description": "Who closed the proof: review:<user identifier> for a console reviewer, review for an API-key decision, widget or sweeper when Didit closed it automatically. Empty while PENDING."
+          },
+          "review_note": {
+            "type": "string",
+            "description": "The note sent with the decision. Empty when none."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "application_id": {
+            "type": "string",
+            "description": "Application that owns the wallet and proof.",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "User in this application matching the submitting widget vendor_data. Null when no matching current user exists, or the submitting widget was deleted. Never the reassigned wallet holder.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "holder_vendor_data": {
+            "type": "string",
+            "description": "Holder identifier from the submitting widget, not the current wallet holder. Empty when the submitting widget was deleted."
+          },
+          "wallet_label": {
+            "type": "string",
+            "description": "Exact current wallet label, including an empty string when no label is set. Not a name inferred from the holder or address."
+          }
+        },
+        "description": "Proof attached to a transfer request. Supports every ownership method; screenshot-only metadata can be null. Review history, notes and decision attribution remain available."
+      },
+      "TravelRuleTransferProofRequest": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "status",
+          "expires_at",
+          "proof"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Identifier of the matching widget request. Does not expose its access token.",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "COMPLETED when the request was completed; otherwise EXPIRED once expires_at has passed, or PENDING. This is the request status, not the proof verdict.",
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "EXPIRED"
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "Expiry of the widget request.",
+            "format": "date-time"
+          },
+          "proof": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleWalletProof"
+              }
+            ],
+            "nullable": true,
+            "description": "Latest proof submitted for this request and matching wallet/chain, or null when none exists. Null after the wallet and its proofs are deleted; the saved transfer decision stays unchanged."
+          }
+        }
+      },
+      "TravelRuleDocumentKind": {
+        "type": "string",
+        "enum": [
+          "questionnaire",
+          "incorporation",
+          "licence",
+          "aml_policy",
+          "ownership"
+        ],
+        "description": "`questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure."
+      },
+      "TravelRuleDocument": {
+        "type": "object",
+        "description": "A PDF document. Never carries the file content.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "content_type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The uploaded file name."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TravelRuleDocumentKind"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When you uploaded it. Present on your own inventory."
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a counterparty uploaded it. Present on documents received with a questionnaire."
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "application/pdf"
+            ]
+          }
+        }
+      },
+      "TravelRuleDocumentShare": {
+        "type": "object",
+        "properties": {
+          "shared_with": {
+            "type": "string",
+            "format": "email"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "The private link, returned once when the share is created. null when nothing changed."
+          }
+        }
+      },
+      "TravelRuleDecisionEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "decision": {
+            "type": "string",
+            "description": "The decision recorded, as in `decision.decision` of the VASP."
+          },
+          "reason": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Who recorded it."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleVaspAssignee": {
+        "type": "object",
+        "nullable": true,
+        "description": "The member the VASP is assigned to, or null. The assignment is private to your application.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member's user id."
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "assigned_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleVaspReviewer": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The member's user id."
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display only; it grants nothing."
           }
         }
       },
@@ -136243,138 +136852,6 @@
         },
         "example": {
           "detail": "Too many attempts to join. Try again in a little while."
-        }
-      },
-      "TravelRuleDocumentKind": {
-        "type": "string",
-        "enum": [
-          "questionnaire",
-          "incorporation",
-          "licence",
-          "aml_policy",
-          "ownership"
-        ],
-        "description": "`questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure."
-      },
-      "TravelRuleDocument": {
-        "type": "object",
-        "description": "A PDF document. Never carries the file content.",
-        "required": [
-          "id",
-          "name",
-          "kind",
-          "content_type"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "description": "The uploaded file name."
-          },
-          "kind": {
-            "$ref": "#/components/schemas/TravelRuleDocumentKind"
-          },
-          "uploaded_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When you uploaded it. Present on your own inventory."
-          },
-          "received_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When a counterparty uploaded it. Present on documents received with a questionnaire."
-          },
-          "content_type": {
-            "type": "string",
-            "enum": [
-              "application/pdf"
-            ]
-          }
-        }
-      },
-      "TravelRuleDocumentShare": {
-        "type": "object",
-        "properties": {
-          "shared_with": {
-            "type": "string",
-            "format": "email"
-          },
-          "url": {
-            "type": "string",
-            "nullable": true,
-            "description": "The private link, returned once when the share is created. null when nothing changed."
-          }
-        }
-      },
-      "TravelRuleDecisionEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "decision": {
-            "type": "string",
-            "description": "The decision recorded, as in `decision.decision` of the VASP."
-          },
-          "reason": {
-            "type": "string"
-          },
-          "actor": {
-            "type": "string",
-            "description": "Who recorded it."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "TravelRuleVaspAssignee": {
-        "type": "object",
-        "nullable": true,
-        "description": "The member the VASP is assigned to, or null. The assignment is private to your application.",
-        "properties": {
-          "uuid": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The member's user id."
-          },
-          "full_name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "assigned_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "TravelRuleVaspReviewer": {
-        "type": "object",
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "description": "The member's user id."
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string",
-            "nullable": true,
-            "description": "Display only; it grants nothing."
-          }
         }
       }
     },
