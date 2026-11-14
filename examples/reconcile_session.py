@@ -44,7 +44,7 @@ def main() -> None:
         raise SystemExit("DIDIT_WEBHOOK_SECRET is not set")
 
     try:
-        event = didit.webhooks.verify(body, headers, secret)
+        event = didit.webhooks.verify(body, headers, secret, allow_simple=True)
     except didit.WebhookVerificationError as err:
         raise SystemExit(f"invalid webhook: {err.reason}") from err
     except didit.ConfigurationError as err:

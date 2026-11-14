@@ -15,7 +15,7 @@ import didit
 from didit import Didit
 from didit.types import SessionDecision
 
-TERMINAL_STATUSES = frozenset({"Approved", "Declined", "Expired", "Abandoned"})
+TERMINAL_STATUSES = frozenset({"Approved", "Declined", "Expired", "Kyc Expired", "Abandoned"})
 
 
 def poll_decision(
