@@ -38,6 +38,9 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     consent: bool
     """Set to `true` when the end user has explicitly consented to the selected validation services. Required for services flagged `requires_consent=true` in the catalog - without it those services return `400` with `services_requiring_consent`."""
 
+    electoral_roll_only: bool
+    """Paraguay (`pry_cedula`) only. Set to `true` to check the cédula against the TSJE electoral roll alone. The electoral roll lists only citizens aged 18 or over, so a `MATCH` also confirms that the holder is an adult, and a cédula that is not on the roll returns `DOCUMENT_NOT_FOUND`. Defaults to `false`, which also checks the DNIT taxpayer register for wider identity coverage but cannot confirm age. Any other service rejects it with `400`."""
+
     identification_number: str
     """Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field."""
 

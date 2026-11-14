@@ -55,6 +55,7 @@ class DatabaseValidation(SyncAPIResource):
         services: Sequence[str] | NotGiven = NOT_GIVEN,
         validation_type: str | NotGiven = NOT_GIVEN,
         consent: bool | NotGiven = NOT_GIVEN,
+        electoral_roll_only: bool | NotGiven = NOT_GIVEN,
         identification_number: str | NotGiven = NOT_GIVEN,
         first_name: str | NotGiven = NOT_GIVEN,
         last_name: str | NotGiven = NOT_GIVEN,
@@ -169,6 +170,7 @@ class DatabaseValidation(SyncAPIResource):
           services: Catalog `service_id`s to run for this country (e.g. `["bra_cpf"]`). Also accepts a single string or a comma-separated/JSON-encoded string. **If omitted or empty, exactly one default service runs** - the longest-established live service for the country; newer, biometric, and pay-as-you-go services must be named explicitly. Sending `services` switches the response to the extended shape (adds `services_used` and `match_score`). Every id must exist and be live for the `issuing_state`; services that require onboarding return `400` until activated for your organization. Discover available services per country via `GET /v1/organization/database-validation-countries/` (a catalog endpoint not documented in this spec) or the Business Console workflow editor.
           validation_type: DEPRECATED. Accepted for backward compatibility but ignored - the response `validation_type` is now derived from how many services full-matched. Use `services` to pin specific services.
           consent: Set to `true` when the end user has explicitly consented to the selected validation services. Required for services flagged `requires_consent=true` in the catalog - without it those services return `400` with `services_requiring_consent`.
+          electoral_roll_only: Paraguay (`pry_cedula`) only. Set to `true` to check the cédula against the TSJE electoral roll alone. The electoral roll lists only citizens aged 18 or over, so a `MATCH` also confirms that the holder is an adult, and a cédula that is not on the roll returns `DOCUMENT_NOT_FOUND`. Defaults to `false`, which also checks the DNIT taxpayer register for wider identity coverage but cannot confirm age. Any other service rejects it with `400`.
           identification_number: Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field.
           first_name: The individual's first name. Required by some services/countries.
           last_name: The individual's last name. Required by some services/countries.
@@ -264,6 +266,7 @@ class DatabaseValidation(SyncAPIResource):
                     "services": services,
                     "validation_type": validation_type,
                     "consent": consent,
+                    "electoral_roll_only": electoral_roll_only,
                     "identification_number": identification_number,
                     "first_name": first_name,
                     "last_name": last_name,
@@ -376,6 +379,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
         services: Sequence[str] | NotGiven = NOT_GIVEN,
         validation_type: str | NotGiven = NOT_GIVEN,
         consent: bool | NotGiven = NOT_GIVEN,
+        electoral_roll_only: bool | NotGiven = NOT_GIVEN,
         identification_number: str | NotGiven = NOT_GIVEN,
         first_name: str | NotGiven = NOT_GIVEN,
         last_name: str | NotGiven = NOT_GIVEN,
@@ -490,6 +494,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           services: Catalog `service_id`s to run for this country (e.g. `["bra_cpf"]`). Also accepts a single string or a comma-separated/JSON-encoded string. **If omitted or empty, exactly one default service runs** - the longest-established live service for the country; newer, biometric, and pay-as-you-go services must be named explicitly. Sending `services` switches the response to the extended shape (adds `services_used` and `match_score`). Every id must exist and be live for the `issuing_state`; services that require onboarding return `400` until activated for your organization. Discover available services per country via `GET /v1/organization/database-validation-countries/` (a catalog endpoint not documented in this spec) or the Business Console workflow editor.
           validation_type: DEPRECATED. Accepted for backward compatibility but ignored - the response `validation_type` is now derived from how many services full-matched. Use `services` to pin specific services.
           consent: Set to `true` when the end user has explicitly consented to the selected validation services. Required for services flagged `requires_consent=true` in the catalog - without it those services return `400` with `services_requiring_consent`.
+          electoral_roll_only: Paraguay (`pry_cedula`) only. Set to `true` to check the cédula against the TSJE electoral roll alone. The electoral roll lists only citizens aged 18 or over, so a `MATCH` also confirms that the holder is an adult, and a cédula that is not on the roll returns `DOCUMENT_NOT_FOUND`. Defaults to `false`, which also checks the DNIT taxpayer register for wider identity coverage but cannot confirm age. Any other service rejects it with `400`.
           identification_number: Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field.
           first_name: The individual's first name. Required by some services/countries.
           last_name: The individual's last name. Required by some services/countries.
@@ -585,6 +590,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
                     "services": services,
                     "validation_type": validation_type,
                     "consent": consent,
+                    "electoral_roll_only": electoral_roll_only,
                     "identification_number": identification_number,
                     "first_name": first_name,
                     "last_name": last_name,
