@@ -164,7 +164,7 @@ Failed requests are retried up to `max_retries` times (default 2) with exponenti
 `with_options(idempotency_key=...)` sends your key as the `Idempotency-Key` header on that request (`POST`, `PUT`, `PATCH` and `DELETE`), so repeating the same operation with the same key never runs it twice.
 
 ```python
-# Chosen by you, 1 to 255 characters, the same on every repeat of this operation.
+# Chosen by you, 1 to 255 printable ASCII characters, the same on every repeat of this operation.
 session = client.with_options(idempotency_key="order-123").sessions.create(workflow_id="...")
 ```
 

@@ -106,10 +106,17 @@ def origin_of(url: httpx.URL | str) -> str:
 
 
 def validate_idempotency_key(key: object) -> str:
-    """The key if it is a string of 1 to 255 characters, else :class:`ConfigurationError`."""
-    if not isinstance(key, str) or not 1 <= len(key) <= MAX_IDEMPOTENCY_KEY_LENGTH:
+    """The key if it is a string of 1 to 255 printable ASCII characters, else :class:`ConfigurationError`.
+
+    An HTTP header value travels as ASCII: a key with other characters (for example ``"注文-1"``) would make the
+    HTTP layer fail while it encodes the header, so it is refused up front with the same error."""
+    if (
+        not isinstance(key, str)
+        or not 1 <= len(key) <= MAX_IDEMPOTENCY_KEY_LENGTH
+        or not all(" " <= character <= "~" for character in key)
+    ):
         raise ConfigurationError(
-            f"idempotency_key must be a string of 1 to {MAX_IDEMPOTENCY_KEY_LENGTH} characters."
+            f"idempotency_key must be a string of 1 to {MAX_IDEMPOTENCY_KEY_LENGTH} printable ASCII characters."
         )
     return key
 

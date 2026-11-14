@@ -104,7 +104,7 @@ class Didit(SyncRootResources):
         """A copy of this client with some options changed. It shares the
         connection pool, so it is cheap: ``client.with_options(max_retries=5).sessions.list()``.
 
-        ``idempotency_key`` (1 to 255 characters) exists only here, never on the
+        ``idempotency_key`` (1 to 255 printable ASCII characters) exists only here, never on the
         constructor: ``client.with_options(idempotency_key=key).sessions.create(...)``
         sends it as the ``Idempotency-Key`` header on ``POST``, ``PUT``, ``PATCH`` and
         ``DELETE`` requests, and a ``POST`` or ``PATCH`` with a key is retried like a ``GET``."""

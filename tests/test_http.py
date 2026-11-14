@@ -469,7 +469,7 @@ def test_idempotency_key_is_not_a_constructor_option() -> None:
         didit.AsyncDidit(api_key=API_KEY, idempotency_key=KEY)  # type: ignore[call-arg]
 
 
-@pytest.mark.parametrize("bad", ["", "k" * 256, 12, None, b"key"])
+@pytest.mark.parametrize("bad", ["", "k" * 256, 12, None, b"key", "注文-1", "caf\u00e9", "a\nb"])
 def test_idempotency_key_is_validated_before_any_request(bad: Any) -> None:
     api = MockAPI().json(201, SESSION)
     with pytest.raises(didit.ConfigurationError):
@@ -642,7 +642,7 @@ def test_a_lowercase_raw_header_is_one_header_and_makes_a_post_retryable() -> No
     assert sum(1 for k, _ in api.requests[0].headers.raw if k.lower() == b"idempotency-key") == 1
 
 
-@pytest.mark.parametrize("bad", ["", "k" * 256])
+@pytest.mark.parametrize("bad", ["", "k" * 256, "注文-1"])
 def test_an_invalid_generated_parameter_or_raw_header_is_a_configuration_error(bad: str) -> None:
     api = MockAPI().json(200, {}).json(201, SESSION)
     with pytest.raises(didit.ConfigurationError):
