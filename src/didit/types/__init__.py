@@ -2124,6 +2124,15 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_counterparty_screening import (
         TravelRuleCounterpartyScreening as TravelRuleCounterpartyScreening,
     )
+    from didit.types.components.travel_rule_counterparty_screening import (
+        TravelRuleCounterpartyScreeningHits as TravelRuleCounterpartyScreeningHits,
+    )
+    from didit.types.components.travel_rule_counterparty_screening import (
+        TravelRuleCounterpartyScreeningHitsReview as TravelRuleCounterpartyScreeningHitsReview,
+    )
+    from didit.types.components.travel_rule_counterparty_screening import (
+        TravelRuleCounterpartyScreeningPeopleScreening as TravelRuleCounterpartyScreeningPeopleScreening,
+    )
     from didit.types.components.travel_rule_counterparty_screening_result import (
         TravelRuleCounterpartyScreeningResult as TravelRuleCounterpartyScreeningResult,
     )
@@ -2219,6 +2228,9 @@ if TYPE_CHECKING:
     from didit.types.components.travel_rule_network_state import (
         TravelRuleNetworkState as TravelRuleNetworkState,
     )
+    from didit.types.components.travel_rule_network_state import (
+        TravelRuleNetworkStateLoadError as TravelRuleNetworkStateLoadError,
+    )
     from didit.types.components.travel_rule_networks_overview import (
         TravelRuleNetworksOverview as TravelRuleNetworksOverview,
     )
@@ -2267,6 +2279,12 @@ if TYPE_CHECKING:
     )
     from didit.types.components.travel_rule_utxo_entry import (
         TravelRuleUtxoEntryParam as TravelRuleUtxoEntryParam,
+    )
+    from didit.types.components.travel_rule_vasp_assignee import (
+        TravelRuleVaspAssignee as TravelRuleVaspAssignee,
+    )
+    from didit.types.components.travel_rule_vasp_reviewer import (
+        TravelRuleVaspReviewer as TravelRuleVaspReviewer,
     )
     from didit.types.components.travel_rule_wallet_lookup import (
         TravelRuleWalletLookup as TravelRuleWalletLookup,
@@ -3302,6 +3320,12 @@ if TYPE_CHECKING:
     from didit.types.transactions.travel_rule.update_transfer_params import (
         TransactionsTravelRuleUpdateTransferParams as TransactionsTravelRuleUpdateTransferParams,
     )
+    from didit.types.travel_rule.assign_vasp_params import (
+        TravelRuleAssignVaspParams as TravelRuleAssignVaspParams,
+    )
+    from didit.types.travel_rule.assign_vasp_response import (
+        TravelRuleAssignVaspResponse as TravelRuleAssignVaspResponse,
+    )
     from didit.types.travel_rule.counterparty_contacts.create_params import (
         TravelRuleCounterpartyContactsCreateParams as TravelRuleCounterpartyContactsCreateParams,
     )
@@ -3313,6 +3337,9 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.create_widget_session_params import (
         TravelRuleCreateWidgetSessionParams as TravelRuleCreateWidgetSessionParams,
+    )
+    from didit.types.travel_rule.list_vasp_reviewers_response import (
+        TravelRuleListVaspReviewersResponse as TravelRuleListVaspReviewersResponse,
     )
     from didit.types.travel_rule.list_vasps_response import (
         TravelRuleListVaspsResponse as TravelRuleListVaspsResponse,
@@ -3328,6 +3355,12 @@ if TYPE_CHECKING:
     )
     from didit.types.travel_rule.register_inbound_params import (
         TravelRuleRegisterInboundParamsOriginatingVasp as TravelRuleRegisterInboundParamsOriginatingVasp,
+    )
+    from didit.types.travel_rule.review_vasp_screening_hit_params import (
+        TravelRuleReviewVaspScreeningHitParams as TravelRuleReviewVaspScreeningHitParams,
+    )
+    from didit.types.travel_rule.review_vasp_screening_hit_response import (
+        TravelRuleReviewVaspScreeningHitResponse as TravelRuleReviewVaspScreeningHitResponse,
     )
     from didit.types.travel_rule.screen_vasp_params import (
         TravelRuleScreenVaspParams as TravelRuleScreenVaspParams,
@@ -4565,6 +4598,8 @@ _MODULES: dict[str, str] = {
     "TransactionsTravelRuleCreateUserLinkParams": "transactions.travel_rule.create_user_link_params",
     "TransactionsTravelRuleTriggerTestVaspInboundParams": "transactions.travel_rule.trigger_test_vasp_inbound_params",
     "TransactionsTravelRuleUpdateTransferParams": "transactions.travel_rule.update_transfer_params",
+    "TravelRuleAssignVaspParams": "travel_rule.assign_vasp_params",
+    "TravelRuleAssignVaspResponse": "travel_rule.assign_vasp_response",
     "TravelRuleChainDetails": "components.travel_rule_chain_details",
     "TravelRuleChainDetailsUtxo": "components.travel_rule_chain_details",
     "TravelRuleChainSide": "components.travel_rule_chain_side",
@@ -4577,6 +4612,9 @@ _MODULES: dict[str, str] = {
     "TravelRuleCounterpartyQuestionnaire": "components.travel_rule_counterparty_questionnaire",
     "TravelRuleCounterpartyQuestionnaireList": "components.travel_rule_counterparty_questionnaire_list",
     "TravelRuleCounterpartyScreening": "components.travel_rule_counterparty_screening",
+    "TravelRuleCounterpartyScreeningHits": "components.travel_rule_counterparty_screening",
+    "TravelRuleCounterpartyScreeningHitsReview": "components.travel_rule_counterparty_screening",
+    "TravelRuleCounterpartyScreeningPeopleScreening": "components.travel_rule_counterparty_screening",
     "TravelRuleCounterpartyScreeningResult": "components.travel_rule_counterparty_screening_result",
     "TravelRuleCounterpartyScreeningStatus": "components.travel_rule_counterparty_screening_status",
     "TravelRuleCreateVaspParams": "travel_rule.create_vasp_params",
@@ -4593,6 +4631,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleDeliveryLogPage": "components.travel_rule_delivery_log_page",
     "TravelRuleDiscoveryStep": "components.travel_rule_discovery_step",
     "TravelRuleInboundResponse": "components.travel_rule_inbound_response",
+    "TravelRuleListVaspReviewersResponse": "travel_rule.list_vasp_reviewers_response",
     "TravelRuleListVaspsResponse": "travel_rule.list_vasps_response",
     "TravelRuleManualMatchResponse": "components.travel_rule_manual_match_response",
     "TravelRuleMatchingRules": "components.travel_rule_matching_rules",
@@ -4613,6 +4652,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleNetworkQuestionnaireAnswersLicences": "components.travel_rule_network_questionnaire_answers",
     "TravelRuleNetworkQuestionnaireHistory": "components.travel_rule_network_questionnaire",
     "TravelRuleNetworkState": "components.travel_rule_network_state",
+    "TravelRuleNetworkStateLoadError": "components.travel_rule_network_state",
     "TravelRuleNetworksOverview": "components.travel_rule_networks_overview",
     "TravelRuleNetworksOverviewNetworks": "components.travel_rule_networks_overview",
     "TravelRuleNetworksUpdateQuestionnaireParams": "travel_rule.networks.update_questionnaire_params",
@@ -4620,6 +4660,8 @@ _MODULES: dict[str, str] = {
     "TravelRuleNextAction": "components.travel_rule_next_action",
     "TravelRuleRegisterInboundParams": "travel_rule.register_inbound_params",
     "TravelRuleRegisterInboundParamsOriginatingVasp": "travel_rule.register_inbound_params",
+    "TravelRuleReviewVaspScreeningHitParams": "travel_rule.review_vasp_screening_hit_params",
+    "TravelRuleReviewVaspScreeningHitResponse": "travel_rule.review_vasp_screening_hit_response",
     "TravelRuleScreenVaspParams": "travel_rule.screen_vasp_params",
     "TravelRuleSendComplianceEmailConfirmationResponse": "travel_rule.send_compliance_email_confirmation_response",
     "TravelRuleSendVaspQuestionnaireParams": "travel_rule.send_vasp_questionnaire_params",
@@ -4642,6 +4684,8 @@ _MODULES: dict[str, str] = {
     "TravelRuleUtxo": "components.travel_rule_utxo",
     "TravelRuleUtxoEntry": "components.travel_rule_utxo_entry",
     "TravelRuleUtxoEntryParam": "components.travel_rule_utxo_entry",
+    "TravelRuleVaspAssignee": "components.travel_rule_vasp_assignee",
+    "TravelRuleVaspReviewer": "components.travel_rule_vasp_reviewer",
     "TravelRuleWalletAddressesBulkImportParamsVariant1": "travel_rule.wallet_addresses.bulk_import_params",
     "TravelRuleWalletAddressesCreateParams": "travel_rule.wallet_addresses.create_params",
     "TravelRuleWalletAddressesListResponse": "travel_rule.wallet_addresses.list_response",
@@ -5838,6 +5882,8 @@ __all__ = [
     "TransactionsTravelRuleCreateUserLinkParams",
     "TransactionsTravelRuleTriggerTestVaspInboundParams",
     "TransactionsTravelRuleUpdateTransferParams",
+    "TravelRuleAssignVaspParams",
+    "TravelRuleAssignVaspResponse",
     "TravelRuleChainDetails",
     "TravelRuleChainDetailsUtxo",
     "TravelRuleChainSide",
@@ -5850,6 +5896,9 @@ __all__ = [
     "TravelRuleCounterpartyQuestionnaire",
     "TravelRuleCounterpartyQuestionnaireList",
     "TravelRuleCounterpartyScreening",
+    "TravelRuleCounterpartyScreeningHits",
+    "TravelRuleCounterpartyScreeningHitsReview",
+    "TravelRuleCounterpartyScreeningPeopleScreening",
     "TravelRuleCounterpartyScreeningResult",
     "TravelRuleCounterpartyScreeningStatus",
     "TravelRuleCreateVaspParams",
@@ -5866,6 +5915,7 @@ __all__ = [
     "TravelRuleDeliveryLogPage",
     "TravelRuleDiscoveryStep",
     "TravelRuleInboundResponse",
+    "TravelRuleListVaspReviewersResponse",
     "TravelRuleListVaspsResponse",
     "TravelRuleManualMatchResponse",
     "TravelRuleMatchingRules",
@@ -5886,6 +5936,7 @@ __all__ = [
     "TravelRuleNetworkQuestionnaireAnswersLicences",
     "TravelRuleNetworkQuestionnaireHistory",
     "TravelRuleNetworkState",
+    "TravelRuleNetworkStateLoadError",
     "TravelRuleNetworksOverview",
     "TravelRuleNetworksOverviewNetworks",
     "TravelRuleNetworksUpdateQuestionnaireParams",
@@ -5893,6 +5944,8 @@ __all__ = [
     "TravelRuleNextAction",
     "TravelRuleRegisterInboundParams",
     "TravelRuleRegisterInboundParamsOriginatingVasp",
+    "TravelRuleReviewVaspScreeningHitParams",
+    "TravelRuleReviewVaspScreeningHitResponse",
     "TravelRuleScreenVaspParams",
     "TravelRuleSendComplianceEmailConfirmationResponse",
     "TravelRuleSendVaspQuestionnaireParams",
@@ -5915,6 +5968,8 @@ __all__ = [
     "TravelRuleUtxo",
     "TravelRuleUtxoEntry",
     "TravelRuleUtxoEntryParam",
+    "TravelRuleVaspAssignee",
+    "TravelRuleVaspReviewer",
     "TravelRuleWalletAddressesBulkImportParamsVariant1",
     "TravelRuleWalletAddressesCreateParams",
     "TravelRuleWalletAddressesListResponse",

@@ -41,10 +41,48 @@ from didit.types.components.vasp_directory_entry import VaspDirectoryEntry
 from didit.types.components.wallet_address_entry import WalletAddressEntry
 from didit.types.components.wallet_address_entry_update import WalletAddressEntryUpdate
 from didit.types.components.wallet_address_import_report import WalletAddressImportReport
+from didit.types.travel_rule.assign_vasp_response import TravelRuleAssignVaspResponse
+from didit.types.travel_rule.list_vasp_reviewers_response import TravelRuleListVaspReviewersResponse
+from didit.types.travel_rule.review_vasp_screening_hit_response import (
+    TravelRuleReviewVaspScreeningHitResponse,
+)
 from didit.types.travel_rule.send_compliance_email_confirmation_response import (
     TravelRuleSendComplianceEmailConfirmationResponse,
 )
 from tests.harness import Expect, check_operation
+
+
+def test_travel_rule_assign_vasp() -> None:
+    """``POST /v3/travel-rule/vasps/{vasp_id}/assign/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/assign/",
+            api="verification",
+            auth="api_key",
+            json_body={"assignee_email": "reviewer@example.com"},
+            status=200,
+            response_json={
+                "id": "00000000-0000-4000-8000-000000000002",
+                "assignee": {
+                    "uuid": "00000000-0000-4000-8000-000000000004",
+                    "full_name": "sample",
+                    "email": "user@example.com",
+                    "assigned_at": "2026-01-01T00:00:00Z",
+                },
+                "changed": True,
+            },
+            strict_type=TravelRuleAssignVaspResponse,
+        ),
+        lambda c: c.travel_rule.assign_vasp(
+            "00000000-0000-4000-8000-000000000001", assignee_email="reviewer@example.com"
+        ),
+        lambda c: c.travel_rule.assign_vasp(
+            "00000000-0000-4000-8000-000000000001", assignee_email="reviewer@example.com"
+        ),
+        lambda r: isinstance(r, TravelRuleAssignVaspResponse),
+        lambda r: isinstance(r, TravelRuleAssignVaspResponse),
+    )
 
 
 def test_travel_rule_clear_vasp_decision() -> None:
@@ -211,6 +249,34 @@ def test_travel_rule_list_vasp_questionnaires() -> None:
         lambda c: c.travel_rule.list_vasp_questionnaires("00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, TravelRuleCounterpartyQuestionnaireList),
         lambda r: isinstance(r, TravelRuleCounterpartyQuestionnaireList),
+    )
+
+
+def test_travel_rule_list_vasp_reviewers() -> None:
+    """``GET /v3/travel-rule/vasps/reviewers/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/travel-rule/vasps/reviewers/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "results": [
+                    {
+                        "user_id": "sample",
+                        "email": "user@example.com",
+                        "name": "sample",
+                        "role": "sample",
+                    }
+                ]
+            },
+            strict_type=TravelRuleListVaspReviewersResponse,
+        ),
+        lambda c: c.travel_rule.list_vasp_reviewers(),
+        lambda c: c.travel_rule.list_vasp_reviewers(),
+        lambda r: isinstance(r, TravelRuleListVaspReviewersResponse),
+        lambda r: isinstance(r, TravelRuleListVaspReviewersResponse),
     )
 
 
@@ -926,6 +992,68 @@ def test_travel_rule_retrieve_vasp_screening() -> None:
     )
 
 
+def test_travel_rule_review_vasp_screening_hit() -> None:
+    """``PATCH /v3/travel-rule/vasps/{vasp_id}/screening/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/travel-rule/vasps/00000000-0000-4000-8000-000000000001/screening/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "screening_id": "7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+                "hit_id": "hit_0123456789",
+                "review_status": "False Positive",
+                "reason": "Different company, same trade name.",
+            },
+            status=200,
+            response_json={
+                "screening": {
+                    "id": "00000000-0000-4000-8000-000000000004",
+                    "status": "Approved",
+                    "total_hits": 1,
+                    "score": 1.5,
+                    "screened_at": "2026-01-01T00:00:00Z",
+                    "fresh": True,
+                    "flagged": True,
+                    "scope": "company",
+                    "people_screening": {"status": "not_run", "reason": "people_not_provided"},
+                    "hits": [
+                        {
+                            "id": "sample",
+                            "review": {
+                                "status": "Unreviewed",
+                                "reason": "sample",
+                                "reviewed_by": "sample",
+                                "reviewed_at": "2026-01-01T00:00:00Z",
+                            },
+                            "dismissed": True,
+                        }
+                    ],
+                },
+                "changed": True,
+            },
+            strict_type=TravelRuleReviewVaspScreeningHitResponse,
+        ),
+        lambda c: c.travel_rule.review_vasp_screening_hit(
+            "00000000-0000-4000-8000-000000000001",
+            screening_id="7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+            hit_id="hit_0123456789",
+            review_status="False Positive",
+            reason="Different company, same trade name.",
+        ),
+        lambda c: c.travel_rule.review_vasp_screening_hit(
+            "00000000-0000-4000-8000-000000000001",
+            screening_id="7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+            hit_id="hit_0123456789",
+            review_status="False Positive",
+            reason="Different company, same trade name.",
+        ),
+        lambda r: isinstance(r, TravelRuleReviewVaspScreeningHitResponse),
+        lambda r: isinstance(r, TravelRuleReviewVaspScreeningHitResponse),
+    )
+
+
 def test_travel_rule_screen_vasp() -> None:
     """``POST /v3/travel-rule/vasps/{vasp_id}/screening/``"""
     check_operation(
@@ -1079,6 +1207,8 @@ def test_travel_rule_update_settings() -> None:
                         },
                         "vasps_reachable": 1,
                         "routed_30d": 1,
+                        "load_status": "loaded",
+                        "load_error": {"code": "network_state_unavailable", "retryable": True},
                     },
                     "trust": {
                         "rail": "GTR",
@@ -1097,6 +1227,8 @@ def test_travel_rule_update_settings() -> None:
                         },
                         "vasps_reachable": 1,
                         "routed_30d": 1,
+                        "load_status": "loaded",
+                        "load_error": {"code": "network_state_unavailable", "retryable": True},
                     },
                     "verifyvasp": {
                         "rail": "GTR",
@@ -1115,6 +1247,8 @@ def test_travel_rule_update_settings() -> None:
                         },
                         "vasps_reachable": 1,
                         "routed_30d": 1,
+                        "load_status": "loaded",
+                        "load_error": {"code": "network_state_unavailable", "retryable": True},
                     },
                     "sygna": {
                         "rail": "GTR",
@@ -1133,6 +1267,8 @@ def test_travel_rule_update_settings() -> None:
                         },
                         "vasps_reachable": 1,
                         "routed_30d": 1,
+                        "load_status": "loaded",
+                        "load_error": {"code": "network_state_unavailable", "retryable": True},
                     },
                 },
                 "didit_network": {
@@ -1352,6 +1488,8 @@ def test_travel_rule_networks_request_access() -> None:
                         "note": "sample",
                     }
                 ],
+                "notify_status_changes": True,
+                "notification_email": "sample",
             },
             strict_type=TravelRuleNetworkParticipant,
         ),
@@ -2379,9 +2517,11 @@ def test_travel_rule_workspace_claim() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "trust": {
                             "rail": "GTR",
@@ -2390,9 +2530,11 @@ def test_travel_rule_workspace_claim() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "verifyvasp": {
                             "rail": "GTR",
@@ -2401,9 +2543,11 @@ def test_travel_rule_workspace_claim() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "sygna": {
                             "rail": "GTR",
@@ -2412,9 +2556,11 @@ def test_travel_rule_workspace_claim() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                     },
                     "didit_network": {
@@ -2521,9 +2667,11 @@ def test_travel_rule_workspace_confirm_domain() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "trust": {
                             "rail": "GTR",
@@ -2532,9 +2680,11 @@ def test_travel_rule_workspace_confirm_domain() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "verifyvasp": {
                             "rail": "GTR",
@@ -2543,9 +2693,11 @@ def test_travel_rule_workspace_confirm_domain() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "sygna": {
                             "rail": "GTR",
@@ -2554,9 +2706,11 @@ def test_travel_rule_workspace_confirm_domain() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                     },
                     "didit_network": {
@@ -2663,9 +2817,11 @@ def test_travel_rule_workspace_enable_billing() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "trust": {
                             "rail": "GTR",
@@ -2674,9 +2830,11 @@ def test_travel_rule_workspace_enable_billing() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "verifyvasp": {
                             "rail": "GTR",
@@ -2685,9 +2843,11 @@ def test_travel_rule_workspace_enable_billing() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "sygna": {
                             "rail": "GTR",
@@ -2696,9 +2856,11 @@ def test_travel_rule_workspace_enable_billing() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                     },
                     "didit_network": {
@@ -2804,9 +2966,11 @@ def test_travel_rule_workspace_get() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "trust": {
                             "rail": "GTR",
@@ -2815,9 +2979,11 @@ def test_travel_rule_workspace_get() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "verifyvasp": {
                             "rail": "GTR",
@@ -2826,9 +2992,11 @@ def test_travel_rule_workspace_get() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "sygna": {
                             "rail": "GTR",
@@ -2837,9 +3005,11 @@ def test_travel_rule_workspace_get() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                     },
                     "didit_network": {
@@ -2968,9 +3138,11 @@ def test_travel_rule_workspace_verify_domain_dns() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "trust": {
                             "rail": "GTR",
@@ -2979,9 +3151,11 @@ def test_travel_rule_workspace_verify_domain_dns() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "verifyvasp": {
                             "rail": "GTR",
@@ -2990,9 +3164,11 @@ def test_travel_rule_workspace_verify_domain_dns() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                         "sygna": {
                             "rail": "GTR",
@@ -3001,9 +3177,11 @@ def test_travel_rule_workspace_verify_domain_dns() -> None:
                             "reason": "own_membership_connected",
                             "platform_available": True,
                             "connected": True,
-                            "participant": None,
+                            "participant": {},
                             "vasps_reachable": 1,
                             "routed_30d": 1,
+                            "load_status": "loaded",
+                            "load_error": {},
                         },
                     },
                     "didit_network": {

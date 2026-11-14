@@ -12,6 +12,7 @@ from didit.types.components.travel_rule_counterparty_questionnaire import (
 from didit.types.components.travel_rule_counterparty_screening import (
     TravelRuleCounterpartyScreening,
 )
+from didit.types.components.travel_rule_vasp_assignee import TravelRuleVaspAssignee
 
 __all__ = [
     "VaspDirectoryEntry",
@@ -271,3 +272,6 @@ class VaspDirectoryEntry(BaseModel):
 
     source: Literal["didit_network", "directory", "added_by_you"] | str | None = None
     """directory for a shared directory entry, added_by_you for your application-private entry, or didit_network for a directory entry linked to a Didit customer. Separate kind=didit member results may omit this field; use kind to identify them."""
+
+    assignee: TravelRuleVaspAssignee | None = None
+    """The member the VASP is assigned to, or null. The assignment is private to your application."""

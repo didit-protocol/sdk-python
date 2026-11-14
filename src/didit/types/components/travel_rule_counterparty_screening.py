@@ -6,7 +6,45 @@ from typing import Literal
 
 from didit._models import BaseModel
 
-__all__ = ["TravelRuleCounterpartyScreening"]
+__all__ = [
+    "TravelRuleCounterpartyScreening",
+    "TravelRuleCounterpartyScreeningHits",
+    "TravelRuleCounterpartyScreeningHitsReview",
+    "TravelRuleCounterpartyScreeningPeopleScreening",
+]
+
+
+class TravelRuleCounterpartyScreeningHitsReview(BaseModel):
+    """The review recorded for the hit, or null while nobody reviewed it."""
+
+    status: (
+        Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"] | str | None
+    ) = None
+
+    reason: str | None = None
+
+    reviewed_by: str | None = None
+
+    reviewed_at: _dt.datetime | None = None
+
+
+class TravelRuleCounterpartyScreeningHits(BaseModel):
+    id: str | None = None
+    """The hit id, `hit_...`."""
+
+    review: TravelRuleCounterpartyScreeningHitsReview | None = None
+    """The review recorded for the hit, or null while nobody reviewed it."""
+
+    dismissed: bool | None = None
+    """true only when a person reviewed the hit as `False Positive`. A low match score can mark a hit `False Positive` automatically; that is not a dismissal."""
+
+
+class TravelRuleCounterpartyScreeningPeopleScreening(BaseModel):
+    """People screening is not run for counterparties."""
+
+    status: Literal["not_run"] | str | None = None
+
+    reason: Literal["people_not_provided"] | str | None = None
 
 
 class TravelRuleCounterpartyScreening(BaseModel):
@@ -30,3 +68,12 @@ class TravelRuleCounterpartyScreening(BaseModel):
 
     flagged: bool | None = None
     """true while the screening is fresh and its status is In Review or Declined. While your latest screening is flagged and counterparty screening stays on, counterparty_risk_level is HIGH in your rules."""
+
+    scope: Literal["company"] | str | None = None
+    """What was screened: the company name only. People are never inferred from the due-diligence questionnaire."""
+
+    people_screening: TravelRuleCounterpartyScreeningPeopleScreening | None = None
+    """People screening is not run for counterparties."""
+
+    hits: list[TravelRuleCounterpartyScreeningHits] | None = None
+    """The possible matches. Returned by `GET` and `POST` on `/v3/travel-rule/vasps/{vasp_id}/screening/` and by the hit review, not in the screening summary of a VASP row. Source and list details are public; no screening supplier is named."""

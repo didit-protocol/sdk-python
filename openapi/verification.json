@@ -36583,6 +36583,151 @@
             }
           }
         }
+      },
+      "patch": {
+        "summary": "Review a screening hit",
+        "description": "Records your review of one possible match of a screening. The screening score and status are recomputed from the reviewed hits, but the counterparty's decision is never changed for you: decide it with `PUT /v3/travel-rule/vasps/{vasp_id}/decision/`. Repeating the same review changes nothing (`changed: false`). Needs the transactions write privilege.",
+        "operationId": "reviewTravelRuleVaspScreeningHit",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "review_vasp_screening_hit",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "screening_id",
+                  "hit_id",
+                  "review_status"
+                ],
+                "properties": {
+                  "screening_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The screening the hit belongs to, as returned by the screening endpoints."
+                  },
+                  "hit_id": {
+                    "type": "string",
+                    "description": "The hit's `id`."
+                  },
+                  "review_status": {
+                    "type": "string",
+                    "enum": [
+                      "Unreviewed",
+                      "Confirmed Match",
+                      "False Positive",
+                      "Inconclusive"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "default": ""
+                  }
+                }
+              },
+              "example": {
+                "screening_id": "7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+                "hit_id": "hit_0123456789",
+                "review_status": "False Positive",
+                "reason": "Different company, same trade name."
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X PATCH https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/screening/ \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"screening_id\":\"SCREENING_ID\",\"hit_id\":\"HIT_ID\",\"review_status\":\"False Positive\",\"reason\":\"Different company.\"}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.review_vasp_screening_hit(\n    \"11111111-2222-3333-4444-555555555555\",\n    screening_id=\"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n    hit_id=\"hit_0123456789\",\n    review_status=\"False Positive\",\n    reason=\"Different company, same trade name.\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.reviewVaspScreeningHit(\"11111111-2222-3333-4444-555555555555\", {\n  screening_id: \"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n  hit_id: \"hit_0123456789\",\n  review_status: \"False Positive\",\n  reason: \"Different company, same trade name.\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.ReviewVASPScreeningHit(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleReviewVASPScreeningHitParams{\n\tScreeningID:  \"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n\tHitID:        \"hit_0123456789\",\n\tReviewStatus: \"False Positive\",\n\tReason:       didit.String(\"Different company, same trade name.\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleReviewVaspScreeningHitParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().reviewVaspScreeningHit(\"11111111-2222-3333-4444-555555555555\", TravelRuleReviewVaspScreeningHitParams.builder()\n        .screeningId(\"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\")\n        .hitId(\"hit_0123456789\")\n        .reviewStatus(TravelRuleReviewVaspScreeningHitParams.ReviewStatus.of(\"False Positive\"))\n        .reason(\"Different company, same trade name.\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->reviewVaspScreeningHit('11111111-2222-3333-4444-555555555555', [\n    'screening_id' => '7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d',\n    'hit_id' => 'hit_0123456789',\n    'review_status' => 'False Positive',\n    'reason' => 'Different company, same trade name.',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.review_vasp_screening_hit(\n  \"11111111-2222-3333-4444-555555555555\",\n  screening_id: \"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n  hit_id: \"hit_0123456789\",\n  review_status: \"False Positive\",\n  reason: \"Different company, same trade name.\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.ReviewVaspScreeningHitAsync(\"11111111-2222-3333-4444-555555555555\", new TravelRuleReviewVaspScreeningHitParams\n{\n    ScreeningId = \"7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n    HitId = \"hit_0123456789\",\n    ReviewStatus = \"False Positive\",\n    Reason = \"Different company, same trade name.\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The screening with the review applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "screening": {
+                      "$ref": "#/components/schemas/TravelRuleCounterpartyScreening"
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid."
+          },
+          "404": {
+            "description": "No screening has this id for this counterparty, or no hit has this id in the screening."
+          }
+        }
       }
     },
     "/v3/travel-rule/vasps/{vasp_id}/questionnaires/": {
@@ -93366,6 +93511,221 @@
           }
         }
       }
+    },
+    "/v3/travel-rule/vasps/reviewers/": {
+      "get": {
+        "summary": "List the members who can be assigned a VASP",
+        "description": "The application members who can review Travel Rule counterparties. Use one `email` as `assignee_email` of `POST /v3/travel-rule/vasps/{vasp_id}/assign/`. Needs the transactions read privilege.",
+        "operationId": "listTravelRuleVaspReviewers",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "list_vasp_reviewers",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET https://verification.didit.me/v3/travel-rule/vasps/reviewers/ \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.list_vasp_reviewers()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.listVaspReviewers();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.ListVASPReviewers(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().listVaspReviewers();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->listVaspReviewers();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.list_vasp_reviewers\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.ListVaspReviewersAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reviewers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TravelRuleVaspReviewer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Reviewer access could not be verified. Try again."
+          }
+        }
+      }
+    },
+    "/v3/travel-rule/vasps/{vasp_id}/assign/": {
+      "post": {
+        "summary": "Assign a VASP to a member",
+        "description": "Assigns the counterparty to one application member, or unassigns it with `assignee_email: null`. Repeating the same assignment changes nothing (`changed: false`). The assignment is private to your application. Needs the transactions write privilege.",
+        "operationId": "assignTravelRuleVasp",
+        "x-didit-sdk": {
+          "resource": "travel_rule",
+          "method": "assign_vasp",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Travel Rule"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vasp_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "assignee_email"
+                ],
+                "properties": {
+                  "assignee_email": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 255,
+                    "description": "Email of an application member. null or an empty string unassigns."
+                  }
+                }
+              },
+              "example": {
+                "assignee_email": "reviewer@example.com"
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST https://verification.didit.me/v3/travel-rule/vasps/VASP_ID/assign/ \\\n  -H 'x-api-key: YOUR_API_KEY' -H 'Content-Type: application/json' \\\n  -d '{\"assignee_email\":\"reviewer@example.com\"}'"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.travel_rule.assign_vasp(\n    \"11111111-2222-3333-4444-555555555555\",\n    assignee_email=\"reviewer@example.com\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.travelRule.assignVasp(\"11111111-2222-3333-4444-555555555555\", {\n  assignee_email: \"reviewer@example.com\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.TravelRule.AssignVASP(ctx, \"11111111-2222-3333-4444-555555555555\", didit.TravelRuleAssignVASPParams{\n\tAssigneeEmail: didit.String(\"reviewer@example.com\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.TravelRuleAssignVaspParams;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.travelRule().assignVasp(\"11111111-2222-3333-4444-555555555555\", TravelRuleAssignVaspParams.builder()\n        .assigneeEmail(\"reviewer@example.com\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->travelRule->assignVasp('11111111-2222-3333-4444-555555555555', [\n    'assignee_email' => 'reviewer@example.com',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.travel_rule.assign_vasp(\n  \"11111111-2222-3333-4444-555555555555\",\n  assignee_email: \"reviewer@example.com\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.TravelRule.AssignVaspAsync(\"11111111-2222-3333-4444-555555555555\", new TravelRuleAssignVaspParams\n{\n    AssigneeEmail = \"reviewer@example.com\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The assignment now in force.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "assignee": {
+                      "$ref": "#/components/schemas/TravelRuleVaspAssignee"
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The email is not a member of the application."
+          },
+          "404": {
+            "description": "No directory entry or listed Didit network member has this id."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -97954,6 +98314,9 @@
               "directory",
               "added_by_you"
             ]
+          },
+          "assignee": {
+            "$ref": "#/components/schemas/TravelRuleVaspAssignee"
           }
         },
         "example": {
@@ -98230,6 +98593,77 @@
           "flagged": {
             "type": "boolean",
             "description": "true while the screening is fresh and its status is In Review or Declined. While your latest screening is flagged and counterparty screening stays on, counterparty_risk_level is HIGH in your rules."
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "company"
+            ],
+            "description": "What was screened: the company name only. People are never inferred from the due-diligence questionnaire."
+          },
+          "people_screening": {
+            "type": "object",
+            "description": "People screening is not run for counterparties.",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_run"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "people_not_provided"
+                ]
+              }
+            }
+          },
+          "hits": {
+            "type": "array",
+            "description": "The possible matches. Returned by `GET` and `POST` on `/v3/travel-rule/vasps/{vasp_id}/screening/` and by the hit review, not in the screening summary of a VASP row. Source and list details are public; no screening supplier is named.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The hit id, `hit_...`."
+                },
+                "review": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "The review recorded for the hit, or null while nobody reviewed it.",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Unreviewed",
+                        "Confirmed Match",
+                        "False Positive",
+                        "Inconclusive"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "reviewed_by": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "reviewed_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    }
+                  }
+                },
+                "dismissed": {
+                  "type": "boolean",
+                  "description": "true only when a person reviewed the hit as `False Positive`. A low match score can mark a hit `False Positive` automatically; that is not a dismissal."
+                }
+              }
+            }
           }
         }
       },
@@ -127995,7 +128429,8 @@
               "unavailable",
               "error"
             ],
-            "description": "own_membership: your connected membership sends; live_through_didit: your own participant on Didit's membership sends; off: you switched platform routing off; didit_onboarding: Didit's own membership of this network is not live yet, so it cannot carry anyone; questionnaire_needed / questionnaire_in_review: the due-diligence questionnaire must be submitted or is with Didit; request_access: the questionnaire is approved, request the network; request_sent: your participant is being onboarded; unavailable: see reason; error: see reason."
+            "description": "own_membership: your connected membership sends; live_through_didit: your own participant on Didit's membership sends; off: you switched platform routing off; didit_onboarding: Didit's own membership of this network is not live yet, so it cannot carry anyone; questionnaire_needed / questionnaire_in_review: the due-diligence questionnaire must be submitted or is with Didit; request_access: the questionnaire is approved, request the network; request_sent: your participant is being onboarded; unavailable: see reason; error: see reason.",
+            "nullable": true
           },
           "reason": {
             "type": "string",
@@ -128019,26 +128454,60 @@
               "questionnaire_pending",
               "submitted_to_network"
             ],
-            "description": "Machine-readable detail of state. own_membership_only: Didit does not carry applications on this network (TRUST), connect your own membership; sandbox_application: sandbox transfers never reach a network; provisioning_failed: the network refused the registration, the participant's last_error says why and requesting the network again retries."
+            "description": "Machine-readable detail of state. own_membership_only: Didit does not carry applications on this network (TRUST), connect your own membership; sandbox_application: sandbox transfers never reach a network; provisioning_failed: the network refused the registration, the participant's last_error says why and requesting the network again retries.",
+            "nullable": true
           },
           "platform_available": {
             "type": "boolean",
-            "description": "Whether Didit's own membership of this network is configured; not a live health check."
+            "description": "Whether Didit's own membership of this network is configured; not a live health check.",
+            "nullable": true
           },
           "connected": {
             "type": "boolean",
-            "description": "Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."
+            "description": "Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange.",
+            "nullable": true
           },
           "participant": {
-            "$ref": "#/components/schemas/TravelRuleNetworkParticipantSummary"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelRuleNetworkParticipantSummary"
+              }
+            ],
+            "nullable": true
           },
           "vasps_reachable": {
             "type": "integer",
-            "description": "Directory VASPs reachable on this network."
+            "description": "Directory VASPs reachable on this network.",
+            "nullable": true
           },
           "routed_30d": {
             "type": "integer",
-            "description": "This application's transfers carried on this network in the last 30 days."
+            "description": "This application's transfers carried on this network in the last 30 days.",
+            "nullable": true
+          },
+          "load_status": {
+            "type": "string",
+            "enum": [
+              "loaded",
+              "error"
+            ],
+            "description": "`error` when this network's row could not be loaded; the other networks are unaffected."
+          },
+          "load_error": {
+            "type": "object",
+            "nullable": true,
+            "description": "Present only when `load_status` is `error`.",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "network_state_unavailable"
+                ]
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            }
           }
         }
       },
@@ -128318,6 +128787,15 @@
                 }
               }
             }
+          },
+          "notify_status_changes": {
+            "type": "boolean",
+            "description": "Whether the signed-in member asked for an email when this participant's status changes. Always false for API-key calls, which cannot set the preference."
+          },
+          "notification_email": {
+            "type": "string",
+            "nullable": true,
+            "description": "The verified account email the notifications go to; null when there is none."
           }
         }
       },
@@ -128355,6 +128833,11 @@
                 "$ref": "#/components/schemas/TravelRuleNetworkState"
               }
             }
+          },
+          "notification_email": {
+            "type": "string",
+            "nullable": true,
+            "description": "The verified account email of the signed-in member; null for API-key calls."
           }
         }
       },
@@ -131402,6 +131885,50 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleVaspAssignee": {
+        "type": "object",
+        "nullable": true,
+        "description": "The member the VASP is assigned to, or null. The assignment is private to your application.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member's user id."
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "assigned_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TravelRuleVaspReviewer": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The member's user id."
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display only; it grants nothing."
           }
         }
       }

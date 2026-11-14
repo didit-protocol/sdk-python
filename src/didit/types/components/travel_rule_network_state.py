@@ -8,7 +8,15 @@ from didit.types.components.travel_rule_network_participant_summary import (
     TravelRuleNetworkParticipantSummary,
 )
 
-__all__ = ["TravelRuleNetworkState"]
+__all__ = ["TravelRuleNetworkState", "TravelRuleNetworkStateLoadError"]
+
+
+class TravelRuleNetworkStateLoadError(BaseModel):
+    """Present only when `load_status` is `error`."""
+
+    code: Literal["network_state_unavailable"] | str | None = None
+
+    retryable: bool | None = None
 
 
 class TravelRuleNetworkState(BaseModel):
@@ -70,10 +78,15 @@ class TravelRuleNetworkState(BaseModel):
     """Whether a connected customer membership exists. Credentials are validated locally; network validation occurs on a live exchange."""
 
     participant: TravelRuleNetworkParticipantSummary | None = None
-    """This application's own participant on the network, or null when it has none."""
 
     vasps_reachable: int | None = None
     """Directory VASPs reachable on this network."""
 
     routed_30d: int | None = None
     """This application's transfers carried on this network in the last 30 days."""
+
+    load_status: Literal["loaded", "error"] | str | None = None
+    """`error` when this network's row could not be loaded; the other networks are unaffected."""
+
+    load_error: TravelRuleNetworkStateLoadError | None = None
+    """Present only when `load_status` is `error`."""
