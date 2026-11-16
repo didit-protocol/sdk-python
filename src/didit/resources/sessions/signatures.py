@@ -181,6 +181,7 @@ class SessionsSignatures(SyncAPIResource):
         node_id: str,
         *,
         signature_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -198,6 +199,7 @@ class SessionsSignatures(SyncAPIResource):
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
           node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of one signer's item in `signatures[]`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -212,6 +214,7 @@ class SessionsSignatures(SyncAPIResource):
                 path_params={"sessionId": session_id, "nodeId": node_id},
                 auth="api_key",
                 body={"signature_id": signature_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -373,6 +376,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
         node_id: str,
         *,
         signature_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -390,6 +394,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
           session_id: The User Verification (KYC) or Business Verification (KYB) session.
           node_id: The E-signature step: `node_id` of the item in `signatures[]`.
           signature_id: `id` of one signer's item in `signatures[]`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -404,6 +409,7 @@ class AsyncSessionsSignatures(AsyncAPIResource):
                 path_params={"sessionId": session_id, "nodeId": node_id},
                 auth="api_key",
                 body={"signature_id": signature_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

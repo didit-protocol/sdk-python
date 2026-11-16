@@ -55,6 +55,7 @@ class FaceSearch(SyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -90,6 +91,7 @@ class FaceSearch(SyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot - no session is stored and the face is not enrolled.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. It does not exclude same-user faces from the search results.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -112,6 +114,7 @@ class FaceSearch(SyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("user_image",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -147,6 +150,7 @@ class AsyncFaceSearch(AsyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -182,6 +186,7 @@ class AsyncFaceSearch(AsyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session, emits a `status.updated` webhook, presigns `match_image_url` values, and enrolls the searched face into your face search index (Face Search enrollments are excluded from future searches). When `false`, the search is one-shot - no session is stored and the face is not enrolled.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. It does not exclude same-user faces from the search results.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -204,6 +209,7 @@ class AsyncFaceSearch(AsyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("user_image",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

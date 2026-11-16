@@ -99,6 +99,7 @@ class TransactionsNotes(SyncAPIResource):
         *,
         note: str,
         mentioned_emails: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -118,6 +119,7 @@ class TransactionsNotes(SyncAPIResource):
           transaction_id: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
           note: Plain-text note. Leading and trailing whitespace is trimmed and a blank note is rejected. No length limit.
           mentioned_emails: Emails of members of your organization to mention. Each must be a valid email of an organization member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -132,6 +134,7 @@ class TransactionsNotes(SyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"note": note, "mentioned_emails": mentioned_emails},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -209,6 +212,7 @@ class AsyncTransactionsNotes(AsyncAPIResource):
         *,
         note: str,
         mentioned_emails: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -228,6 +232,7 @@ class AsyncTransactionsNotes(AsyncAPIResource):
           transaction_id: Didit transaction UUID: the `uuid` returned by `POST /v3/transactions/` and `GET /v3/transactions/`. Your own `txn_id` is not accepted.
           note: Plain-text note. Leading and trailing whitespace is trimmed and a blank note is rejected. No length limit.
           mentioned_emails: Emails of members of your organization to mention. Each must be a valid email of an organization member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -242,6 +247,7 @@ class AsyncTransactionsNotes(AsyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"note": note, "mentioned_emails": mentioned_emails},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

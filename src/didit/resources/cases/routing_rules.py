@@ -155,6 +155,7 @@ class CasesRoutingRules(SyncAPIResource):
         team: str | None | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -177,6 +178,7 @@ class CasesRoutingRules(SyncAPIResource):
           team
           is_active
           expected_version: Version opened by the editor. When supplied, stale writes return 409 without changing the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -202,6 +204,7 @@ class CasesRoutingRules(SyncAPIResource):
                     "is_active": is_active,
                     "expected_version": expected_version,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -262,6 +265,7 @@ class CasesRoutingRules(SyncAPIResource):
         team: str | None | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -283,6 +287,7 @@ class CasesRoutingRules(SyncAPIResource):
           team
           is_active
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -307,6 +312,7 @@ class CasesRoutingRules(SyncAPIResource):
                     "is_active": is_active,
                     "publish": publish,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -320,6 +326,7 @@ class CasesRoutingRules(SyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -331,6 +338,7 @@ class CasesRoutingRules(SyncAPIResource):
           record_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -346,6 +354,7 @@ class CasesRoutingRules(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -394,6 +403,7 @@ class CasesRoutingRules(SyncAPIResource):
         expected_version: int,
         expected_revision: str | None,
         changes: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -406,6 +416,7 @@ class CasesRoutingRules(SyncAPIResource):
           expected_version
           expected_revision
           changes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -425,6 +436,7 @@ class CasesRoutingRules(SyncAPIResource):
                     "expected_revision": expected_revision,
                     "changes": changes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -438,6 +450,7 @@ class CasesRoutingRules(SyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -449,6 +462,7 @@ class CasesRoutingRules(SyncAPIResource):
           record_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -464,6 +478,7 @@ class CasesRoutingRules(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -479,6 +494,7 @@ class CasesRoutingRules(SyncAPIResource):
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         rule_uuid: str | NotGiven = NOT_GIVEN,
         draft: CaseRoutingRuleCreate | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -496,6 +512,7 @@ class CasesRoutingRules(SyncAPIResource):
           tags
           rule_uuid
           draft
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -516,6 +533,7 @@ class CasesRoutingRules(SyncAPIResource):
                     "rule_uuid": rule_uuid,
                     "draft": draft,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -633,6 +651,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         team: str | None | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -655,6 +674,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           team
           is_active
           expected_version: Version opened by the editor. When supplied, stale writes return 409 without changing the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -680,6 +700,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                     "is_active": is_active,
                     "expected_version": expected_version,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -740,6 +761,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         team: str | None | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -761,6 +783,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           team
           is_active
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -785,6 +808,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                     "is_active": is_active,
                     "publish": publish,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -798,6 +822,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -809,6 +834,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           record_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -824,6 +850,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -872,6 +899,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         expected_version: int,
         expected_revision: str | None,
         changes: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -884,6 +912,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           expected_version
           expected_revision
           changes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -903,6 +932,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                     "expected_revision": expected_revision,
                     "changes": changes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -916,6 +946,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -927,6 +958,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           record_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -942,6 +974,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -957,6 +990,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         rule_uuid: str | NotGiven = NOT_GIVEN,
         draft: CaseRoutingRuleCreate | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -974,6 +1008,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
           tags
           rule_uuid
           draft
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -994,6 +1029,7 @@ class AsyncCasesRoutingRules(AsyncAPIResource):
                     "rule_uuid": rule_uuid,
                     "draft": draft,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

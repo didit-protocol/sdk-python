@@ -95,6 +95,7 @@ class ReportTemplates(SyncAPIResource):
         report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -111,6 +112,7 @@ class ReportTemplates(SyncAPIResource):
           jurisdiction: ISO 3166-1 alpha-2 country code, upper-cased on save.
           report_type
           field_config: Reusable goAML header defaults. Template-level obligatory fields: rentity_id, submission_code, and currency_code_local (3-letter). Optional: enabled_fields (which optional report blocks to include) plus reporting_person, location, reason, and action defaults. Per-filing header fields (action, submission_date, transactions, jurisdiction) are enforced when the report is validated or finalized, not on the template.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -130,6 +132,7 @@ class ReportTemplates(SyncAPIResource):
                     "report_type": report_type,
                     "field_config": field_config,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -179,6 +182,7 @@ class ReportTemplates(SyncAPIResource):
         self,
         template_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -192,6 +196,7 @@ class ReportTemplates(SyncAPIResource):
 
         Args:
           template_uuid: Report template UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -206,6 +211,7 @@ class ReportTemplates(SyncAPIResource):
                 path_params={"template_uuid": template_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -223,6 +229,7 @@ class ReportTemplates(SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -240,6 +247,7 @@ class ReportTemplates(SyncAPIResource):
           jurisdiction: ISO 3166-1 alpha-2 country code, upper-cased on save.
           report_type
           field_config: Reusable goAML header defaults. Template-level obligatory fields: rentity_id, submission_code, and currency_code_local (3-letter). Optional: enabled_fields (which optional report blocks to include) plus reporting_person, location, reason, and action defaults. Per-filing header fields (action, submission_date, transactions, jurisdiction) are enforced when the report is validated or finalized, not on the template.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -260,6 +268,7 @@ class ReportTemplates(SyncAPIResource):
                     "report_type": report_type,
                     "field_config": field_config,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -333,6 +342,7 @@ class AsyncReportTemplates(AsyncAPIResource):
         report_type: Literal["SAR", "STR", "CTR", "TTR", "UTR", "IFT", "CBR", "TFR", "FFR", "PNMR"]
         | str,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -349,6 +359,7 @@ class AsyncReportTemplates(AsyncAPIResource):
           jurisdiction: ISO 3166-1 alpha-2 country code, upper-cased on save.
           report_type
           field_config: Reusable goAML header defaults. Template-level obligatory fields: rentity_id, submission_code, and currency_code_local (3-letter). Optional: enabled_fields (which optional report blocks to include) plus reporting_person, location, reason, and action defaults. Per-filing header fields (action, submission_date, transactions, jurisdiction) are enforced when the report is validated or finalized, not on the template.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -368,6 +379,7 @@ class AsyncReportTemplates(AsyncAPIResource):
                     "report_type": report_type,
                     "field_config": field_config,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -417,6 +429,7 @@ class AsyncReportTemplates(AsyncAPIResource):
         self,
         template_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -430,6 +443,7 @@ class AsyncReportTemplates(AsyncAPIResource):
 
         Args:
           template_uuid: Report template UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -444,6 +458,7 @@ class AsyncReportTemplates(AsyncAPIResource):
                 path_params={"template_uuid": template_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -461,6 +476,7 @@ class AsyncReportTemplates(AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         field_config: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -478,6 +494,7 @@ class AsyncReportTemplates(AsyncAPIResource):
           jurisdiction: ISO 3166-1 alpha-2 country code, upper-cased on save.
           report_type
           field_config: Reusable goAML header defaults. Template-level obligatory fields: rentity_id, submission_code, and currency_code_local (3-letter). Optional: enabled_fields (which optional report blocks to include) plus reporting_person, location, reason, and action defaults. Per-filing header fields (action, submission_date, transactions, jurisdiction) are enforced when the report is validated or finalized, not on the template.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -498,6 +515,7 @@ class AsyncReportTemplates(AsyncAPIResource):
                     "report_type": report_type,
                     "field_config": field_config,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

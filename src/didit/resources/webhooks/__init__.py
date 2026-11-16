@@ -112,6 +112,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
         biometric_consent_mode: Literal["auto", "always", "never"] | str | NotGiven = NOT_GIVEN,
         allowed_return_hosts: Sequence[str] | NotGiven = NOT_GIVEN,
         allowed_domains: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -134,6 +135,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
           biometric_consent_mode: When the hosted flow and the native SDKs ask the person for explicit biometric consent before a face capture. `auto` (default) asks only where a trigger applies: a declared state, the person's IP, or the identity document's issuer is in Illinois, Texas or Colorado, or the person looks to be in the US without a known state. `always` asks every person whose workflow captures a face. `never` never shows the step, and you collect consent yourself before the selfie. Each change is recorded in the audit log. See [Biometric consent](https://docs.didit.me/getting-started/biometric-consent).
           allowed_return_hosts: Replaces the whole list of Digital ID wallet return hosts. Bare hostnames only, such as `shop.example.com`: no scheme, port, path or wildcard. Values are lowercased and duplicates are dropped. Send `[]` to clear the list.
           allowed_domains: Replaces the whole list of allowed origins. Origins (for example `https://app.example.com`; `http` only for `localhost`) the hosted verification flow may be embedded in and may send the user back to with a session callback. Server-to-server calls are not affected. An empty list means no restriction. Didit stores each origin in lower case without a default port. An invalid entry fails with `400` on `allowed_domains`. Send `[]` to remove the restriction.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -158,6 +160,7 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
                     "allowed_return_hosts": allowed_return_hosts,
                     "allowed_domains": allowed_domains,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -239,6 +242,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
         biometric_consent_mode: Literal["auto", "always", "never"] | str | NotGiven = NOT_GIVEN,
         allowed_return_hosts: Sequence[str] | NotGiven = NOT_GIVEN,
         allowed_domains: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -261,6 +265,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
           biometric_consent_mode: When the hosted flow and the native SDKs ask the person for explicit biometric consent before a face capture. `auto` (default) asks only where a trigger applies: a declared state, the person's IP, or the identity document's issuer is in Illinois, Texas or Colorado, or the person looks to be in the US without a known state. `always` asks every person whose workflow captures a face. `never` never shows the step, and you collect consent yourself before the selfie. Each change is recorded in the audit log. See [Biometric consent](https://docs.didit.me/getting-started/biometric-consent).
           allowed_return_hosts: Replaces the whole list of Digital ID wallet return hosts. Bare hostnames only, such as `shop.example.com`: no scheme, port, path or wildcard. Values are lowercased and duplicates are dropped. Send `[]` to clear the list.
           allowed_domains: Replaces the whole list of allowed origins. Origins (for example `https://app.example.com`; `http` only for `localhost`) the hosted verification flow may be embedded in and may send the user back to with a session callback. Server-to-server calls are not affected. An empty list means no restriction. Didit stores each origin in lower case without a default port. An invalid entry fails with `400` on `allowed_domains`. Send `[]` to remove the restriction.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -285,6 +290,7 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
                     "allowed_return_hosts": allowed_return_hosts,
                     "allowed_domains": allowed_domains,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

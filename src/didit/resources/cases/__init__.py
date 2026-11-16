@@ -291,6 +291,7 @@ class Cases(SyncAPIResource):
         review_duplicates: bool | NotGiven = NOT_GIVEN,
         separate_incident_reason: str | NotGiven = NOT_GIVEN,
         source_context: CaseDuplicateCaseFraudSourceContextRequest | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -314,6 +315,7 @@ class Cases(SyncAPIResource):
           review_duplicates: Recheck existing investigations before creating the case. When true, a subject with existing cases requires a nonblank separate_incident_reason. The console always enables this protection. Omitting it preserves existing API behavior.
           separate_incident_reason
           source_context
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -340,6 +342,7 @@ class Cases(SyncAPIResource):
                     "separate_incident_reason": separate_incident_reason,
                     "source_context": source_context,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -389,6 +392,7 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -404,6 +408,7 @@ class Cases(SyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -418,6 +423,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -434,6 +440,7 @@ class Cases(SyncAPIResource):
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         team: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -452,6 +459,7 @@ class Cases(SyncAPIResource):
           due_at: New deadline. Send null to clear it.
           tags: The complete tag list. It replaces the current tags.
           team: UUID of the review team that owns the case. It must be an active team of this application. Send null to clear the team.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -473,6 +481,7 @@ class Cases(SyncAPIResource):
                     "tags": tags,
                     "team": team,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -487,6 +496,7 @@ class Cases(SyncAPIResource):
         assignee_user_id: str | None,
         assignee_email: str | None | NotGiven = NOT_GIVEN,
         assignee_name: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -503,6 +513,7 @@ class Cases(SyncAPIResource):
           assignee_user_id: null to unassign.
           assignee_email
           assignee_name
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -522,6 +533,7 @@ class Cases(SyncAPIResource):
                     "assignee_email": assignee_email,
                     "assignee_name": assignee_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -543,6 +555,7 @@ class Cases(SyncAPIResource):
         | str,
         note: str | None | NotGiven = NOT_GIVEN,
         checker: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -559,6 +572,7 @@ class Cases(SyncAPIResource):
           resolution
           note: Required when the blueprint sets require_resolution_note.
           checker: Four-eyes blueprints only. The user uuid of the member who must approve this resolution (the same id as `assigned_to.uuid` on a case, or `members[].user_id` on a review team). The member must have case access to this application and cannot be the officer who submits the resolution. Omit it or send null to leave the resolution to the checker queue.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -574,6 +588,7 @@ class Cases(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"resolution": resolution, "note": note, "checker": checker},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -585,6 +600,7 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -598,6 +614,7 @@ class Cases(SyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -612,6 +629,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -623,6 +641,7 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -636,6 +655,7 @@ class Cases(SyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -650,6 +670,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -661,6 +682,7 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -674,6 +696,7 @@ class Cases(SyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -688,6 +711,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -700,6 +724,7 @@ class Cases(SyncAPIResource):
         case_uuid: str,
         *,
         target_blueprint: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -714,6 +739,7 @@ class Cases(SyncAPIResource):
         Args:
           case_uuid: Case UUID.
           target_blueprint
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -729,6 +755,7 @@ class Cases(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"target_blueprint": target_blueprint},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -740,6 +767,7 @@ class Cases(SyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -753,6 +781,7 @@ class Cases(SyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -767,6 +796,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -779,6 +809,7 @@ class Cases(SyncAPIResource):
         case_uuid: str,
         *,
         notes: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -793,6 +824,7 @@ class Cases(SyncAPIResource):
         Args:
           case_uuid: Case UUID.
           notes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -808,6 +840,7 @@ class Cases(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"notes": notes},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -825,6 +858,7 @@ class Cases(SyncAPIResource):
         status: str | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -842,6 +876,7 @@ class Cases(SyncAPIResource):
           status
           tags
           note
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -864,6 +899,7 @@ class Cases(SyncAPIResource):
                     "tags": tags,
                     "note": note,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1066,6 +1102,7 @@ class Cases(SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1082,6 +1119,7 @@ class Cases(SyncAPIResource):
           status
           resolution: Required when status is RESOLVED.
           note
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1101,6 +1139,7 @@ class Cases(SyncAPIResource):
                     "resolution": resolution,
                     "note": note,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1115,6 +1154,7 @@ class Cases(SyncAPIResource):
         assignee_user_id: str | None,
         assignee_email: str | None | NotGiven = NOT_GIVEN,
         assignee_name: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1131,6 +1171,7 @@ class Cases(SyncAPIResource):
           assignee_user_id
           assignee_email
           assignee_name
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1150,6 +1191,7 @@ class Cases(SyncAPIResource):
                     "assignee_email": assignee_email,
                     "assignee_name": assignee_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1201,6 +1243,7 @@ class Cases(SyncAPIResource):
         case_uuid: str,
         receipt_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1213,6 +1256,7 @@ class Cases(SyncAPIResource):
         Args:
           case_uuid
           receipt_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1227,6 +1271,7 @@ class Cases(SyncAPIResource):
                 path_params={"case_uuid": case_uuid, "receipt_uuid": receipt_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1240,6 +1285,7 @@ class Cases(SyncAPIResource):
         subject: CaseDuplicateCaseSubjectInputRequest | NotGiven = NOT_GIVEN,
         links: Sequence[CaseDuplicateCaseLinkCreateRequest] | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1253,6 +1299,7 @@ class Cases(SyncAPIResource):
           subject
           links
           offset
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1267,6 +1314,7 @@ class Cases(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"subject": subject, "links": links, "offset": offset},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1475,6 +1523,7 @@ class AsyncCases(AsyncAPIResource):
         review_duplicates: bool | NotGiven = NOT_GIVEN,
         separate_incident_reason: str | NotGiven = NOT_GIVEN,
         source_context: CaseDuplicateCaseFraudSourceContextRequest | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1498,6 +1547,7 @@ class AsyncCases(AsyncAPIResource):
           review_duplicates: Recheck existing investigations before creating the case. When true, a subject with existing cases requires a nonblank separate_incident_reason. The console always enables this protection. Omitting it preserves existing API behavior.
           separate_incident_reason
           source_context
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1524,6 +1574,7 @@ class AsyncCases(AsyncAPIResource):
                     "separate_incident_reason": separate_incident_reason,
                     "source_context": source_context,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1573,6 +1624,7 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1588,6 +1640,7 @@ class AsyncCases(AsyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1602,6 +1655,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1618,6 +1672,7 @@ class AsyncCases(AsyncAPIResource):
         due_at: str | _dt.datetime | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         team: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1636,6 +1691,7 @@ class AsyncCases(AsyncAPIResource):
           due_at: New deadline. Send null to clear it.
           tags: The complete tag list. It replaces the current tags.
           team: UUID of the review team that owns the case. It must be an active team of this application. Send null to clear the team.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1657,6 +1713,7 @@ class AsyncCases(AsyncAPIResource):
                     "tags": tags,
                     "team": team,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1671,6 +1728,7 @@ class AsyncCases(AsyncAPIResource):
         assignee_user_id: str | None,
         assignee_email: str | None | NotGiven = NOT_GIVEN,
         assignee_name: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1687,6 +1745,7 @@ class AsyncCases(AsyncAPIResource):
           assignee_user_id: null to unassign.
           assignee_email
           assignee_name
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1706,6 +1765,7 @@ class AsyncCases(AsyncAPIResource):
                     "assignee_email": assignee_email,
                     "assignee_name": assignee_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1727,6 +1787,7 @@ class AsyncCases(AsyncAPIResource):
         | str,
         note: str | None | NotGiven = NOT_GIVEN,
         checker: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1743,6 +1804,7 @@ class AsyncCases(AsyncAPIResource):
           resolution
           note: Required when the blueprint sets require_resolution_note.
           checker: Four-eyes blueprints only. The user uuid of the member who must approve this resolution (the same id as `assigned_to.uuid` on a case, or `members[].user_id` on a review team). The member must have case access to this application and cannot be the officer who submits the resolution. Omit it or send null to leave the resolution to the checker queue.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1758,6 +1820,7 @@ class AsyncCases(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"resolution": resolution, "note": note, "checker": checker},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1769,6 +1832,7 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1782,6 +1846,7 @@ class AsyncCases(AsyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1796,6 +1861,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1807,6 +1873,7 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1820,6 +1887,7 @@ class AsyncCases(AsyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1834,6 +1902,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1845,6 +1914,7 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1858,6 +1928,7 @@ class AsyncCases(AsyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1872,6 +1943,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1884,6 +1956,7 @@ class AsyncCases(AsyncAPIResource):
         case_uuid: str,
         *,
         target_blueprint: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1898,6 +1971,7 @@ class AsyncCases(AsyncAPIResource):
         Args:
           case_uuid: Case UUID.
           target_blueprint
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1913,6 +1987,7 @@ class AsyncCases(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"target_blueprint": target_blueprint},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1924,6 +1999,7 @@ class AsyncCases(AsyncAPIResource):
         self,
         case_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1937,6 +2013,7 @@ class AsyncCases(AsyncAPIResource):
 
         Args:
           case_uuid: Case UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1951,6 +2028,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1963,6 +2041,7 @@ class AsyncCases(AsyncAPIResource):
         case_uuid: str,
         *,
         notes: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1977,6 +2056,7 @@ class AsyncCases(AsyncAPIResource):
         Args:
           case_uuid: Case UUID.
           notes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1992,6 +2072,7 @@ class AsyncCases(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"notes": notes},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2009,6 +2090,7 @@ class AsyncCases(AsyncAPIResource):
         status: str | None | NotGiven = NOT_GIVEN,
         tags: Sequence[str] | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2026,6 +2108,7 @@ class AsyncCases(AsyncAPIResource):
           status
           tags
           note
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2048,6 +2131,7 @@ class AsyncCases(AsyncAPIResource):
                     "tags": tags,
                     "note": note,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2250,6 +2334,7 @@ class AsyncCases(AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         note: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2266,6 +2351,7 @@ class AsyncCases(AsyncAPIResource):
           status
           resolution: Required when status is RESOLVED.
           note
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2285,6 +2371,7 @@ class AsyncCases(AsyncAPIResource):
                     "resolution": resolution,
                     "note": note,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2299,6 +2386,7 @@ class AsyncCases(AsyncAPIResource):
         assignee_user_id: str | None,
         assignee_email: str | None | NotGiven = NOT_GIVEN,
         assignee_name: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2315,6 +2403,7 @@ class AsyncCases(AsyncAPIResource):
           assignee_user_id
           assignee_email
           assignee_name
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2334,6 +2423,7 @@ class AsyncCases(AsyncAPIResource):
                     "assignee_email": assignee_email,
                     "assignee_name": assignee_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2385,6 +2475,7 @@ class AsyncCases(AsyncAPIResource):
         case_uuid: str,
         receipt_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2397,6 +2488,7 @@ class AsyncCases(AsyncAPIResource):
         Args:
           case_uuid
           receipt_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2411,6 +2503,7 @@ class AsyncCases(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid, "receipt_uuid": receipt_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2424,6 +2517,7 @@ class AsyncCases(AsyncAPIResource):
         subject: CaseDuplicateCaseSubjectInputRequest | NotGiven = NOT_GIVEN,
         links: Sequence[CaseDuplicateCaseLinkCreateRequest] | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2437,6 +2531,7 @@ class AsyncCases(AsyncAPIResource):
           subject
           links
           offset
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2451,6 +2546,7 @@ class AsyncCases(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"subject": subject, "links": links, "offset": offset},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

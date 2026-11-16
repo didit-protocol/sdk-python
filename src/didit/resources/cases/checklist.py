@@ -89,6 +89,7 @@ class CasesChecklist(SyncAPIResource):
         item_uuid: str,
         *,
         is_completed: bool,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -104,6 +105,7 @@ class CasesChecklist(SyncAPIResource):
           case_uuid: Case UUID.
           item_uuid: Checklist item UUID.
           is_completed
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -119,6 +121,7 @@ class CasesChecklist(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"is_completed": is_completed},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -187,6 +190,7 @@ class AsyncCasesChecklist(AsyncAPIResource):
         item_uuid: str,
         *,
         is_completed: bool,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -202,6 +206,7 @@ class AsyncCasesChecklist(AsyncAPIResource):
           case_uuid: Case UUID.
           item_uuid: Checklist item UUID.
           is_completed
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -217,6 +222,7 @@ class AsyncCasesChecklist(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"is_completed": is_completed},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

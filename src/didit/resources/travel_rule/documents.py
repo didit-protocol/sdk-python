@@ -92,6 +92,7 @@ class TravelRuleDocuments(SyncAPIResource):
         *,
         kind: TravelRuleDocumentKind,
         file: FileTypes,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -106,6 +107,7 @@ class TravelRuleDocuments(SyncAPIResource):
         Args:
           kind: `questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure.
           file: A PDF of at most 5 MiB.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -121,6 +123,7 @@ class TravelRuleDocuments(SyncAPIResource):
                 body={"kind": kind, "file": file},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -170,6 +173,7 @@ class TravelRuleDocuments(SyncAPIResource):
         self,
         document_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -183,6 +187,7 @@ class TravelRuleDocuments(SyncAPIResource):
 
         Args:
           document_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -196,6 +201,7 @@ class TravelRuleDocuments(SyncAPIResource):
                 cast_to=None,
                 path_params={"document_id": document_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -265,6 +271,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
         *,
         kind: TravelRuleDocumentKind,
         file: FileTypes,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -279,6 +286,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
         Args:
           kind: `questionnaire`: the due-diligence questionnaire answers. `incorporation`: certificate of incorporation. `licence`: licence or registration. `aml_policy`: AML and CFT policy. `ownership`: ownership structure.
           file: A PDF of at most 5 MiB.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -294,6 +302,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
                 body={"kind": kind, "file": file},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -343,6 +352,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
         self,
         document_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -356,6 +366,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
 
         Args:
           document_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -369,6 +380,7 @@ class AsyncTravelRuleDocuments(AsyncAPIResource):
                 cast_to=None,
                 path_params={"document_id": document_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

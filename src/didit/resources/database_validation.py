@@ -138,6 +138,7 @@ class DatabaseValidation(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         selfie: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -249,6 +250,7 @@ class DatabaseValidation(SyncAPIResource):
           vendor_data: Your identifier for the validated user; echoed back and stored with the session.
           metadata: Free-form JSON stored with the request and echoed back.
           selfie: Selfie image (`jpg`, `jpeg`, `png`, `webp`; max 2 MB - images are compressed to ~1.5 MB before upload to the registry) for biometric validation services, e.g. Argentina RENAPER (`arg_renaper`) and Panama SIB (`pan_cedula_sib`, `pan_cedula_sib_plus`). Required whenever a selected service lists it as a required field. Only available via `multipart/form-data`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -348,6 +350,7 @@ class DatabaseValidation(SyncAPIResource):
                 },
                 multipart="auto",
                 file_fields=("selfie",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -462,6 +465,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         selfie: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -573,6 +577,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           vendor_data: Your identifier for the validated user; echoed back and stored with the session.
           metadata: Free-form JSON stored with the request and echoed back.
           selfie: Selfie image (`jpg`, `jpeg`, `png`, `webp`; max 2 MB - images are compressed to ~1.5 MB before upload to the registry) for biometric validation services, e.g. Argentina RENAPER (`arg_renaper`) and Panama SIB (`pan_cedula_sib`, `pan_cedula_sib_plus`). Required whenever a selected service lists it as a required field. Only available via `multipart/form-data`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -672,6 +677,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
                 },
                 multipart="auto",
                 file_fields=("selfie",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

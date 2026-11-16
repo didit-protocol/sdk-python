@@ -142,6 +142,7 @@ class Businesses(SyncAPIResource):
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -162,6 +163,7 @@ class Businesses(SyncAPIResource):
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
           metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -184,6 +186,7 @@ class Businesses(SyncAPIResource):
                     "metadata": metadata,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -197,6 +200,7 @@ class Businesses(SyncAPIResource):
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -212,6 +216,7 @@ class Businesses(SyncAPIResource):
           vendor_data: Your unique identifier for the business (free-form string, NOT a UUID).
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
           reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -226,6 +231,7 @@ class Businesses(SyncAPIResource):
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
                 body={"status": status, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -239,6 +245,7 @@ class Businesses(SyncAPIResource):
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
         delete_all: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -256,6 +263,7 @@ class Businesses(SyncAPIResource):
           vendor_data_list: Your own identifiers to delete, matched exactly as sent.
           didit_internal_id_list: Didit's internal UUIDs (`didit_internal_id`) to delete.
           delete_all: If `true`, deletes every business in the application. Cannot be combined with the list selectors.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -273,6 +281,7 @@ class Businesses(SyncAPIResource):
                     "didit_internal_id_list": didit_internal_id_list,
                     "delete_all": delete_all,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -287,6 +296,7 @@ class Businesses(SyncAPIResource):
         estimate_only: bool | NotGiven = NOT_GIVEN,
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -305,6 +315,7 @@ class Businesses(SyncAPIResource):
           estimate_only: When true, returns the cost estimate and performs no writes - no screening, no billing, no job.
           vendor_data_list: Your own identifiers of the businesses to toggle, matched exactly as sent.
           didit_internal_id_list: Didit internal ids of the businesses to toggle - the `didit_internal_id` returned by the create, get and list endpoints.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -323,6 +334,7 @@ class Businesses(SyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -340,6 +352,7 @@ class Businesses(SyncAPIResource):
         country_code: str | None | NotGiven = NOT_GIVEN,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -347,7 +360,7 @@ class Businesses(SyncAPIResource):
     ) -> BusinessDetailItem:
         """Create business.
 
-        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
+        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent without an `Idempotency-Key`.
 
         ``POST /v3/businesses/create/``
 
@@ -359,6 +372,7 @@ class Businesses(SyncAPIResource):
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Initial lifecycle status. Defaults to `ACTIVE`.
           metadata: Arbitrary JSON object you attach to the business. Defaults to `{}`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -380,6 +394,7 @@ class Businesses(SyncAPIResource):
                     "status": status,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -399,6 +414,7 @@ class Businesses(SyncAPIResource):
         filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -420,6 +436,7 @@ class Businesses(SyncAPIResource):
           filter_date_from
           filter_date_to
           didit_internal_id_list: Entities to toggle. Required unless update_all is true.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -444,6 +461,7 @@ class Businesses(SyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -503,6 +521,7 @@ class Businesses(SyncAPIResource):
         session_numbers: Sequence[str] | NotGiven = NOT_GIVEN,
         toggle_all: bool | NotGiven = NOT_GIVEN,
         filter_workflow_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -526,6 +545,7 @@ class Businesses(SyncAPIResource):
           session_numbers: Business session numbers to toggle. Required unless update_all (or the legacy toggle_all alias) is true.
           toggle_all: Legacy alias of update_all.
           filter_workflow_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -552,6 +572,7 @@ class Businesses(SyncAPIResource):
                     "toggle_all": toggle_all,
                     "filter_workflow_id": filter_workflow_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -783,6 +804,7 @@ class AsyncBusinesses(AsyncAPIResource):
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -803,6 +825,7 @@ class AsyncBusinesses(AsyncAPIResource):
           status: Business lifecycle status. Setting `BLOCKED` automatically adds the `vendor_data` to the system blocklist; flipping away from `BLOCKED` removes that blocklist entry.
           metadata: Arbitrary JSON object you attach to the business. **Fully replaces** the existing metadata on update - merge client-side if you only want to add keys.
           reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -825,6 +848,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "metadata": metadata,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -838,6 +862,7 @@ class AsyncBusinesses(AsyncAPIResource):
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -853,6 +878,7 @@ class AsyncBusinesses(AsyncAPIResource):
           vendor_data: Your unique identifier for the business (free-form string, NOT a UUID).
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
           reason: Why the status changed. Recorded on the status-change entry of the company's **Activity** in the Business Console, only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -867,6 +893,7 @@ class AsyncBusinesses(AsyncAPIResource):
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
                 body={"status": status, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -880,6 +907,7 @@ class AsyncBusinesses(AsyncAPIResource):
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
         delete_all: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -897,6 +925,7 @@ class AsyncBusinesses(AsyncAPIResource):
           vendor_data_list: Your own identifiers to delete, matched exactly as sent.
           didit_internal_id_list: Didit's internal UUIDs (`didit_internal_id`) to delete.
           delete_all: If `true`, deletes every business in the application. Cannot be combined with the list selectors.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -914,6 +943,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "didit_internal_id_list": didit_internal_id_list,
                     "delete_all": delete_all,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -928,6 +958,7 @@ class AsyncBusinesses(AsyncAPIResource):
         estimate_only: bool | NotGiven = NOT_GIVEN,
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -946,6 +977,7 @@ class AsyncBusinesses(AsyncAPIResource):
           estimate_only: When true, returns the cost estimate and performs no writes - no screening, no billing, no job.
           vendor_data_list: Your own identifiers of the businesses to toggle, matched exactly as sent.
           didit_internal_id_list: Didit internal ids of the businesses to toggle - the `didit_internal_id` returned by the create, get and list endpoints.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -964,6 +996,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -981,6 +1014,7 @@ class AsyncBusinesses(AsyncAPIResource):
         country_code: str | None | NotGiven = NOT_GIVEN,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -988,7 +1022,7 @@ class AsyncBusinesses(AsyncAPIResource):
     ) -> BusinessDetailItem:
         """Create business.
 
-        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent.
+        Pre-create a [business](/entities/businesses) *without* a KYB session. All fields are optional, but you should always send `vendor_data` - without it the record cannot be linked to sessions or transactions. When provided, `vendor_data` must be unique among non-deleted businesses (exact match; conflicts return 400). Not idempotent without an `Idempotency-Key`.
 
         ``POST /v3/businesses/create/``
 
@@ -1000,6 +1034,7 @@ class AsyncBusinesses(AsyncAPIResource):
           country_code: Country of incorporation (ISO 3166-1 alpha-2, e.g. `GB`, `US`).
           status: Initial lifecycle status. Defaults to `ACTIVE`.
           metadata: Arbitrary JSON object you attach to the business. Defaults to `{}`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1021,6 +1056,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "status": status,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1040,6 +1076,7 @@ class AsyncBusinesses(AsyncAPIResource):
         filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1061,6 +1098,7 @@ class AsyncBusinesses(AsyncAPIResource):
           filter_date_from
           filter_date_to
           didit_internal_id_list: Entities to toggle. Required unless update_all is true.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1085,6 +1123,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1144,6 +1183,7 @@ class AsyncBusinesses(AsyncAPIResource):
         session_numbers: Sequence[str] | NotGiven = NOT_GIVEN,
         toggle_all: bool | NotGiven = NOT_GIVEN,
         filter_workflow_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1167,6 +1207,7 @@ class AsyncBusinesses(AsyncAPIResource):
           session_numbers: Business session numbers to toggle. Required unless update_all (or the legacy toggle_all alias) is true.
           toggle_all: Legacy alias of update_all.
           filter_workflow_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1193,6 +1234,7 @@ class AsyncBusinesses(AsyncAPIResource):
                     "toggle_all": toggle_all,
                     "filter_workflow_id": filter_workflow_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

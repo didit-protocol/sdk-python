@@ -104,6 +104,7 @@ class SessionsImports(SyncAPIResource):
         face_templates: bool | NotGiven = NOT_GIVEN,
         lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -129,6 +130,7 @@ class SessionsImports(SyncAPIResource):
           face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
           lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -158,6 +160,7 @@ class SessionsImports(SyncAPIResource):
                 },
                 multipart="auto",
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -345,6 +348,7 @@ class SessionsImports(SyncAPIResource):
         credentials: Mapping[str, str],
         options: SessionsImportsCheckProviderParamsOptions | NotGiven = NOT_GIVEN,
         record_ids: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -361,6 +365,7 @@ class SessionsImports(SyncAPIResource):
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
           options
           record_ids: For `api_ids` providers: the first record ID of your export.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -379,6 +384,7 @@ class SessionsImports(SyncAPIResource):
                     "options": options,
                     "record_ids": record_ids,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -398,6 +404,7 @@ class SessionsImports(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         face_templates: bool | NotGiven = NOT_GIVEN,
         lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -414,6 +421,7 @@ class SessionsImports(SyncAPIResource):
           status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
           face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
           lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -432,6 +440,7 @@ class SessionsImports(SyncAPIResource):
                     "face_templates": face_templates,
                     "lawful_basis_confirmed": lawful_basis_confirmed,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -443,6 +452,7 @@ class SessionsImports(SyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -456,6 +466,7 @@ class SessionsImports(SyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -469,6 +480,7 @@ class SessionsImports(SyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -480,6 +492,7 @@ class SessionsImports(SyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -493,6 +506,7 @@ class SessionsImports(SyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -506,6 +520,7 @@ class SessionsImports(SyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -517,6 +532,7 @@ class SessionsImports(SyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -530,6 +546,7 @@ class SessionsImports(SyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -543,6 +560,7 @@ class SessionsImports(SyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -556,6 +574,7 @@ class SessionsImports(SyncAPIResource):
         *,
         credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -571,6 +590,7 @@ class SessionsImports(SyncAPIResource):
           import_id
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
           file: The record IDs or export file again, for `api_ids` and `export_file` providers.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -587,6 +607,7 @@ class SessionsImports(SyncAPIResource):
                 body={"credentials": credentials, "file": file},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -727,6 +748,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         face_templates: bool | NotGiven = NOT_GIVEN,
         lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -752,6 +774,7 @@ class AsyncSessionsImports(AsyncAPIResource):
           face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
           lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
           file: Canonical CSV or NDJSON file. Use NDJSON for large imports. Maximum upload size 25 MB (use `source_file_url` for bigger files). Mutually exclusive with `source_file_url`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -781,6 +804,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                 },
                 multipart="auto",
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -968,6 +992,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         credentials: Mapping[str, str],
         options: SessionsImportsCheckProviderParamsOptions | NotGiven = NOT_GIVEN,
         record_ids: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -984,6 +1009,7 @@ class AsyncSessionsImports(AsyncAPIResource):
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
           options
           record_ids: For `api_ids` providers: the first record ID of your export.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1002,6 +1028,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                     "options": options,
                     "record_ids": record_ids,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1021,6 +1048,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         face_templates: bool | NotGiven = NOT_GIVEN,
         lawful_basis_confirmed: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1037,6 +1065,7 @@ class AsyncSessionsImports(AsyncAPIResource):
           status_mapping: Edits to the provider's default status mapping: source status to Didit status. `Not Finished` and `Abandoned` are skipped and counted, never imported.
           face_templates: Build face templates from the imported selfies and search them against the application's faces and blocklist. Matches are flagged for review only. Requires `lawful_basis_confirmed`.
           lawful_basis_confirmed: Confirms you have a lawful basis to share these selfies with Didit as processor.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1055,6 +1084,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                     "face_templates": face_templates,
                     "lawful_basis_confirmed": lawful_basis_confirmed,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1066,6 +1096,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1079,6 +1110,7 @@ class AsyncSessionsImports(AsyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1092,6 +1124,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1103,6 +1136,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1116,6 +1150,7 @@ class AsyncSessionsImports(AsyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1129,6 +1164,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1140,6 +1176,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         self,
         import_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1153,6 +1190,7 @@ class AsyncSessionsImports(AsyncAPIResource):
 
         Args:
           import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1166,6 +1204,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                 cast_to=SessionImportJob,
                 path_params={"importId": import_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1179,6 +1218,7 @@ class AsyncSessionsImports(AsyncAPIResource):
         *,
         credentials: Mapping[str, str] | NotGiven = NOT_GIVEN,
         file: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1194,6 +1234,7 @@ class AsyncSessionsImports(AsyncAPIResource):
           import_id
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
           file: The record IDs or export file again, for `api_ids` and `export_file` providers.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1210,6 +1251,7 @@ class AsyncSessionsImports(AsyncAPIResource):
                 body={"credentials": credentials, "file": file},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

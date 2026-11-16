@@ -60,6 +60,7 @@ class Email(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -92,6 +93,7 @@ class Email(SyncAPIResource):
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -112,6 +114,7 @@ class Email(SyncAPIResource):
                     "metadata": metadata,
                     "enable_social": enable_social,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -127,6 +130,7 @@ class Email(SyncAPIResource):
         signals: EmailSendCodeParamsSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -160,6 +164,7 @@ class Email(SyncAPIResource):
           signals: Optional device and network signals about the end user, forwarded to the anti-fraud layer to improve detection of abusive or automated traffic. All fields are optional.
           vendor_data: Optional caller-controlled identifier (your internal user id, an email, a UUID, etc.) persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console. Use it to correlate Didit's `request_id` with your user record.
           metadata: Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -179,6 +184,7 @@ class Email(SyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -204,6 +210,7 @@ class Email(SyncAPIResource):
         email_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
         | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -247,6 +254,7 @@ class Email(SyncAPIResource):
           frequent_email_breach_action: Action when the address appears in many known data breaches. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
           email_no_social_presence_action: Action when the social footprint check finds the address registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -272,6 +280,7 @@ class Email(SyncAPIResource):
                     "enable_social": enable_social,
                     "email_no_social_presence_action": email_no_social_presence_action,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -305,6 +314,7 @@ class AsyncEmail(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         enable_social: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -337,6 +347,7 @@ class AsyncEmail(AsyncAPIResource):
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -357,6 +368,7 @@ class AsyncEmail(AsyncAPIResource):
                     "metadata": metadata,
                     "enable_social": enable_social,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -372,6 +384,7 @@ class AsyncEmail(AsyncAPIResource):
         signals: EmailSendCodeParamsSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -405,6 +418,7 @@ class AsyncEmail(AsyncAPIResource):
           signals: Optional device and network signals about the end user, forwarded to the anti-fraud layer to improve detection of abusive or automated traffic. All fields are optional.
           vendor_data: Optional caller-controlled identifier (your internal user id, an email, a UUID, etc.) persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console. Use it to correlate Didit's `request_id` with your user record.
           metadata: Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -424,6 +438,7 @@ class AsyncEmail(AsyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -449,6 +464,7 @@ class AsyncEmail(AsyncAPIResource):
         email_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
         | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -492,6 +508,7 @@ class AsyncEmail(AsyncAPIResource):
           frequent_email_breach_action: Action when the address appears in many known data breaches. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the address - the email, social, professional, e-commerce and entertainment platforms it is registered on. Billed as one `email_social` unit per request in addition to this endpoint's own price.
           email_no_social_presence_action: Action when the social footprint check finds the address registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -517,6 +534,7 @@ class AsyncEmail(AsyncAPIResource):
                     "enable_social": enable_social,
                     "email_no_social_presence_action": email_no_social_presence_action,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

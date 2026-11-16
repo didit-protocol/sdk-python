@@ -98,6 +98,7 @@ class FraudChecks(SyncAPIResource):
         checks: FraudCheckModuleSelectionRequest | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -120,6 +121,7 @@ class FraudChecks(SyncAPIResource):
           checks
           vendor_data
           metadata
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -142,6 +144,7 @@ class FraudChecks(SyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -160,6 +163,7 @@ class FraudChecks(SyncAPIResource):
         checks: FraudCheckModuleSelectionRequest | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -180,6 +184,7 @@ class FraudChecks(SyncAPIResource):
           checks
           vendor_data
           metadata
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -202,6 +207,7 @@ class FraudChecks(SyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -274,6 +280,7 @@ class AsyncFraudChecks(AsyncAPIResource):
         checks: FraudCheckModuleSelectionRequest | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -296,6 +303,7 @@ class AsyncFraudChecks(AsyncAPIResource):
           checks
           vendor_data
           metadata
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -318,6 +326,7 @@ class AsyncFraudChecks(AsyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -336,6 +345,7 @@ class AsyncFraudChecks(AsyncAPIResource):
         checks: FraudCheckModuleSelectionRequest | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: object | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -356,6 +366,7 @@ class AsyncFraudChecks(AsyncAPIResource):
           checks
           vendor_data
           metadata
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -378,6 +389,7 @@ class AsyncFraudChecks(AsyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

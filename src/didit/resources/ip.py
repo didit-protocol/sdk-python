@@ -52,6 +52,7 @@ class Ip(SyncAPIResource):
         user_agent: str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -81,6 +82,7 @@ class Ip(SyncAPIResource):
           user_agent: User agent observed by your backend. Stored as request context; it does not provide device fingerprinting.
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -100,6 +102,7 @@ class Ip(SyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -132,6 +135,7 @@ class AsyncIp(AsyncAPIResource):
         user_agent: str | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -161,6 +165,7 @@ class AsyncIp(AsyncAPIResource):
           user_agent: User agent observed by your backend. Stored as request context; it does not provide device fingerprinting.
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -180,6 +185,7 @@ class AsyncIp(AsyncAPIResource):
                     "vendor_data": vendor_data,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

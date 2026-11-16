@@ -110,6 +110,7 @@ class CasesRequests(SyncAPIResource):
         expires_at: str | _dt.datetime,
         preview_token: str,
         language: CustomerMessagingLanguageEnum | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -127,6 +128,7 @@ class CasesRequests(SyncAPIResource):
           expires_at: Use the expiry covered by the preview token. Source-of-funds and purpose-of-payment requests allow up to 14 days; other purposes allow up to seven days. The default remains seven days. Changing the expiry without a matching preview is rejected.
           preview_token
           language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -149,6 +151,7 @@ class CasesRequests(SyncAPIResource):
                     "preview_token": preview_token,
                     "language": language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -161,6 +164,7 @@ class CasesRequests(SyncAPIResource):
         case_uuid: str,
         request_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -171,6 +175,7 @@ class CasesRequests(SyncAPIResource):
         Args:
           case_uuid
           request_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -185,6 +190,7 @@ class CasesRequests(SyncAPIResource):
                 path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -270,6 +276,7 @@ class CasesRequests(SyncAPIResource):
         contact_id: str,
         purpose: CustomerMessagingPurposeEnum,
         language: CustomerMessagingLanguageEnum | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -284,6 +291,7 @@ class CasesRequests(SyncAPIResource):
           contact_id
           purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -299,6 +307,7 @@ class CasesRequests(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"contact_id": contact_id, "purpose": purpose, "language": language},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -311,6 +320,7 @@ class CasesRequests(SyncAPIResource):
         case_uuid: str,
         request_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -325,6 +335,7 @@ class CasesRequests(SyncAPIResource):
         Args:
           case_uuid: Case UUID.
           request_uuid: Customer request UUID, from the case's request list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -339,6 +350,7 @@ class CasesRequests(SyncAPIResource):
                 path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -415,6 +427,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         expires_at: str | _dt.datetime,
         preview_token: str,
         language: CustomerMessagingLanguageEnum | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -432,6 +445,7 @@ class AsyncCasesRequests(AsyncAPIResource):
           expires_at: Use the expiry covered by the preview token. Source-of-funds and purpose-of-payment requests allow up to 14 days; other purposes allow up to seven days. The default remains seven days. Changing the expiry without a matching preview is rejected.
           preview_token
           language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -454,6 +468,7 @@ class AsyncCasesRequests(AsyncAPIResource):
                     "preview_token": preview_token,
                     "language": language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -466,6 +481,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         case_uuid: str,
         request_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -476,6 +492,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         Args:
           case_uuid
           request_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -490,6 +507,7 @@ class AsyncCasesRequests(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -575,6 +593,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         contact_id: str,
         purpose: CustomerMessagingPurposeEnum,
         language: CustomerMessagingLanguageEnum | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -589,6 +608,7 @@ class AsyncCasesRequests(AsyncAPIResource):
           contact_id
           purpose: * `identity_document` - identity_document * `proof_of_address` - proof_of_address * `business_document` - business_document * `confirm_details` - confirm_details * `review_in_progress` - review_in_progress * `source_of_funds` - Request a document showing the source of payment funds. * `purpose_of_payment` - Request a document explaining the payment purpose. Both are available for person and business cases.
           language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -604,6 +624,7 @@ class AsyncCasesRequests(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"contact_id": contact_id, "purpose": purpose, "language": language},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -616,6 +637,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         case_uuid: str,
         request_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -630,6 +652,7 @@ class AsyncCasesRequests(AsyncAPIResource):
         Args:
           case_uuid: Case UUID.
           request_uuid: Customer request UUID, from the case's request list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -644,6 +667,7 @@ class AsyncCasesRequests(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid, "request_uuid": request_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

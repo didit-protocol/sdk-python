@@ -51,6 +51,7 @@ class NetworksNotes(SyncAPIResource):
         network_uuid: str,
         note_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -65,6 +66,7 @@ class NetworksNotes(SyncAPIResource):
         Args:
           network_uuid: Network UUID.
           note_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -79,6 +81,7 @@ class NetworksNotes(SyncAPIResource):
                 path_params={"network_uuid": network_uuid, "note_uuid": note_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -136,6 +139,7 @@ class NetworksNotes(SyncAPIResource):
         *,
         comment: str,
         client_reference: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -151,6 +155,7 @@ class NetworksNotes(SyncAPIResource):
           network_uuid: Network UUID.
           comment
           client_reference
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -166,6 +171,7 @@ class NetworksNotes(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"comment": comment, "client_reference": client_reference},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -195,6 +201,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
         network_uuid: str,
         note_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -209,6 +216,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
         Args:
           network_uuid: Network UUID.
           note_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -223,6 +231,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
                 path_params={"network_uuid": network_uuid, "note_uuid": note_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -280,6 +289,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
         *,
         comment: str,
         client_reference: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -295,6 +305,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
           network_uuid: Network UUID.
           comment
           client_reference
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -310,6 +321,7 @@ class AsyncNetworksNotes(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"comment": comment, "client_reference": client_reference},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

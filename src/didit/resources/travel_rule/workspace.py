@@ -86,6 +86,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         *,
         vasp_id: str,
         licence: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -100,6 +101,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         Args:
           vasp_id: The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`.
           licence: Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -113,6 +115,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"vasp_id": vasp_id, "licence": licence},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -123,6 +126,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
     def send_domain_code(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -135,6 +139,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         ``POST /v3/travel-rule/workspace/domain/code/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -147,6 +152,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 "/v3/travel-rule/workspace/domain/code/",
                 cast_to=TravelRuleWorkspaceDomainCodeResponse,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -158,6 +164,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         self,
         *,
         code: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -171,6 +178,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
 
         Args:
           code
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -184,6 +192,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"code": code},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -194,6 +203,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
     def verify_domain_dns(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -206,6 +216,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         ``POST /v3/travel-rule/workspace/domain/dns/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -218,6 +229,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 "/v3/travel-rule/workspace/domain/dns/",
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -229,6 +241,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
         self,
         *,
         enabled: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -242,6 +255,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
 
         Args:
           enabled: Only `true` is accepted: outbound billing cannot be turned back off through the API.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -255,6 +269,7 @@ class TravelRuleWorkspaceResource(SyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"enabled": enabled},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -318,6 +333,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         *,
         vasp_id: str,
         licence: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -332,6 +348,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         Args:
           vasp_id: The directory entry this workspace is. Read ids from `GET /v3/travel-rule/vasps/`.
           licence: Optional licence or registration reference, up to 255 characters; empty clears it. Omission preserves it for the same directory entry and clears it when claiming a different entry. Applied to the VASP profile only when the claim is granted.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -345,6 +362,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"vasp_id": vasp_id, "licence": licence},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -355,6 +373,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
     async def send_domain_code(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -367,6 +386,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         ``POST /v3/travel-rule/workspace/domain/code/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -379,6 +399,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 "/v3/travel-rule/workspace/domain/code/",
                 cast_to=TravelRuleWorkspaceDomainCodeResponse,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -390,6 +411,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         self,
         *,
         code: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -403,6 +425,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
 
         Args:
           code
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -416,6 +439,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"code": code},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -426,6 +450,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
     async def verify_domain_dns(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -438,6 +463,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         ``POST /v3/travel-rule/workspace/domain/dns/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -450,6 +476,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 "/v3/travel-rule/workspace/domain/dns/",
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -461,6 +488,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
         self,
         *,
         enabled: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -474,6 +502,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
 
         Args:
           enabled: Only `true` is accepted: outbound billing cannot be turned back off through the API.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -487,6 +516,7 @@ class AsyncTravelRuleWorkspaceResource(AsyncAPIResource):
                 cast_to=TravelRuleWorkspace,
                 auth="api_key",
                 body={"enabled": enabled},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

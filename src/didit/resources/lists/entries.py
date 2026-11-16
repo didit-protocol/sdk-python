@@ -115,6 +115,7 @@ class ListsEntries(SyncAPIResource):
         display_label: str | NotGiven = NOT_GIVEN,
         comment: str | NotGiven = NOT_GIVEN,
         metadata: ListsEntriesCreateParamsMetadata | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -136,6 +137,7 @@ class ListsEntries(SyncAPIResource):
           display_label: Human-readable label. When empty, Didit derives one from the session where it can (for example the holder's name and document number).
           comment: Free-text note, such as the reason for listing.
           metadata: Free-form JSON stored with the entry and returned as stored. Use `reference_type` and `reference_id` so the console links back to the source. `reference_image_url` and `front_image_url` are set by Didit only and are dropped if you send them. For an entry read from a session, Didit's keys are merged with yours.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -159,6 +161,7 @@ class ListsEntries(SyncAPIResource):
                     "comment": comment,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -171,6 +174,7 @@ class ListsEntries(SyncAPIResource):
         list_uuid: str,
         entry_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -185,6 +189,7 @@ class ListsEntries(SyncAPIResource):
         Args:
           list_uuid: UUID of the list that holds the entry.
           entry_uuid: UUID of the entry, as returned by List list entries or Create a list entry.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -198,6 +203,7 @@ class ListsEntries(SyncAPIResource):
                 cast_to=None,
                 path_params={"list_uuid": list_uuid, "entry_uuid": entry_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -211,6 +217,7 @@ class ListsEntries(SyncAPIResource):
         *,
         image: str,
         comment: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -226,6 +233,7 @@ class ListsEntries(SyncAPIResource):
           list_uuid: UUID of a list with `entry_type: face` and `list_type: blocklist` or `allowlist`.
           image: Base64-encoded JPEG or PNG, at most 2 MB once decoded, showing a clearly visible face. Send the bare base64 string, without a `data:image/...;base64,` prefix.
           comment: Optional free-text note, such as the reason for listing.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -240,6 +248,7 @@ class ListsEntries(SyncAPIResource):
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
                 body={"image": image, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -332,6 +341,7 @@ class AsyncListsEntries(AsyncAPIResource):
         display_label: str | NotGiven = NOT_GIVEN,
         comment: str | NotGiven = NOT_GIVEN,
         metadata: ListsEntriesCreateParamsMetadata | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -353,6 +363,7 @@ class AsyncListsEntries(AsyncAPIResource):
           display_label: Human-readable label. When empty, Didit derives one from the session where it can (for example the holder's name and document number).
           comment: Free-text note, such as the reason for listing.
           metadata: Free-form JSON stored with the entry and returned as stored. Use `reference_type` and `reference_id` so the console links back to the source. `reference_image_url` and `front_image_url` are set by Didit only and are dropped if you send them. For an entry read from a session, Didit's keys are merged with yours.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -376,6 +387,7 @@ class AsyncListsEntries(AsyncAPIResource):
                     "comment": comment,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -388,6 +400,7 @@ class AsyncListsEntries(AsyncAPIResource):
         list_uuid: str,
         entry_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -402,6 +415,7 @@ class AsyncListsEntries(AsyncAPIResource):
         Args:
           list_uuid: UUID of the list that holds the entry.
           entry_uuid: UUID of the entry, as returned by List list entries or Create a list entry.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -415,6 +429,7 @@ class AsyncListsEntries(AsyncAPIResource):
                 cast_to=None,
                 path_params={"list_uuid": list_uuid, "entry_uuid": entry_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -428,6 +443,7 @@ class AsyncListsEntries(AsyncAPIResource):
         *,
         image: str,
         comment: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -443,6 +459,7 @@ class AsyncListsEntries(AsyncAPIResource):
           list_uuid: UUID of a list with `entry_type: face` and `list_type: blocklist` or `allowlist`.
           image: Base64-encoded JPEG or PNG, at most 2 MB once decoded, showing a clearly visible face. Send the bare base64 string, without a `data:image/...;base64,` prefix.
           comment: Optional free-text note, such as the reason for listing.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -457,6 +474,7 @@ class AsyncListsEntries(AsyncAPIResource):
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
                 body={"image": image, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

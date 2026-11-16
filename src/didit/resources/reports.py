@@ -146,6 +146,7 @@ class Reports(SyncAPIResource):
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         notify_on_ready: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -163,6 +164,7 @@ class Reports(SyncAPIResource):
           date_from: Optional replacement period start. Send both dates in order; omit for a failed-item retry.
           date_to: Optional replacement period end, on or after date_from.
           notify_on_ready: Email the requester when ready, if a requester email is available.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -183,6 +185,7 @@ class Reports(SyncAPIResource):
                     "date_to": date_to,
                     "notify_on_ready": notify_on_ready,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -306,6 +309,7 @@ class AsyncReports(AsyncAPIResource):
         date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         notify_on_ready: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -323,6 +327,7 @@ class AsyncReports(AsyncAPIResource):
           date_from: Optional replacement period start. Send both dates in order; omit for a failed-item retry.
           date_to: Optional replacement period end, on or after date_from.
           notify_on_ready: Email the requester when ready, if a requester email is available.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -343,6 +348,7 @@ class AsyncReports(AsyncAPIResource):
                     "date_to": date_to,
                     "notify_on_ready": notify_on_ready,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

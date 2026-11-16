@@ -105,6 +105,7 @@ class WebhooksDestinations(SyncAPIResource):
         enabled: bool | NotGiven = NOT_GIVEN,
         webhook_version: Literal["v1", "v2", "v3"] | str | NotGiven = NOT_GIVEN,
         subscribed_events: WebhookSubscribedEventsParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -122,6 +123,7 @@ class WebhooksDestinations(SyncAPIResource):
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -141,6 +143,7 @@ class WebhooksDestinations(SyncAPIResource):
                     "webhook_version": webhook_version,
                     "subscribed_events": subscribed_events,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -189,6 +192,7 @@ class WebhooksDestinations(SyncAPIResource):
         self,
         destination_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -202,6 +206,7 @@ class WebhooksDestinations(SyncAPIResource):
 
         Args:
           destination_uuid: UUID of the destination to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -215,6 +220,7 @@ class WebhooksDestinations(SyncAPIResource):
                 cast_to=None,
                 path_params={"destination_uuid": destination_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -231,6 +237,7 @@ class WebhooksDestinations(SyncAPIResource):
         enabled: bool | NotGiven = NOT_GIVEN,
         webhook_version: Literal["v1", "v2", "v3"] | str | NotGiven = NOT_GIVEN,
         subscribed_events: WebhookSubscribedEventsParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -249,6 +256,7 @@ class WebhooksDestinations(SyncAPIResource):
           enabled: Set to `false` to pause deliveries to this destination without deleting it.
           webhook_version: New payload schema version for future deliveries.
           subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -269,6 +277,7 @@ class WebhooksDestinations(SyncAPIResource):
                     "webhook_version": webhook_version,
                     "subscribed_events": subscribed_events,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -414,6 +423,7 @@ class WebhooksDestinations(SyncAPIResource):
         destination_uuid: str,
         delivery_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -428,6 +438,7 @@ class WebhooksDestinations(SyncAPIResource):
         Args:
           destination_uuid: UUID of the destination the delivery was sent to.
           delivery_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -441,6 +452,7 @@ class WebhooksDestinations(SyncAPIResource):
                 cast_to=WebhookDestinationDeliveryDetail,
                 path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -551,6 +563,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         enabled: bool | NotGiven = NOT_GIVEN,
         webhook_version: Literal["v1", "v2", "v3"] | str | NotGiven = NOT_GIVEN,
         subscribed_events: WebhookSubscribedEventsParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -568,6 +581,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
           enabled: When `false`, the destination is saved but Didit will not push any webhooks to it. Useful for staging configs you want to keep parked.
           webhook_version: Payload schema version Didit will send. `v3` is the current/recommended format; older versions are kept for backward compatibility with legacy integrations.
           subscribed_events: Events to deliver. Effectively required: an explicit `[]` is rejected with 400, and omitting the field creates a destination with no subscriptions that receives nothing.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -587,6 +601,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
                     "webhook_version": webhook_version,
                     "subscribed_events": subscribed_events,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -635,6 +650,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         self,
         destination_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -648,6 +664,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
 
         Args:
           destination_uuid: UUID of the destination to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -661,6 +678,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
                 cast_to=None,
                 path_params={"destination_uuid": destination_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -677,6 +695,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         enabled: bool | NotGiven = NOT_GIVEN,
         webhook_version: Literal["v1", "v2", "v3"] | str | NotGiven = NOT_GIVEN,
         subscribed_events: WebhookSubscribedEventsParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -695,6 +714,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
           enabled: Set to `false` to pause deliveries to this destination without deleting it.
           webhook_version: New payload schema version for future deliveries.
           subscribed_events: Event filter for this webhook destination. Didit delivers only webhooks whose event type exactly matches one of these values - there is no wildcard subscription. When sent, the list must contain at least one valid event (an explicit `[]` is rejected with 400); a destination whose list is empty (field omitted at create) receives nothing. On update the list is replaced wholesale, never merged.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -715,6 +735,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
                     "webhook_version": webhook_version,
                     "subscribed_events": subscribed_events,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -860,6 +881,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         destination_uuid: str,
         delivery_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -874,6 +896,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
         Args:
           destination_uuid: UUID of the destination the delivery was sent to.
           delivery_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/webhook/destinations/{destination_uuid}/deliveries/`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -887,6 +910,7 @@ class AsyncWebhooksDestinations(AsyncAPIResource):
                 cast_to=WebhookDestinationDeliveryDetail,
                 path_params={"destination_uuid": destination_uuid, "delivery_uuid": delivery_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
