@@ -277,7 +277,7 @@ class Sessions(SyncAPIResource):
           session_expiration_time: Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
-          expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
+          expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored. UAE PASS (an ID Verification wallet) only confirms these details and never returns the person's identity: it is offered only when they include `identification_number` (the Emirates ID number), or a name (`first_name` and/or `last_name`) with `date_of_birth`.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
           sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
@@ -466,6 +466,26 @@ class Sessions(SyncAPIResource):
         self,
         session_id: str,
         *,
+        language: Literal[
+            "en",
+            "es",
+            "ar",
+            "ca",
+            "de",
+            "fr",
+            "hi",
+            "id",
+            "it",
+            "ja",
+            "ko",
+            "pt-BR",
+            "pt-PT",
+            "ru",
+            "sw",
+            "zh",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -487,7 +507,7 @@ class Sessions(SyncAPIResource):
         - **KYC** - rolled-up session status, the warnings list, and one section per executed feature: ID Verification (document images plus extracted fields), NFC, Liveness, Face Match, Email Verification, Phone Verification, Proof of Address, Questionnaire answers, Database Validation, AML Screening, and IP Analysis - followed by session tags, console review activity (comments and status changes), and the session event timeline.
         - **KYB** - registry checks (company data), AML screenings, business document verifications, key-people checks, questionnaire responses, phone/email verifications, IP analyses, and the session event timeline, followed by tags and review activity.
 
-        **Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English - there is no language parameter.
+        **Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English by default; pass the `language` query parameter to print every word the report writes itself (section titles, labels, statuses, check names, notes, footers, dates and country names) in one of 16 languages, while values the end user submitted or a source returned print exactly as captured.
 
         **No caching.** Every call re-renders the PDF from the current session data, so a report generated after a manual review reflects the reviewer’s decision. Two calls for the same session can produce byte-different files - archive the downloaded file if you need an immutable copy.
 
@@ -501,6 +521,7 @@ class Sessions(SyncAPIResource):
 
         Args:
           session_id: UUID of the User Verification (KYC) or Business Verification (KYB) session to render - the `session_id` returned by `POST /v3/session/`. The same path works for both session kinds; use the `Content-Disposition` filename on the response to tell which report type you received. **Must be a well-formed, lowercase UUID.** The route only matches valid UUIDs, so a malformed value is rejected by the URL router before any application code runs and the response is a `404` **HTML** page rather than the JSON `{"detail": ...}` envelope shown below. The route's UUID converter only matches the canonical lowercase form - uppercase-hex UUIDs are rejected with the HTML 404.
+          language: Language of the report. Every word the report writes itself prints in this language: section titles, labels, table headers, statuses, check names and descriptions, notes, footers, page numbering, the cover, the PDF outline, dates (month names and order per language) and country names. What the end user submitted or a source returned (names, addresses, document fields, OCR values, watchlist profiles, free text, IDs) prints exactly as captured. Arabic (`ar`) prints right to left. Values are case-sensitive; an unknown value returns `400`. Applies to both KYC and KYB reports. Omit it for the English report.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -514,6 +535,7 @@ class Sessions(SyncAPIResource):
                 cast_to=bytes,
                 path_params={"sessionId": session_id},
                 auth="api_key",
+                query={"language": language},
                 accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -3014,7 +3036,7 @@ class AsyncSessions(AsyncAPIResource):
           session_expiration_time: Seconds this session's link stays valid, overriding the workflow's `session_expiration_time` for this session only. Whole number between 3600 (1 hour) and 2419200 (4 weeks), the same bounds as the workflow setting. Omit it to use the workflow's setting. A value outside the range, or one that is not a whole number, returns `400` on `session_expiration_time`. A session created by this call takes this lifetime from creation. When the call returns an existing unfinished session instead of creating one, sending this field resets that session's expiry to now plus this value, and omitting it leaves that session's expiry as it is. The response returns the resulting `expires_at`.
           language: Language code (ISO 639-1) for the verification process interface. Controls the language displayed to the end user during verification. If not provided, the browser's language will be automatically detected and used. Check all the supported languages [here](/integration/supported-languages).
           contact_details: User contact information that can be used for notifications, prefilling verification forms, and phone verification. This includes email address, preferred language for communications, and phone number.
-          expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored.
+          expected_details: Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used - they pre-fill the company registry search for the user - and all person-level fields are ignored. UAE PASS (an ID Verification wallet) only confirms these details and never returns the person's identity: it is offered only when they include `identification_number` (the Emirates ID number), or a name (`first_name` and/or `last_name`) with `date_of_birth`.
           portrait_image: Base64-encoded portrait image of the end user's face (max 2MB; JPEG, PNG, WebP, or TIFF). Used as the reference image to match against the liveness capture when the workflow is a `Biometric Authentication` workflow with Face Match enabled, or any graph workflow where Face Match runs before ID Verification (OCR). Optional when the `vendor_data` user already has a stored face image: Didit reuses it automatically, resolved in priority order: approved liveness face, ePassport chip photo, ID document portrait, manually enrolled profile face (only faces from approved sessions or faces you enrolled yourself are reused). When provided, `portrait_image` always takes precedence over the stored face. If omitted and no stored face exists (or `vendor_data` is not sent), session creation fails with `400`. Ignored for other workflow types.
           sandbox_scenario: Sandbox-only scenario slug. Only accepted when the API key belongs to a sandbox-mode application; rejected on live applications. When set, the create flow expands the scenario's bundled magic values onto the session's input fields (contact_details, expected_details) so the mocked providers reproduce the scenario's outcome through the real workflow pipeline. See the scenario catalog at GET /v1/sandbox/scenarios/ or [Sandbox & Test Data](/integration/sandbox-testing). You can also arm (or re-arm) a scenario after create via POST /v3/session/{sessionId}/sandbox/arm/, as long as the session is still `Not Started`. For non-doc lookup, use `lookup_partial_match`, `lookup_no_match`, or `lookup_provider_error` to test the configured attempt budget and fallback. For identity wallets, use `wallet_cancelled`, `wallet_timeout`, or `wallet_provider_error`; `approve` simulates a verified wallet. All catalog wallets can be tested in sandbox, including schemes unavailable on live applications. Simulated attempts are not charged.
           sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
@@ -3203,6 +3225,26 @@ class AsyncSessions(AsyncAPIResource):
         self,
         session_id: str,
         *,
+        language: Literal[
+            "en",
+            "es",
+            "ar",
+            "ca",
+            "de",
+            "fr",
+            "hi",
+            "id",
+            "it",
+            "ja",
+            "ko",
+            "pt-BR",
+            "pt-PT",
+            "ru",
+            "sw",
+            "zh",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3224,7 +3266,7 @@ class AsyncSessions(AsyncAPIResource):
         - **KYC** - rolled-up session status, the warnings list, and one section per executed feature: ID Verification (document images plus extracted fields), NFC, Liveness, Face Match, Email Verification, Phone Verification, Proof of Address, Questionnaire answers, Database Validation, AML Screening, and IP Analysis - followed by session tags, console review activity (comments and status changes), and the session event timeline.
         - **KYB** - registry checks (company data), AML screenings, business document verifications, key-people checks, questionnaire responses, phone/email verifications, IP analyses, and the session event timeline, followed by tags and review activity.
 
-        **Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English - there is no language parameter.
+        **Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English by default; pass the `language` query parameter to print every word the report writes itself (section titles, labels, statuses, check names, notes, footers, dates and country names) in one of 16 languages, while values the end user submitted or a source returned print exactly as captured.
 
         **No caching.** Every call re-renders the PDF from the current session data, so a report generated after a manual review reflects the reviewer’s decision. Two calls for the same session can produce byte-different files - archive the downloaded file if you need an immutable copy.
 
@@ -3238,6 +3280,7 @@ class AsyncSessions(AsyncAPIResource):
 
         Args:
           session_id: UUID of the User Verification (KYC) or Business Verification (KYB) session to render - the `session_id` returned by `POST /v3/session/`. The same path works for both session kinds; use the `Content-Disposition` filename on the response to tell which report type you received. **Must be a well-formed, lowercase UUID.** The route only matches valid UUIDs, so a malformed value is rejected by the URL router before any application code runs and the response is a `404` **HTML** page rather than the JSON `{"detail": ...}` envelope shown below. The route's UUID converter only matches the canonical lowercase form - uppercase-hex UUIDs are rejected with the HTML 404.
+          language: Language of the report. Every word the report writes itself prints in this language: section titles, labels, table headers, statuses, check names and descriptions, notes, footers, page numbering, the cover, the PDF outline, dates (month names and order per language) and country names. What the end user submitted or a source returned (names, addresses, document fields, OCR values, watchlist profiles, free text, IDs) prints exactly as captured. Arabic (`ar`) prints right to left. Values are case-sensitive; an unknown value returns `400`. Applies to both KYC and KYB reports. Omit it for the English report.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3251,6 +3294,7 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=bytes,
                 path_params={"sessionId": session_id},
                 auth="api_key",
+                query={"language": language},
                 accept="application/pdf, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
