@@ -83,7 +83,8 @@ def _resolve_parameter(parameter: dict[str, Any], components: dict[str, Any]) ->
         return parameter
     prefix = "#/components/parameters/"
     assert ref.startswith(prefix), ref
-    return components["parameters"][ref.removeprefix(prefix)]
+    resolved: dict[str, Any] = components["parameters"][ref.removeprefix(prefix)]
+    return resolved
 
 
 def _sdk_methods(root: Any, base: type) -> dict[tuple[str, str], Any]:
