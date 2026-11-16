@@ -555,7 +555,8 @@ def test_sync_reports_changes_and_drops_overlay_entries(openapi: pathlib.Path) -
     op = spec["paths"]["/v3/session/"]["post"]
     op["x-didit-sdk"] = naming
     op["parameters"] = [
-        {"name": "dry_run", "in": "query", "required": True, "schema": {"type": "boolean"}}
+        *op.get("parameters", []),
+        {"name": "dry_run", "in": "query", "required": True, "schema": {"type": "boolean"}},
     ]
     spec["paths"]["/v3/new-thing/"] = {"get": {"responses": {"200": {"description": "ok"}}}}
     downloads = {
