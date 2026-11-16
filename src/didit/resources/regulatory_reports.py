@@ -133,6 +133,7 @@ class RegulatoryReports(SyncAPIResource):
         narrative: RegulatoryReportsCreateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -165,6 +166,7 @@ class RegulatoryReports(SyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -200,6 +202,7 @@ class RegulatoryReports(SyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -250,6 +253,7 @@ class RegulatoryReports(SyncAPIResource):
         report_uuid: str,
         *,
         confirm_delete: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -266,6 +270,7 @@ class RegulatoryReports(SyncAPIResource):
         Args:
           report_uuid: Report UUID.
           confirm_delete: Set to true to confirm that a finalized report and its generated files are deleted permanently.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -281,6 +286,7 @@ class RegulatoryReports(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"confirm_delete": confirm_delete},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -308,6 +314,7 @@ class RegulatoryReports(SyncAPIResource):
         narrative: RegulatoryReportsUpdateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -337,6 +344,7 @@ class RegulatoryReports(SyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -369,6 +377,7 @@ class RegulatoryReports(SyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -380,6 +389,7 @@ class RegulatoryReports(SyncAPIResource):
         self,
         report_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -393,6 +403,7 @@ class RegulatoryReports(SyncAPIResource):
 
         Args:
           report_uuid: Report UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -407,6 +418,7 @@ class RegulatoryReports(SyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -418,6 +430,7 @@ class RegulatoryReports(SyncAPIResource):
         self,
         report_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -431,6 +444,7 @@ class RegulatoryReports(SyncAPIResource):
 
         Args:
           report_uuid: Report UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -445,6 +459,7 @@ class RegulatoryReports(SyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -590,6 +605,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         narrative: RegulatoryReportsCreateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -622,6 +638,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -657,6 +674,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -707,6 +725,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         report_uuid: str,
         *,
         confirm_delete: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -723,6 +742,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         Args:
           report_uuid: Report UUID.
           confirm_delete: Set to true to confirm that a finalized report and its generated files are deleted permanently.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -738,6 +758,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"confirm_delete": confirm_delete},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -765,6 +786,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         narrative: RegulatoryReportsUpdateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -794,6 +816,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -826,6 +849,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -837,6 +861,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         self,
         report_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -850,6 +875,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
 
         Args:
           report_uuid: Report UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -864,6 +890,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -875,6 +902,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
         self,
         report_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -888,6 +916,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
 
         Args:
           report_uuid: Report UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -902,6 +931,7 @@ class AsyncRegulatoryReports(AsyncAPIResource):
                 path_params={"report_uuid": report_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

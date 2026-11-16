@@ -103,6 +103,7 @@ class Workflows(SyncAPIResource):
         face_liveness_max_attempts: int | NotGiven = NOT_GIVEN,
         face_match_max_attempts: int | NotGiven = NOT_GIVEN,
         session_expiration_time: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -110,7 +111,7 @@ class Workflows(SyncAPIResource):
     ) -> WorkflowDetail:
         """Create workflow.
 
-        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Not idempotent - each call creates a new workflow. Maximum 50 workflows per application.
+        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Without an `Idempotency-Key` each call creates a new workflow. Maximum 50 workflows per application.
 
         ``POST /v3/workflows/``
 
@@ -127,6 +128,7 @@ class Workflows(SyncAPIResource):
           face_liveness_max_attempts: Maximum liveness submissions per session. Default 3: one initial attempt plus two retries. This value is also copied into generated liveness and age-estimation workflow nodes unless the feature-level config overrides it.
           face_match_max_attempts: Maximum face-match submissions per session. Default 3: one initial attempt plus two retries. This value is also copied into generated face-match workflow nodes unless the feature-level config overrides it.
           session_expiration_time: Seconds before an unfinished session expires. Minimum 1 hour (3600), maximum 4 weeks (2419200).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -153,6 +155,7 @@ class Workflows(SyncAPIResource):
                     "face_match_max_attempts": face_match_max_attempts,
                     "session_expiration_time": session_expiration_time,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -201,6 +204,7 @@ class Workflows(SyncAPIResource):
         self,
         settings_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -214,6 +218,7 @@ class Workflows(SyncAPIResource):
 
         Args:
           settings_uuid: Per-version UUID of the workflow to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -227,6 +232,7 @@ class Workflows(SyncAPIResource):
                 cast_to=None,
                 path_params={"settings_uuid": settings_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -250,6 +256,7 @@ class Workflows(SyncAPIResource):
         face_liveness_max_attempts: int | NotGiven = NOT_GIVEN,
         face_match_max_attempts: int | NotGiven = NOT_GIVEN,
         session_expiration_time: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -275,6 +282,7 @@ class Workflows(SyncAPIResource):
           face_liveness_max_attempts: Maximum liveness submissions per session. This value is also copied into generated liveness and age-estimation workflow nodes unless the feature-level config overrides it.
           face_match_max_attempts: Maximum face-match submissions per session. This value is also copied into generated face-match workflow nodes unless the feature-level config overrides it.
           session_expiration_time: Seconds before an unfinished session expires. Minimum 1 hour (3600), maximum 4 weeks (2419200).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -302,6 +310,7 @@ class Workflows(SyncAPIResource):
                     "face_match_max_attempts": face_match_max_attempts,
                     "session_expiration_time": session_expiration_time,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -381,6 +390,7 @@ class AsyncWorkflows(AsyncAPIResource):
         face_liveness_max_attempts: int | NotGiven = NOT_GIVEN,
         face_match_max_attempts: int | NotGiven = NOT_GIVEN,
         session_expiration_time: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -388,7 +398,7 @@ class AsyncWorkflows(AsyncAPIResource):
     ) -> WorkflowDetail:
         """Create workflow.
 
-        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Not idempotent - each call creates a new workflow. Maximum 50 workflows per application.
+        Create a simple workflow. Send `features` in execution order (ordering rules apply); defaults to `published` v1. The body accepts ONLY the fields listed in `SimpleWorkflowRequest` - any other key (including `workflow_type`) is rejected with a 400. Without an `Idempotency-Key` each call creates a new workflow. Maximum 50 workflows per application.
 
         ``POST /v3/workflows/``
 
@@ -405,6 +415,7 @@ class AsyncWorkflows(AsyncAPIResource):
           face_liveness_max_attempts: Maximum liveness submissions per session. Default 3: one initial attempt plus two retries. This value is also copied into generated liveness and age-estimation workflow nodes unless the feature-level config overrides it.
           face_match_max_attempts: Maximum face-match submissions per session. Default 3: one initial attempt plus two retries. This value is also copied into generated face-match workflow nodes unless the feature-level config overrides it.
           session_expiration_time: Seconds before an unfinished session expires. Minimum 1 hour (3600), maximum 4 weeks (2419200).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -431,6 +442,7 @@ class AsyncWorkflows(AsyncAPIResource):
                     "face_match_max_attempts": face_match_max_attempts,
                     "session_expiration_time": session_expiration_time,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -479,6 +491,7 @@ class AsyncWorkflows(AsyncAPIResource):
         self,
         settings_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -492,6 +505,7 @@ class AsyncWorkflows(AsyncAPIResource):
 
         Args:
           settings_uuid: Per-version UUID of the workflow to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -505,6 +519,7 @@ class AsyncWorkflows(AsyncAPIResource):
                 cast_to=None,
                 path_params={"settings_uuid": settings_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -528,6 +543,7 @@ class AsyncWorkflows(AsyncAPIResource):
         face_liveness_max_attempts: int | NotGiven = NOT_GIVEN,
         face_match_max_attempts: int | NotGiven = NOT_GIVEN,
         session_expiration_time: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -553,6 +569,7 @@ class AsyncWorkflows(AsyncAPIResource):
           face_liveness_max_attempts: Maximum liveness submissions per session. This value is also copied into generated liveness and age-estimation workflow nodes unless the feature-level config overrides it.
           face_match_max_attempts: Maximum face-match submissions per session. This value is also copied into generated face-match workflow nodes unless the feature-level config overrides it.
           session_expiration_time: Seconds before an unfinished session expires. Minimum 1 hour (3600), maximum 4 weeks (2419200).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -580,6 +597,7 @@ class AsyncWorkflows(AsyncAPIResource):
                     "face_match_max_attempts": face_match_max_attempts,
                     "session_expiration_time": session_expiration_time,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

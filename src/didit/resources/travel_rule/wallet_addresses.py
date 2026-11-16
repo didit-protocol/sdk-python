@@ -112,6 +112,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         self_declared: bool | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -132,6 +133,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
           self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof. Returns 400 when `allow_self_declaration` is off in your Travel Rule settings.
           travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing for the assets TRP carries (BTC, ETH, and USDC on a named network). An invalid travel address returns 400.
           memo: Optional. The destination tag or memo that is part of the wallet. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -154,6 +156,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
                     "travel_address": travel_address,
                     "memo": memo,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -165,6 +168,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         self,
         entry_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -178,6 +182,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
 
         Args:
           entry_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -191,6 +196,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
                 cast_to=None,
                 path_params={"entry_uuid": entry_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -206,6 +212,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         holder_vendor_data: str | NotGiven = NOT_GIVEN,
         entity_type: str | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -223,6 +230,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
           holder_vendor_data
           entity_type
           travel_address
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -242,6 +250,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
                     "entity_type": entity_type,
                     "travel_address": travel_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -253,6 +262,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
         self,
         *,
         body: TravelRuleWalletAddressesBulkImportParamsVariant1 | Sequence[WalletAddressImportRow],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -266,6 +276,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
 
         Args:
           body
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -281,6 +292,7 @@ class TravelRuleWalletAddresses(SyncAPIResource):
                 body=body,
                 multipart="auto",
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -440,6 +452,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         self_declared: bool | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -460,6 +473,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
           self_declared: Write-only. When true, the entry is created already ownership-verified via a SELF_DECLARATION proof. Returns 400 when `allow_self_declaration` is off in your Travel Rule settings.
           travel_address: Optional. The counterparty VASP's travel address for this wallet, enabling TRP routing for the assets TRP carries (BTC, ETH, and USDC on a named network). An invalid travel address returns 400.
           memo: Optional. The destination tag or memo that is part of the wallet. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -482,6 +496,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
                     "travel_address": travel_address,
                     "memo": memo,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -493,6 +508,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         self,
         entry_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -506,6 +522,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
 
         Args:
           entry_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -519,6 +536,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
                 cast_to=None,
                 path_params={"entry_uuid": entry_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -534,6 +552,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         holder_vendor_data: str | NotGiven = NOT_GIVEN,
         entity_type: str | NotGiven = NOT_GIVEN,
         travel_address: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -551,6 +570,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
           holder_vendor_data
           entity_type
           travel_address
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -570,6 +590,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
                     "entity_type": entity_type,
                     "travel_address": travel_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -581,6 +602,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
         self,
         *,
         body: TravelRuleWalletAddressesBulkImportParamsVariant1 | Sequence[WalletAddressImportRow],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -594,6 +616,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
 
         Args:
           body
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -609,6 +632,7 @@ class AsyncTravelRuleWalletAddresses(AsyncAPIResource):
                 body=body,
                 multipart="auto",
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

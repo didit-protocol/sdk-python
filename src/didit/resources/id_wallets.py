@@ -188,6 +188,7 @@ class IdWallets(SyncAPIResource):
         self,
         request_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -201,6 +202,7 @@ class IdWallets(SyncAPIResource):
 
         Args:
           request_id: The request_id the start endpoint returned.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -214,6 +216,7 @@ class IdWallets(SyncAPIResource):
                 cast_to=DigitalIdWalletApiWalletVerificationResponse,
                 path_params={"request_id": request_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -225,6 +228,7 @@ class IdWallets(SyncAPIResource):
         self,
         request_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -238,6 +242,7 @@ class IdWallets(SyncAPIResource):
 
         Args:
           request_id: The request_id the start endpoint returned.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -251,6 +256,7 @@ class IdWallets(SyncAPIResource):
                 cast_to=DigitalIdWalletApiWalletVerificationResponse,
                 path_params={"request_id": request_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1694,6 +1700,7 @@ class IdWallets(SyncAPIResource):
         request_id: str,
         *,
         response: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1708,6 +1715,7 @@ class IdWallets(SyncAPIResource):
         Args:
           request_id: The request_id the start endpoint returned.
           response: Exactly what the wallet returned: {protocol, data} of the DigitalCredential from navigator.credentials.get, or the parsed credentialJson of Android's DigitalCredential. Encrypted to Didit; do not alter it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1722,6 +1730,7 @@ class IdWallets(SyncAPIResource):
                 path_params={"request_id": request_id},
                 auth="api_key",
                 body={"response": response},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1875,6 +1884,7 @@ class AsyncIdWallets(AsyncAPIResource):
         self,
         request_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1888,6 +1898,7 @@ class AsyncIdWallets(AsyncAPIResource):
 
         Args:
           request_id: The request_id the start endpoint returned.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1901,6 +1912,7 @@ class AsyncIdWallets(AsyncAPIResource):
                 cast_to=DigitalIdWalletApiWalletVerificationResponse,
                 path_params={"request_id": request_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1912,6 +1924,7 @@ class AsyncIdWallets(AsyncAPIResource):
         self,
         request_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1925,6 +1938,7 @@ class AsyncIdWallets(AsyncAPIResource):
 
         Args:
           request_id: The request_id the start endpoint returned.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1938,6 +1952,7 @@ class AsyncIdWallets(AsyncAPIResource):
                 cast_to=DigitalIdWalletApiWalletVerificationResponse,
                 path_params={"request_id": request_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3381,6 +3396,7 @@ class AsyncIdWallets(AsyncAPIResource):
         request_id: str,
         *,
         response: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3395,6 +3411,7 @@ class AsyncIdWallets(AsyncAPIResource):
         Args:
           request_id: The request_id the start endpoint returned.
           response: Exactly what the wallet returned: {protocol, data} of the DigitalCredential from navigator.credentials.get, or the parsed credentialJson of Android's DigitalCredential. Encrypted to Didit; do not alter it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3409,6 +3426,7 @@ class AsyncIdWallets(AsyncAPIResource):
                 path_params={"request_id": request_id},
                 auth="api_key",
                 body={"response": response},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

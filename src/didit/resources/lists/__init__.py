@@ -153,6 +153,7 @@ class Lists(SyncAPIResource):
         ]
         | str,
         description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -169,6 +170,7 @@ class Lists(SyncAPIResource):
           list_type: `allowlist` or `custom`. `blocklist` is refused with `400`.
           entry_type: What the list holds: `face`, `document` (document number), `phone`, `email`, `ip_address` (IP address or CIDR range), `device_fingerprint`, `wallet_address`, `bank_account`, `country` (ISO 3166-1 alpha-3), `user` or `business` (your `vendor_data`), or `key` (any string). It decides how entry values are validated and matched. Cannot be changed later.
           description: Optional free-text description.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -187,6 +189,7 @@ class Lists(SyncAPIResource):
                     "entry_type": entry_type,
                     "description": description,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -235,6 +238,7 @@ class Lists(SyncAPIResource):
         self,
         list_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -248,6 +252,7 @@ class Lists(SyncAPIResource):
 
         Args:
           list_uuid: UUID of the list, as returned by List lists or Create a list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -261,6 +266,7 @@ class Lists(SyncAPIResource):
                 cast_to=None,
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -274,6 +280,7 @@ class Lists(SyncAPIResource):
         *,
         name: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -289,6 +296,7 @@ class Lists(SyncAPIResource):
           list_uuid: UUID of the list, as returned by List lists or Create a list.
           name: New name. Must differ from the name of every other list of the application.
           description: New description. Send an empty string to clear it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -303,6 +311,7 @@ class Lists(SyncAPIResource):
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
                 body={"name": name, "description": description},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -423,6 +432,7 @@ class AsyncLists(AsyncAPIResource):
         ]
         | str,
         description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -439,6 +449,7 @@ class AsyncLists(AsyncAPIResource):
           list_type: `allowlist` or `custom`. `blocklist` is refused with `400`.
           entry_type: What the list holds: `face`, `document` (document number), `phone`, `email`, `ip_address` (IP address or CIDR range), `device_fingerprint`, `wallet_address`, `bank_account`, `country` (ISO 3166-1 alpha-3), `user` or `business` (your `vendor_data`), or `key` (any string). It decides how entry values are validated and matched. Cannot be changed later.
           description: Optional free-text description.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -457,6 +468,7 @@ class AsyncLists(AsyncAPIResource):
                     "entry_type": entry_type,
                     "description": description,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -505,6 +517,7 @@ class AsyncLists(AsyncAPIResource):
         self,
         list_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -518,6 +531,7 @@ class AsyncLists(AsyncAPIResource):
 
         Args:
           list_uuid: UUID of the list, as returned by List lists or Create a list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -531,6 +545,7 @@ class AsyncLists(AsyncAPIResource):
                 cast_to=None,
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -544,6 +559,7 @@ class AsyncLists(AsyncAPIResource):
         *,
         name: str | NotGiven = NOT_GIVEN,
         description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -559,6 +575,7 @@ class AsyncLists(AsyncAPIResource):
           list_uuid: UUID of the list, as returned by List lists or Create a list.
           name: New name. Must differ from the name of every other list of the application.
           description: New description. Send an empty string to clear it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -573,6 +590,7 @@ class AsyncLists(AsyncAPIResource):
                 path_params={"list_uuid": list_uuid},
                 auth="api_key",
                 body={"name": name, "description": description},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

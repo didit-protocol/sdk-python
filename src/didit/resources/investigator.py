@@ -216,6 +216,7 @@ class Investigator(SyncAPIResource):
         send_email: bool | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -233,6 +234,7 @@ class Investigator(SyncAPIResource):
           send_email: Email the person about the decision.
           email_address: Required when `send_email` is true.
           email_language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -252,6 +254,7 @@ class Investigator(SyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -272,6 +275,7 @@ class Investigator(SyncAPIResource):
         send_email: bool | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -291,6 +295,7 @@ class Investigator(SyncAPIResource):
           send_email: Email the person about the decision.
           email_address: Required when `send_email` is true.
           email_language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -312,6 +317,7 @@ class Investigator(SyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -323,6 +329,7 @@ class Investigator(SyncAPIResource):
         self,
         *,
         run_ids: Sequence[str],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -336,6 +343,7 @@ class Investigator(SyncAPIResource):
 
         Args:
           run_ids
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -349,6 +357,7 @@ class Investigator(SyncAPIResource):
                 cast_to=InvestigatorBatchAcceptResponse,
                 auth="api_key",
                 body={"run_ids": run_ids},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -652,6 +661,7 @@ class Investigator(SyncAPIResource):
         *,
         stage: Literal["none", "shadow", "live"] | str | NotGiven = NOT_GIVEN,
         monthly_spend_limit: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -666,6 +676,7 @@ class Investigator(SyncAPIResource):
         Args:
           stage
           monthly_spend_limit: Monthly limit in your billing currency, 0.01 to 1,000,000. Null turns it off.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -679,6 +690,7 @@ class Investigator(SyncAPIResource):
                 cast_to=InvestigatorSettings,
                 auth="api_key",
                 body={"stage": stage, "monthly_spend_limit": monthly_spend_limit},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -853,6 +865,7 @@ class AsyncInvestigator(AsyncAPIResource):
         send_email: bool | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -870,6 +883,7 @@ class AsyncInvestigator(AsyncAPIResource):
           send_email: Email the person about the decision.
           email_address: Required when `send_email` is true.
           email_language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -889,6 +903,7 @@ class AsyncInvestigator(AsyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -909,6 +924,7 @@ class AsyncInvestigator(AsyncAPIResource):
         send_email: bool | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -928,6 +944,7 @@ class AsyncInvestigator(AsyncAPIResource):
           send_email: Email the person about the decision.
           email_address: Required when `send_email` is true.
           email_language
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -949,6 +966,7 @@ class AsyncInvestigator(AsyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -960,6 +978,7 @@ class AsyncInvestigator(AsyncAPIResource):
         self,
         *,
         run_ids: Sequence[str],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -973,6 +992,7 @@ class AsyncInvestigator(AsyncAPIResource):
 
         Args:
           run_ids
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -986,6 +1006,7 @@ class AsyncInvestigator(AsyncAPIResource):
                 cast_to=InvestigatorBatchAcceptResponse,
                 auth="api_key",
                 body={"run_ids": run_ids},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1289,6 +1310,7 @@ class AsyncInvestigator(AsyncAPIResource):
         *,
         stage: Literal["none", "shadow", "live"] | str | NotGiven = NOT_GIVEN,
         monthly_spend_limit: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1303,6 +1325,7 @@ class AsyncInvestigator(AsyncAPIResource):
         Args:
           stage
           monthly_spend_limit: Monthly limit in your billing currency, 0.01 to 1,000,000. Null turns it off.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1316,6 +1339,7 @@ class AsyncInvestigator(AsyncAPIResource):
                 cast_to=InvestigatorSettings,
                 auth="api_key",
                 body={"stage": stage, "monthly_spend_limit": monthly_spend_limit},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

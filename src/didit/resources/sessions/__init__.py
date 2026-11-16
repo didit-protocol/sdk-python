@@ -248,6 +248,7 @@ class Sessions(SyncAPIResource):
         sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
         user_state: str | NotGiven = NOT_GIVEN,
         biometric_consent: SessionsCreateParamsBiometricConsent | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -282,6 +283,7 @@ class Sessions(SyncAPIResource):
           sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
           user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
           biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -312,6 +314,7 @@ class Sessions(SyncAPIResource):
                     "user_state": user_state,
                     "biometric_consent": biometric_consent,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -382,6 +385,7 @@ class Sessions(SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         instruction_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -410,7 +414,7 @@ class Sessions(SyncAPIResource):
 
         **Response:** `200 OK` once the deletion has completed, with a JSON body reporting the `face_retention_outcome`, the retained template's expiry and, for a KYB session, `deleted_child_verifications`. Earlier versions of this endpoint returned `204 No Content`; update clients that assert on `204`. Keep your `instruction_id` in your own erasure log.
 
-        **Idempotency:** not idempotent at the HTTP level: the first call returns `200`; repeating it returns `404` because the session no longer resolves. After a `503` the session is still in place; repeat the same request to finish deleting it.
+        **Idempotency:** without an `Idempotency-Key`, repeating a delete returns `404` because the session no longer resolves; with the same key, a repeat of a successful delete returns the first `200` response. After a `503` the session is still in place; repeat the same request to finish deleting it.
 
         **Authentication:** send your application's API key in the `x-api-key` header; the session must belong to that application. Console user access tokens (`Authorization: Bearer ...`) may also call this endpoint when they carry the `delete:sessions` permission. Authentication and permission failures both return `403`; this API never returns `401`.
 
@@ -429,6 +433,7 @@ class Sessions(SyncAPIResource):
           face_retention_deadline: Optional hard expiry for a retained template. Must be in the future.
           deletion_instruction: The class of instruction you are giving. `operational_session_delete` deletes the session and retains a template only when the policy or `retain_face_embeddings` says so. `privacy_erasure` purges every retained biometric template anchored to the session's User before deleting the session, cannot be overridden by the application policy, and cannot be combined with `retain_face_embeddings: true` (`400`).
           instruction_id: Your durable reference for this deletion instruction (for example an erasure-ticket id). Recorded on the audit trail and on any retained template. Generated by Didit when omitted.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -449,6 +454,7 @@ class Sessions(SyncAPIResource):
                     "deletion_instruction": deletion_instruction,
                     "instruction_id": instruction_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -530,6 +536,7 @@ class Sessions(SyncAPIResource):
         email_preview_token: str | NotGiven = NOT_GIVEN,
         link_to_session_id: str | NotGiven = NOT_GIVEN,
         link_reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -564,6 +571,7 @@ class Sessions(SyncAPIResource):
           email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
           link_to_session_id: Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined.
           link_reason: Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -588,6 +596,7 @@ class Sessions(SyncAPIResource):
                     "link_to_session_id": link_to_session_id,
                     "link_reason": link_reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -746,6 +755,7 @@ class Sessions(SyncAPIResource):
         *,
         for_application_id: str,
         ttl_in_seconds: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -761,6 +771,7 @@ class Sessions(SyncAPIResource):
           session_id: UUID of the source verification session to mint a token for.
           for_application_id: UUID of the Didit application that will redeem the token. Must exist, must not be deleted, and must differ from the calling application. Find it in the Business Console under **Settings → Application**.
           ttl_in_seconds: Token lifetime, in seconds. Minimum `60`, maximum `86400` (24 h). Defaults to `3600` (1 h).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -775,6 +786,7 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={"for_application_id": for_application_id, "ttl_in_seconds": ttl_in_seconds},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -789,6 +801,7 @@ class Sessions(SyncAPIResource):
         trust_review: bool,
         workflow_id: str,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -796,7 +809,7 @@ class Sessions(SyncAPIResource):
     ) -> SessionDecision:
         """Redeem a share token to clone a verification session into your application.
 
-        Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Not idempotent - a token redeems once per receiver.
+        Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Without an `Idempotency-Key` a token redeems once per receiver; repeat it with the same key to get the first response back.
 
         ``POST /v3/session/import-shared/``
 
@@ -805,6 +818,7 @@ class Sessions(SyncAPIResource):
           trust_review: If `true`, the cloned session keeps the source's final `status`. If `false`, it is forced into `In Review`.
           workflow_id: UUID of a workflow in the calling application. Cross-application IDs are rejected with `404`.
           vendor_data: Optional override for the cloned session's `vendor_data`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -823,6 +837,7 @@ class Sessions(SyncAPIResource):
                     "workflow_id": workflow_id,
                     "vendor_data": vendor_data,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -861,6 +876,7 @@ class Sessions(SyncAPIResource):
         filter_is_kyc_to_be_reviewed: bool | NotGiven = NOT_GIVEN,
         filter_euuid: str | NotGiven = NOT_GIVEN,
         filter_organization_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -931,6 +947,7 @@ class Sessions(SyncAPIResource):
           filter_is_kyc_to_be_reviewed: Narrows a `delete_all` to the sessions that match the `is_kyc_to_be_reviewed` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_euuid: Narrows a `delete_all` to the sessions that match the `euuid` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_organization_name: Narrows a `delete_all` to the sessions that match the `organization_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. With an API key it can only match your own organization's name, so it selects all of your sessions or none. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -971,6 +988,7 @@ class Sessions(SyncAPIResource):
                     "filter_euuid": filter_euuid,
                     "filter_organization_name": filter_organization_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1048,6 +1066,7 @@ class Sessions(SyncAPIResource):
         extra_fields: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         parsed_address: SessionsUpdateDataParamsParsedAddress | None | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1087,6 +1106,7 @@ class Sessions(SyncAPIResource):
           extra_fields: Per-key overrides for document-specific extra fields (e.g. `blood_group`, `dl_categories`, `mrz_string`). Keys are merged into the existing override map: send a key with a value to set it, or with `null` / `""` to remove that key from the merged view. Send the whole field as `null` to clear all previously applied overrides. Must be a JSON object, otherwise `400`. The response always returns the merged view (OCR-extracted values with your overrides applied).
           parsed_address: Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response - you cannot set it directly.
           node_id: Workflow graph node whose KYC record to patch, for graph workflows with multiple ID-verification steps (also accepted as a `node_id` body field). When omitted, the most recent KYC record on the session is patched. If no KYC exists for the given node, the call returns `404` (`"The session does not have a KYC for node '<node_id>'."`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1120,6 +1140,7 @@ class Sessions(SyncAPIResource):
                     "extra_fields": extra_fields,
                     "parsed_address": parsed_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1166,6 +1187,7 @@ class Sessions(SyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         defer_until_flow_finishes: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1196,6 +1218,7 @@ class Sessions(SyncAPIResource):
           comment: Optional free-text note recorded on the session's review trail for this feature change.
           feature_type: Which kind of step to target. Needed on non-graph workflows (`nodeId` = `default`), where every step shares no node; optional otherwise. An unknown value returns `400`.
           defer_until_flow_finishes: While the person is still in the flow, store the override as `pending_until_flow_finishes` and apply it when the flow finishes, instead of at once. Omitted or `false`, the override applies at once. On a session whose flow already ended it applies at once either way.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1215,6 +1238,7 @@ class Sessions(SyncAPIResource):
                     "feature_type": feature_type,
                     "defer_until_flow_finishes": defer_until_flow_finishes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1231,6 +1255,7 @@ class Sessions(SyncAPIResource):
         | str,
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1254,6 +1279,7 @@ class Sessions(SyncAPIResource):
           review_status: The new review status for the hit.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1269,6 +1295,7 @@ class Sessions(SyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"hit_id": hit_id, "review_status": review_status, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1283,6 +1310,7 @@ class Sessions(SyncAPIResource):
         hit_updates: Sequence[SessionsBulkUpdateAmlHitStatusParamsHitUpdates],
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1303,6 +1331,7 @@ class Sessions(SyncAPIResource):
           hit_updates: Non-empty list of hit updates.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1318,6 +1347,7 @@ class Sessions(SyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"hit_updates": hit_updates, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1349,6 +1379,7 @@ class Sessions(SyncAPIResource):
         | None
         | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1382,6 +1413,7 @@ class Sessions(SyncAPIResource):
           extra_fields: Document-specific extras, merged key-by-key. Nine keys map to dedicated POA columns: `bank_account_number`, `bank_iban`, `bank_sort_code`, `bank_routing_number`, `bank_swift_bic`, `bank_branch_name`, `bank_branch_address`, `document_phone_number`, and `additional_names` (must be a list of strings or `null`, otherwise `400`). Any other key is stored as a custom extra field. Per-key semantics: a value sets the key; `null` or `""` deletes it. Must be a JSON object, otherwise `400`.
           poa_parsed_address: Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` - you cannot set it directly.
           node_id: Workflow graph node whose POA record to patch, for graph workflows with multiple Proof of Address steps (also accepted as a `node_id` body field). When omitted, the most recent POA record on the session is patched. If no POA exists for the given node, the call returns `404` (`"The session does not have a POA for node '<node_id>'."`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1407,6 +1439,7 @@ class Sessions(SyncAPIResource):
                     "extra_fields": extra_fields,
                     "poa_parsed_address": poa_parsed_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1461,6 +1494,7 @@ class Sessions(SyncAPIResource):
         location_of_registration: str | NotGiven = NOT_GIVEN,
         vat_number: str | NotGiven = NOT_GIVEN,
         control_scheme: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1507,6 +1541,7 @@ class Sessions(SyncAPIResource):
           location_of_registration: City / subdivision of the registry of record.
           vat_number: EU VAT number. Merged into the `registry_data` snapshot only - editing it here does not re-run VAT and tax ID validation, so `vat_validation_status` and the other `vat_*` result fields are unchanged.
           control_scheme: Control / governance scheme when the registry exposes it. Stored in the registry snapshot only.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1546,6 +1581,7 @@ class Sessions(SyncAPIResource):
                     "vat_number": vat_number,
                     "control_scheme": control_scheme,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1559,6 +1595,7 @@ class Sessions(SyncAPIResource):
         party_uuid: str,
         *,
         is_skipped: bool,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1582,6 +1619,7 @@ class Sessions(SyncAPIResource):
           session_id: UUID of the parent Business Verification (KYB) session.
           party_uuid: UUID of the Key People party to update (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
           is_skipped: `true` exempts the party from verification so the Key People check can settle without it; `false` puts it back in scope.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1596,6 +1634,7 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id, "partyUuid": party_uuid},
                 auth="api_key",
                 body={"is_skipped": is_skipped},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1649,6 +1688,7 @@ class Sessions(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1671,6 +1711,7 @@ class Sessions(SyncAPIResource):
           nodes_to_resubmit: Steps to preview, using the same validation, selection and workflow ordering as a resubmission. Omit to auto-select recorded attempts needing resubmission.
           email_address: Optional. Send the email to this address instead of the person's own. Without it, the recipient is the address the person verified in the flow, else the one given in `contact_details`. No email is sent by this call.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1689,6 +1730,7 @@ class Sessions(SyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1705,6 +1747,7 @@ class Sessions(SyncAPIResource):
         status: Literal["Approved", "Declined", "In Review", "Not Finished"]
         | str
         | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1721,6 +1764,7 @@ class Sessions(SyncAPIResource):
           document_uuid: UUID of the Document AI document (`document_ai_documents[].items[].uuid` in `GET /v3/session/{sessionId}/decision/`). It must belong to the session in the path.
           extracted_data: Field keys (the keys you configured for the document) and their corrected values. Must be a JSON object; merged key by key into the stored data. Leave it out rather than sending `null`, which returns `400`.
           status: New review status of the document.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1735,6 +1779,7 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id, "documentUuid": document_uuid},
                 auth="api_key",
                 body={"extracted_data": extracted_data, "status": status},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1747,6 +1792,7 @@ class Sessions(SyncAPIResource):
         session_id: str,
         party_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1761,6 +1807,7 @@ class Sessions(SyncAPIResource):
         Args:
           session_id: UUID of the parent Business Verification (KYB) session.
           party_uuid: UUID of the Key People party (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1774,6 +1821,7 @@ class Sessions(SyncAPIResource):
                 cast_to=KYBKeyPeopleParty,
                 path_params={"sessionId": session_id, "partyUuid": party_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1931,6 +1979,7 @@ class Sessions(SyncAPIResource):
         file: FileTypes,
         model_type: Literal["kyc", "poa"] | str,
         file_password: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1947,6 +1996,7 @@ class Sessions(SyncAPIResource):
           file: The image or PDF. Allowed extensions: `jpg`, `jpeg`, `png`, `webp`, `tiff`, `pdf`. At most 15 MB as uploaded; the file is then compressed and rejected with `400` if it is still larger than 2 MB (2,097,152 bytes). Empty files are rejected.
           model_type: `kyc` adds the file to the ID verification result, `poa` to the Proof of Address result.
           file_password: Password of an encrypted PDF. Without it, or with a wrong one, an encrypted PDF returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1963,6 +2013,7 @@ class Sessions(SyncAPIResource):
                 body={"file": file, "model_type": model_type, "file_password": file_password},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1978,6 +2029,7 @@ class Sessions(SyncAPIResource):
         | str,
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1994,6 +2046,7 @@ class Sessions(SyncAPIResource):
           status: New status of the AML check.
           node_id: Workflow graph node ID of the AML check, as an alternative to the query parameter.
           node_id_query: Workflow graph node ID of the AML check to update. Needed only when the session ran more than one AML step. Takes precedence over `node_id` in the body.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2009,6 +2062,7 @@ class Sessions(SyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"status": status, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2028,6 +2082,7 @@ class Sessions(SyncAPIResource):
         risk: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
         send_webhooks: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2053,6 +2108,7 @@ class Sessions(SyncAPIResource):
           risk: A risk case from the catalog. Its warning is added to the session, with a log type that follows `new_status`. An unknown value returns `400`.
           node_id: Workflow node the risk warning is attached to. Defaults to the session's current node.
           send_webhooks: `true` sends exactly the webhooks a real status change sends to the sandbox application's destinations: `status.updated`, plus the `user.status.updated` / `user.data.updated` (or `business.status.updated` / `business.data.updated`) events the change causes, for destinations subscribed to them. `false` changes the status without logging or sending any webhook: the missed-webhook recovery never re-sends that decision, the console still updates live, and the next status change of the session sends webhooks as usual.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2074,6 +2130,7 @@ class Sessions(SyncAPIResource):
                     "node_id": node_id,
                     "send_webhooks": send_webhooks,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2127,6 +2184,7 @@ class Sessions(SyncAPIResource):
         session_id: str,
         override_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2145,6 +2203,7 @@ class Sessions(SyncAPIResource):
         Args:
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
           override_id: The `id` of the override to cancel.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2158,6 +2217,7 @@ class Sessions(SyncAPIResource):
                 cast_to=FeatureStatusOverride,
                 path_params={"sessionId": session_id, "overrideId": override_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2171,6 +2231,7 @@ class Sessions(SyncAPIResource):
         *,
         new_status: Literal["Approved", "Declined"] | str,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2192,6 +2253,7 @@ class Sessions(SyncAPIResource):
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
           new_status: The decision whose email you want to preview.
           email_language: Language of the email, the same default as Update Session Status. A language that is not offered falls back to English; `language` in the response says which one is used.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2206,6 +2268,7 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={"new_status": new_status, "email_language": email_language},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2229,6 +2292,7 @@ class Sessions(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         locale: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2247,6 +2311,7 @@ class Sessions(SyncAPIResource):
           document_group: Required document group this upload answers.
           locale: Locale used to translate the response of the next step.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2269,6 +2334,7 @@ class Sessions(SyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("documents",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2419,6 +2485,7 @@ class Sessions(SyncAPIResource):
         custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
         skip_verification: bool | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2449,6 +2516,7 @@ class Sessions(SyncAPIResource):
           custom_fields: Workflow-defined extra fields.
           skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2481,6 +2549,7 @@ class Sessions(SyncAPIResource):
                     "custom_fields": custom_fields,
                     "skip_verification": skip_verification,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2494,6 +2563,7 @@ class Sessions(SyncAPIResource):
         draft_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2509,6 +2579,7 @@ class Sessions(SyncAPIResource):
           session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
           draft_id: UUID of the party draft (`draft_id` returned when it was created).
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2523,6 +2594,7 @@ class Sessions(SyncAPIResource):
                 path_params={"sessionId": session_id, "draftId": draft_id},
                 auth="api_key",
                 query={"node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2594,6 +2666,7 @@ class Sessions(SyncAPIResource):
         custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
         skip_verification: bool | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2625,6 +2698,7 @@ class Sessions(SyncAPIResource):
           custom_fields: Workflow-defined extra fields.
           skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2657,6 +2731,7 @@ class Sessions(SyncAPIResource):
                     "custom_fields": custom_fields,
                     "skip_verification": skip_verification,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2670,6 +2745,7 @@ class Sessions(SyncAPIResource):
         *,
         locale: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2685,6 +2761,7 @@ class Sessions(SyncAPIResource):
           session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
           locale: Locale used to translate the response of the step the session advances to.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2700,6 +2777,7 @@ class Sessions(SyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id},
                 body={"locale": locale},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2711,6 +2789,7 @@ class Sessions(SyncAPIResource):
         self,
         session_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2726,6 +2805,7 @@ class Sessions(SyncAPIResource):
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2739,6 +2819,7 @@ class Sessions(SyncAPIResource):
                 cast_to=SessionFilesExport,
                 path_params={"sessionId": session_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2904,6 +2985,7 @@ class AsyncSessions(AsyncAPIResource):
         sign: SessionsCreateParamsSign | NotGiven = NOT_GIVEN,
         user_state: str | NotGiven = NOT_GIVEN,
         biometric_consent: SessionsCreateParamsBiometricConsent | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2938,6 +3020,7 @@ class AsyncSessions(AsyncAPIResource):
           sign: E-signature input for this session. `documents` are the documents to sign, for a workflow whose E-signature step takes documents from the session (`signature_documents_source` `session` or `both`): up to 20 documents and 50 MB in total. `field_values` fills the fields whose `prefill` is `api.<key>`, on workflow and session documents alike. Creating a session again for the same `workflow_id` and `vendor_data` returns the pending session; if that call sends `sign`, its documents, fields and values must be identical to the first ones, and anything different returns `400` with `{"sign": "signature_document_changed"}`. See [E-signature documents](/sessions-api/create-session#e-signature-documents).
           user_state: Where the person lives, when you know it: an ISO 3166-2 subdivision code (`US-IL`, `ES-M`) or a US state code or name (`IL`, `Illinois`). A state whose law requires explicit biometric consent (Illinois, Texas, Colorado) makes the verification flow ask for it before capturing a face, with trigger `declared_state`. An unrecognized value returns `400`. See [Biometric consent](/getting-started/biometric-consent).
           biometric_consent: Explicit biometric consent you already collected from the person. It satisfies the requirement, so the verification flow does not ask again, and the decision records it as `status: "given"` with trigger `customer_collected`. An answer the person already gave in the flow is never replaced. See [Biometric consent](/getting-started/biometric-consent).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2968,6 +3051,7 @@ class AsyncSessions(AsyncAPIResource):
                     "user_state": user_state,
                     "biometric_consent": biometric_consent,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3038,6 +3122,7 @@ class AsyncSessions(AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         instruction_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3066,7 +3151,7 @@ class AsyncSessions(AsyncAPIResource):
 
         **Response:** `200 OK` once the deletion has completed, with a JSON body reporting the `face_retention_outcome`, the retained template's expiry and, for a KYB session, `deleted_child_verifications`. Earlier versions of this endpoint returned `204 No Content`; update clients that assert on `204`. Keep your `instruction_id` in your own erasure log.
 
-        **Idempotency:** not idempotent at the HTTP level: the first call returns `200`; repeating it returns `404` because the session no longer resolves. After a `503` the session is still in place; repeat the same request to finish deleting it.
+        **Idempotency:** without an `Idempotency-Key`, repeating a delete returns `404` because the session no longer resolves; with the same key, a repeat of a successful delete returns the first `200` response. After a `503` the session is still in place; repeat the same request to finish deleting it.
 
         **Authentication:** send your application's API key in the `x-api-key` header; the session must belong to that application. Console user access tokens (`Authorization: Bearer ...`) may also call this endpoint when they carry the `delete:sessions` permission. Authentication and permission failures both return `403`; this API never returns `401`.
 
@@ -3085,6 +3170,7 @@ class AsyncSessions(AsyncAPIResource):
           face_retention_deadline: Optional hard expiry for a retained template. Must be in the future.
           deletion_instruction: The class of instruction you are giving. `operational_session_delete` deletes the session and retains a template only when the policy or `retain_face_embeddings` says so. `privacy_erasure` purges every retained biometric template anchored to the session's User before deleting the session, cannot be overridden by the application policy, and cannot be combined with `retain_face_embeddings: true` (`400`).
           instruction_id: Your durable reference for this deletion instruction (for example an erasure-ticket id). Recorded on the audit trail and on any retained template. Generated by Didit when omitted.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3105,6 +3191,7 @@ class AsyncSessions(AsyncAPIResource):
                     "deletion_instruction": deletion_instruction,
                     "instruction_id": instruction_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3186,6 +3273,7 @@ class AsyncSessions(AsyncAPIResource):
         email_preview_token: str | NotGiven = NOT_GIVEN,
         link_to_session_id: str | NotGiven = NOT_GIVEN,
         link_reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3220,6 +3308,7 @@ class AsyncSessions(AsyncAPIResource):
           email_preview_token: Optional receipt from [Preview Decision Email](/sessions-api/preview-decision-email) (for `Approved` and `Declined`) or [Preview Resubmission Email](/sessions-api/preview-resubmission) (for `Resubmitted`): its `preview_token`. Valid only with `send_email: true`; without it the request returns `400`. The recipient, language, session status, sender and email (and, for a resubmission, the selected steps) must still match the preview, and the receipt expires after 15 minutes. Otherwise the request returns `409` before the session changes or an email is sent. Existing integrations may omit this field.
           link_to_session_id: Optional UUID of another live KYC verification in the same application. Requires new_status=Approved and link_reason. Both participants must be KYC; self-links, deleted, missing and foreign-application targets return 400. The target need not be approved or have a person profile. Existing groups are joined.
           link_reason: Reviewer reason for the same-person link, required with link_to_session_id and rejected without it. Leading and trailing whitespace is trimmed; the result must be nonblank and at most 2000 characters. Recorded in the separate link audit. comment does not substitute for this field.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3244,6 +3333,7 @@ class AsyncSessions(AsyncAPIResource):
                     "link_to_session_id": link_to_session_id,
                     "link_reason": link_reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3402,6 +3492,7 @@ class AsyncSessions(AsyncAPIResource):
         *,
         for_application_id: str,
         ttl_in_seconds: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3417,6 +3508,7 @@ class AsyncSessions(AsyncAPIResource):
           session_id: UUID of the source verification session to mint a token for.
           for_application_id: UUID of the Didit application that will redeem the token. Must exist, must not be deleted, and must differ from the calling application. Find it in the Business Console under **Settings → Application**.
           ttl_in_seconds: Token lifetime, in seconds. Minimum `60`, maximum `86400` (24 h). Defaults to `3600` (1 h).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3431,6 +3523,7 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={"for_application_id": for_application_id, "ttl_in_seconds": ttl_in_seconds},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3445,6 +3538,7 @@ class AsyncSessions(AsyncAPIResource):
         trust_review: bool,
         workflow_id: str,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3452,7 +3546,7 @@ class AsyncSessions(AsyncAPIResource):
     ) -> SessionDecision:
         """Redeem a share token to clone a verification session into your application.
 
-        Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Not idempotent - a token redeems once per receiver.
+        Redeem a share token to clone a KYC or KYB session into the calling application with a fresh `session_id`. Without an `Idempotency-Key` a token redeems once per receiver; repeat it with the same key to get the first response back.
 
         ``POST /v3/session/import-shared/``
 
@@ -3461,6 +3555,7 @@ class AsyncSessions(AsyncAPIResource):
           trust_review: If `true`, the cloned session keeps the source's final `status`. If `false`, it is forced into `In Review`.
           workflow_id: UUID of a workflow in the calling application. Cross-application IDs are rejected with `404`.
           vendor_data: Optional override for the cloned session's `vendor_data`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3479,6 +3574,7 @@ class AsyncSessions(AsyncAPIResource):
                     "workflow_id": workflow_id,
                     "vendor_data": vendor_data,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3517,6 +3613,7 @@ class AsyncSessions(AsyncAPIResource):
         filter_is_kyc_to_be_reviewed: bool | NotGiven = NOT_GIVEN,
         filter_euuid: str | NotGiven = NOT_GIVEN,
         filter_organization_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3587,6 +3684,7 @@ class AsyncSessions(AsyncAPIResource):
           filter_is_kyc_to_be_reviewed: Narrows a `delete_all` to the sessions that match the `is_kyc_to_be_reviewed` filter of [List Sessions](/sessions-api/list-sessions), with the same values. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_euuid: Narrows a `delete_all` to the sessions that match the `euuid` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_organization_name: Narrows a `delete_all` to the sessions that match the `organization_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. With an API key it can only match your own organization's name, so it selects all of your sessions or none. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3627,6 +3725,7 @@ class AsyncSessions(AsyncAPIResource):
                     "filter_euuid": filter_euuid,
                     "filter_organization_name": filter_organization_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3704,6 +3803,7 @@ class AsyncSessions(AsyncAPIResource):
         extra_fields: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         parsed_address: SessionsUpdateDataParamsParsedAddress | None | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3743,6 +3843,7 @@ class AsyncSessions(AsyncAPIResource):
           extra_fields: Per-key overrides for document-specific extra fields (e.g. `blood_group`, `dl_categories`, `mrz_string`). Keys are merged into the existing override map: send a key with a value to set it, or with `null` / `""` to remove that key from the merged view. Send the whole field as `null` to clear all previously applied overrides. Must be a JSON object, otherwise `400`. The response always returns the merged view (OCR-extracted values with your overrides applied).
           parsed_address: Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` and is returned in the response - you cannot set it directly.
           node_id: Workflow graph node whose KYC record to patch, for graph workflows with multiple ID-verification steps (also accepted as a `node_id` body field). When omitted, the most recent KYC record on the session is patched. If no KYC exists for the given node, the call returns `404` (`"The session does not have a KYC for node '<node_id>'."`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3776,6 +3877,7 @@ class AsyncSessions(AsyncAPIResource):
                     "extra_fields": extra_fields,
                     "parsed_address": parsed_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3822,6 +3924,7 @@ class AsyncSessions(AsyncAPIResource):
         | str
         | NotGiven = NOT_GIVEN,
         defer_until_flow_finishes: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3852,6 +3955,7 @@ class AsyncSessions(AsyncAPIResource):
           comment: Optional free-text note recorded on the session's review trail for this feature change.
           feature_type: Which kind of step to target. Needed on non-graph workflows (`nodeId` = `default`), where every step shares no node; optional otherwise. An unknown value returns `400`.
           defer_until_flow_finishes: While the person is still in the flow, store the override as `pending_until_flow_finishes` and apply it when the flow finishes, instead of at once. Omitted or `false`, the override applies at once. On a session whose flow already ended it applies at once either way.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3871,6 +3975,7 @@ class AsyncSessions(AsyncAPIResource):
                     "feature_type": feature_type,
                     "defer_until_flow_finishes": defer_until_flow_finishes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3887,6 +3992,7 @@ class AsyncSessions(AsyncAPIResource):
         | str,
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3910,6 +4016,7 @@ class AsyncSessions(AsyncAPIResource):
           review_status: The new review status for the hit.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3925,6 +4032,7 @@ class AsyncSessions(AsyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"hit_id": hit_id, "review_status": review_status, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -3939,6 +4047,7 @@ class AsyncSessions(AsyncAPIResource):
         hit_updates: Sequence[SessionsBulkUpdateAmlHitStatusParamsHitUpdates],
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -3959,6 +4068,7 @@ class AsyncSessions(AsyncAPIResource):
           hit_updates: Non-empty list of hit updates.
           node_id: Optional graph node ID. Use it (here or as a query parameter) when the session has multiple AML checks.
           node_id_query: Workflow graph node ID. Required only when the session has multiple AML checks (one per node); omit it for single-AML sessions.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -3974,6 +4084,7 @@ class AsyncSessions(AsyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"hit_updates": hit_updates, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4005,6 +4116,7 @@ class AsyncSessions(AsyncAPIResource):
         | None
         | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4038,6 +4150,7 @@ class AsyncSessions(AsyncAPIResource):
           extra_fields: Document-specific extras, merged key-by-key. Nine keys map to dedicated POA columns: `bank_account_number`, `bank_iban`, `bank_sort_code`, `bank_routing_number`, `bank_swift_bic`, `bank_branch_name`, `bank_branch_address`, `document_phone_number`, and `additional_names` (must be a list of strings or `null`, otherwise `400`). Any other key is stored as a custom extra field. Per-key semantics: a value sets the key; `null` or `""` deletes it. Must be a JSON object, otherwise `400`.
           poa_parsed_address: Structured address. Only these nested keys are accepted: `address_type`, `city`, `region`, `street_1`, `street_2`, `postal_code`, `country` - any other key returns `400`. Per-key semantics: a value sets the key, `null` removes it. `formatted_address` (and the top-level `poa_formatted_address`) is recomputed server-side by joining `street_1`, `street_2`, `city`, `region`, `postal_code`, and `country` - you cannot set it directly.
           node_id: Workflow graph node whose POA record to patch, for graph workflows with multiple Proof of Address steps (also accepted as a `node_id` body field). When omitted, the most recent POA record on the session is patched. If no POA exists for the given node, the call returns `404` (`"The session does not have a POA for node '<node_id>'."`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4063,6 +4176,7 @@ class AsyncSessions(AsyncAPIResource):
                     "extra_fields": extra_fields,
                     "poa_parsed_address": poa_parsed_address,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4117,6 +4231,7 @@ class AsyncSessions(AsyncAPIResource):
         location_of_registration: str | NotGiven = NOT_GIVEN,
         vat_number: str | NotGiven = NOT_GIVEN,
         control_scheme: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4163,6 +4278,7 @@ class AsyncSessions(AsyncAPIResource):
           location_of_registration: City / subdivision of the registry of record.
           vat_number: EU VAT number. Merged into the `registry_data` snapshot only - editing it here does not re-run VAT and tax ID validation, so `vat_validation_status` and the other `vat_*` result fields are unchanged.
           control_scheme: Control / governance scheme when the registry exposes it. Stored in the registry snapshot only.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4202,6 +4318,7 @@ class AsyncSessions(AsyncAPIResource):
                     "vat_number": vat_number,
                     "control_scheme": control_scheme,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4215,6 +4332,7 @@ class AsyncSessions(AsyncAPIResource):
         party_uuid: str,
         *,
         is_skipped: bool,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4238,6 +4356,7 @@ class AsyncSessions(AsyncAPIResource):
           session_id: UUID of the parent Business Verification (KYB) session.
           party_uuid: UUID of the Key People party to update (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
           is_skipped: `true` exempts the party from verification so the Key People check can settle without it; `false` puts it back in scope.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4252,6 +4371,7 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id, "partyUuid": party_uuid},
                 auth="api_key",
                 body={"is_skipped": is_skipped},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4305,6 +4425,7 @@ class AsyncSessions(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         email_address: str | NotGiven = NOT_GIVEN,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4327,6 +4448,7 @@ class AsyncSessions(AsyncAPIResource):
           nodes_to_resubmit: Steps to preview, using the same validation, selection and workflow ordering as a resubmission. Omit to auto-select recorded attempts needing resubmission.
           email_address: Optional. Send the email to this address instead of the person's own. Without it, the recipient is the address the person verified in the flow, else the one given in `contact_details`. No email is sent by this call.
           email_language: Language for the notification email. Accepts any string at schema level; unsupported codes silently fall back to English (`en`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4345,6 +4467,7 @@ class AsyncSessions(AsyncAPIResource):
                     "email_address": email_address,
                     "email_language": email_language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4361,6 +4484,7 @@ class AsyncSessions(AsyncAPIResource):
         status: Literal["Approved", "Declined", "In Review", "Not Finished"]
         | str
         | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4377,6 +4501,7 @@ class AsyncSessions(AsyncAPIResource):
           document_uuid: UUID of the Document AI document (`document_ai_documents[].items[].uuid` in `GET /v3/session/{sessionId}/decision/`). It must belong to the session in the path.
           extracted_data: Field keys (the keys you configured for the document) and their corrected values. Must be a JSON object; merged key by key into the stored data. Leave it out rather than sending `null`, which returns `400`.
           status: New review status of the document.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4391,6 +4516,7 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id, "documentUuid": document_uuid},
                 auth="api_key",
                 body={"extracted_data": extracted_data, "status": status},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4403,6 +4529,7 @@ class AsyncSessions(AsyncAPIResource):
         session_id: str,
         party_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4417,6 +4544,7 @@ class AsyncSessions(AsyncAPIResource):
         Args:
           session_id: UUID of the parent Business Verification (KYB) session.
           party_uuid: UUID of the Key People party (`key_people_checks[].submitted.parties[].uuid` on the business session decision). Must belong to the session referenced by `sessionId`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4430,6 +4558,7 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=KYBKeyPeopleParty,
                 path_params={"sessionId": session_id, "partyUuid": party_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4587,6 +4716,7 @@ class AsyncSessions(AsyncAPIResource):
         file: FileTypes,
         model_type: Literal["kyc", "poa"] | str,
         file_password: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4603,6 +4733,7 @@ class AsyncSessions(AsyncAPIResource):
           file: The image or PDF. Allowed extensions: `jpg`, `jpeg`, `png`, `webp`, `tiff`, `pdf`. At most 15 MB as uploaded; the file is then compressed and rejected with `400` if it is still larger than 2 MB (2,097,152 bytes). Empty files are rejected.
           model_type: `kyc` adds the file to the ID verification result, `poa` to the Proof of Address result.
           file_password: Password of an encrypted PDF. Without it, or with a wrong one, an encrypted PDF returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4619,6 +4750,7 @@ class AsyncSessions(AsyncAPIResource):
                 body={"file": file, "model_type": model_type, "file_password": file_password},
                 multipart=True,
                 file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4634,6 +4766,7 @@ class AsyncSessions(AsyncAPIResource):
         | str,
         node_id: str | NotGiven = NOT_GIVEN,
         node_id_query: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4650,6 +4783,7 @@ class AsyncSessions(AsyncAPIResource):
           status: New status of the AML check.
           node_id: Workflow graph node ID of the AML check, as an alternative to the query parameter.
           node_id_query: Workflow graph node ID of the AML check to update. Needed only when the session ran more than one AML step. Takes precedence over `node_id` in the body.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4665,6 +4799,7 @@ class AsyncSessions(AsyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id_query},
                 body={"status": status, "node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4684,6 +4819,7 @@ class AsyncSessions(AsyncAPIResource):
         risk: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
         send_webhooks: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4709,6 +4845,7 @@ class AsyncSessions(AsyncAPIResource):
           risk: A risk case from the catalog. Its warning is added to the session, with a log type that follows `new_status`. An unknown value returns `400`.
           node_id: Workflow node the risk warning is attached to. Defaults to the session's current node.
           send_webhooks: `true` sends exactly the webhooks a real status change sends to the sandbox application's destinations: `status.updated`, plus the `user.status.updated` / `user.data.updated` (or `business.status.updated` / `business.data.updated`) events the change causes, for destinations subscribed to them. `false` changes the status without logging or sending any webhook: the missed-webhook recovery never re-sends that decision, the console still updates live, and the next status change of the session sends webhooks as usual.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4730,6 +4867,7 @@ class AsyncSessions(AsyncAPIResource):
                     "node_id": node_id,
                     "send_webhooks": send_webhooks,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4783,6 +4921,7 @@ class AsyncSessions(AsyncAPIResource):
         session_id: str,
         override_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4801,6 +4940,7 @@ class AsyncSessions(AsyncAPIResource):
         Args:
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
           override_id: The `id` of the override to cancel.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4814,6 +4954,7 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=FeatureStatusOverride,
                 path_params={"sessionId": session_id, "overrideId": override_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4827,6 +4968,7 @@ class AsyncSessions(AsyncAPIResource):
         *,
         new_status: Literal["Approved", "Declined"] | str,
         email_language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4848,6 +4990,7 @@ class AsyncSessions(AsyncAPIResource):
           session_id: UUID of the verification session. Accepts both user (KYC) and business (KYB) session IDs.
           new_status: The decision whose email you want to preview.
           email_language: Language of the email, the same default as Update Session Status. A language that is not offered falls back to English; `language` in the response says which one is used.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4862,6 +5005,7 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id},
                 auth="api_key",
                 body={"new_status": new_status, "email_language": email_language},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -4885,6 +5029,7 @@ class AsyncSessions(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         locale: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -4903,6 +5048,7 @@ class AsyncSessions(AsyncAPIResource):
           document_group: Required document group this upload answers.
           locale: Locale used to translate the response of the next step.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -4925,6 +5071,7 @@ class AsyncSessions(AsyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("documents",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -5075,6 +5222,7 @@ class AsyncSessions(AsyncAPIResource):
         custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
         skip_verification: bool | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -5105,6 +5253,7 @@ class AsyncSessions(AsyncAPIResource):
           custom_fields: Workflow-defined extra fields.
           skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -5137,6 +5286,7 @@ class AsyncSessions(AsyncAPIResource):
                     "custom_fields": custom_fields,
                     "skip_verification": skip_verification,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -5150,6 +5300,7 @@ class AsyncSessions(AsyncAPIResource):
         draft_id: str,
         *,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -5165,6 +5316,7 @@ class AsyncSessions(AsyncAPIResource):
           session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
           draft_id: UUID of the party draft (`draft_id` returned when it was created).
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -5179,6 +5331,7 @@ class AsyncSessions(AsyncAPIResource):
                 path_params={"sessionId": session_id, "draftId": draft_id},
                 auth="api_key",
                 query={"node_id": node_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -5250,6 +5403,7 @@ class AsyncSessions(AsyncAPIResource):
         custom_fields: Mapping[str, object] | NotGiven = NOT_GIVEN,
         skip_verification: bool | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -5281,6 +5435,7 @@ class AsyncSessions(AsyncAPIResource):
           custom_fields: Workflow-defined extra fields.
           skip_verification: Ask to skip this party's verification. Honoured only when the party's role allows skipping in the workflow's Key People settings.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -5313,6 +5468,7 @@ class AsyncSessions(AsyncAPIResource):
                     "custom_fields": custom_fields,
                     "skip_verification": skip_verification,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -5326,6 +5482,7 @@ class AsyncSessions(AsyncAPIResource):
         *,
         locale: str | NotGiven = NOT_GIVEN,
         node_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -5341,6 +5498,7 @@ class AsyncSessions(AsyncAPIResource):
           session_id: UUID of the Business Verification (KYB) session. It must belong to the application of the API key.
           locale: Locale used to translate the response of the step the session advances to.
           node_id: Workflow node of the KYB step. Only needed when the workflow has more than one KYB node; by default Didit uses the session's own node.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -5356,6 +5514,7 @@ class AsyncSessions(AsyncAPIResource):
                 auth="api_key",
                 query={"node_id": node_id},
                 body={"locale": locale},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -5367,6 +5526,7 @@ class AsyncSessions(AsyncAPIResource):
         self,
         session_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -5382,6 +5542,7 @@ class AsyncSessions(AsyncAPIResource):
 
         Args:
           session_id: UUID of the verification session (the `session_id` returned by `POST /v3/session/`). Accepts both User Verification (KYC) and Business Verification (KYB) session IDs. A deleted session returns `404`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -5395,6 +5556,7 @@ class AsyncSessions(AsyncAPIResource):
                 cast_to=SessionFilesExport,
                 path_params={"sessionId": session_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

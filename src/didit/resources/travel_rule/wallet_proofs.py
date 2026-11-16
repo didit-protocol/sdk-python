@@ -94,6 +94,7 @@ class TravelRuleWalletProofs(SyncAPIResource):
         *,
         decision: Literal["approve", "reject"] | str,
         note: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -109,6 +110,7 @@ class TravelRuleWalletProofs(SyncAPIResource):
           proof_uuid: proof_id from the review queue.
           decision
           note: Optional. Kept with the proof and returned as review_note.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -123,6 +125,7 @@ class TravelRuleWalletProofs(SyncAPIResource):
                 path_params={"proof_uuid": proof_uuid},
                 auth="api_key",
                 body={"decision": decision, "note": note},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -195,6 +198,7 @@ class AsyncTravelRuleWalletProofs(AsyncAPIResource):
         *,
         decision: Literal["approve", "reject"] | str,
         note: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -210,6 +214,7 @@ class AsyncTravelRuleWalletProofs(AsyncAPIResource):
           proof_uuid: proof_id from the review queue.
           decision
           note: Optional. Kept with the proof and returned as review_note.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -224,6 +229,7 @@ class AsyncTravelRuleWalletProofs(AsyncAPIResource):
                 path_params={"proof_uuid": proof_uuid},
                 auth="api_key",
                 body={"decision": decision, "note": note},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

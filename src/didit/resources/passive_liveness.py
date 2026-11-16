@@ -53,6 +53,7 @@ class PassiveLiveness(SyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -91,6 +92,7 @@ class PassiveLiveness(SyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot - nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. Also used to exclude prior sessions with the same `vendor_data` from the duplicate-face check, so re-verifying the same user does not raise `DUPLICATED_FACE`.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -113,6 +115,7 @@ class PassiveLiveness(SyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("user_image",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -146,6 +149,7 @@ class AsyncPassiveLiveness(AsyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -184,6 +188,7 @@ class AsyncPassiveLiveness(AsyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session, stores the face images, emits a `status.updated` webhook, and enrolls the detected face into your face search index. When `false`, the call is one-shot - nothing is stored and the face is not enrolled. Blocklist and duplicate screening run either way.
           vendor_data: Optional opaque identifier (your user id, email, UUID…) stored on the persisted session and echoed back. Also used to exclude prior sessions with the same `vendor_data` from the duplicate-face check, so re-verifying the same user does not raise `DUPLICATED_FACE`.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back. In multipart requests, send it as a JSON-encoded string field - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -206,6 +211,7 @@ class AsyncPassiveLiveness(AsyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("user_image",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

@@ -274,6 +274,7 @@ class TravelRule(SyncAPIResource):
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
         licence: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -311,6 +312,7 @@ class TravelRule(SyncAPIResource):
           non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
           licence: VASP licence or registration reference. Empty when not supplied.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -350,6 +352,7 @@ class TravelRule(SyncAPIResource):
                     "disabled_networks": disabled_networks,
                     "licence": licence,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -360,6 +363,7 @@ class TravelRule(SyncAPIResource):
     def send_compliance_email_confirmation(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -372,6 +376,7 @@ class TravelRule(SyncAPIResource):
         ``POST /v3/travel-rule/settings/compliance-email/confirmation/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -384,6 +389,7 @@ class TravelRule(SyncAPIResource):
                 "/v3/travel-rule/settings/compliance-email/confirmation/",
                 cast_to=TravelRuleSendComplianceEmailConfirmationResponse,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -467,6 +473,7 @@ class TravelRule(SyncAPIResource):
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
         invite: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -484,6 +491,7 @@ class TravelRule(SyncAPIResource):
           lei: Optional LEI, normalized to uppercase.
           jurisdiction: Optional ISO 3166 alpha-2 or alpha-3 country code, normalized to uppercase.
           invite: Send an invitation to the supplied email.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -503,6 +511,7 @@ class TravelRule(SyncAPIResource):
                     "jurisdiction": jurisdiction,
                     "invite": invite,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -590,6 +599,7 @@ class TravelRule(SyncAPIResource):
         *,
         decision: Literal["APPROVED", "RESTRICTED", "BLOCKED"] | str,
         reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -605,6 +615,7 @@ class TravelRule(SyncAPIResource):
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           decision
           reason: Optional. Replaces the previous reason; omit it to clear it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -619,6 +630,7 @@ class TravelRule(SyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"decision": decision, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -630,6 +642,7 @@ class TravelRule(SyncAPIResource):
         self,
         vasp_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -643,6 +656,7 @@ class TravelRule(SyncAPIResource):
 
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -656,6 +670,7 @@ class TravelRule(SyncAPIResource):
                 cast_to=TravelRuleCounterpartyDecisionResponse,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -705,6 +720,7 @@ class TravelRule(SyncAPIResource):
         vasp_id: str,
         *,
         refresh: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -719,6 +735,7 @@ class TravelRule(SyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           refresh: true screens again (and bills again) even when a fresh screening exists.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -733,6 +750,7 @@ class TravelRule(SyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"refresh": refresh},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -749,6 +767,7 @@ class TravelRule(SyncAPIResource):
         review_status: Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"]
         | str,
         reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -766,6 +785,7 @@ class TravelRule(SyncAPIResource):
           hit_id: The hit's `id`.
           review_status
           reason
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -785,6 +805,7 @@ class TravelRule(SyncAPIResource):
                     "review_status": review_status,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -836,6 +857,7 @@ class TravelRule(SyncAPIResource):
         sent_to: str | NotGiven = NOT_GIVEN,
         answer_by_days: int | NotGiven = NOT_GIVEN,
         requested_items: Sequence[TravelRuleDocumentKind] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -852,6 +874,7 @@ class TravelRule(SyncAPIResource):
           sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
           answer_by_days: Optional. Days the counterparty has to answer. Default: the standard answer window.
           requested_items: Optional. What the counterparty must provide: the questionnaire answers and/or PDF documents.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -870,6 +893,7 @@ class TravelRule(SyncAPIResource):
                     "answer_by_days": answer_by_days,
                     "requested_items": requested_items,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -890,6 +914,7 @@ class TravelRule(SyncAPIResource):
         originating_vasp: TravelRuleRegisterInboundParamsOriginatingVasp | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
         utxo: TravelRuleUtxo | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -912,6 +937,7 @@ class TravelRule(SyncAPIResource):
           originating_vasp: Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry.
           memo: Optional. The deposit's destination tag or memo on a memo network: on a shared deposit address it is what tells your customers apart, and the address-book entry for that memo is matched. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
           utxo: Optional, UTXO chains only. The deposit transaction's inputs and outputs: the sender's wallet is the declared `originator_data.wallet_address`, else the largest input.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -936,6 +962,7 @@ class TravelRule(SyncAPIResource):
                     "memo": memo,
                     "utxo": utxo,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -957,6 +984,7 @@ class TravelRule(SyncAPIResource):
         wallet_entry_id: str | NotGiven = NOT_GIVEN,
         request_action: Literal["ensure", "resend", "new"] | str | NotGiven = NOT_GIVEN,
         request_key: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -980,6 +1008,7 @@ class TravelRule(SyncAPIResource):
           wallet_entry_id: Optional. Request the ownership proof of this address book entry instead of passing `wallet_address` and `chain`. The entry must be a customer wallet with a holder (`holder_vendor_data`), an address and a chain; the saved wallet and holder are always used and a conflicting `wallet_address`, `chain`, `holder_name` or `vendor_data` is rejected. Cannot be combined with `transaction_id`.
           request_action: Only with `wallet_entry_id`. `ensure` and `resend` return the entry's active link when it has one (`200`) and create one otherwise (`201`). `new` revokes the active link and creates another; it needs `request_key`.
           request_key: Only with `request_action: new`. An idempotency key: repeating the call with the same key returns the same link while it is active, and `410` once it has been revoked or has expired.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1005,6 +1034,7 @@ class TravelRule(SyncAPIResource):
                     "request_action": request_action,
                     "request_key": request_key,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1055,6 +1085,7 @@ class TravelRule(SyncAPIResource):
         *,
         document_ids: Sequence[str],
         sent_to: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1070,6 +1101,7 @@ class TravelRule(SyncAPIResource):
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           document_ids: Documents of your own inventory, each once.
           sent_to: Optional. A compliance address on record for the counterparty, chosen the way `sent_to` of the questionnaire request is. Default: the address a Travel Rule email to the counterparty goes to.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1084,6 +1116,7 @@ class TravelRule(SyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"document_ids": document_ids, "sent_to": sent_to},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1095,6 +1128,7 @@ class TravelRule(SyncAPIResource):
         self,
         vasp_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1108,6 +1142,7 @@ class TravelRule(SyncAPIResource):
 
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1121,6 +1156,7 @@ class TravelRule(SyncAPIResource):
                 cast_to=None,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1133,6 +1169,7 @@ class TravelRule(SyncAPIResource):
         vasp_id: str,
         questionnaire_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1147,6 +1184,7 @@ class TravelRule(SyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           questionnaire_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1160,6 +1198,7 @@ class TravelRule(SyncAPIResource):
                 cast_to=None,
                 path_params={"vasp_id": vasp_id, "questionnaire_id": questionnaire_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1249,6 +1288,7 @@ class TravelRule(SyncAPIResource):
         vasp_id: str,
         *,
         assignee_email: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1263,6 +1303,7 @@ class TravelRule(SyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           assignee_email: Email of an application member. null or an empty string unassigns.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1277,6 +1318,7 @@ class TravelRule(SyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"assignee_email": assignee_email},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1422,6 +1464,7 @@ class AsyncTravelRule(AsyncAPIResource):
         disabled_networks: Sequence[Literal["GTR", "TRUST", "VERIFYVASP", "SYGNA"] | str]
         | NotGiven = NOT_GIVEN,
         licence: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1459,6 +1502,7 @@ class AsyncTravelRule(AsyncAPIResource):
           non_responsive_policy: HOLD, REJECT, PROCEED, or empty to follow timeout_outcome. See the response field of the same name.
           disabled_networks: Networks opted out of platform membership. Does not disable your connected own memberships or provision unavailable networks.
           licence: VASP licence or registration reference. Empty when not supplied.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1498,6 +1542,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "disabled_networks": disabled_networks,
                     "licence": licence,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1508,6 +1553,7 @@ class AsyncTravelRule(AsyncAPIResource):
     async def send_compliance_email_confirmation(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1520,6 +1566,7 @@ class AsyncTravelRule(AsyncAPIResource):
         ``POST /v3/travel-rule/settings/compliance-email/confirmation/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1532,6 +1579,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 "/v3/travel-rule/settings/compliance-email/confirmation/",
                 cast_to=TravelRuleSendComplianceEmailConfirmationResponse,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1615,6 +1663,7 @@ class AsyncTravelRule(AsyncAPIResource):
         lei: str | NotGiven = NOT_GIVEN,
         jurisdiction: str | NotGiven = NOT_GIVEN,
         invite: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1632,6 +1681,7 @@ class AsyncTravelRule(AsyncAPIResource):
           lei: Optional LEI, normalized to uppercase.
           jurisdiction: Optional ISO 3166 alpha-2 or alpha-3 country code, normalized to uppercase.
           invite: Send an invitation to the supplied email.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1651,6 +1701,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "jurisdiction": jurisdiction,
                     "invite": invite,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1738,6 +1789,7 @@ class AsyncTravelRule(AsyncAPIResource):
         *,
         decision: Literal["APPROVED", "RESTRICTED", "BLOCKED"] | str,
         reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1753,6 +1805,7 @@ class AsyncTravelRule(AsyncAPIResource):
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           decision
           reason: Optional. Replaces the previous reason; omit it to clear it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1767,6 +1820,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"decision": decision, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1778,6 +1832,7 @@ class AsyncTravelRule(AsyncAPIResource):
         self,
         vasp_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1791,6 +1846,7 @@ class AsyncTravelRule(AsyncAPIResource):
 
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1804,6 +1860,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 cast_to=TravelRuleCounterpartyDecisionResponse,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1853,6 +1910,7 @@ class AsyncTravelRule(AsyncAPIResource):
         vasp_id: str,
         *,
         refresh: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1867,6 +1925,7 @@ class AsyncTravelRule(AsyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           refresh: true screens again (and bills again) even when a fresh screening exists.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1881,6 +1940,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"refresh": refresh},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1897,6 +1957,7 @@ class AsyncTravelRule(AsyncAPIResource):
         review_status: Literal["Unreviewed", "Confirmed Match", "False Positive", "Inconclusive"]
         | str,
         reason: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1914,6 +1975,7 @@ class AsyncTravelRule(AsyncAPIResource):
           hit_id: The hit's `id`.
           review_status
           reason
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1933,6 +1995,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "review_status": review_status,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1984,6 +2047,7 @@ class AsyncTravelRule(AsyncAPIResource):
         sent_to: str | NotGiven = NOT_GIVEN,
         answer_by_days: int | NotGiven = NOT_GIVEN,
         requested_items: Sequence[TravelRuleDocumentKind] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2000,6 +2064,7 @@ class AsyncTravelRule(AsyncAPIResource):
           sent_to: Optional. A compliance address on record for the counterparty: for a directory entry its compliance address or a contact your application sees, for a Didit network member its confirmed compliance email. Default: the address a Travel Rule email to the counterparty goes to (your own contact first, then a platform contact, then the entry's compliance address).
           answer_by_days: Optional. Days the counterparty has to answer. Default: the standard answer window.
           requested_items: Optional. What the counterparty must provide: the questionnaire answers and/or PDF documents.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2018,6 +2083,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "answer_by_days": answer_by_days,
                     "requested_items": requested_items,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2038,6 +2104,7 @@ class AsyncTravelRule(AsyncAPIResource):
         originating_vasp: TravelRuleRegisterInboundParamsOriginatingVasp | NotGiven = NOT_GIVEN,
         memo: str | NotGiven = NOT_GIVEN,
         utxo: TravelRuleUtxo | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2060,6 +2127,7 @@ class AsyncTravelRule(AsyncAPIResource):
           originating_vasp: Optional description of the sending VASP. It stays on this transfer only (`metadata.originating_vasp`, and the transfer's originator VASP in GET /v3/travel-rule/transfers/); it never creates, edits or links a shared VASP directory entry.
           memo: Optional. The deposit's destination tag or memo on a memo network: on a shared deposit address it is what tells your customers apart, and the address-book entry for that memo is matched. XRP: a destination tag, a whole number from 0 to 4294967295 (a JSON number is accepted). XLM: a text memo of up to 28 bytes, a 64-bit id or a 32-byte hash in hex. EOS: up to 256 bytes. ATOM: up to 256 characters. HBAR: up to 100 bytes. Bitcoin, EVM, Solana, Tron, Litecoin, Bitcoin Cash, Dogecoin and Lightning wallets take no memo: one there is a `400`. Alias: `destinationTag` or `destination_tag`.
           utxo: Optional, UTXO chains only. The deposit transaction's inputs and outputs: the sender's wallet is the declared `originator_data.wallet_address`, else the largest input.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2084,6 +2152,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "memo": memo,
                     "utxo": utxo,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2105,6 +2174,7 @@ class AsyncTravelRule(AsyncAPIResource):
         wallet_entry_id: str | NotGiven = NOT_GIVEN,
         request_action: Literal["ensure", "resend", "new"] | str | NotGiven = NOT_GIVEN,
         request_key: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2128,6 +2198,7 @@ class AsyncTravelRule(AsyncAPIResource):
           wallet_entry_id: Optional. Request the ownership proof of this address book entry instead of passing `wallet_address` and `chain`. The entry must be a customer wallet with a holder (`holder_vendor_data`), an address and a chain; the saved wallet and holder are always used and a conflicting `wallet_address`, `chain`, `holder_name` or `vendor_data` is rejected. Cannot be combined with `transaction_id`.
           request_action: Only with `wallet_entry_id`. `ensure` and `resend` return the entry's active link when it has one (`200`) and create one otherwise (`201`). `new` revokes the active link and creates another; it needs `request_key`.
           request_key: Only with `request_action: new`. An idempotency key: repeating the call with the same key returns the same link while it is active, and `410` once it has been revoked or has expired.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2153,6 +2224,7 @@ class AsyncTravelRule(AsyncAPIResource):
                     "request_action": request_action,
                     "request_key": request_key,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2203,6 +2275,7 @@ class AsyncTravelRule(AsyncAPIResource):
         *,
         document_ids: Sequence[str],
         sent_to: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2218,6 +2291,7 @@ class AsyncTravelRule(AsyncAPIResource):
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           document_ids: Documents of your own inventory, each once.
           sent_to: Optional. A compliance address on record for the counterparty, chosen the way `sent_to` of the questionnaire request is. Default: the address a Travel Rule email to the counterparty goes to.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2232,6 +2306,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"document_ids": document_ids, "sent_to": sent_to},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2243,6 +2318,7 @@ class AsyncTravelRule(AsyncAPIResource):
         self,
         vasp_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2256,6 +2332,7 @@ class AsyncTravelRule(AsyncAPIResource):
 
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2269,6 +2346,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 cast_to=None,
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2281,6 +2359,7 @@ class AsyncTravelRule(AsyncAPIResource):
         vasp_id: str,
         questionnaire_id: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2295,6 +2374,7 @@ class AsyncTravelRule(AsyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           questionnaire_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2308,6 +2388,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 cast_to=None,
                 path_params={"vasp_id": vasp_id, "questionnaire_id": questionnaire_id},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -2397,6 +2478,7 @@ class AsyncTravelRule(AsyncAPIResource):
         vasp_id: str,
         *,
         assignee_email: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -2411,6 +2493,7 @@ class AsyncTravelRule(AsyncAPIResource):
         Args:
           vasp_id: The id of a row of GET /v3/travel-rule/vasps/: a directory entry or a Didit network member.
           assignee_email: Email of an application member. null or an empty string unassigns.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2425,6 +2508,7 @@ class AsyncTravelRule(AsyncAPIResource):
                 path_params={"vasp_id": vasp_id},
                 auth="api_key",
                 body={"assignee_email": assignee_email},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

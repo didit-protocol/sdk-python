@@ -72,6 +72,7 @@ class DocumentAi(SyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -111,6 +112,7 @@ class DocumentAi(SyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session - visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, with the uploaded document, the extracted values, the field definitions and the name-match snapshot stored. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only; the call is still billed.
           vendor_data: Optional opaque string (your internal user id, email, UUID…) stored on the persisted session and echoed back in the response. Use it to correlate API calls with your own records and to filter sessions later.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"onboarding"}`) - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -142,6 +144,7 @@ class DocumentAi(SyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("document",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -194,6 +197,7 @@ class AsyncDocumentAi(AsyncAPIResource):
         save_api_request: bool | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -233,6 +237,7 @@ class AsyncDocumentAi(AsyncAPIResource):
           save_api_request: When `true` (default), persists the call as an API-type session - visible in the Business Console, retrievable via `GET /v3/session/{sessionId}/decision/` using the returned `request_id`, with the uploaded document, the extracted values, the field definitions and the name-match snapshot stored. When `false`, nothing is stored and `request_id` is a transient UUID for response correlation only; the call is still billed.
           vendor_data: Optional opaque string (your internal user id, email, UUID…) stored on the persisted session and echoed back in the response. Use it to correlate API calls with your own records and to filter sessions later.
           metadata: Optional JSON object stored with the session (when `save_api_request=true`) and echoed back in the response. In multipart requests, send it as a JSON-encoded string field (e.g. `metadata={"flow":"onboarding"}`) - it is parsed into an object.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -264,6 +269,7 @@ class AsyncDocumentAi(AsyncAPIResource):
                 },
                 multipart=True,
                 file_fields=("document",),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

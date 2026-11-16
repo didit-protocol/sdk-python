@@ -112,6 +112,7 @@ class Customization(SyncAPIResource):
         image_rectangular: FileTypes | NotGiven = NOT_GIVEN,
         image_rectangular_dark: FileTypes | NotGiven = NOT_GIVEN,
         image_favicon: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -155,6 +156,7 @@ class Customization(SyncAPIResource):
           image_rectangular: Rectangular logo (2:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
           image_rectangular_dark: Rectangular logo for dark mode (2:1 aspect ratio), shown on a dark background. PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**. Returned as `logo_rectangular_dark`.
           image_favicon: Favicon image. Max **500 KB**.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -207,6 +209,7 @@ class Customization(SyncAPIResource):
                     "image_rectangular_dark",
                     "image_square",
                 ),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -299,6 +302,7 @@ class AsyncCustomization(AsyncAPIResource):
         image_rectangular: FileTypes | NotGiven = NOT_GIVEN,
         image_rectangular_dark: FileTypes | NotGiven = NOT_GIVEN,
         image_favicon: FileTypes | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -342,6 +346,7 @@ class AsyncCustomization(AsyncAPIResource):
           image_rectangular: Rectangular logo (2:1 aspect ratio). PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**.
           image_rectangular_dark: Rectangular logo for dark mode (2:1 aspect ratio), shown on a dark background. PNG, JPG or WebP, at least 512 px on the long side, at most **1 MB**. Returned as `logo_rectangular_dark`.
           image_favicon: Favicon image. Max **500 KB**.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -394,6 +399,7 @@ class AsyncCustomization(AsyncAPIResource):
                     "image_rectangular_dark",
                     "image_square",
                 ),
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

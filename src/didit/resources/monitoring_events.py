@@ -210,6 +210,7 @@ class MonitoringEvents(SyncAPIResource):
         transaction_context: MonitoringEventsCreateParamsTransactionContext | NotGiven = NOT_GIVEN,
         payload: Mapping[str, object] | NotGiven = NOT_GIVEN,
         custom_values: Mapping[str, str | float | bool | None] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -234,6 +235,7 @@ class MonitoringEvents(SyncAPIResource):
           transaction_context: Money context. Non-empty values here also satisfy the required payload keys of the action.
           payload: The category's domain fields, at most 16384 bytes once JSON-encoded. Some actions require keys (in `payload` or `transaction_context`): `gameplay.p2p_settlement` needs `game_id`, `counterparty_vendor_data`, `stake_amount`, `net_result_amount`, `role` and one of `hand_id`, `round_id`, `match_id`; `gameplay.bet_placed` and `gameplay.bet_settled` need `game_id`; `payment.deposit_initiated`, `payment.deposit_completed`, `payment.withdrawal_requested` and `payment.withdrawal_completed` need `payment_reference_id`, `amount`, `currency`, `payment_method`, `status`; `payment.withdrawal_address_changed` needs `withdrawal_address_hash`; `dispute.chargeback_opened`, `dispute.chargeback_won` and `dispute.chargeback_lost` need `payment_reference_id` and one of `dispute_id`, `chargeback_id`; `session.bot_signal_observed` needs `telemetry_schema_version` and one of `bot_score`, `actions_per_minute`, `timing_variance_ms`, `pointer_entropy`, `keystroke_entropy`, `reaction_time_ms_p50`; `responsible_gambling.self_exclusion_match` needs `registry_source`, `exclusion_status`, `identity_match_ref`. Every `security` action ending in `_changed` needs `changed_field`, plus `previous_reference_hash` or `new_reference_hash` when the field is `password`, `mfa_method`, `mfa`, `email`, `phone`, `withdrawal_address`, `payout_method` or `api_key`. Send hashes and references, never a card number, a full withdrawal address, a password hash or an MFA secret.
           custom_values: Up to 100 keys of your own, addressable from rules as `custom_values.<key>`. Values must be scalars (string, number, boolean or null); nested objects and arrays are rejected.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -260,6 +262,7 @@ class MonitoringEvents(SyncAPIResource):
                     "payload": payload,
                     "custom_values": custom_values,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -271,6 +274,7 @@ class MonitoringEvents(SyncAPIResource):
         self,
         *,
         events: Sequence[MonitoringEventCreateRequest],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -284,6 +288,7 @@ class MonitoringEvents(SyncAPIResource):
 
         Args:
           events: 1 to 500 events. Each item follows `MonitoringEventCreateRequest`, including the 7-day past and 5-minute future window on `occurred_at`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -297,6 +302,7 @@ class MonitoringEvents(SyncAPIResource):
                 cast_to=MonitoringEventsCreateBatchResponse,
                 auth="api_key",
                 body={"events": events},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -328,6 +334,7 @@ class MonitoringEvents(SyncAPIResource):
         ttl_seconds: int | NotGiven = NOT_GIVEN,
         max_uses: int | None | NotGiven = NOT_GIVEN,
         bind_to_origin: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -346,6 +353,7 @@ class MonitoringEvents(SyncAPIResource):
           ttl_seconds: Lifetime of the credential in seconds.
           max_uses: Number of events the credential may submit (a batch spends one use per event). Send `null` for no cap within the lifetime.
           bind_to_origin: When set, the browser `Origin` header of every device request must equal this value exactly; a request without `Origin` is refused.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -366,6 +374,7 @@ class MonitoringEvents(SyncAPIResource):
                     "max_uses": max_uses,
                     "bind_to_origin": bind_to_origin,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -570,6 +579,7 @@ class MonitoringEvents(SyncAPIResource):
         self,
         event_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -583,6 +593,7 @@ class MonitoringEvents(SyncAPIResource):
 
         Args:
           event_uuid: Didit identifier of the event (`event_uuid` from the create, batch, list or timeline response), not your own `event_id`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -596,6 +607,7 @@ class MonitoringEvents(SyncAPIResource):
                 cast_to=None,
                 path_params={"event_uuid": event_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -766,6 +778,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
         transaction_context: MonitoringEventsCreateParamsTransactionContext | NotGiven = NOT_GIVEN,
         payload: Mapping[str, object] | NotGiven = NOT_GIVEN,
         custom_values: Mapping[str, str | float | bool | None] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -790,6 +803,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
           transaction_context: Money context. Non-empty values here also satisfy the required payload keys of the action.
           payload: The category's domain fields, at most 16384 bytes once JSON-encoded. Some actions require keys (in `payload` or `transaction_context`): `gameplay.p2p_settlement` needs `game_id`, `counterparty_vendor_data`, `stake_amount`, `net_result_amount`, `role` and one of `hand_id`, `round_id`, `match_id`; `gameplay.bet_placed` and `gameplay.bet_settled` need `game_id`; `payment.deposit_initiated`, `payment.deposit_completed`, `payment.withdrawal_requested` and `payment.withdrawal_completed` need `payment_reference_id`, `amount`, `currency`, `payment_method`, `status`; `payment.withdrawal_address_changed` needs `withdrawal_address_hash`; `dispute.chargeback_opened`, `dispute.chargeback_won` and `dispute.chargeback_lost` need `payment_reference_id` and one of `dispute_id`, `chargeback_id`; `session.bot_signal_observed` needs `telemetry_schema_version` and one of `bot_score`, `actions_per_minute`, `timing_variance_ms`, `pointer_entropy`, `keystroke_entropy`, `reaction_time_ms_p50`; `responsible_gambling.self_exclusion_match` needs `registry_source`, `exclusion_status`, `identity_match_ref`. Every `security` action ending in `_changed` needs `changed_field`, plus `previous_reference_hash` or `new_reference_hash` when the field is `password`, `mfa_method`, `mfa`, `email`, `phone`, `withdrawal_address`, `payout_method` or `api_key`. Send hashes and references, never a card number, a full withdrawal address, a password hash or an MFA secret.
           custom_values: Up to 100 keys of your own, addressable from rules as `custom_values.<key>`. Values must be scalars (string, number, boolean or null); nested objects and arrays are rejected.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -816,6 +830,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
                     "payload": payload,
                     "custom_values": custom_values,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -827,6 +842,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
         self,
         *,
         events: Sequence[MonitoringEventCreateRequest],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -840,6 +856,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
 
         Args:
           events: 1 to 500 events. Each item follows `MonitoringEventCreateRequest`, including the 7-day past and 5-minute future window on `occurred_at`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -853,6 +870,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
                 cast_to=MonitoringEventsCreateBatchResponse,
                 auth="api_key",
                 body={"events": events},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -884,6 +902,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
         ttl_seconds: int | NotGiven = NOT_GIVEN,
         max_uses: int | None | NotGiven = NOT_GIVEN,
         bind_to_origin: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -902,6 +921,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
           ttl_seconds: Lifetime of the credential in seconds.
           max_uses: Number of events the credential may submit (a batch spends one use per event). Send `null` for no cap within the lifetime.
           bind_to_origin: When set, the browser `Origin` header of every device request must equal this value exactly; a request without `Origin` is refused.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -922,6 +942,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
                     "max_uses": max_uses,
                     "bind_to_origin": bind_to_origin,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1126,6 +1147,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
         self,
         event_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1139,6 +1161,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
 
         Args:
           event_uuid: Didit identifier of the event (`event_uuid` from the create, batch, list or timeline response), not your own `event_id`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1152,6 +1175,7 @@ class AsyncMonitoringEvents(AsyncAPIResource):
                 cast_to=None,
                 path_params={"event_uuid": event_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

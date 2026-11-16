@@ -47,7 +47,14 @@ def _spec_operations() -> dict[tuple[str, str], dict[str, Any]]:
                 raw_server_operations += 1
                 name_key = (naming["resource"], naming["method"])
                 assert name_key not in out, f"{key} duplicates {name_key}"
-                out[name_key] = {"key": key, "path": path, "naming": naming, "op": op, "item": item}
+                out[name_key] = {
+                    "key": key,
+                    "path": path,
+                    "naming": naming,
+                    "op": op,
+                    "item": item,
+                    "components": spec.get("components", {}),
+                }
     # Every server operation got its own name: none was lost to a duplicate.
     assert len(out) == raw_server_operations
     for name, entry in _deprecated().items():
@@ -63,9 +70,21 @@ def _spec_operations() -> dict[tuple[str, str], dict[str, Any]]:
             "naming": naming,
             "op": entry["operation"],
             "item": {},
+            "components": {},
             "deprecated": True,
         }
     return out
+
+
+def _resolve_parameter(parameter: dict[str, Any], components: dict[str, Any]) -> dict[str, Any]:
+    """A parameter, following a ``#/components/parameters/<name>`` reference (upstream shares the header)."""
+    ref = parameter.get("$ref")
+    if ref is None:
+        return parameter
+    prefix = "#/components/parameters/"
+    assert ref.startswith(prefix), ref
+    resolved: dict[str, Any] = components["parameters"][ref.removeprefix(prefix)]
+    return resolved
 
 
 def _sdk_methods(root: Any, base: type) -> dict[tuple[str, str], Any]:
@@ -158,9 +177,13 @@ def test_signatures_follow_the_paths() -> None:
         assert len(positional) == len(path_names), name
         for option in ("extra_headers", "extra_query", "extra_body", "timeout"):
             assert option in params, (name, option)
+        declared = [
+            _resolve_parameter(p, info["components"])
+            for p in [*info["item"].get("parameters", []), *info["op"].get("parameters", [])]
+        ]
         has_idempotency = any(
             p.get("in") == "header" and p.get("name", "").lower() == "idempotency-key"
-            for p in [*info["item"].get("parameters", []), *info["op"].get("parameters", [])]
+            for p in declared
         )
         assert ("idempotency_key" in params) == has_idempotency, name
 

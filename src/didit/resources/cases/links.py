@@ -89,6 +89,7 @@ class CasesLinks(SyncAPIResource):
         *,
         entity_type: Literal["session", "business_session", "transaction", "network"] | str,
         entity_uuid: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -104,6 +105,7 @@ class CasesLinks(SyncAPIResource):
           case_uuid: Case UUID.
           entity_type: Type of record to attach. A network must be visible and contain the selected case subject.
           entity_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -119,6 +121,7 @@ class CasesLinks(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"entity_type": entity_type, "entity_uuid": entity_uuid},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -131,6 +134,7 @@ class CasesLinks(SyncAPIResource):
         case_uuid: str,
         link_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -145,6 +149,7 @@ class CasesLinks(SyncAPIResource):
         Args:
           case_uuid: Case UUID.
           link_uuid: Link UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -159,6 +164,7 @@ class CasesLinks(SyncAPIResource):
                 path_params={"case_uuid": case_uuid, "link_uuid": link_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -227,6 +233,7 @@ class AsyncCasesLinks(AsyncAPIResource):
         *,
         entity_type: Literal["session", "business_session", "transaction", "network"] | str,
         entity_uuid: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -242,6 +249,7 @@ class AsyncCasesLinks(AsyncAPIResource):
           case_uuid: Case UUID.
           entity_type: Type of record to attach. A network must be visible and contain the selected case subject.
           entity_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -257,6 +265,7 @@ class AsyncCasesLinks(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"entity_type": entity_type, "entity_uuid": entity_uuid},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -269,6 +278,7 @@ class AsyncCasesLinks(AsyncAPIResource):
         case_uuid: str,
         link_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -283,6 +293,7 @@ class AsyncCasesLinks(AsyncAPIResource):
         Args:
           case_uuid: Case UUID.
           link_uuid: Link UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -297,6 +308,7 @@ class AsyncCasesLinks(AsyncAPIResource):
                 path_params={"case_uuid": case_uuid, "link_uuid": link_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

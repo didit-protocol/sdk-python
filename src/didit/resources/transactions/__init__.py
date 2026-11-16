@@ -185,6 +185,7 @@ class Transactions(SyncAPIResource):
         travel_rule_details: TransactionsCreateParamsTravelRuleDetails | NotGiven = NOT_GIVEN,
         network_snapshot: TransactionsCreateParamsNetworkSnapshot | NotGiven = NOT_GIVEN,
         include_crypto_screening: bool | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -208,6 +209,7 @@ class Transactions(SyncAPIResource):
           travel_rule_details: Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name."
           network_snapshot: Pre-computed network graph snapshot.
           include_crypto_screening: Per-transaction override for crypto blockchain analytics screening. When `true`, crypto screening is performed regardless of the application default. When `false`, crypto screening is skipped even if enabled in the application settings. When omitted or `null`, the application-level default configured in the Console is used. Crypto screening requires `transaction_details.direction`, `currency_kind: "crypto"`, a chain/currency, and the wallet address selected by the direction: inbound pre-transfer screening uses `counterparty.payment_method.account_id`, inbound transaction-hash screening uses `subject.payment_method.account_id`, and outbound screening uses `counterparty.payment_method.account_id`. When `transaction_details.payment_reference_id` contains a blockchain transaction hash, Didit performs transaction screening and returns transaction summary enrichment when available.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -233,6 +235,7 @@ class Transactions(SyncAPIResource):
                     "network_snapshot": network_snapshot,
                     "include_crypto_screening": include_crypto_screening,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -283,6 +286,7 @@ class Transactions(SyncAPIResource):
         vendor_data: str,
         ttl_seconds: int | NotGiven = NOT_GIVEN,
         max_uses: int | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -298,6 +302,7 @@ class Transactions(SyncAPIResource):
           vendor_data: Your internal identifier for the end user this token is scoped to. Enforced as the subject identity of every transaction submitted with the token.
           ttl_seconds: Token lifetime in seconds. Defaults to 900 (15 minutes); maximum 86400 (24 hours).
           max_uses: Maximum number of successful submissions allowed with this token. Omit or null for unlimited uses within the TTL.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -311,6 +316,7 @@ class Transactions(SyncAPIResource):
                 cast_to=TransactionsCreateSdkTokenResponse,
                 auth="api_key",
                 body={"vendor_data": vendor_data, "ttl_seconds": ttl_seconds, "max_uses": max_uses},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -494,6 +500,7 @@ class Transactions(SyncAPIResource):
         *,
         body: TransactionsBatchDeleteParamsSelectedTransactions
         | TransactionsBatchDeleteParamsAllTransactions,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -511,6 +518,7 @@ class Transactions(SyncAPIResource):
 
         Args:
           body
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -525,6 +533,7 @@ class Transactions(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body=body,
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -643,6 +652,7 @@ class AsyncTransactions(AsyncAPIResource):
         travel_rule_details: TransactionsCreateParamsTravelRuleDetails | NotGiven = NOT_GIVEN,
         network_snapshot: TransactionsCreateParamsNetworkSnapshot | NotGiven = NOT_GIVEN,
         include_crypto_screening: bool | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -666,6 +676,7 @@ class AsyncTransactions(AsyncAPIResource):
           travel_rule_details: Travel Rule data. When Travel Rule is enabled and transaction_category is travel_rule, Didit runs the exchange itself: it ignores status, protocol, required and obligations_count, and uses originator_data, beneficiary_data and metadata. Otherwise Didit stores these values as a passive Travel Rule record. While Travel Rule is on, an outbound transfer at or above your threshold must carry what its regime requires (EU TFR or FATF Recommendation 16), checked on the sides you send: a missing field answers 400 under `travel_rule_details.originator_data` or `travel_rule_details.beneficiary_data`, for example "EU TFR requires the originator name."
           network_snapshot: Pre-computed network graph snapshot.
           include_crypto_screening: Per-transaction override for crypto blockchain analytics screening. When `true`, crypto screening is performed regardless of the application default. When `false`, crypto screening is skipped even if enabled in the application settings. When omitted or `null`, the application-level default configured in the Console is used. Crypto screening requires `transaction_details.direction`, `currency_kind: "crypto"`, a chain/currency, and the wallet address selected by the direction: inbound pre-transfer screening uses `counterparty.payment_method.account_id`, inbound transaction-hash screening uses `subject.payment_method.account_id`, and outbound screening uses `counterparty.payment_method.account_id`. When `transaction_details.payment_reference_id` contains a blockchain transaction hash, Didit performs transaction screening and returns transaction summary enrichment when available.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -691,6 +702,7 @@ class AsyncTransactions(AsyncAPIResource):
                     "network_snapshot": network_snapshot,
                     "include_crypto_screening": include_crypto_screening,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -741,6 +753,7 @@ class AsyncTransactions(AsyncAPIResource):
         vendor_data: str,
         ttl_seconds: int | NotGiven = NOT_GIVEN,
         max_uses: int | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -756,6 +769,7 @@ class AsyncTransactions(AsyncAPIResource):
           vendor_data: Your internal identifier for the end user this token is scoped to. Enforced as the subject identity of every transaction submitted with the token.
           ttl_seconds: Token lifetime in seconds. Defaults to 900 (15 minutes); maximum 86400 (24 hours).
           max_uses: Maximum number of successful submissions allowed with this token. Omit or null for unlimited uses within the TTL.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -769,6 +783,7 @@ class AsyncTransactions(AsyncAPIResource):
                 cast_to=TransactionsCreateSdkTokenResponse,
                 auth="api_key",
                 body={"vendor_data": vendor_data, "ttl_seconds": ttl_seconds, "max_uses": max_uses},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -952,6 +967,7 @@ class AsyncTransactions(AsyncAPIResource):
         *,
         body: TransactionsBatchDeleteParamsSelectedTransactions
         | TransactionsBatchDeleteParamsAllTransactions,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -969,6 +985,7 @@ class AsyncTransactions(AsyncAPIResource):
 
         Args:
           body
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -983,6 +1000,7 @@ class AsyncTransactions(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body=body,
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

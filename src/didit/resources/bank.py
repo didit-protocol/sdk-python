@@ -54,6 +54,7 @@ class Bank(SyncAPIResource):
         holder: BankAccountCheckHolder,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
         consent: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -69,7 +70,7 @@ class Bank(SyncAPIResource):
 
         **Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.
 
-        **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
+        **Retries.** Send an `Idempotency-Key` header: the same key and body return the first response, with the same `request_id`, and the check runs and is billed once. Without a key, every request is a new check and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
         **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one (`name_match_score` 78), `0003` a `no_match` (`name_match_score` 0), `0006` a `no_match` for an account that does not exist (`name_match_score` null), `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match` (`name_match_score` 100).
 
@@ -83,6 +84,7 @@ class Bank(SyncAPIResource):
           holder: The name the account is checked against. Send exactly one of `full_name` and `business_name`.
           vendor_data: Your own reference for this check, returned unchanged.
           consent: Set to `true` when the account holder has explicitly consented to this check. Required in the countries whose account check needs that consent: without it the check is refused with a `400` whose `field` is `consent` and whose `reason` is `required`, and nothing is billed. Elsewhere it is optional, and Didit records it with the check's charge when you send it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -102,6 +104,7 @@ class Bank(SyncAPIResource):
                     "vendor_data": vendor_data,
                     "consent": consent,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -134,6 +137,7 @@ class AsyncBank(AsyncAPIResource):
         holder: BankAccountCheckHolder,
         vendor_data: str | None | NotGiven = NOT_GIVEN,
         consent: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -149,7 +153,7 @@ class AsyncBank(AsyncAPIResource):
 
         **Billing.** Each check the bank answers is billed once at the Account check price of the account's country, whatever the result: a `no_match`, an account that does not exist and a `cannot_verify` are billed too. A request answered with an error is never billed.
 
-        **Every request is a new check.** There is no idempotency key and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
+        **Retries.** Send an `Idempotency-Key` header: the same key and body return the first response, with the same `request_id`, and the check runs and is billed once. Without a key, every request is a new check and no endpoint to read a check back, so a retried request runs, and is billed, again. Store the response.
 
         **Sandbox.** Use a sandbox API key with the sample account details. A sandbox key calls no bank and is charged nothing. The last 4 characters of the IBAN, else of the account number, choose the answer: `0001` a `close_match` with a `holder_name`, `0002` a `close_match` without one (`name_match_score` 78), `0003` a `no_match` (`name_match_score` 0), `0006` a `no_match` for an account that does not exist (`name_match_score` null), `0004` `cannot_verify`, `0005` a `503` and `0009` a `400`. Any other ending is a `match` (`name_match_score` 100).
 
@@ -163,6 +167,7 @@ class AsyncBank(AsyncAPIResource):
           holder: The name the account is checked against. Send exactly one of `full_name` and `business_name`.
           vendor_data: Your own reference for this check, returned unchanged.
           consent: Set to `true` when the account holder has explicitly consented to this check. Required in the countries whose account check needs that consent: without it the check is refused with a `400` whose `field` is `consent` and whose `reason` is `required`, and nothing is billed. Elsewhere it is optional, and Didit records it with the check's charge when you send it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -182,6 +187,7 @@ class AsyncBank(AsyncAPIResource):
                     "vendor_data": vendor_data,
                     "consent": consent,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

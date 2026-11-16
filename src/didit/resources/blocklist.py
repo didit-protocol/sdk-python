@@ -98,6 +98,7 @@ class Blocklist(SyncAPIResource):
         blocklist_document: bool | NotGiven = NOT_GIVEN,
         blocklist_phone: bool | NotGiven = NOT_GIVEN,
         blocklist_email: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -115,6 +116,7 @@ class Blocklist(SyncAPIResource):
           blocklist_document: Blocklist the session's identity document. The document needs its issuing state, document type, document number and full name.
           blocklist_phone: Blocklist the session's phone number.
           blocklist_email: Blocklist the session's email address.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -134,6 +136,7 @@ class Blocklist(SyncAPIResource):
                     "blocklist_phone": blocklist_phone,
                     "blocklist_email": blocklist_email,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -149,6 +152,7 @@ class Blocklist(SyncAPIResource):
         unblock_document: bool | NotGiven = NOT_GIVEN,
         unblock_phone: bool | NotGiven = NOT_GIVEN,
         unblock_email: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -166,6 +170,7 @@ class Blocklist(SyncAPIResource):
           unblock_document: Lift the block on the session's identity document.
           unblock_phone: Lift the block on the session's phone number.
           unblock_email: Lift the block on the session's email address.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -185,6 +190,7 @@ class Blocklist(SyncAPIResource):
                     "unblock_phone": unblock_phone,
                     "unblock_email": unblock_email,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -259,6 +265,7 @@ class AsyncBlocklist(AsyncAPIResource):
         blocklist_document: bool | NotGiven = NOT_GIVEN,
         blocklist_phone: bool | NotGiven = NOT_GIVEN,
         blocklist_email: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -276,6 +283,7 @@ class AsyncBlocklist(AsyncAPIResource):
           blocklist_document: Blocklist the session's identity document. The document needs its issuing state, document type, document number and full name.
           blocklist_phone: Blocklist the session's phone number.
           blocklist_email: Blocklist the session's email address.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -295,6 +303,7 @@ class AsyncBlocklist(AsyncAPIResource):
                     "blocklist_phone": blocklist_phone,
                     "blocklist_email": blocklist_email,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -310,6 +319,7 @@ class AsyncBlocklist(AsyncAPIResource):
         unblock_document: bool | NotGiven = NOT_GIVEN,
         unblock_phone: bool | NotGiven = NOT_GIVEN,
         unblock_email: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -327,6 +337,7 @@ class AsyncBlocklist(AsyncAPIResource):
           unblock_document: Lift the block on the session's identity document.
           unblock_phone: Lift the block on the session's phone number.
           unblock_email: Lift the block on the session's email address.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -346,6 +357,7 @@ class AsyncBlocklist(AsyncAPIResource):
                     "unblock_phone": unblock_phone,
                     "unblock_email": unblock_email,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

@@ -130,6 +130,7 @@ class TransactionsRules(SyncAPIResource):
         aggregation: Sequence[TransactionRuleAggregationParam] | NotGiven = NOT_GIVEN,
         actions: Sequence[TransactionRuleActionParam] | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -152,6 +153,7 @@ class TransactionsRules(SyncAPIResource):
           aggregation
           actions
           metadata: Free-form metadata stored on the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -176,6 +178,7 @@ class TransactionsRules(SyncAPIResource):
                     "actions": actions,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -224,6 +227,7 @@ class TransactionsRules(SyncAPIResource):
         self,
         rule_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -237,6 +241,7 @@ class TransactionsRules(SyncAPIResource):
 
         Args:
           rule_uuid: The rule's uuid from list or create.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -250,6 +255,7 @@ class TransactionsRules(SyncAPIResource):
                 cast_to=None,
                 path_params={"rule_uuid": rule_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -271,6 +277,7 @@ class TransactionsRules(SyncAPIResource):
         aggregation: Sequence[TransactionRuleAggregationParam] | NotGiven = NOT_GIVEN,
         actions: Sequence[TransactionRuleActionParam] | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -294,6 +301,7 @@ class TransactionsRules(SyncAPIResource):
           aggregation
           actions
           metadata: Free-form metadata stored on the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -319,6 +327,7 @@ class TransactionsRules(SyncAPIResource):
                     "actions": actions,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -335,6 +344,7 @@ class TransactionsRules(SyncAPIResource):
         scope: TransactionRuleScopeParam | NotGiven = NOT_GIVEN,
         period_days: int | NotGiven = NOT_GIVEN,
         rule_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -353,6 +363,7 @@ class TransactionsRules(SyncAPIResource):
           scope: Which transactions the rule applies to. Only these three keys are accepted.
           period_days
           rule_id: Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -373,6 +384,7 @@ class TransactionsRules(SyncAPIResource):
                     "period_days": period_days,
                     "rule_id": rule_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -437,6 +449,7 @@ class TransactionsRules(SyncAPIResource):
         *,
         library_keys: Sequence[str] | NotGiven = NOT_GIVEN,
         bundle: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -451,6 +464,7 @@ class TransactionsRules(SyncAPIResource):
         Args:
           library_keys: Specific presets to install or uninstall.
           bundle: Install or uninstall every preset in this bundle instead.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -464,6 +478,7 @@ class TransactionsRules(SyncAPIResource):
                 cast_to=TransactionRuleInstallResult,
                 auth="api_key",
                 body={"library_keys": library_keys, "bundle": bundle},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -476,6 +491,7 @@ class TransactionsRules(SyncAPIResource):
         *,
         library_keys: Sequence[str] | NotGiven = NOT_GIVEN,
         bundle: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -490,6 +506,7 @@ class TransactionsRules(SyncAPIResource):
         Args:
           library_keys: Specific presets to install or uninstall.
           bundle: Install or uninstall every preset in this bundle instead.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -503,6 +520,7 @@ class TransactionsRules(SyncAPIResource):
                 cast_to=TransactionRuleInstallResult,
                 auth="api_key",
                 body={"library_keys": library_keys, "bundle": bundle},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -601,6 +619,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         aggregation: Sequence[TransactionRuleAggregationParam] | NotGiven = NOT_GIVEN,
         actions: Sequence[TransactionRuleActionParam] | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -623,6 +642,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
           aggregation
           actions
           metadata: Free-form metadata stored on the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -647,6 +667,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                     "actions": actions,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -695,6 +716,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         self,
         rule_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -708,6 +730,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
 
         Args:
           rule_uuid: The rule's uuid from list or create.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -721,6 +744,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                 cast_to=None,
                 path_params={"rule_uuid": rule_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -742,6 +766,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         aggregation: Sequence[TransactionRuleAggregationParam] | NotGiven = NOT_GIVEN,
         actions: Sequence[TransactionRuleActionParam] | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -765,6 +790,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
           aggregation
           actions
           metadata: Free-form metadata stored on the rule.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -790,6 +816,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                     "actions": actions,
                     "metadata": metadata,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -806,6 +833,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         scope: TransactionRuleScopeParam | NotGiven = NOT_GIVEN,
         period_days: int | NotGiven = NOT_GIVEN,
         rule_id: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -824,6 +852,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
           scope: Which transactions the rule applies to. Only these three keys are accepted.
           period_days
           rule_id: Optional ID of the rule being edited. Excludes that rule from overlap comparisons; does not change the candidate configuration.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -844,6 +873,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                     "period_days": period_days,
                     "rule_id": rule_id,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -908,6 +938,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         *,
         library_keys: Sequence[str] | NotGiven = NOT_GIVEN,
         bundle: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -922,6 +953,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         Args:
           library_keys: Specific presets to install or uninstall.
           bundle: Install or uninstall every preset in this bundle instead.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -935,6 +967,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                 cast_to=TransactionRuleInstallResult,
                 auth="api_key",
                 body={"library_keys": library_keys, "bundle": bundle},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -947,6 +980,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         *,
         library_keys: Sequence[str] | NotGiven = NOT_GIVEN,
         bundle: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -961,6 +995,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
         Args:
           library_keys: Specific presets to install or uninstall.
           bundle: Install or uninstall every preset in this bundle instead.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -974,6 +1009,7 @@ class AsyncTransactionsRules(AsyncAPIResource):
                 cast_to=TransactionRuleInstallResult,
                 auth="api_key",
                 body={"library_keys": library_keys, "bundle": bundle},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

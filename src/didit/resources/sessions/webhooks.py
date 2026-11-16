@@ -126,6 +126,7 @@ class SessionsWebhooks(SyncAPIResource):
         session_id: str,
         webhook_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -140,6 +141,7 @@ class SessionsWebhooks(SyncAPIResource):
         Args:
           session_id: UUID of the verification session, user (KYC) or business (KYB): the `session_id` returned by `POST /v3/session/`. The server resolves it against both session types. **Must be a valid UUID.** The route only matches well-formed UUIDs, so a malformed value is rejected by the URL router before any application code runs and the response is a `404` **HTML** page rather than the JSON `{"detail": ...}` envelope shown below.
           webhook_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/session/{sessionId}/webhooks/`. It must belong to the session in the path.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -153,6 +155,7 @@ class SessionsWebhooks(SyncAPIResource):
                 cast_to=SessionWebhookDelivery,
                 path_params={"sessionId": session_id, "webhook_uuid": webhook_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -258,6 +261,7 @@ class AsyncSessionsWebhooks(AsyncAPIResource):
         session_id: str,
         webhook_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -272,6 +276,7 @@ class AsyncSessionsWebhooks(AsyncAPIResource):
         Args:
           session_id: UUID of the verification session, user (KYC) or business (KYB): the `session_id` returned by `POST /v3/session/`. The server resolves it against both session types. **Must be a valid UUID.** The route only matches well-formed UUIDs, so a malformed value is rejected by the URL router before any application code runs and the response is a `404` **HTML** page rather than the JSON `{"detail": ...}` envelope shown below.
           webhook_uuid: UUID of the delivery to resend: the `uuid` of an entry returned by `GET /v3/session/{sessionId}/webhooks/`. It must belong to the session in the path.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -285,6 +290,7 @@ class AsyncSessionsWebhooks(AsyncAPIResource):
                 cast_to=SessionWebhookDelivery,
                 path_params={"sessionId": session_id, "webhook_uuid": webhook_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

@@ -61,6 +61,7 @@ class Kyb(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         webhook_url: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -97,6 +98,7 @@ class Kyb(SyncAPIResource):
           vendor_data: Your identifier for this lookup; echoed back and included in the webhook callback.
           metadata: Free-form JSON; echoed back and included in the webhook callback.
           webhook_url: Switches the search to asynchronous mode: the API returns immediately and POSTs an unsigned `kyb.registry_search.resolved` callback to this URL when the candidate list is ready.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -119,6 +121,7 @@ class Kyb(SyncAPIResource):
                     "metadata": metadata,
                     "webhook_url": webhook_url,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -133,6 +136,7 @@ class Kyb(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -155,6 +159,7 @@ class Kyb(SyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -173,6 +178,7 @@ class Kyb(SyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -187,6 +193,7 @@ class Kyb(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -211,6 +218,7 @@ class Kyb(SyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -229,6 +237,7 @@ class Kyb(SyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -243,6 +252,7 @@ class Kyb(SyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -267,6 +277,7 @@ class Kyb(SyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -285,6 +296,7 @@ class Kyb(SyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -320,6 +332,7 @@ class AsyncKyb(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         webhook_url: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -356,6 +369,7 @@ class AsyncKyb(AsyncAPIResource):
           vendor_data: Your identifier for this lookup; echoed back and included in the webhook callback.
           metadata: Free-form JSON; echoed back and included in the webhook callback.
           webhook_url: Switches the search to asynchronous mode: the API returns immediately and POSTs an unsigned `kyb.registry_search.resolved` callback to this URL when the candidate list is ready.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -378,6 +392,7 @@ class AsyncKyb(AsyncAPIResource):
                     "metadata": metadata,
                     "webhook_url": webhook_url,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -392,6 +407,7 @@ class AsyncKyb(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -414,6 +430,7 @@ class AsyncKyb(AsyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -432,6 +449,7 @@ class AsyncKyb(AsyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -446,6 +464,7 @@ class AsyncKyb(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -470,6 +489,7 @@ class AsyncKyb(AsyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -488,6 +508,7 @@ class AsyncKyb(AsyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -502,6 +523,7 @@ class AsyncKyb(AsyncAPIResource):
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
         save_api_request: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -526,6 +548,7 @@ class AsyncKyb(AsyncAPIResource):
           vendor_data: Your identifier for this company; echoed back and stored with the business session.
           metadata: Free-form JSON stored with the business session and echoed back.
           save_api_request: Must be `true` (the default). KYB registry selects are always persisted so billing and retrieval can be tracked; `false` returns `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -544,6 +567,7 @@ class AsyncKyb(AsyncAPIResource):
                     "metadata": metadata,
                     "save_api_request": save_api_request,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

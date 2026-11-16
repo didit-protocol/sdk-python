@@ -146,6 +146,7 @@ class Users(SyncAPIResource):
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -168,6 +169,7 @@ class Users(SyncAPIResource):
           approved_phones: Verified phone numbers for this user. Fully replaces the stored list.
           issuing_states: Issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`. Fully replaces the stored list.
           reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -192,6 +194,7 @@ class Users(SyncAPIResource):
                     "issuing_states": issuing_states,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -261,6 +264,7 @@ class Users(SyncAPIResource):
         delete_all: bool | NotGiven = NOT_GIVEN,
         retain_face_embeddings: bool | NotGiven = NOT_GIVEN,
         face_retention_days: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -282,6 +286,7 @@ class Users(SyncAPIResource):
           delete_all: If `true`, deletes every user in the application.
           retain_face_embeddings: Your explicit choice to keep one image-free biometric template of each deleted person for duplicate detection, for `face_retention_days`. Everything else about the person is deleted. Omit it, or send `false`, to delete the templates with the users. When `true`, `face_retention_days` is required.
           face_retention_days: Number of days the image-free biometric template is kept when `retain_face_embeddings` is `true`. Required with it, and rejected without it with a `400` on `face_retention_days`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -301,6 +306,7 @@ class Users(SyncAPIResource):
                     "retain_face_embeddings": retain_face_embeddings,
                     "face_retention_days": face_retention_days,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -315,6 +321,7 @@ class Users(SyncAPIResource):
         estimate_only: bool | NotGiven = NOT_GIVEN,
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -333,6 +340,7 @@ class Users(SyncAPIResource):
           estimate_only: When true, returns the cost estimate and performs no writes - no screening, no billing, no job.
           vendor_data_list: Your own identifiers of the users to toggle, matched exactly as sent.
           didit_internal_id_list: Didit internal ids of the users to toggle - the `didit_internal_id` returned by the create, get and list endpoints.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -351,6 +359,7 @@ class Users(SyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -364,6 +373,7 @@ class Users(SyncAPIResource):
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -379,6 +389,7 @@ class Users(SyncAPIResource):
           vendor_data: Your unique identifier for the user.
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
           reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -393,6 +404,7 @@ class Users(SyncAPIResource):
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
                 body={"status": status, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -420,6 +432,7 @@ class Users(SyncAPIResource):
         send_verification_link: bool | NotGiven = NOT_GIVEN,
         workflow_id: str | NotGiven = NOT_GIVEN,
         language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -427,7 +440,7 @@ class Users(SyncAPIResource):
     ) -> UsersCreateResponse:
         """Create user.
 
-        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent.
+        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent without an `Idempotency-Key`.
 
         **Contact details:** `email` and `phone_number` are stored in `metadata.contact`, and `country` in `metadata.address`. When you send `first_name` or `last_name` without `full_name`, Didit joins them into `full_name`.
 
@@ -455,6 +468,7 @@ class Users(SyncAPIResource):
           send_verification_link: When `true`, Didit creates a verification session for the person on `workflow_id` and emails them the link at `email`. Requires `email` and `workflow_id`. A scoped API key also needs `sessions` write.
           workflow_id: The workflow of the verification session. Required when `send_verification_link` is `true`. It must verify a person: a Business Verification (KYB) workflow is refused. Ignored otherwise.
           language: Language of the verification email, as a [supported language](/integration/supported-languages) code. English when omitted. Ignored when `send_verification_link` is not `true`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -486,6 +500,7 @@ class Users(SyncAPIResource):
                     "workflow_id": workflow_id,
                     "language": language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -499,6 +514,7 @@ class Users(SyncAPIResource):
         *,
         image: str,
         comment: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -514,6 +530,7 @@ class Users(SyncAPIResource):
           didit_internal_id: Didit's internal User UUID, returned as `didit_internal_id` by `GET /v3/users/{vendor_data}/` and `POST /v3/users/create/`.
           image: Raw base64-encoded JPG or PNG face image. Do not include a `data:image/...;base64,` prefix. Max decoded size: 2 MB.
           comment: Optional operator-visible note for the uploaded face.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -529,6 +546,7 @@ class Users(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"image": image, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -548,6 +566,7 @@ class Users(SyncAPIResource):
         filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -569,6 +588,7 @@ class Users(SyncAPIResource):
           filter_date_from
           filter_date_to
           didit_internal_id_list: Entities to toggle. Required unless update_all is true.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -593,6 +613,7 @@ class Users(SyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -783,6 +804,7 @@ class AsyncUsers(AsyncAPIResource):
         approved_phones: Sequence[str] | NotGiven = NOT_GIVEN,
         issuing_states: Sequence[str] | NotGiven = NOT_GIVEN,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -805,6 +827,7 @@ class AsyncUsers(AsyncAPIResource):
           approved_phones: Verified phone numbers for this user. Fully replaces the stored list.
           issuing_states: Issuing countries (ISO 3166-1 alpha-3), e.g. `["USA"]`. Fully replaces the stored list.
           reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -829,6 +852,7 @@ class AsyncUsers(AsyncAPIResource):
                     "issuing_states": issuing_states,
                     "reason": reason,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -898,6 +922,7 @@ class AsyncUsers(AsyncAPIResource):
         delete_all: bool | NotGiven = NOT_GIVEN,
         retain_face_embeddings: bool | NotGiven = NOT_GIVEN,
         face_retention_days: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -919,6 +944,7 @@ class AsyncUsers(AsyncAPIResource):
           delete_all: If `true`, deletes every user in the application.
           retain_face_embeddings: Your explicit choice to keep one image-free biometric template of each deleted person for duplicate detection, for `face_retention_days`. Everything else about the person is deleted. Omit it, or send `false`, to delete the templates with the users. When `true`, `face_retention_days` is required.
           face_retention_days: Number of days the image-free biometric template is kept when `retain_face_embeddings` is `true`. Required with it, and rejected without it with a `400` on `face_retention_days`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -938,6 +964,7 @@ class AsyncUsers(AsyncAPIResource):
                     "retain_face_embeddings": retain_face_embeddings,
                     "face_retention_days": face_retention_days,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -952,6 +979,7 @@ class AsyncUsers(AsyncAPIResource):
         estimate_only: bool | NotGiven = NOT_GIVEN,
         vendor_data_list: Sequence[str] | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -970,6 +998,7 @@ class AsyncUsers(AsyncAPIResource):
           estimate_only: When true, returns the cost estimate and performs no writes - no screening, no billing, no job.
           vendor_data_list: Your own identifiers of the users to toggle, matched exactly as sent.
           didit_internal_id_list: Didit internal ids of the users to toggle - the `didit_internal_id` returned by the create, get and list endpoints.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -988,6 +1017,7 @@ class AsyncUsers(AsyncAPIResource):
                     "vendor_data_list": vendor_data_list,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1001,6 +1031,7 @@ class AsyncUsers(AsyncAPIResource):
         *,
         status: Literal["ACTIVE", "FLAGGED", "BLOCKED"] | str,
         reason: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1016,6 +1047,7 @@ class AsyncUsers(AsyncAPIResource):
           vendor_data: Your unique identifier for the user.
           status: New lifecycle status. `BLOCKED` also adds the `vendor_data` to the system blocklist.
           reason: Why the status changed. Recorded on the status-change entry of the user's activity (`comments[].comment`, and **Activity** in the Business Console), only when the status actually changes. Webhooks do not carry it.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1030,6 +1062,7 @@ class AsyncUsers(AsyncAPIResource):
                 path_params={"vendor_data": vendor_data},
                 auth="api_key",
                 body={"status": status, "reason": reason},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1057,6 +1090,7 @@ class AsyncUsers(AsyncAPIResource):
         send_verification_link: bool | NotGiven = NOT_GIVEN,
         workflow_id: str | NotGiven = NOT_GIVEN,
         language: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1064,7 +1098,7 @@ class AsyncUsers(AsyncAPIResource):
     ) -> UsersCreateResponse:
         """Create user.
 
-        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent.
+        Create a [user](/entities/users) by `vendor_data`, before or without a verification session. `vendor_data` must be unique among the application's users (a duplicate returns `400`). Not idempotent without an `Idempotency-Key`.
 
         **Contact details:** `email` and `phone_number` are stored in `metadata.contact`, and `country` in `metadata.address`. When you send `first_name` or `last_name` without `full_name`, Didit joins them into `full_name`.
 
@@ -1092,6 +1126,7 @@ class AsyncUsers(AsyncAPIResource):
           send_verification_link: When `true`, Didit creates a verification session for the person on `workflow_id` and emails them the link at `email`. Requires `email` and `workflow_id`. A scoped API key also needs `sessions` write.
           workflow_id: The workflow of the verification session. Required when `send_verification_link` is `true`. It must verify a person: a Business Verification (KYB) workflow is refused. Ignored otherwise.
           language: Language of the verification email, as a [supported language](/integration/supported-languages) code. English when omitted. Ignored when `send_verification_link` is not `true`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1123,6 +1158,7 @@ class AsyncUsers(AsyncAPIResource):
                     "workflow_id": workflow_id,
                     "language": language,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1136,6 +1172,7 @@ class AsyncUsers(AsyncAPIResource):
         *,
         image: str,
         comment: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1151,6 +1188,7 @@ class AsyncUsers(AsyncAPIResource):
           didit_internal_id: Didit's internal User UUID, returned as `didit_internal_id` by `GET /v3/users/{vendor_data}/` and `POST /v3/users/create/`.
           image: Raw base64-encoded JPG or PNG face image. Do not include a `data:image/...;base64,` prefix. Max decoded size: 2 MB.
           comment: Optional operator-visible note for the uploaded face.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1166,6 +1204,7 @@ class AsyncUsers(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"image": image, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1185,6 +1224,7 @@ class AsyncUsers(AsyncAPIResource):
         filter_date_from: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         didit_internal_id_list: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1206,6 +1246,7 @@ class AsyncUsers(AsyncAPIResource):
           filter_date_from
           filter_date_to
           didit_internal_id_list: Entities to toggle. Required unless update_all is true.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1230,6 +1271,7 @@ class AsyncUsers(AsyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "didit_internal_id_list": didit_internal_id_list,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

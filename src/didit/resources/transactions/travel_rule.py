@@ -80,6 +80,7 @@ class TransactionsTravelRule(SyncAPIResource):
         lei: str | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         vasp_name: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -105,6 +106,7 @@ class TransactionsTravelRule(SyncAPIResource):
           lei: With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint.
           country: With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint.
           vasp_name: With action=update_compliance_email: optional counterparty name saved with the address when nonempty.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -132,6 +134,7 @@ class TransactionsTravelRule(SyncAPIResource):
                     "country": country,
                     "vasp_name": vasp_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -145,6 +148,7 @@ class TransactionsTravelRule(SyncAPIResource):
         *,
         confirmed: bool,
         wallet_address: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -160,6 +164,7 @@ class TransactionsTravelRule(SyncAPIResource):
           transaction_id: Didit-stable UUID of the transaction your application holds for this transfer: the beneficiary side's transaction on an INTERNAL-rail transfer, or the transaction you created (outbound or inbound) when the counterparty wallet was declared self-hosted.
           confirmed: true to confirm ownership, false to deny it.
           wallet_address: Inbound TRP transfers: the payment address Didit returns to the originating VASP when you approve. Defaults to the matched address book entry's address, then beneficiary_data.wallet_address. On a declared self-hosted wallet transfer that names no counterparty wallet, the wallet whose ownership you verified; without it the request is rejected with 400. Ignored for other transfers.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -174,6 +179,7 @@ class TransactionsTravelRule(SyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"confirmed": confirmed, "wallet_address": wallet_address},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -227,6 +233,7 @@ class TransactionsTravelRule(SyncAPIResource):
         requested_documents: Sequence[str] | NotGiven = NOT_GIVEN,
         reply_to: str | None | NotGiven = NOT_GIVEN,
         files: Sequence[FileTypes] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -245,6 +252,7 @@ class TransactionsTravelRule(SyncAPIResource):
           requested_documents: Required (at least one) for a DOCUMENT_REQUEST, and only allowed there.
           reply_to: A message of the same transfer. A reply that carries a document fulfils the document request it answers.
           files: Multipart only. Up to 5 files of 10 MB each.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -265,6 +273,7 @@ class TransactionsTravelRule(SyncAPIResource):
                     "reply_to": reply_to,
                     "files": files,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -281,6 +290,7 @@ class TransactionsTravelRule(SyncAPIResource):
         amount: str | NotGiven = NOT_GIVEN,
         currency: str | NotGiven = NOT_GIVEN,
         reference: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -299,6 +309,7 @@ class TransactionsTravelRule(SyncAPIResource):
           amount: Amount as a decimal string.
           currency: Asset code.
           reference: Optional idempotency key. A repeat with the same value returns the transfer the first call booked.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -319,6 +330,7 @@ class TransactionsTravelRule(SyncAPIResource):
                     "currency": currency,
                     "reference": reference,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -374,6 +386,7 @@ class TransactionsTravelRule(SyncAPIResource):
         transaction_id: str,
         *,
         channel: Literal["link", "email"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -388,6 +401,7 @@ class TransactionsTravelRule(SyncAPIResource):
         Args:
           transaction_id: Didit-stable transaction UUID that owns the transfer.
           channel: link returns a new link; email also attempts to send it to the end user's Didit-record email.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -402,6 +416,7 @@ class TransactionsTravelRule(SyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"channel": channel},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -453,6 +468,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         lei: str | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         vasp_name: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -478,6 +494,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
           lei: With action=add_vasp_hint: optional LEI, normalized to uppercase. Empty clears the previous LEI hint.
           country: With action=add_vasp_hint: optional country hint, normalized to uppercase. Empty clears the previous country hint.
           vasp_name: With action=update_compliance_email: optional counterparty name saved with the address when nonempty.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -505,6 +522,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                     "country": country,
                     "vasp_name": vasp_name,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -518,6 +536,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         *,
         confirmed: bool,
         wallet_address: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -533,6 +552,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
           transaction_id: Didit-stable UUID of the transaction your application holds for this transfer: the beneficiary side's transaction on an INTERNAL-rail transfer, or the transaction you created (outbound or inbound) when the counterparty wallet was declared self-hosted.
           confirmed: true to confirm ownership, false to deny it.
           wallet_address: Inbound TRP transfers: the payment address Didit returns to the originating VASP when you approve. Defaults to the matched address book entry's address, then beneficiary_data.wallet_address. On a declared self-hosted wallet transfer that names no counterparty wallet, the wallet whose ownership you verified; without it the request is rejected with 400. Ignored for other transfers.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -547,6 +567,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"confirmed": confirmed, "wallet_address": wallet_address},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -600,6 +621,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         requested_documents: Sequence[str] | NotGiven = NOT_GIVEN,
         reply_to: str | None | NotGiven = NOT_GIVEN,
         files: Sequence[FileTypes] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -618,6 +640,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
           requested_documents: Required (at least one) for a DOCUMENT_REQUEST, and only allowed there.
           reply_to: A message of the same transfer. A reply that carries a document fulfils the document request it answers.
           files: Multipart only. Up to 5 files of 10 MB each.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -638,6 +661,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                     "reply_to": reply_to,
                     "files": files,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -654,6 +678,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         amount: str | NotGiven = NOT_GIVEN,
         currency: str | NotGiven = NOT_GIVEN,
         reference: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -672,6 +697,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
           amount: Amount as a decimal string.
           currency: Asset code.
           reference: Optional idempotency key. A repeat with the same value returns the transfer the first call booked.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -692,6 +718,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                     "currency": currency,
                     "reference": reference,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -747,6 +774,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         transaction_id: str,
         *,
         channel: Literal["link", "email"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -761,6 +789,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
         Args:
           transaction_id: Didit-stable transaction UUID that owns the transfer.
           channel: link returns a new link; email also attempts to send it to the end user's Didit-record email.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -775,6 +804,7 @@ class AsyncTransactionsTravelRule(AsyncAPIResource):
                 path_params={"transaction_id": transaction_id},
                 auth="api_key",
                 body={"channel": channel},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

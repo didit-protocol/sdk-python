@@ -122,6 +122,7 @@ class CasesBlueprints(SyncAPIResource):
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
         applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -149,6 +150,7 @@ class CasesBlueprints(SyncAPIResource):
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
           applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -179,6 +181,7 @@ class CasesBlueprints(SyncAPIResource):
                     "publish": publish,
                     "applies_to": applies_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -228,6 +231,7 @@ class CasesBlueprints(SyncAPIResource):
         self,
         blueprint_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -241,6 +245,7 @@ class CasesBlueprints(SyncAPIResource):
 
         Args:
           blueprint_uuid: Blueprint UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -255,6 +260,7 @@ class CasesBlueprints(SyncAPIResource):
                 path_params={"blueprint_uuid": blueprint_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -281,6 +287,7 @@ class CasesBlueprints(SyncAPIResource):
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
         applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -309,6 +316,7 @@ class CasesBlueprints(SyncAPIResource):
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           expected_version: The version opened by the editor. A stale version returns 409 without changing the review policy.
           applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -340,6 +348,7 @@ class CasesBlueprints(SyncAPIResource):
                     "expected_version": expected_version,
                     "applies_to": applies_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -386,6 +395,7 @@ class CasesBlueprints(SyncAPIResource):
         self,
         *,
         preset_keys: Sequence[str] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -399,6 +409,7 @@ class CasesBlueprints(SyncAPIResource):
 
         Args:
           preset_keys: Subset of screening_hit, aml_investigation, suspicious_activity, kyc. Omit to install all.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -413,6 +424,7 @@ class CasesBlueprints(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"preset_keys": preset_keys},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -426,6 +438,7 @@ class CasesBlueprints(SyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -437,6 +450,7 @@ class CasesBlueprints(SyncAPIResource):
           blueprint_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -452,6 +466,7 @@ class CasesBlueprints(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -500,6 +515,7 @@ class CasesBlueprints(SyncAPIResource):
         expected_version: int,
         expected_revision: str | None,
         changes: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -512,6 +528,7 @@ class CasesBlueprints(SyncAPIResource):
           expected_version
           expected_revision
           changes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -531,6 +548,7 @@ class CasesBlueprints(SyncAPIResource):
                     "expected_revision": expected_revision,
                     "changes": changes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -544,6 +562,7 @@ class CasesBlueprints(SyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -555,6 +574,7 @@ class CasesBlueprints(SyncAPIResource):
           blueprint_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -570,6 +590,7 @@ class CasesBlueprints(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -623,6 +644,7 @@ class CasesBlueprints(SyncAPIResource):
         self,
         *,
         prompt: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -636,6 +658,7 @@ class CasesBlueprints(SyncAPIResource):
 
         Args:
           prompt: Nonblank description of the review policy to propose.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -650,6 +673,7 @@ class CasesBlueprints(SyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"prompt": prompt},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -733,6 +757,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         publish: bool | NotGiven = NOT_GIVEN,
         applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -760,6 +785,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           publish: Set false to save a never-published draft. The record remains inactive at version 0 until the draft is explicitly published. Omitting this field preserves immediate creation for existing integrations.
           applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -790,6 +816,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                     "publish": publish,
                     "applies_to": applies_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -839,6 +866,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         self,
         blueprint_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -852,6 +880,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
 
         Args:
           blueprint_uuid: Blueprint UUID.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -866,6 +895,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                 path_params={"blueprint_uuid": blueprint_uuid},
                 scope="application",
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -892,6 +922,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         default_deadline_hours: int | None | NotGiven = NOT_GIVEN,
         expected_version: int | NotGiven = NOT_GIVEN,
         applies_to: CaseBlueprintAppliesToParam | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -920,6 +951,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           default_deadline_hours: Default deadline for newly opened cases. Existing case deadlines are unchanged.
           expected_version: The version opened by the editor. A stale version returns 409 without changing the review policy.
           applies_to: Case types this blueprint describes. Optional on create and update; new blueprints default to an empty list. Stored in the accepted case policy snapshot.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -951,6 +983,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                     "expected_version": expected_version,
                     "applies_to": applies_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -997,6 +1030,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         self,
         *,
         preset_keys: Sequence[str] | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1010,6 +1044,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
 
         Args:
           preset_keys: Subset of screening_hit, aml_investigation, suspicious_activity, kyc. Omit to install all.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1024,6 +1059,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"preset_keys": preset_keys},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1037,6 +1073,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1048,6 +1085,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           blueprint_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1063,6 +1101,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1111,6 +1150,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         expected_version: int,
         expected_revision: str | None,
         changes: Mapping[str, object],
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1123,6 +1163,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           expected_version
           expected_revision
           changes
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1142,6 +1183,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                     "expected_revision": expected_revision,
                     "changes": changes,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1155,6 +1197,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         *,
         expected_version: int,
         expected_revision: str | None,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1166,6 +1209,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
           blueprint_uuid
           expected_version
           expected_revision
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1181,6 +1225,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"expected_version": expected_version, "expected_revision": expected_revision},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1234,6 +1279,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
         self,
         *,
         prompt: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1247,6 +1293,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
 
         Args:
           prompt: Nonblank description of the review policy to propose.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1261,6 +1308,7 @@ class AsyncCasesBlueprints(AsyncAPIResource):
                 scope="application",
                 auth="api_key",
                 body={"prompt": prompt},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

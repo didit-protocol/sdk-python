@@ -138,6 +138,7 @@ class TravelRuleNetworks(SyncAPIResource):
         expected_monthly_transfers: int | NotGiven = NOT_GIVEN,
         expected_monthly_volume_usd: str | NotGiven = NOT_GIVEN,
         assets: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -167,6 +168,7 @@ class TravelRuleNetworks(SyncAPIResource):
           expected_monthly_transfers
           expected_monthly_volume_usd: Expected monthly volume in USD, up to 2 decimal places. Returned as a string.
           assets: Asset tickers, stored upper-case, sorted and de-duplicated.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -198,6 +200,7 @@ class TravelRuleNetworks(SyncAPIResource):
                     "expected_monthly_volume_usd": expected_monthly_volume_usd,
                     "assets": assets,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -208,6 +211,7 @@ class TravelRuleNetworks(SyncAPIResource):
     def submit_questionnaire(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -220,6 +224,7 @@ class TravelRuleNetworks(SyncAPIResource):
         ``POST /v3/travel-rule/networks/questionnaire/submit/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -232,6 +237,7 @@ class TravelRuleNetworks(SyncAPIResource):
                 "/v3/travel-rule/networks/questionnaire/submit/",
                 cast_to=TravelRuleNetworkQuestionnaire,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -243,6 +249,7 @@ class TravelRuleNetworks(SyncAPIResource):
         self,
         network: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -256,6 +263,7 @@ class TravelRuleNetworks(SyncAPIResource):
 
         Args:
           network: The network to join through Didit's membership.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -269,6 +277,7 @@ class TravelRuleNetworks(SyncAPIResource):
                 cast_to=TravelRuleNetworkParticipant,
                 path_params={"network": network},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -382,6 +391,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
         expected_monthly_transfers: int | NotGiven = NOT_GIVEN,
         expected_monthly_volume_usd: str | NotGiven = NOT_GIVEN,
         assets: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -411,6 +421,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
           expected_monthly_transfers
           expected_monthly_volume_usd: Expected monthly volume in USD, up to 2 decimal places. Returned as a string.
           assets: Asset tickers, stored upper-case, sorted and de-duplicated.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -442,6 +453,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
                     "expected_monthly_volume_usd": expected_monthly_volume_usd,
                     "assets": assets,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -452,6 +464,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
     async def submit_questionnaire(
         self,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -464,6 +477,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
         ``POST /v3/travel-rule/networks/questionnaire/submit/``
 
         Args:
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -476,6 +490,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
                 "/v3/travel-rule/networks/questionnaire/submit/",
                 cast_to=TravelRuleNetworkQuestionnaire,
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -487,6 +502,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
         self,
         network: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -500,6 +516,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
 
         Args:
           network: The network to join through Didit's membership.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -513,6 +530,7 @@ class AsyncTravelRuleNetworks(AsyncAPIResource):
                 cast_to=TravelRuleNetworkParticipant,
                 path_params={"network": network},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

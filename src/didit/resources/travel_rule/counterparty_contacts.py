@@ -99,6 +99,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
         role: str | NotGiven = NOT_GIVEN,
         phone: str | NotGiven = NOT_GIVEN,
         receives_requests: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -117,6 +118,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
           role: Optional. The contact's role.
           phone: Optional. The contact's phone number.
           receives_requests: Whether due-diligence requests and reminders go to this contact.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -137,6 +139,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
                     "phone": phone,
                     "receives_requests": receives_requests,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -148,6 +151,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
         self,
         contact_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -161,6 +165,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
 
         Args:
           contact_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -174,6 +179,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
                 cast_to=None,
                 path_params={"contact_uuid": contact_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -190,6 +196,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
         role: str | NotGiven = NOT_GIVEN,
         phone: str | NotGiven = NOT_GIVEN,
         receives_requests: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -208,6 +215,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
           role
           phone
           receives_requests
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -228,6 +236,7 @@ class TravelRuleCounterpartyContacts(SyncAPIResource):
                     "phone": phone,
                     "receives_requests": receives_requests,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -303,6 +312,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
         role: str | NotGiven = NOT_GIVEN,
         phone: str | NotGiven = NOT_GIVEN,
         receives_requests: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -321,6 +331,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
           role: Optional. The contact's role.
           phone: Optional. The contact's phone number.
           receives_requests: Whether due-diligence requests and reminders go to this contact.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -341,6 +352,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
                     "phone": phone,
                     "receives_requests": receives_requests,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -352,6 +364,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
         self,
         contact_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -365,6 +378,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
 
         Args:
           contact_uuid
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -378,6 +392,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
                 cast_to=None,
                 path_params={"contact_uuid": contact_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -394,6 +409,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
         role: str | NotGiven = NOT_GIVEN,
         phone: str | NotGiven = NOT_GIVEN,
         receives_requests: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -412,6 +428,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
           role
           phone
           receives_requests
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -432,6 +449,7 @@ class AsyncTravelRuleCounterpartyContacts(AsyncAPIResource):
                     "phone": phone,
                     "receives_requests": receives_requests,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

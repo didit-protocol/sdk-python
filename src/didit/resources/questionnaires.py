@@ -98,6 +98,7 @@ class Questionnaires(SyncAPIResource):
         default_language: str | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -117,6 +118,7 @@ class Questionnaires(SyncAPIResource):
           default_language: Default language. Must be included in `languages`.
           is_active
           status: Omit this field to create a published questionnaire ready for workflows.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -138,6 +140,7 @@ class Questionnaires(SyncAPIResource):
                     "is_active": is_active,
                     "status": status,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -186,6 +189,7 @@ class Questionnaires(SyncAPIResource):
         self,
         questionnaire_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -199,6 +203,7 @@ class Questionnaires(SyncAPIResource):
 
         Args:
           questionnaire_uuid: Per-version UUID of the questionnaire to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -212,6 +217,7 @@ class Questionnaires(SyncAPIResource):
                 cast_to=None,
                 path_params={"questionnaire_uuid": questionnaire_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -230,6 +236,7 @@ class Questionnaires(SyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
         form_elements: Sequence[SimpleQuestionnaireElement] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -250,6 +257,7 @@ class Questionnaires(SyncAPIResource):
           is_active
           status
           form_elements: If provided, this replaces the full linear question list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -272,6 +280,7 @@ class Questionnaires(SyncAPIResource):
                     "status": status,
                     "form_elements": form_elements,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -346,6 +355,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
         default_language: str | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -365,6 +375,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
           default_language: Default language. Must be included in `languages`.
           is_active
           status: Omit this field to create a published questionnaire ready for workflows.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -386,6 +397,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
                     "is_active": is_active,
                     "status": status,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -434,6 +446,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
         self,
         questionnaire_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -447,6 +460,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
 
         Args:
           questionnaire_uuid: Per-version UUID of the questionnaire to delete.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -460,6 +474,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
                 cast_to=None,
                 path_params={"questionnaire_uuid": questionnaire_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -478,6 +493,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
         is_active: bool | NotGiven = NOT_GIVEN,
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
         form_elements: Sequence[SimpleQuestionnaireElement] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -498,6 +514,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
           is_active
           status
           form_elements: If provided, this replaces the full linear question list.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -520,6 +537,7 @@ class AsyncQuestionnaires(AsyncAPIResource):
                     "status": status,
                     "form_elements": form_elements,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

@@ -234,6 +234,7 @@ class BiometricTemplates(SyncAPIResource):
         self,
         template_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -253,6 +254,7 @@ class BiometricTemplates(SyncAPIResource):
 
         Args:
           template_uuid: Template id, as returned in `biometric_template_uuid` by the session deletion endpoints, `biometric_template_id` on a Face Search match, or the list endpoint.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -266,6 +268,7 @@ class BiometricTemplates(SyncAPIResource):
                 cast_to=BiometricTemplatesDeleteResponse,
                 path_params={"template_uuid": template_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -290,6 +293,7 @@ class BiometricTemplates(SyncAPIResource):
         | NotGiven = NOT_GIVEN,
         retained_from: str | _dt.datetime | NotGiven = NOT_GIVEN,
         retained_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -314,6 +318,7 @@ class BiometricTemplates(SyncAPIResource):
           source_type: Only with `delete_all`.
           retained_from: Only with `delete_all`.
           retained_to: Only with `delete_all`. Must not be earlier than `retained_from`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -336,6 +341,7 @@ class BiometricTemplates(SyncAPIResource):
                     "retained_from": retained_from,
                     "retained_to": retained_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -539,6 +545,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
         self,
         template_uuid: str,
         *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -558,6 +565,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
 
         Args:
           template_uuid: Template id, as returned in `biometric_template_uuid` by the session deletion endpoints, `biometric_template_id` on a Face Search match, or the list endpoint.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -571,6 +579,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
                 cast_to=BiometricTemplatesDeleteResponse,
                 path_params={"template_uuid": template_uuid},
                 auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -595,6 +604,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
         | NotGiven = NOT_GIVEN,
         retained_from: str | _dt.datetime | NotGiven = NOT_GIVEN,
         retained_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -619,6 +629,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
           source_type: Only with `delete_all`.
           retained_from: Only with `delete_all`.
           retained_to: Only with `delete_all`. Must not be earlier than `retained_from`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -641,6 +652,7 @@ class AsyncBiometricTemplates(AsyncAPIResource):
                     "retained_from": retained_from,
                     "retained_to": retained_to,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

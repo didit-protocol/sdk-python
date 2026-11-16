@@ -95,6 +95,7 @@ class CasesTeams(SyncAPIResource):
         members: Sequence[CaseReviewTeamMemberParam],
         description: str | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -111,6 +112,7 @@ class CasesTeams(SyncAPIResource):
           members
           description
           is_active
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -130,6 +132,7 @@ class CasesTeams(SyncAPIResource):
                     "description": description,
                     "is_active": is_active,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -183,6 +186,7 @@ class CasesTeams(SyncAPIResource):
         description: str | NotGiven = NOT_GIVEN,
         members: Sequence[CaseReviewTeamMemberParam] | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -200,6 +204,7 @@ class CasesTeams(SyncAPIResource):
           description
           members
           is_active
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -220,6 +225,7 @@ class CasesTeams(SyncAPIResource):
                     "members": members,
                     "is_active": is_active,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -292,6 +298,7 @@ class AsyncCasesTeams(AsyncAPIResource):
         members: Sequence[CaseReviewTeamMemberParam],
         description: str | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -308,6 +315,7 @@ class AsyncCasesTeams(AsyncAPIResource):
           members
           description
           is_active
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -327,6 +335,7 @@ class AsyncCasesTeams(AsyncAPIResource):
                     "description": description,
                     "is_active": is_active,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -380,6 +389,7 @@ class AsyncCasesTeams(AsyncAPIResource):
         description: str | NotGiven = NOT_GIVEN,
         members: Sequence[CaseReviewTeamMemberParam] | NotGiven = NOT_GIVEN,
         is_active: bool | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -397,6 +407,7 @@ class AsyncCasesTeams(AsyncAPIResource):
           description
           members
           is_active
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -417,6 +428,7 @@ class AsyncCasesTeams(AsyncAPIResource):
                     "members": members,
                     "is_active": is_active,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

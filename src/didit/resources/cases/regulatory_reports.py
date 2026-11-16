@@ -119,6 +119,7 @@ class CasesRegulatoryReports(SyncAPIResource):
         narrative: CasesRegulatoryReportsCreateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -151,6 +152,7 @@ class CasesRegulatoryReports(SyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -186,6 +188,7 @@ class CasesRegulatoryReports(SyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -279,6 +282,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
         narrative: CasesRegulatoryReportsCreateParamsNarrative | NotGiven = NOT_GIVEN,
         report_indicators: Sequence[str] | NotGiven = NOT_GIVEN,
         included_fields: Sequence[str] | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -311,6 +315,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
           narrative
           report_indicators
           included_fields
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -346,6 +351,7 @@ class AsyncCasesRegulatoryReports(AsyncAPIResource):
                     "report_indicators": report_indicators,
                     "included_fields": included_fields,
                 },
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

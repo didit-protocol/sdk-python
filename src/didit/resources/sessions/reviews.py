@@ -116,6 +116,7 @@ class SessionsReviews(SyncAPIResource):
         | None
         | NotGiven = NOT_GIVEN,
         comment: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -135,6 +136,7 @@ class SessionsReviews(SyncAPIResource):
           session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
           new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status - use the update-status endpoint for that.
           comment: Optional free-text note (no enforced length limit). Stored verbatim; `@email` mentions are not processed on this endpoint.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -149,6 +151,7 @@ class SessionsReviews(SyncAPIResource):
                 path_params={"session_id": session_id},
                 auth="api_key",
                 body={"new_status": new_status, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -242,6 +245,7 @@ class AsyncSessionsReviews(AsyncAPIResource):
         | None
         | NotGiven = NOT_GIVEN,
         comment: str | None | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -261,6 +265,7 @@ class AsyncSessionsReviews(AsyncAPIResource):
           session_id: UUID of the User Verification (KYC) session. Must belong to the same application as the API key - cross-application UUIDs, deleted sessions, and Business Verification (KYB) session IDs all return `404`.
           new_status: Optional status label to record on the entry. Accepts any session status value, case-sensitive (`"approved"` is rejected with `400`). Recording a status here does **not** change the session's actual status - use the update-status endpoint for that.
           comment: Optional free-text note (no enforced length limit). Stored verbatim; `@email` mentions are not processed on this endpoint.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -275,6 +280,7 @@ class AsyncSessionsReviews(AsyncAPIResource):
                 path_params={"session_id": session_id},
                 auth="api_key",
                 body={"new_status": new_status, "comment": comment},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

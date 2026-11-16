@@ -122,6 +122,7 @@ class TravelRuleUnmatchedDeposits(SyncAPIResource):
         transaction_uuid: str,
         *,
         transaction_id: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -136,6 +137,7 @@ class TravelRuleUnmatchedDeposits(SyncAPIResource):
         Args:
           transaction_uuid: The `transaction_id` of the unmatched deposit.
           transaction_id: The `transaction_id` of the received Travel Rule message (a row with `kind: message`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -150,6 +152,7 @@ class TravelRuleUnmatchedDeposits(SyncAPIResource):
                 path_params={"transaction_uuid": transaction_uuid},
                 auth="api_key",
                 body={"transaction_id": transaction_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -246,6 +249,7 @@ class AsyncTravelRuleUnmatchedDeposits(AsyncAPIResource):
         transaction_uuid: str,
         *,
         transaction_id: str,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -260,6 +264,7 @@ class AsyncTravelRuleUnmatchedDeposits(AsyncAPIResource):
         Args:
           transaction_uuid: The `transaction_id` of the unmatched deposit.
           transaction_id: The `transaction_id` of the received Travel Rule message (a row with `kind: message`).
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -274,6 +279,7 @@ class AsyncTravelRuleUnmatchedDeposits(AsyncAPIResource):
                 path_params={"transaction_uuid": transaction_uuid},
                 auth="api_key",
                 body={"transaction_id": transaction_id},
+                headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
