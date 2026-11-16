@@ -852,7 +852,7 @@ class IdWallets(SyncAPIResource):
     ) -> DigitalIdWalletApiWalletVerificationResponse:
         """Start UAE PASS verification.
 
-        Start a UAE PASS sign-in (UAE Digital Government Authority; ARE) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=redirect with the URL to send the user's browser to; the user returns to return_url with request_id and result appended. Read the outcome with GET /v3/id-verification/wallets/verifications/{request_id}/ or from the webhook, never from the URL. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider.
+        UAE PASS (UAE Digital Government Authority; ARE) never returns an identity: it only confirms whether the details you declared for your user (expected_details: name, date of birth, Emirates ID number) match, so it runs only inside a verification session created with expected_details. This endpoint never starts it and always answers 403 wallet_unavailable, sandbox applications included.
 
         ``POST /v3/id-verification/wallets/uae-pass/``
 
@@ -2548,7 +2548,7 @@ class AsyncIdWallets(AsyncAPIResource):
     ) -> DigitalIdWalletApiWalletVerificationResponse:
         """Start UAE PASS verification.
 
-        Start a UAE PASS sign-in (UAE Digital Government Authority; ARE) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=redirect with the URL to send the user's browser to; the user returns to return_url with request_id and result appended. Read the outcome with GET /v3/id-verification/wallets/verifications/{request_id}/ or from the webhook, never from the URL. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider.
+        UAE PASS (UAE Digital Government Authority; ARE) never returns an identity: it only confirms whether the details you declared for your user (expected_details: name, date of birth, Emirates ID number) match, so it runs only inside a verification session created with expected_details. This endpoint never starts it and always answers 403 wallet_unavailable, sandbox applications included.
 
         ``POST /v3/id-verification/wallets/uae-pass/``
 

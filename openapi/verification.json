@@ -1419,7 +1419,7 @@
                   },
                   "expected_details": {
                     "type": "object",
-                    "description": "Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used — they pre-fill the company registry search for the user — and all person-level fields are ignored.",
+                    "description": "Expected user details used to cross-validate against the data extracted from the user's ID document, Proof of Address, and other verification steps. Mismatches are surfaced as warnings on the decision; some fields (e.g. `id_country`, `expected_document_types`) also alter the user-facing flow. For Business Verification (KYB) workflows only the business fields (`company_name`, `registry_country`, `registration_number`) are used — they pre-fill the company registry search for the user — and all person-level fields are ignored. UAE PASS (an ID Verification wallet) only confirms these details and never returns the person's identity: it is offered only when they include `identification_number` (the Emirates ID number), or a name (`first_name` and/or `last_name`) with `date_of_birth`.",
                     "example": {
                       "first_name": "John",
                       "last_name": "Doe",
@@ -5378,7 +5378,7 @@
     "/v3/session/{sessionId}/generate-pdf/": {
       "get": {
         "summary": "Download a PDF report for a verification session",
-        "description": "Render and download a compliance-ready PDF report for a finished verification session. The same path serves both User Verification (KYC) and Business Verification (KYB) sessions — the server resolves the `sessionId` against both session types and picks the matching report template.\n\n**Eligible statuses.** The session must already carry a final or reviewable status:\n\n- KYC sessions: `Approved`, `Declined`, `In Review`, or `Kyc Expired`.\n- KYB sessions: `Approved`, `Declined`, or `In Review`.\n\nAny other status (`Not Started`, `In Progress`, `Expired`, `Abandoned`, …) returns `403` with an explanatory `detail` string — see the `403` response below.\n\n**What the report contains.** The PDF mirrors the console session view at the moment of the request:\n\n- **KYC** — rolled-up session status, the warnings list, and one section per executed feature: ID Verification (document images plus extracted fields), NFC, Liveness, Face Match, Email Verification, Phone Verification, Proof of Address, Questionnaire answers, Database Validation, AML Screening, and IP Analysis — followed by session tags, console review activity (comments and status changes), and the session event timeline.\n- **KYB** — registry checks (company data), AML screenings, business document verifications, key-people checks, questionnaire responses, phone/email verifications, IP analyses, and the session event timeline, followed by tags and review activity.\n\n**Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English — there is no language parameter.\n\n**No caching.** Every call re-renders the PDF from the current session data, so a report generated after a manual review reflects the reviewer’s decision. Two calls for the same session can produce byte-different files — archive the downloaded file if you need an immutable copy.\n\n**Latency.** Rendering downloads every stored image (document sides, selfies, extra files) before composing the PDF, so media-heavy sessions can take several seconds. Use a generous client read timeout (60 s recommended) and stream the body to disk.\n\n**Trailing slash.** The canonical route ends with a trailing slash (`…/generate-pdf/`). A request without it is served directly with the same response — there is no `301` redirect, so no client has to follow redirects and `curl` does not need `-L`. Use the slashed URL as in the samples.\n\nIf you need the underlying data as JSON instead of a rendered report, use `GET /v3/session/{sessionId}/decision/`. For every reportable session of one user in a single document, use `GET /v3/users/{vendor_data}/generate-pdf/`.",
+        "description": "Render and download a compliance-ready PDF report for a finished verification session. The same path serves both User Verification (KYC) and Business Verification (KYB) sessions — the server resolves the `sessionId` against both session types and picks the matching report template.\n\n**Eligible statuses.** The session must already carry a final or reviewable status:\n\n- KYC sessions: `Approved`, `Declined`, `In Review`, or `Kyc Expired`.\n- KYB sessions: `Approved`, `Declined`, or `In Review`.\n\nAny other status (`Not Started`, `In Progress`, `Expired`, `Abandoned`, …) returns `403` with an explanatory `detail` string — see the `403` response below.\n\n**What the report contains.** The PDF mirrors the console session view at the moment of the request:\n\n- **KYC** — rolled-up session status, the warnings list, and one section per executed feature: ID Verification (document images plus extracted fields), NFC, Liveness, Face Match, Email Verification, Phone Verification, Proof of Address, Questionnaire answers, Database Validation, AML Screening, and IP Analysis — followed by session tags, console review activity (comments and status changes), and the session event timeline.\n- **KYB** — registry checks (company data), AML screenings, business document verifications, key-people checks, questionnaire responses, phone/email verifications, IP analyses, and the session event timeline, followed by tags and review activity.\n\n**Branding.** If your application has white-label customization, the report is rendered with your logo and links to your privacy-policy URL; otherwise it carries Didit branding. Reports are rendered in English by default; pass the `language` query parameter to print every word the report writes itself (section titles, labels, statuses, check names, notes, footers, dates and country names) in one of 16 languages, while values the end user submitted or a source returned print exactly as captured.\n\n**No caching.** Every call re-renders the PDF from the current session data, so a report generated after a manual review reflects the reviewer’s decision. Two calls for the same session can produce byte-different files — archive the downloaded file if you need an immutable copy.\n\n**Latency.** Rendering downloads every stored image (document sides, selfies, extra files) before composing the PDF, so media-heavy sessions can take several seconds. Use a generous client read timeout (60 s recommended) and stream the body to disk.\n\n**Trailing slash.** The canonical route ends with a trailing slash (`…/generate-pdf/`). A request without it is served directly with the same response — there is no `301` redirect, so no client has to follow redirects and `curl` does not need `-L`. Use the slashed URL as in the samples.\n\nIf you need the underlying data as JSON instead of a rendered report, use `GET /v3/session/{sessionId}/decision/`. For every reportable session of one user in a single document, use `GET /v3/users/{vendor_data}/generate-pdf/`.",
         "operationId": "get_v3_session_generate_pdf",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -5399,6 +5399,35 @@
               "type": "string",
               "format": "uuid",
               "example": "11111111-2222-3333-4444-555555555555"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "description": "Language of the report. Every word the report writes itself prints in this language: section titles, labels, table headers, statuses, check names and descriptions, notes, footers, page numbering, the cover, the PDF outline, dates (month names and order per language) and country names. What the end user submitted or a source returned (names, addresses, document fields, OCR values, watchlist profiles, free text, IDs) prints exactly as captured. Arabic (`ar`) prints right to left. Values are case-sensitive; an unknown value returns `400`. Applies to both KYC and KYB reports. Omit it for the English report.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "es",
+                "ar",
+                "ca",
+                "de",
+                "fr",
+                "hi",
+                "id",
+                "it",
+                "ja",
+                "ko",
+                "pt-BR",
+                "pt-PT",
+                "ru",
+                "sw",
+                "zh"
+              ],
+              "default": "en",
+              "example": "es"
             }
           }
         ],
@@ -5426,6 +5455,34 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The `language` query parameter is not a supported report language. The body maps `language` to a list with the message, for example `\"xx\" is not a report language. Use one of: en, es, ar, ca, de, fr, hi, id, it, ja, ko, pt-BR, pt-PT, ru, sw, zh.` Values are case-sensitive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "language": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Unknown language": {
+                    "summary": "language is not one of the 16 supported codes",
+                    "value": {
+                      "language": [
+                        "\"xx\" is not a report language. Use one of: en, es, ar, ca, de, fr, hi, id, it, ja, ko, pt-BR, pt-PT, ru, sw, zh."
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -5584,7 +5641,7 @@
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresp, err := client.Sessions.GeneratePDF(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer resp.Body.Close()\nfile, err := os.Create(\"download.pdf\")\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer file.Close()\nif _, err := io.Copy(file, resp.Body); err != nil {\n\tlog.Fatal(err)\n}"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresp, err := client.Sessions.GeneratePDF(ctx, \"11111111-2222-3333-4444-555555555555\", didit.SessionsGeneratePDFParams{})\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer resp.Body.Close()\nfile, err := os.Create(\"download.pdf\")\nif err != nil {\n\tlog.Fatal(err)\n}\ndefer file.Close()\nif _, err := io.Copy(file, resp.Body); err != nil {\n\tlog.Fatal(err)\n}"
           },
           {
             "lang": "java",
@@ -59096,7 +59153,7 @@
           "auth": "api_key",
           "server": true
         },
-        "description": "Start a UAE PASS sign-in (UAE Digital Government Authority; ARE) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=redirect with the URL to send the user's browser to; the user returns to return_url with request_id and result appended. Read the outcome with GET /v3/id-verification/wallets/verifications/{request_id}/ or from the webhook, never from the URL. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider.",
+        "description": "UAE PASS (UAE Digital Government Authority; ARE) never returns an identity: it only confirms whether the details you declared for your user (expected_details: name, date of birth, Emirates ID number) match, so it runs only inside a verification session created with expected_details. This endpoint never starts it and always answers 403 wallet_unavailable, sandbox applications included.",
         "summary": "Start UAE PASS verification",
         "parameters": [
           {
@@ -59153,42 +59210,10 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DigitalIdWalletApiWalletVerificationResponse"
-                },
-                "example": {
-                  "request_id": "00000000-0000-4000-8000-000000000001",
-                  "wallet_verification": {
-                    "wallet": {
-                      "id": "uae_pass",
-                      "name": "UAE PASS",
-                      "issuing_authority": "UAE Digital Government Authority"
-                    },
-                    "country": "ARE",
-                    "status": "Not Finished",
-                    "outcome": "pending",
-                    "error": null,
-                    "interaction": "redirect",
-                    "simulated": false,
-                    "expires_at": "2026-01-01T10:10:00Z",
-                    "next_action": {
-                      "type": "redirect",
-                      "url": "https://wallet.example.com/authorize"
-                    },
-                    "identity": null,
-                    "attributes": null,
-                    "level_of_assurance": null,
-                    "verified_at": null,
-                    "signature_valid": null,
-                    "credential_type": "person_identification"
-                  },
-                  "vendor_data": "your-customer-reference",
-                  "metadata": {
-                    "reference": "example"
-                  },
-                  "created_at": "2026-01-01T10:00:00Z"
                 }
               }
             },
-            "description": ""
+            "description": "Never returned for UAE PASS: this endpoint always answers 403 wallet_unavailable."
           },
           "400": {
             "content": {
@@ -59208,7 +59233,7 @@
                 }
               }
             },
-            "description": "Missing credentials ({detail}), or error wallet_unavailable, insufficient_credits or contract_rate_missing."
+            "description": "Missing credentials ({detail}), or error wallet_unavailable: always for UAE PASS, which runs only inside a verification session created with expected_details."
           },
           "409": {
             "content": {
@@ -116280,7 +116305,7 @@
                 "wallet_verification": {
                   "type": "object",
                   "nullable": true,
-                  "description": "Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise.",
+                  "description": "Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. UAE PASS (`provider` `uae_pass`) is outcome only: the identity fields of this ID verification (`full_name`, `first_name`, `last_name`, `date_of_birth`, `nationality`, the document numbers) stay `null`, `attributes` holds only whether each detail declared in `expected_details` matched, and nothing UAE PASS shared about the person is returned or kept.",
                   "properties": {
                     "provider": {
                       "type": "string",
@@ -116329,7 +116354,7 @@
                     "attributes": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "The attributes the wallet shared, keyed as the wallet's catalog entry lists them."
+                      "description": "The attributes the wallet shared, keyed as the wallet's catalog entry lists them. For UAE PASS only the comparison with `expected_details`, one key per declared detail, each `match` or `no_match`: `name_match` (`first_name` / `last_name`), `date_of_birth_match` and `identification_number_match` (the Emirates ID number). A declared detail that does not match also raises the expected-details warning (`FULL_NAME_MISMATCH_WITH_PROVIDED`, `DOB_MISMATCH_WITH_PROVIDED` or `IDENTIFICATION_NUMBER_MISMATCH_WITH_PROVIDED`), handled by the workflow's expected-details mismatch action."
                     },
                     "portrait": {
                       "type": "string",
