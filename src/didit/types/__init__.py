@@ -1066,6 +1066,12 @@ if TYPE_CHECKING:
     from didit.types.components.geolocation_check import (
         GeolocationCheckWarnings as GeolocationCheckWarnings,
     )
+    from didit.types.components.geolocation_parsed_address import (
+        GeolocationParsedAddress as GeolocationParsedAddress,
+    )
+    from didit.types.components.geolocation_parsed_address import (
+        GeolocationParsedAddressDocumentLocation as GeolocationParsedAddressDocumentLocation,
+    )
     from didit.types.components.import_job_summary import ImportJobSummary as ImportJobSummary
     from didit.types.components.import_job_summary import (
         ImportJobSummaryFaceTemplates as ImportJobSummaryFaceTemplates,
@@ -4014,6 +4020,8 @@ _MODULES: dict[str, str] = {
     "GeolocationCheckConsent": "components.geolocation_check",
     "GeolocationCheckGeofence": "components.geolocation_check",
     "GeolocationCheckWarnings": "components.geolocation_check",
+    "GeolocationParsedAddress": "components.geolocation_parsed_address",
+    "GeolocationParsedAddressDocumentLocation": "components.geolocation_parsed_address",
     "IPRiskResponse": "components.ip_risk_response",
     "IPRiskResponseIp": "components.ip_risk_response",
     "IdVerificationVerifyParams": "id_verification.verify_params",
@@ -5321,6 +5329,8 @@ __all__ = [
     "GeolocationCheckConsent",
     "GeolocationCheckGeofence",
     "GeolocationCheckWarnings",
+    "GeolocationParsedAddress",
+    "GeolocationParsedAddressDocumentLocation",
     "IPRiskResponse",
     "IPRiskResponseIp",
     "IdVerificationVerifyParams",
