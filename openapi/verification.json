@@ -134434,6 +134434,15 @@
             "nullable": true,
             "description": "Nearest populated place, a label for reviewers."
           },
+          "parsed_address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeolocationParsedAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Street address at the device fix, reverse geocoded. `country_code`, `region_code` and `city` stay the offline place used by geofences; this is the address for reviewers and for comparison with `kyc.parsed_address` or `poa.parsed_address` in workflow rules. See the schema for when it is `null`."
+          },
           "geofence": {
             "type": "object",
             "description": "Result of the country and area rules of the step.",
@@ -134801,6 +134810,15 @@
             "type": "string",
             "nullable": true,
             "description": "Nearest populated place, a label for reviewers."
+          },
+          "parsed_address": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeolocationParsedAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Street address at the device fix, reverse geocoded. `country_code`, `region_code` and `city` stay the offline place used by geofences; this is the address for reviewers and for comparison with `kyc.parsed_address` or `poa.parsed_address` in workflow rules. See the schema for when it is `null`."
           },
           "geofence": {
             "type": "object",
@@ -137661,6 +137679,87 @@
         },
         "example": {
           "detail": "Too many attempts to join. Try again in a little while."
+        }
+      },
+      "GeolocationParsedAddress": {
+        "type": "object",
+        "nullable": true,
+        "description": "The street address at the device fix, reverse geocoded, in the same shape as `id_verifications[].parsed_address` and `poa_verifications[].poa_parsed_address`. It is only as precise as `accuracy_m`. `null` when there is no device fix (permission denied, timeout or skip), when the Location step only used the IP address, in sandbox sessions, when the geocoder places the point nowhere, or when the geocoder failed.",
+        "properties": {
+          "street_1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Street and number, for example `Puerta del Sol 7`."
+          },
+          "street_2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Secondary address line, when the geocoder returns one."
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City or locality of the address."
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "description": "Region, state or province of the address."
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 3166-1 alpha-2 country code of the address."
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code of the address."
+          },
+          "address_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Street-type prefix detected at the start of `street_1`, title-cased, for example `Calle` or `Avenue`. `null` when none is found."
+          },
+          "formatted_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "The address as one display line."
+          },
+          "raw_results": {
+            "type": "object",
+            "nullable": true,
+            "description": "The geocoder's raw result, for audit.",
+            "additionalProperties": true
+          },
+          "document_location": {
+            "type": "object",
+            "nullable": true,
+            "description": "Coordinates of the address point.",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "example": {
+          "street_1": "Puerta del Sol 7",
+          "street_2": null,
+          "city": "Madrid",
+          "region": "Comunidad de Madrid",
+          "country": "ES",
+          "postal_code": "28013",
+          "address_type": null,
+          "formatted_address": "Real Casa de Correos, Prta del Sol, 7, Centro, 28013 Madrid, Spain",
+          "raw_results": {},
+          "document_location": {
+            "latitude": 40.4169,
+            "longitude": -3.7035
+          }
         }
       }
     },

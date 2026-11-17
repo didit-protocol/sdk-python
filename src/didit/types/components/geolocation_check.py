@@ -5,6 +5,7 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.geolocation_parsed_address import GeolocationParsedAddress
 
 __all__ = [
     "GeolocationCheck",
@@ -188,6 +189,9 @@ class GeolocationCheck(BaseModel):
 
     city: str | None = None
     """Nearest populated place, a label for reviewers."""
+
+    parsed_address: GeolocationParsedAddress | None = None
+    """Street address at the device fix, reverse geocoded. `country_code`, `region_code` and `city` stay the offline place used by geofences; this is the address for reviewers and for comparison with `kyc.parsed_address` or `poa.parsed_address` in workflow rules. See the schema for when it is `null`."""
 
     geofence: GeolocationCheckGeofence | None = None
     """Result of the country and area rules of the step."""
