@@ -89,7 +89,7 @@ class DatabaseValidationValidateResponseDatabaseValidationWarnings(BaseModel):
 
 class DatabaseValidationValidateResponseDatabaseValidation(BaseModel):
     status: Literal["Approved", "Declined", "In Review"] | str | None = None
-    """`Declined` when the overall `match_type` triggers a `DECLINE` action (`no_match_action` defaults to `DECLINE`, `partial_match_action` to `NO_ACTION`); `In Review` when no service produced a usable comparison, for example when the only selected service came back `REGISTRY_UNAVAILABLE` or `INCONCLUSIVE`; `Approved` otherwise. A request that selected several services can be `Approved` on one service's match while another was unavailable, so check `errors` and the per-service `outcome_code`s too."""
+    """`Declined` when the overall `match_type` triggers a `DECLINE` action (`no_match_action` defaults to `DECLINE`, `partial_match_action` to `NO_ACTION`); `In Review` when no service produced a usable comparison, for example when the only selected service came back `REGISTRY_UNAVAILABLE` or `INCONCLUSIVE`, and when the registry confirmed the identification number but returned a different name while `partial_match_action` is `NO_ACTION`; `Approved` otherwise. A request that selected several services can be `Approved` on one service's match while another was unavailable, so check `errors` and the per-service `outcome_code`s too."""
 
     issuing_state: str | None = None
     """Echo of the ISO 3166-1 alpha-3 country validated against."""

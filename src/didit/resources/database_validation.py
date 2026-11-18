@@ -244,7 +244,7 @@ class DatabaseValidation(SyncAPIResource):
           landline: Landline number for phone-verification services.
           email: Email address for identity-verification services.
           country_of_residence: ISO 3166-1 alpha-2 country of residence. It was used only by the retired global identity-enrichment service (`glb_identity_enrichment`), which Didit no longer offers.
-          partial_match_action: What a `partial_match` does to `database_validation.status`. Defaults to `NO_ACTION` (status stays `Approved`, with a warning).
+          partial_match_action: What a `partial_match` does to `database_validation.status`. Defaults to `NO_ACTION` (status stays `Approved`, with a warning). When the registry confirmed the identification number but returned a different name, `NO_ACTION` answers `In Review` instead of `Approved`; `DECLINE` still declines.
           no_match_action: What a `no_match` does to `database_validation.status`. Defaults to `DECLINE`.
           save_api_request: Persist the validation as a session (console visibility, decision endpoint, `status.updated` webhook). Also changes the `validations` response shape: per-service objects when `true` (default), a merged field map when `false`.
           vendor_data: Your identifier for the validated user; echoed back and stored with the session.
@@ -571,7 +571,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           landline: Landline number for phone-verification services.
           email: Email address for identity-verification services.
           country_of_residence: ISO 3166-1 alpha-2 country of residence. It was used only by the retired global identity-enrichment service (`glb_identity_enrichment`), which Didit no longer offers.
-          partial_match_action: What a `partial_match` does to `database_validation.status`. Defaults to `NO_ACTION` (status stays `Approved`, with a warning).
+          partial_match_action: What a `partial_match` does to `database_validation.status`. Defaults to `NO_ACTION` (status stays `Approved`, with a warning). When the registry confirmed the identification number but returned a different name, `NO_ACTION` answers `In Review` instead of `Approved`; `DECLINE` still declines.
           no_match_action: What a `no_match` does to `database_validation.status`. Defaults to `DECLINE`.
           save_api_request: Persist the validation as a session (console visibility, decision endpoint, `status.updated` webhook). Also changes the `validations` response shape: per-service objects when `true` (default), a merged field map when `false`.
           vendor_data: Your identifier for the validated user; echoed back and stored with the session.
