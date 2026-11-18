@@ -1605,6 +1605,7 @@ class SessionDecisionIdVerificationsWarnings(BaseModel):
     """The feature that generated this warning (e.g., `ID_VERIFICATION`, `NFC`, `LIVENESS`). The value identifies the feature block the warning belongs to. Each module's warnings array typically uses the value matching its module, but the enum above is authoritative across all feature warnings on the decision payload."""
 
     risk: str | None = None
+    """Machine-readable risk code. In ID verification warnings, `SELFIE_MATCH_NOT_COMPUTED` means document selfie matching is enabled but the front-camera comparison never ran because the client reported no front-camera frame (`front_camera_image_unavailable`); it resolves to `In Review` by default or `Declined` when `document_selfie_portrait_match_not_computed_action` is `DECLINE`."""
 
     additional_data: dict[str, object] | None = None
     """Additional contextual data about the warning"""
@@ -1746,7 +1747,7 @@ class SessionDecisionIdVerifications(BaseModel):
     """Additional document verification files"""
 
     front_image_camera_front_face_match_score: float | None = None
-    """Face match score between the portrait extracted from the front document image and the front camera image"""
+    """Face match score between the portrait extracted from the front document image and the front camera image. `null` when the comparison did not run; when the client reported no front-camera frame and neither side has a score, the ID verification warnings carry `SELFIE_MATCH_NOT_COMPUTED`."""
 
     back_image_camera_front_face_match_score: float | None = None
     """Face match score between the portrait extracted from the back document image and the front camera image"""

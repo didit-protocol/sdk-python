@@ -7125,7 +7125,7 @@
                             "properties": {
                               "risk": {
                                 "type": "string",
-                                "description": "Machine-readable risk code. Always-decline risks: `DOCUMENT_EXPIRED`, `MINIMUM_AGE_NOT_MET`, `PORTRAIT_IMAGE_NOT_DETECTED`, `SCREEN_CAPTURE_DETECTED`, `PRINTED_COPY_DETECTED`, `PORTRAIT_MANIPULATION_DETECTED`, `PUBLIC_DOCUMENT_IMAGE_DETECTED`, `INVALID_DATE`, `COULD_NOT_RECOGNIZE_DOCUMENT` (400-only, never a warning), `DOCUMENT_NUMBER_NOT_DETECTED`, `COULD_NOT_DETECT_DOCUMENT_TYPE`, `NAME_NOT_DETECTED`, `DATE_OF_BIRTH_NOT_DETECTED`. Governed by request options: `MRZ_NOT_DETECTED` / `MRZ_VALIDATION_FAILED` (`invalid_mrz_action`), `DATA_INCONSISTENT` / `MRZ_AND_DATA_EXTRACTED_FROM_OCR_NOT_SAME` / `DOCUMENT_NAME_DIFFERENT_FROM_OTHER_APPROVED_DOCUMENTS` (`inconsistent_data_action`), `EXPIRATION_DATE_NOT_DETECTED` (`expiration_date_not_detected_action`). Other risks (e.g. `POSSIBLE_DUPLICATED_USER`) are informational. `DOCUMENT_LIVENESS_NOT_COMPUTED` is raised when `perform_document_liveness=true` but the forgery check returned no usable score; it sets `status` to `In Review`. `COULD_NOT_DETECT_DOCUMENT_TYPE` is also returned when the front of the document does not match a known official document design with high confidence, for example an edited or computer-generated document, or a design that is not supported yet.",
+                                "description": "Machine-readable risk code. Always-decline risks: `DOCUMENT_EXPIRED`, `MINIMUM_AGE_NOT_MET`, `PORTRAIT_IMAGE_NOT_DETECTED`, `SCREEN_CAPTURE_DETECTED`, `PRINTED_COPY_DETECTED`, `PORTRAIT_MANIPULATION_DETECTED`, `PUBLIC_DOCUMENT_IMAGE_DETECTED`, `INVALID_DATE`, `COULD_NOT_RECOGNIZE_DOCUMENT` (400-only, never a warning), `DOCUMENT_NUMBER_NOT_DETECTED`, `COULD_NOT_DETECT_DOCUMENT_TYPE`, `NAME_NOT_DETECTED`, `DATE_OF_BIRTH_NOT_DETECTED`. Governed by request options: `MRZ_NOT_DETECTED` / `MRZ_VALIDATION_FAILED` (`invalid_mrz_action`), `DATA_INCONSISTENT` / `MRZ_AND_DATA_EXTRACTED_FROM_OCR_NOT_SAME` / `DOCUMENT_NAME_DIFFERENT_FROM_OTHER_APPROVED_DOCUMENTS` (`inconsistent_data_action`), `EXPIRATION_DATE_NOT_DETECTED` (`expiration_date_not_detected_action`). Other risks (e.g. `POSSIBLE_DUPLICATED_USER`) are informational. `SELFIE_MATCH_NOT_COMPUTED` is never raised on this endpoint, which has no front camera image. `DOCUMENT_LIVENESS_NOT_COMPUTED` is raised when `perform_document_liveness=true` but the forgery check returned no usable score; it sets `status` to `In Review`. `COULD_NOT_DETECT_DOCUMENT_TYPE` is also returned when the front of the document does not match a known official document design with high confidence, for example an edited or computer-generated document, or a design that is not supported yet.",
                                 "example": "DOCUMENT_EXPIRED"
                               },
                               "feature": {
@@ -116840,7 +116840,7 @@
                 "front_image_camera_front_face_match_score": {
                   "type": "number",
                   "nullable": true,
-                  "description": "Face match score between the portrait extracted from the front document image and the front camera image"
+                  "description": "Face match score between the portrait extracted from the front document image and the front camera image. `null` when the comparison did not run; when the client reported no front-camera frame and neither side has a score, the ID verification warnings carry `SELFIE_MATCH_NOT_COMPUTED`."
                 },
                 "back_image_camera_front_face_match_score": {
                   "type": "number",
@@ -117050,7 +117050,8 @@
                         "description": "The feature that generated this warning (e.g., `ID_VERIFICATION`, `NFC`, `LIVENESS`). The value identifies the feature block the warning belongs to. Each module's warnings array typically uses the value matching its module, but the enum above is authoritative across all feature warnings on the decision payload."
                       },
                       "risk": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Machine-readable risk code. In ID verification warnings, `SELFIE_MATCH_NOT_COMPUTED` means document selfie matching is enabled but the front-camera comparison never ran because the client reported no front-camera frame (`front_camera_image_unavailable`); it resolves to `In Review` by default or `Declined` when `document_selfie_portrait_match_not_computed_action` is `DECLINE`."
                       },
                       "additional_data": {
                         "type": "object",
