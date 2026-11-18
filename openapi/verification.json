@@ -14839,7 +14839,7 @@
                   },
                   "middle_name": {
                     "type": "string",
-                    "description": "Middle name, used by some country services (AUS, NZL, …)."
+                    "description": "Middle name, used by some country services (NZL, …)."
                   },
                   "full_name": {
                     "type": "string",
@@ -14964,15 +14964,15 @@
                   },
                   "driver_license_number": {
                     "type": "string",
-                    "description": "Driver licence number for government document-verification services (AUS, NZL, IND)."
+                    "description": "Driver licence number for government document-verification services (NZL, IND)."
                   },
                   "driver_license_card_number": {
                     "type": "string",
-                    "description": "Physical driver licence card number, where required separately from the licence number (AUS)."
+                    "description": "Physical driver licence card number, where required separately from the licence number."
                   },
                   "driver_license_state": {
                     "type": "string",
-                    "description": "Driver licence state or territory of issue (AUS)."
+                    "description": "Driver licence state or territory of issue."
                   },
                   "driver_license_version": {
                     "type": "string",
@@ -14980,7 +14980,7 @@
                   },
                   "passport_number": {
                     "type": "string",
-                    "description": "Passport number for government passport-verification services (AUS, NZL, IND, CHN)."
+                    "description": "Passport number for government passport-verification services (NZL, IND, CHN)."
                   },
                   "passport_expiration_date": {
                     "type": "string",
@@ -14997,49 +14997,47 @@
                   },
                   "medicare_card_number": {
                     "type": "string",
-                    "description": "Medicare card number (AUS)."
+                    "description": "Medicare card number."
                   },
                   "immi_card_number": {
-                    "type": "string",
-                    "description": "Australian ImmiCard number."
+                    "type": "string"
                   },
                   "immi_card_expiry_date": {
                     "type": "string",
-                    "format": "date",
-                    "description": "Australian ImmiCard expiry date."
+                    "format": "date"
                   },
                   "citizenship_certificate_number": {
                     "type": "string",
-                    "description": "Citizenship certificate number (AUS)."
+                    "description": "Citizenship certificate number."
                   },
                   "birth_registration_number": {
                     "type": "string",
-                    "description": "Birth-certificate registration number (AUS)."
+                    "description": "Birth-certificate registration number."
                   },
                   "birth_registration_date": {
                     "type": "string",
                     "format": "date",
-                    "description": "Birth-certificate registration date (AUS)."
+                    "description": "Birth-certificate registration date."
                   },
                   "birth_registration_state": {
                     "type": "string",
-                    "description": "Birth-certificate registration state (AUS)."
+                    "description": "Birth-certificate registration state."
                   },
                   "marriage_certificate_number": {
                     "type": "string",
-                    "description": "Marriage certificate number (AUS)."
+                    "description": "Marriage certificate number."
                   },
                   "change_of_name_certificate_number": {
                     "type": "string",
-                    "description": "Change-of-name certificate number (AUS)."
+                    "description": "Change-of-name certificate number."
                   },
                   "first_partner_name": {
                     "type": "string",
-                    "description": "First name of the partner on a marriage certificate (AUS)."
+                    "description": "First name of the partner on a marriage certificate."
                   },
                   "last_partner_name": {
                     "type": "string",
-                    "description": "Last name of the partner on a marriage certificate (AUS)."
+                    "description": "Last name of the partner on a marriage certificate."
                   },
                   "voter_id": {
                     "type": "string",
@@ -15270,7 +15268,7 @@
                   },
                   "middle_name": {
                     "type": "string",
-                    "description": "Middle name, used by some country services (AUS, NZL, …)."
+                    "description": "Middle name, used by some country services (NZL, …)."
                   },
                   "full_name": {
                     "type": "string",
@@ -15395,15 +15393,15 @@
                   },
                   "driver_license_number": {
                     "type": "string",
-                    "description": "Driver licence number for government document-verification services (AUS, NZL, IND)."
+                    "description": "Driver licence number for government document-verification services (NZL, IND)."
                   },
                   "driver_license_card_number": {
                     "type": "string",
-                    "description": "Physical driver licence card number, where required separately from the licence number (AUS)."
+                    "description": "Physical driver licence card number, where required separately from the licence number."
                   },
                   "driver_license_state": {
                     "type": "string",
-                    "description": "Driver licence state or territory of issue (AUS)."
+                    "description": "Driver licence state or territory of issue."
                   },
                   "driver_license_version": {
                     "type": "string",
@@ -15411,7 +15409,7 @@
                   },
                   "passport_number": {
                     "type": "string",
-                    "description": "Passport number for government passport-verification services (AUS, NZL, IND, CHN)."
+                    "description": "Passport number for government passport-verification services (NZL, IND, CHN)."
                   },
                   "passport_expiration_date": {
                     "type": "string",
@@ -15428,49 +15426,47 @@
                   },
                   "medicare_card_number": {
                     "type": "string",
-                    "description": "Medicare card number (AUS)."
+                    "description": "Medicare card number."
                   },
                   "immi_card_number": {
-                    "type": "string",
-                    "description": "Australian ImmiCard number."
+                    "type": "string"
                   },
                   "immi_card_expiry_date": {
                     "type": "string",
-                    "format": "date",
-                    "description": "Australian ImmiCard expiry date."
+                    "format": "date"
                   },
                   "citizenship_certificate_number": {
                     "type": "string",
-                    "description": "Citizenship certificate number (AUS)."
+                    "description": "Citizenship certificate number."
                   },
                   "birth_registration_number": {
                     "type": "string",
-                    "description": "Birth-certificate registration number (AUS)."
+                    "description": "Birth-certificate registration number."
                   },
                   "birth_registration_date": {
                     "type": "string",
                     "format": "date",
-                    "description": "Birth-certificate registration date (AUS)."
+                    "description": "Birth-certificate registration date."
                   },
                   "birth_registration_state": {
                     "type": "string",
-                    "description": "Birth-certificate registration state (AUS)."
+                    "description": "Birth-certificate registration state."
                   },
                   "marriage_certificate_number": {
                     "type": "string",
-                    "description": "Marriage certificate number (AUS)."
+                    "description": "Marriage certificate number."
                   },
                   "change_of_name_certificate_number": {
                     "type": "string",
-                    "description": "Change-of-name certificate number (AUS)."
+                    "description": "Change-of-name certificate number."
                   },
                   "first_partner_name": {
                     "type": "string",
-                    "description": "First name of the partner on a marriage certificate (AUS)."
+                    "description": "First name of the partner on a marriage certificate."
                   },
                   "last_partner_name": {
                     "type": "string",
-                    "description": "Last name of the partner on a marriage certificate (AUS)."
+                    "description": "Last name of the partner on a marriage certificate."
                   },
                   "voter_id": {
                     "type": "string",
@@ -16119,17 +16115,6 @@
                     "value": {
                       "services": [
                         "Services not currently live for PER: ['bra_cpf']. Available services: ['per_dni', 'per_residential', 'per_tax_registration']"
-                      ]
-                    }
-                  },
-                  "Service requires onboarding": {
-                    "summary": "Service exists but is not activated for your organization yet",
-                    "value": {
-                      "services": [
-                        "Services require onboarding before they can be enabled for AUS: ['aus_australia_driver_licence']. Contact Didit support to activate them."
-                      ],
-                      "requires_onboarding": [
-                        "aus_australia_driver_licence"
                       ]
                     }
                   },
