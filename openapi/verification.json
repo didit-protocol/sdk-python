@@ -11068,6 +11068,29 @@
                 "$ref": "#/components/headers/BudgetXRateLimitReset"
               }
             }
+          },
+          "503": {
+            "description": "AML screening is temporarily unavailable: no screening provider answered the search. No screening was performed, nothing was stored and the call was not billed. This is never a result: do not treat it as a screening with no matches. Retry with exponential backoff; a retry with the same `Idempotency-Key` runs the screening again.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Screening unavailable": {
+                    "summary": "No screening provider answered the search",
+                    "value": {
+                      "detail": "AML screening is temporarily unavailable. No screening was performed."
+                    }
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
