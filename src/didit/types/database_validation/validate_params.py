@@ -51,7 +51,7 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """The individual's last name. Required by some services/countries."""
 
     middle_name: str
-    """Middle name, used by some country services (AUS, NZL, …)."""
+    """Middle name, used by some country services (NZL, …)."""
 
     full_name: str
     """Full name - some services accept this in lieu of first/last name (e.g. CHN services, which match the native-script name)."""
@@ -107,19 +107,19 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """Postal code for address-based services (alias of `address_element_5`)."""
 
     driver_license_number: str
-    """Driver licence number for government document-verification services (AUS, NZL, IND)."""
+    """Driver licence number for government document-verification services (NZL, IND)."""
 
     driver_license_card_number: str
-    """Physical driver licence card number, where required separately from the licence number (AUS)."""
+    """Physical driver licence card number, where required separately from the licence number."""
 
     driver_license_state: str
-    """Driver licence state or territory of issue (AUS)."""
+    """Driver licence state or territory of issue."""
 
     driver_license_version: str
     """Driver licence version code (NZL)."""
 
     passport_number: str
-    """Passport number for government passport-verification services (AUS, NZL, IND, CHN)."""
+    """Passport number for government passport-verification services (NZL, IND, CHN)."""
 
     passport_expiration_date: str | _dt.date
     """Passport expiry date, `YYYY-MM-DD`, for passport-verification services."""
@@ -131,37 +131,35 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     """Issuing country of the passport (ISO 3166-1 alpha-3) for passport-verification services."""
 
     medicare_card_number: str
-    """Medicare card number (AUS)."""
+    """Medicare card number."""
 
     immi_card_number: str
-    """Australian ImmiCard number."""
 
     immi_card_expiry_date: str | _dt.date
-    """Australian ImmiCard expiry date."""
 
     citizenship_certificate_number: str
-    """Citizenship certificate number (AUS)."""
+    """Citizenship certificate number."""
 
     birth_registration_number: str
-    """Birth-certificate registration number (AUS)."""
+    """Birth-certificate registration number."""
 
     birth_registration_date: str | _dt.date
-    """Birth-certificate registration date (AUS)."""
+    """Birth-certificate registration date."""
 
     birth_registration_state: str
-    """Birth-certificate registration state (AUS)."""
+    """Birth-certificate registration state."""
 
     marriage_certificate_number: str
-    """Marriage certificate number (AUS)."""
+    """Marriage certificate number."""
 
     change_of_name_certificate_number: str
-    """Change-of-name certificate number (AUS)."""
+    """Change-of-name certificate number."""
 
     first_partner_name: str
-    """First name of the partner on a marriage certificate (AUS)."""
+    """First name of the partner on a marriage certificate."""
 
     last_partner_name: str
-    """Last name of the partner on a marriage certificate (AUS)."""
+    """Last name of the partner on a marriage certificate."""
 
     voter_id: str
     """Voter registration number (IND EPIC, IRL)."""

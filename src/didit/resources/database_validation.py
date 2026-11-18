@@ -175,7 +175,7 @@ class DatabaseValidation(SyncAPIResource):
           identification_number: Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field.
           first_name: The individual's first name. Required by some services/countries.
           last_name: The individual's last name. Required by some services/countries.
-          middle_name: Middle name, used by some country services (AUS, NZL, …).
+          middle_name: Middle name, used by some country services (NZL, …).
           full_name: Full name - some services accept this in lieu of first/last name (e.g. CHN services, which match the native-script name).
           date_of_birth: Date of birth, `YYYY-MM-DD`. Required by many services.
           personal_number: Government-issued unique personal identifier. Used by: CHL (RUT), COL (Cédula), CRI, DOM, ECU, ESP (DNI/NIE), MEX (CURP), PAN (Cédula), PER (DNI), URY. Consider `identification_number` instead.
@@ -193,25 +193,25 @@ class DatabaseValidation(SyncAPIResource):
           address_element_4: State, province, region, or town. If omitted, derived from `address`.
           address_element_5: Postcode or postal code. `postal_code` is accepted as an alias.
           postal_code: Postal code for address-based services (alias of `address_element_5`).
-          driver_license_number: Driver licence number for government document-verification services (AUS, NZL, IND).
-          driver_license_card_number: Physical driver licence card number, where required separately from the licence number (AUS).
-          driver_license_state: Driver licence state or territory of issue (AUS).
+          driver_license_number: Driver licence number for government document-verification services (NZL, IND).
+          driver_license_card_number: Physical driver licence card number, where required separately from the licence number.
+          driver_license_state: Driver licence state or territory of issue.
           driver_license_version: Driver licence version code (NZL).
-          passport_number: Passport number for government passport-verification services (AUS, NZL, IND, CHN).
+          passport_number: Passport number for government passport-verification services (NZL, IND, CHN).
           passport_expiration_date: Passport expiry date, `YYYY-MM-DD`, for passport-verification services.
           passport_file_number: Passport file number (IND).
           passport_issue_country: Issuing country of the passport (ISO 3166-1 alpha-3) for passport-verification services.
-          medicare_card_number: Medicare card number (AUS).
-          immi_card_number: Australian ImmiCard number.
-          immi_card_expiry_date: Australian ImmiCard expiry date.
-          citizenship_certificate_number: Citizenship certificate number (AUS).
-          birth_registration_number: Birth-certificate registration number (AUS).
-          birth_registration_date: Birth-certificate registration date (AUS).
-          birth_registration_state: Birth-certificate registration state (AUS).
-          marriage_certificate_number: Marriage certificate number (AUS).
-          change_of_name_certificate_number: Change-of-name certificate number (AUS).
-          first_partner_name: First name of the partner on a marriage certificate (AUS).
-          last_partner_name: Last name of the partner on a marriage certificate (AUS).
+          medicare_card_number: Medicare card number.
+          immi_card_number
+          immi_card_expiry_date
+          citizenship_certificate_number: Citizenship certificate number.
+          birth_registration_number: Birth-certificate registration number.
+          birth_registration_date: Birth-certificate registration date.
+          birth_registration_state: Birth-certificate registration state.
+          marriage_certificate_number: Marriage certificate number.
+          change_of_name_certificate_number: Change-of-name certificate number.
+          first_partner_name: First name of the partner on a marriage certificate.
+          last_partner_name: Last name of the partner on a marriage certificate.
           voter_id: Voter registration number (IND EPIC, IRL).
           epic_card: India EPIC voter card number.
           pan: India PAN (Permanent Account Number).
@@ -502,7 +502,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           identification_number: Universal identification number - automatically mapped to the correct country-specific field, so you can use it instead of `personal_number`/`tax_number`/`document_number`: ARG→document_number (DNI), BOL→document_number (CI), BRA→tax_number (CPF, 11 digits), CHL→personal_number (RUT), COL→personal_number (Cédula), CRI→personal_number (Cédula), DOM→personal_number (Cédula, 11 digits), ECU→personal_number (Cédula, 10 digits), ESP→personal_number (DNI/NIE), GTM→document_number (DPI), HND→document_number (DNI), MEX→personal_number (CURP, 18 chars), PAN→personal_number (Cédula), PER→personal_number (DNI, 8 digits), PRY→document_number (CI), SLV→document_number (DUI), URY→personal_number (CI), VEN→document_number (Cédula). It never overrides an explicitly provided country-specific field.
           first_name: The individual's first name. Required by some services/countries.
           last_name: The individual's last name. Required by some services/countries.
-          middle_name: Middle name, used by some country services (AUS, NZL, …).
+          middle_name: Middle name, used by some country services (NZL, …).
           full_name: Full name - some services accept this in lieu of first/last name (e.g. CHN services, which match the native-script name).
           date_of_birth: Date of birth, `YYYY-MM-DD`. Required by many services.
           personal_number: Government-issued unique personal identifier. Used by: CHL (RUT), COL (Cédula), CRI, DOM, ECU, ESP (DNI/NIE), MEX (CURP), PAN (Cédula), PER (DNI), URY. Consider `identification_number` instead.
@@ -520,25 +520,25 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           address_element_4: State, province, region, or town. If omitted, derived from `address`.
           address_element_5: Postcode or postal code. `postal_code` is accepted as an alias.
           postal_code: Postal code for address-based services (alias of `address_element_5`).
-          driver_license_number: Driver licence number for government document-verification services (AUS, NZL, IND).
-          driver_license_card_number: Physical driver licence card number, where required separately from the licence number (AUS).
-          driver_license_state: Driver licence state or territory of issue (AUS).
+          driver_license_number: Driver licence number for government document-verification services (NZL, IND).
+          driver_license_card_number: Physical driver licence card number, where required separately from the licence number.
+          driver_license_state: Driver licence state or territory of issue.
           driver_license_version: Driver licence version code (NZL).
-          passport_number: Passport number for government passport-verification services (AUS, NZL, IND, CHN).
+          passport_number: Passport number for government passport-verification services (NZL, IND, CHN).
           passport_expiration_date: Passport expiry date, `YYYY-MM-DD`, for passport-verification services.
           passport_file_number: Passport file number (IND).
           passport_issue_country: Issuing country of the passport (ISO 3166-1 alpha-3) for passport-verification services.
-          medicare_card_number: Medicare card number (AUS).
-          immi_card_number: Australian ImmiCard number.
-          immi_card_expiry_date: Australian ImmiCard expiry date.
-          citizenship_certificate_number: Citizenship certificate number (AUS).
-          birth_registration_number: Birth-certificate registration number (AUS).
-          birth_registration_date: Birth-certificate registration date (AUS).
-          birth_registration_state: Birth-certificate registration state (AUS).
-          marriage_certificate_number: Marriage certificate number (AUS).
-          change_of_name_certificate_number: Change-of-name certificate number (AUS).
-          first_partner_name: First name of the partner on a marriage certificate (AUS).
-          last_partner_name: Last name of the partner on a marriage certificate (AUS).
+          medicare_card_number: Medicare card number.
+          immi_card_number
+          immi_card_expiry_date
+          citizenship_certificate_number: Citizenship certificate number.
+          birth_registration_number: Birth-certificate registration number.
+          birth_registration_date: Birth-certificate registration date.
+          birth_registration_state: Birth-certificate registration state.
+          marriage_certificate_number: Marriage certificate number.
+          change_of_name_certificate_number: Change-of-name certificate number.
+          first_partner_name: First name of the partner on a marriage certificate.
+          last_partner_name: Last name of the partner on a marriage certificate.
           voter_id: Voter registration number (IND EPIC, IRL).
           epic_card: India EPIC voter card number.
           pan: India PAN (Permanent Account Number).
