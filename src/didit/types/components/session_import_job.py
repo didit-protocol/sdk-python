@@ -5,6 +5,8 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.import_check import ImportCheck
+from didit.types.components.import_limit_request import ImportLimitRequest
 
 __all__ = ["SessionImportJob"]
 
@@ -14,9 +16,23 @@ class SessionImportJob(BaseModel):
     """Import job id. Use this value to poll progress and fetch row errors."""
 
     status: (
-        Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED", "PAUSED", "CANCELLED", "READY"]
+        Literal[
+            "PENDING",
+            "PROCESSING",
+            "COMPLETED",
+            "FAILED",
+            "PAUSED",
+            "CANCELLED",
+            "READY",
+            "WAITING",
+            "HELD",
+            "DECLINED",
+            "UNDOING",
+            "UNDONE",
+        ]
         | str
     )
+    """`WAITING`: the month's limit is used up. The import continues by itself when the limit goes up (a top-up, the next month, or Didit approving a limit request). `HELD`: a check held the file for review by Didit; nothing is written. `DECLINED`: Didit declined the held file (`review_note` says why); nothing was written and the source and credentials are erased. `UNDOING` and `UNDONE`: an Undo import is running or has finished."""
 
     import_type: (
         Literal["user_verification", "business_verification", "status_rules", "transactions"] | str
@@ -54,12 +70,24 @@ class SessionImportJob(BaseModel):
 
     state: (
         Literal[
-            "ready", "queued", "running", "paused", "completed", "errors", "failed", "cancelled"
+            "ready",
+            "queued",
+            "running",
+            "paused",
+            "completed",
+            "errors",
+            "failed",
+            "cancelled",
+            "waiting",
+            "held",
+            "declined",
+            "undoing",
+            "undone",
         ]
         | str
         | None
     ) = None
-    """The job's state as the console shows it; `errors` is a completed job with rejected rows."""
+    """The job's state as the console shows it; `errors` is a completed job with rejected rows. `waiting`: the month's import limit is used up. `held`: a check holds the import for review by Didit. `declined`: Didit declined the held import. `undoing` and `undone`: Undo import is running or finished."""
 
     source: Literal["file", "api", "provider"] | str | None = None
 
@@ -81,7 +109,7 @@ class SessionImportJob(BaseModel):
     is_dry_run: bool | None = None
 
     dry_run_summary: dict[str, object] | None = None
-    """What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses`."""
+    """What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses` and `checks` (only the checks that fired, the same list as the job's `checks`)."""
 
     face_templates_enabled: bool | None = None
 
@@ -100,3 +128,32 @@ class SessionImportJob(BaseModel):
     created_by_name: str | None = None
 
     created_by_email: str | None = None
+
+    limit_lane: Literal["provider", "file"] | str | None = None
+    """The monthly limit this job counts against: `provider` for a migration read from another provider (`source=provider`), `file` for an upload or file URL."""
+
+    waiting_reason: Literal["limit"] | str | None = None
+    """Why a `WAITING` job waits. `null` otherwise."""
+
+    checks: list[ImportCheck] | None = None
+    """Only the checks that fired over the whole file or account, each saying whether it holds the import. Empty when nothing fired."""
+
+    review_note: str | None = None
+    """The note from Didit on a `DECLINED` job."""
+
+    limit_request: ImportLimitRequest | None = None
+    """The request for a higher limit made for this job, or `null`."""
+
+    granted_records: int | None = None
+    """Records Didit approved for this job beyond the monthly limit."""
+
+    can_undo: bool | None = None
+    """`true` when the job recorded what it created, so `POST /v3/session/imports/{importId}/undo/` can delete it. Imports made before Undo import existed did not record it."""
+
+    undone_count: int | None = None
+    """Records deleted by Undo import."""
+
+    undone_at: _dt.datetime | None = None
+
+    undone_by: str | None = None
+    """Who undid the import."""

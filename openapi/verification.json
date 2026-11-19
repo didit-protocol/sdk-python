@@ -1722,7 +1722,7 @@
     "/v3/session/imports/": {
       "post": {
         "summary": "Create a verification import job",
-        "description": "Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Imports are disabled by default and must be enabled per organization by Didit.",
+        "description": "Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: `GET /v3/session/imports/providers/` lists the providers and how each is read: with your read-only key, from the record IDs you upload in `file`, or from an export file in Didit's format. Record IDs are namespaced by provider (`<provider>:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Any organization can import without asking Didit first, within a monthly limit that follows what it pays (see `GET /v3/session/imports/limits/`): 2,000 records a month from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit on a contract. A job above the limit writes what fits and then waits (`WAITING`), and continues by itself when the limit goes up; ask for a higher limit with `POST /v3/session/imports/{importId}/request-limit/`. Every source accepts `dry_run`. A job that is not a dry run first checks the whole file or account; for an organization that has never paid, a finding can hold the job (`HELD`) for review by Didit before anything is written. Imported verifications stay in their application: they cannot be shared with another application and never feed cross-organization fraud signals. `POST /v3/session/imports/{importId}/undo/` deletes what an import created.",
         "operationId": "post_v3_session_imports_create",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -1815,7 +1815,7 @@
                     "properties": {
                       "region": {
                         "type": "string",
-                        "description": "The provider region, one of its `regions` (Onfido: `eu`, `us`, `ca`)."
+                        "description": "The provider region, one of its `regions` in `GET /v3/session/imports/providers/`."
                       }
                     }
                   },
@@ -1837,7 +1837,7 @@
                   "dry_run": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Count what the migration would import (by status, already in Didit, same person, not finished) and write nothing. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`."
+                    "description": "Check what the import would do and write nothing, for every source (provider, file or URL). A migration counts what it would import (by status, already in Didit, same person, not finished); every dry run also computes the `checks`. The job ends `READY`; start it with `POST /v3/session/imports/{importId}/start/`. A dry run does not count against the monthly limit. Without it, the job first runs the same checks over the whole file."
                   },
                   "face_templates": {
                     "type": "boolean",
@@ -1855,9 +1855,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "source_file_url"
-                ],
                 "properties": {
                   "import_type": {
                     "type": "string",
@@ -1886,7 +1883,7 @@
                   "source_file_url": {
                     "type": "string",
                     "format": "uri",
-                    "description": "Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`."
+                    "description": "HTTPS URL of the file, resolving to a public address (private/loopback networks are rejected). Required for a file import and for a provider migration whose provider is read from uploaded record IDs or an export file (`GET /v3/session/imports/providers/` gives each provider's mode). Not needed when `source` is `provider` and Didit reads the account with `credentials`."
                   },
                   "source": {
                     "type": "string",
@@ -1979,7 +1976,7 @@
         },
         "responses": {
           "201": {
-            "description": "Import job accepted. Poll the returned `uuid` until `status` is `COMPLETED` or `FAILED`.",
+            "description": "Import job accepted. Poll the returned `uuid` until `status` is `COMPLETED`, `FAILED`, `DECLINED` or `READY`. A job can also wait: `WAITING` (the monthly limit is used up) or `HELD` (a check holds it for review by Didit).",
             "content": {
               "application/json": {
                 "schema": {
@@ -2064,18 +2061,20 @@
             }
           },
           "403": {
-            "description": "Imports not enabled, sandbox application, or missing API key (a wrong, revoked or expired key gets `401`). Verification imports are disabled by default and must be enabled per organization by Didit.",
+            "description": "Missing API key, a sandbox application (`code: imports_not_available_in_sandbox`), or an organization whose imports are turned off (`code: imports_turned_off`). A wrong, revoked or expired key gets `401`.",
             "content": {
               "application/json": {
                 "examples": {
-                  "Imports not enabled": {
+                  "Imports turned off": {
                     "value": {
-                      "detail": "Verification imports are not enabled for this organization."
+                      "detail": "Imports are turned off for this organization. Contact support.",
+                      "code": "imports_turned_off"
                     }
                   },
                   "Sandbox": {
                     "value": {
-                      "detail": "Verification imports are not enabled for sandbox applications."
+                      "detail": "Imports run in a live application, not in sandbox.",
+                      "code": "imports_not_available_in_sandbox"
                     }
                   },
                   "Bad API key": {
@@ -12541,6 +12540,25 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The session was imported from another provider with `POST /v3/session/imports/`. Didit did not run its checks, so it stays in the application that imported it and no share token is minted. Nothing is created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedSessionNotShareableError"
+                },
+                "examples": {
+                  "Imported verification": {
+                    "summary": "The session was imported from another provider",
+                    "value": {
+                      "detail": "Imported verifications cannot be shared with another application: Didit did not run their checks.",
+                      "code": "imported_session_not_shareable"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -12767,6 +12785,25 @@
                     "summary": "Workflow unknown",
                     "value": {
                       "detail": "Workflow does not exist for this application."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The share token names a session that was imported from another provider with `POST /v3/session/imports/` (a token minted before imported sessions stopped being shareable). Didit did not run its checks, so nothing is copied into your application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedSessionNotShareableError"
+                },
+                "examples": {
+                  "Imported verification": {
+                    "summary": "The session was imported from another provider",
+                    "value": {
+                      "detail": "Imported verifications cannot be shared with another application: Didit did not run their checks.",
+                      "code": "imported_session_not_shareable"
                     }
                   }
                 }
@@ -89236,11 +89273,23 @@
             "description": "The provider refused the key: `code`, `detail`, `missing_permissions`, `suggested_region`."
           },
           "403": {
-            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "description": "Missing API key, a sandbox application (`code: imports_not_available_in_sandbox`), or an organization whose imports are turned off (`code: imports_turned_off`). A wrong, revoked or expired key gets `401`.",
             "content": {
               "application/json": {
                 "examples": {
-                  "Forbidden": {
+                  "Imports turned off": {
+                    "value": {
+                      "detail": "Imports are turned off for this organization. Contact support.",
+                      "code": "imports_turned_off"
+                    }
+                  },
+                  "Sandbox": {
+                    "value": {
+                      "detail": "Imports run in a live application, not in sandbox.",
+                      "code": "imports_not_available_in_sandbox"
+                    }
+                  },
+                  "Bad API key": {
                     "value": {
                       "detail": "You do not have permission to perform this action."
                     }
@@ -89302,7 +89351,7 @@
     "/v3/session/imports/{importId}/start/": {
       "post": {
         "summary": "Start a dry run",
-        "description": "Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.",
+        "description": "Start an import whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now. A file or API job runs the checks again over the whole file first.",
         "operationId": "post_v3_session_imports_start",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -89379,11 +89428,23 @@
             "description": "The job is not in a state this action applies to."
           },
           "403": {
-            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "description": "Missing API key, a sandbox application (`code: imports_not_available_in_sandbox`), or an organization whose imports are turned off (`code: imports_turned_off`). A wrong, revoked or expired key gets `401`.",
             "content": {
               "application/json": {
                 "examples": {
-                  "Forbidden": {
+                  "Imports turned off": {
+                    "value": {
+                      "detail": "Imports are turned off for this organization. Contact support.",
+                      "code": "imports_turned_off"
+                    }
+                  },
+                  "Sandbox": {
+                    "value": {
+                      "detail": "Imports run in a live application, not in sandbox.",
+                      "code": "imports_not_available_in_sandbox"
+                    }
+                  },
+                  "Bad API key": {
                     "value": {
                       "detail": "You do not have permission to perform this action."
                     }
@@ -89642,7 +89703,7 @@
     "/v3/session/imports/{importId}/cancel/": {
       "post": {
         "summary": "Cancel an import job",
-        "description": "Cancel an import. What was imported stays; the uploaded file and the key are erased.",
+        "description": "Cancel an import. What was imported stays, unless you undo it with `POST /v3/session/imports/{importId}/undo/`; the uploaded file and the key are erased.",
         "operationId": "post_v3_session_imports_cancel",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -89813,11 +89874,23 @@
             "description": "Not a migration, not ended, or the provider refused the key."
           },
           "403": {
-            "description": "Missing, invalid, or revoked API key, or the caller cannot import verifications for this application.",
+            "description": "Missing API key, a sandbox application (`code: imports_not_available_in_sandbox`), or an organization whose imports are turned off (`code: imports_turned_off`). A wrong, revoked or expired key gets `401`.",
             "content": {
               "application/json": {
                 "examples": {
-                  "Forbidden": {
+                  "Imports turned off": {
+                    "value": {
+                      "detail": "Imports are turned off for this organization. Contact support.",
+                      "code": "imports_turned_off"
+                    }
+                  },
+                  "Sandbox": {
+                    "value": {
+                      "detail": "Imports run in a live application, not in sandbox.",
+                      "code": "imports_not_available_in_sandbox"
+                    }
+                  },
+                  "Bad API key": {
                     "value": {
                       "detail": "You do not have permission to perform this action."
                     }
@@ -89874,7 +89947,7 @@
     "/v3/import-jobs/": {
       "get": {
         "summary": "List import jobs",
-        "description": "Every import of the application in one shape: verification imports and migrations, people and businesses.",
+        "description": "Every import of the application in one shape: verification imports and migrations, people and businesses. `limit_lane`, `waiting_reason`, `checks`, `review_note`, `limit_request`, `granted_records` and the Undo fields apply to verification imports; they are `null`, empty or `false` for people and company imports.",
         "operationId": "get_v3_import_jobs_list",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -98320,6 +98393,436 @@
           }
         ]
       }
+    },
+    "/v3/session/imports/limits/": {
+      "get": {
+        "summary": "Get import limits",
+        "description": "Read how many verifications your organization can still import this month. Limits follow what the organization pays and are counted per organization, across all its live applications, per calendar month in UTC, in records written by imports that are not dry runs: 2,000 from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit (`limit: null`) on a contract or when Didit set the organization to always allowed. Records skipped because they were already in Didit, rejected rows and dry runs do not count, and records you undo are given back. `can_import: false` with `reason: turned_off` or `reason: sandbox` means a create call would be refused. Authenticate with your application's API key, or with a console user token that has `write:sessions`.",
+        "operationId": "get_v3_session_imports_limits",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "retrieve_limits",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "description": "The limits and this month's use.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportLimits"
+                },
+                "examples": {
+                  "Never paid": {
+                    "value": {
+                      "mode": "automatic",
+                      "level": "never_paid",
+                      "can_import": true,
+                      "reason": null,
+                      "checks_can_hold": true,
+                      "period": {
+                        "starts_at": "2026-11-01T00:00:00Z",
+                        "resets_at": "2026-12-01T00:00:00Z"
+                      },
+                      "lanes": {
+                        "provider": {
+                          "limit": 2000,
+                          "used": 0,
+                          "remaining": 2000
+                        },
+                        "file": {
+                          "limit": 500,
+                          "used": 0,
+                          "remaining": 500
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing API key. A wrong, revoked or expired key gets `401`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sessions.imports.retrieve_limits()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sessions.imports.retrieveLimits();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sessions.Imports.RetrieveLimits(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sessions().imports().retrieveLimits();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->sessions->imports->retrieveLimits();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sessions.imports.retrieve_limits\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sessions.Imports.RetrieveLimitsAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/request-limit/": {
+      "post": {
+        "summary": "Request a higher import limit",
+        "description": "Ask Didit to let one import go past the monthly limit. Allowed on a job that is `READY`, `PENDING`, `PROCESSING` or `WAITING` and whose lane has a limit; one request can be pending per job. `requested_records` is not sent: it is computed from the job's dry run or check pass as what the import still has to write beyond what it may write now (one month of the lane when no pass counted the file). An approval lets that job finish and does not change the organization's monthly limit. A declined request leaves the job waiting for the next month or a top-up, and the answer is in `limit_request.staff_note`. The job continues by itself when the limit goes up. A turned-off organization or a sandbox application is refused.",
+        "operationId": "post_v3_session_imports_request_limit",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "request_limit",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportLimitRequestInput"
+              },
+              "example": {
+                "note": "Migrating our full 2023-2026 history from the previous provider."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The import job, with its pending `limit_request`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                },
+                "examples": {
+                  "Requested": {
+                    "value": {
+                      "uuid": "3f9c1a2b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+                      "status": "WAITING",
+                      "import_type": "user_verification",
+                      "source": "file",
+                      "limit_lane": "file",
+                      "waiting_reason": "limit",
+                      "limit_request": {
+                        "id": "7d1f0c1e-2b3a-4c5d-8e9f-0a1b2c3d4e5f",
+                        "status": "pending",
+                        "requested_records": 8011,
+                        "note": "Migrating our full 2023-2026 history from the previous provider.",
+                        "created_at": "2026-11-18T10:15:00Z",
+                        "decided_at": null,
+                        "staff_note": null
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The job is in a status that cannot ask for a higher limit, it has no monthly limit to go past (`import_has_no_limit`), or everything it still has to write already fits in this month's limit (`import_fits_the_limit`).",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "No limit": {
+                    "value": {
+                      "detail": "This import has no monthly limit, so there is nothing to ask for.",
+                      "code": "import_has_no_limit"
+                    }
+                  },
+                  "Fits": {
+                    "value": {
+                      "detail": "Everything this import still has to write fits in this month's limit.",
+                      "code": "import_fits_the_limit"
+                    }
+                  },
+                  "Wrong status": {
+                    "value": {
+                      "status": "A completed import cannot ask for a higher limit."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing API key, a sandbox application (`code: imports_not_available_in_sandbox`), or an organization whose imports are turned off (`code: imports_turned_off`). A wrong, revoked or expired key gets `401`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Imports turned off": {
+                    "value": {
+                      "detail": "Imports are turned off for this organization. Contact support.",
+                      "code": "imports_turned_off"
+                    }
+                  },
+                  "Sandbox": {
+                    "value": {
+                      "detail": "Imports run in a live application, not in sandbox.",
+                      "code": "imports_not_available_in_sandbox"
+                    }
+                  },
+                  "Bad API key": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No import job with this id in the application."
+          },
+          "409": {
+            "description": "A request for this job is already pending.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Pending": {
+                    "value": {
+                      "detail": "This import already has a request for a higher limit waiting for Didit's answer.",
+                      "code": "import_limit_request_pending"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sessions.imports.request_limit(\n    \"11111111-2222-3333-4444-555555555555\",\n    note=\"Migrating our full 2023-2026 history from the previous provider.\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sessions.imports.requestLimit(\"11111111-2222-3333-4444-555555555555\", {\n  note: \"Migrating our full 2023-2026 history from the previous provider.\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sessions.Imports.RequestLimit(ctx, \"11111111-2222-3333-4444-555555555555\", didit.SessionsImportsRequestLimitParams{\n\tBody: didit.ImportLimitRequestInput{\n\t\tNote: didit.String(\"Migrating our full 2023-2026 history from the previous provider.\"),\n\t},\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.ImportLimitRequestInput;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sessions().imports().requestLimit(\"11111111-2222-3333-4444-555555555555\", ImportLimitRequestInput.builder()\n        .note(\"Migrating our full 2023-2026 history from the previous provider.\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->sessions->imports->requestLimit('11111111-2222-3333-4444-555555555555', [\n    'note' => 'Migrating our full 2023-2026 history from the previous provider.',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sessions.imports.request_limit(\n  \"11111111-2222-3333-4444-555555555555\",\n  note: \"Migrating our full 2023-2026 history from the previous provider.\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sessions.Imports.RequestLimitAsync(\"11111111-2222-3333-4444-555555555555\", new ImportLimitRequestInput\n{\n    Note = \"Migrating our full 2023-2026 history from the previous provider.\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/session/imports/{importId}/undo/": {
+      "post": {
+        "summary": "Undo an import",
+        "description": "Delete what an import created. Every verification (User Verification, Business Verification) and transaction the job created is deleted with its images and videos, its face templates, and the blocklist entries the job added, exactly as `DELETE /v3/session/{sessionId}/delete/` deletes a session. Records that were already in Didit, and the workflow status rules an import changed, are not affected. The records you undo are given back to the month's import limit. Deletion cannot be reversed.\n\nAllowed when `can_undo` is `true` and the job is `COMPLETED`, `FAILED`, `CANCELLED` or `WAITING` (a waiting job is cancelled first). Imports made before Undo import existed did not record what they created and cannot be undone. The job moves to `UNDOING` and ends `UNDONE` with `undone_count`; poll `GET /v3/session/imports/{importId}/`. Undo is available for User Verification, Business Verification and transaction imports; status rules are not undone. Needs the sessions write and delete privileges (`write:sessions` and `delete:sessions` for a console user; an API key needs sessions write access and `delete:sessions`). Undoing a Business Verification import also needs `delete:businesses`, and a transactions import needs `write:transactions` (an API key needs write access to that resource).",
+        "operationId": "post_v3_session_imports_undo",
+        "x-didit-sdk": {
+          "resource": "sessions.imports",
+          "method": "undo",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Undo started. The job is `UNDOING`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionImportJob"
+                },
+                "examples": {
+                  "Undoing": {
+                    "value": {
+                      "uuid": "3f9c1a2b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+                      "status": "UNDOING",
+                      "import_type": "user_verification",
+                      "source": "file",
+                      "limit_lane": "file",
+                      "can_undo": false,
+                      "undone_count": 0,
+                      "undone_at": null,
+                      "undone_by": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing API key, or the caller lacks `delete:sessions` (or the privilege the import's records need). A wrong, revoked or expired key gets `401`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No import job with this id in the application."
+          },
+          "409": {
+            "description": "The job cannot be undone: it did not record what it created or created nothing, it is a status rules import, or it is not `COMPLETED`, `FAILED`, `CANCELLED` or `WAITING`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Not undoable": {
+                    "value": {
+                      "detail": "This import cannot be undone.",
+                      "code": "import_not_undoable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.sessions.imports.undo(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.sessions.imports.undo(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Sessions.Imports.Undo(ctx, \"11111111-2222-3333-4444-555555555555\", didit.SessionsImportsUndoParams{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.sessions().imports().undo(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->sessions->imports->undo('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.sessions.imports.undo(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sessions.Imports.UndoAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -98430,8 +98933,14 @@
               "FAILED",
               "PAUSED",
               "CANCELLED",
-              "READY"
-            ]
+              "READY",
+              "WAITING",
+              "HELD",
+              "DECLINED",
+              "UNDOING",
+              "UNDONE"
+            ],
+            "description": "`WAITING`: the month's limit is used up. The import continues by itself when the limit goes up (a top-up, the next month, or Didit approving a limit request). `HELD`: a check held the file for review by Didit; nothing is written. `DECLINED`: Didit declined the held file (`review_note` says why); nothing was written and the source and credentials are erased. `UNDOING` and `UNDONE`: an Undo import is running or has finished."
           },
           "import_type": {
             "type": "string",
@@ -98516,9 +99025,14 @@
               "completed",
               "errors",
               "failed",
-              "cancelled"
+              "cancelled",
+              "waiting",
+              "held",
+              "declined",
+              "undoing",
+              "undone"
             ],
-            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows."
+            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows. `waiting`: the month's import limit is used up. `held`: a check holds the import for review by Didit. `declined`: Didit declined the held import. `undoing` and `undone`: Undo import is running or finished."
           },
           "source": {
             "type": "string",
@@ -98561,7 +99075,7 @@
           },
           "dry_run_summary": {
             "type": "object",
-            "description": "What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses`."
+            "description": "What a dry run found: `total`, `by_status`, `already_in_didit`, `same_person`, `not_finished`, `failed`, `unmapped_statuses` and `checks` (only the checks that fired, the same list as the job's `checks`)."
           },
           "face_templates_enabled": {
             "type": "boolean"
@@ -98598,6 +99112,67 @@
           "created_by_email": {
             "type": "string",
             "nullable": true
+          },
+          "limit_lane": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "file"
+            ],
+            "description": "The monthly limit this job counts against: `provider` for a migration read from another provider (`source=provider`), `file` for an upload or file URL."
+          },
+          "waiting_reason": {
+            "type": "string",
+            "enum": [
+              "limit"
+            ],
+            "nullable": true,
+            "description": "Why a `WAITING` job waits. `null` otherwise."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportCheck"
+            },
+            "description": "Only the checks that fired over the whole file or account, each saying whether it holds the import. Empty when nothing fired."
+          },
+          "review_note": {
+            "type": "string",
+            "nullable": true,
+            "description": "The note from Didit on a `DECLINED` job."
+          },
+          "limit_request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportLimitRequest"
+              }
+            ],
+            "nullable": true,
+            "description": "The request for a higher limit made for this job, or `null`."
+          },
+          "granted_records": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records Didit approved for this job beyond the monthly limit."
+          },
+          "can_undo": {
+            "type": "boolean",
+            "description": "`true` when the job recorded what it created, so `POST /v3/session/imports/{importId}/undo/` can delete it. Imports made before Undo import existed did not record it."
+          },
+          "undone_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records deleted by Undo import."
+          },
+          "undone_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "undone_by": {
+            "type": "string",
+            "nullable": true,
+            "description": "Who undid the import."
           }
         }
       },
@@ -132832,12 +133407,18 @@
               "completed",
               "errors",
               "failed",
-              "cancelled"
+              "cancelled",
+              "waiting",
+              "held",
+              "declined",
+              "undoing",
+              "undone"
             ],
-            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows."
+            "description": "The job's state as the console shows it; `errors` is a completed job with rejected rows. `waiting`: the month's import limit is used up. `held`: a check holds the import for review by Didit. `declined`: Didit declined the held import. `undoing` and `undone`: Undo import is running or finished."
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "The job's status; the same values as a verification import job's `status`, including `WAITING`, `HELD`, `DECLINED`, `UNDOING` and `UNDONE`."
           },
           "is_dry_run": {
             "type": "boolean"
@@ -132943,6 +133524,68 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "limit_lane": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "file"
+            ],
+            "description": "The monthly limit this job counts against: `provider` for a migration read from another provider (`source=provider`), `file` for an upload or file URL.",
+            "nullable": true
+          },
+          "waiting_reason": {
+            "type": "string",
+            "enum": [
+              "limit"
+            ],
+            "nullable": true,
+            "description": "Why a `WAITING` job waits. `null` otherwise."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportCheck"
+            },
+            "description": "What the checks found in the whole file or account. Empty when nothing was flagged."
+          },
+          "review_note": {
+            "type": "string",
+            "nullable": true,
+            "description": "The note from Didit on a `DECLINED` job."
+          },
+          "limit_request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportLimitRequest"
+              }
+            ],
+            "nullable": true,
+            "description": "The request for a higher limit made for this job, or `null`."
+          },
+          "granted_records": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records Didit approved for this job beyond the monthly limit."
+          },
+          "can_undo": {
+            "type": "boolean",
+            "description": "`true` when the job recorded what it created, so `POST /v3/session/imports/{importId}/undo/` can delete it. Imports made before Undo import existed did not record it."
+          },
+          "undone_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records deleted by Undo import."
+          },
+          "undone_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "undone_by": {
+            "type": "string",
+            "nullable": true,
+            "description": "Who undid the import."
           }
         }
       },
@@ -133012,6 +133655,26 @@
               "$ref": "#/components/schemas/FiledRegulatoryReport"
             },
             "description": "Finalized reports that list this transaction."
+          }
+        }
+      },
+      "ImportedSessionNotShareableError": {
+        "type": "object",
+        "description": "The session was imported from another provider, so it cannot be shared with another application: Didit did not run its checks. Nothing is created or copied.",
+        "required": [
+          "detail",
+          "code"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "imported_session_not_shareable"
+            ],
+            "description": "Stable error code for a share or share import refused because the session was imported from another provider."
           }
         }
       },
@@ -137768,6 +138431,208 @@
           "document_location": {
             "latitude": 40.4169,
             "longitude": -3.7035
+          }
+        }
+      },
+      "ImportCheck": {
+        "type": "object",
+        "required": [
+          "code",
+          "count",
+          "share",
+          "holds"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "all_approved_no_media",
+              "repeated_documents",
+              "implausible_dates"
+            ],
+            "description": "`all_approved_no_media`: at least 95% of the records are Approved and at most 5% carry any image (selfie, document or video), on 100 records or more. It applies to file imports only (a provider's export file included), because records read from a provider's API carry their images only once they are imported. `repeated_documents`: the same document number and issuing country appears under a different name or date of birth in at least 2% of the records and at least 20 records (User Verification imports). `implausible_dates`: a verification date in the future or before 2010, or a date of birth giving an age under 14 or over 110, in at least 2% of the records."
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records the check flagged."
+          },
+          "share": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Flagged records as a fraction of the records checked."
+          },
+          "holds": {
+            "type": "boolean",
+            "description": "`true` when this finding holds the import for review by Didit before anything is written (an organization on the automatic mode that has never paid). Otherwise the finding is a warning only."
+          }
+        }
+      },
+      "ImportLimitLane": {
+        "type": "object",
+        "required": [
+          "limit",
+          "used",
+          "remaining"
+        ],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Records this lane may write in the period. `null` when there is no monthly limit, `0` when imports are turned off."
+          },
+          "used": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records written in the period by imports that are not dry runs, across all live applications of the organization. Records an import skipped because they were already in Didit, rejected rows and dry runs do not count, and records you undo are given back."
+          },
+          "remaining": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "`limit` minus `used`. `null` when there is no monthly limit, `0` when imports are turned off."
+          }
+        }
+      },
+      "ImportLimits": {
+        "type": "object",
+        "required": [
+          "mode",
+          "level",
+          "can_import",
+          "reason",
+          "checks_can_hold",
+          "period",
+          "lanes"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "always_allowed",
+              "turned_off"
+            ],
+            "description": "The import mode of the organization. `automatic` applies the monthly limits; `always_allowed` has no monthly limit and its files are never held for a check; `turned_off` imports nothing."
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "never_paid",
+              "paid",
+              "contract"
+            ],
+            "description": "The level that sets the monthly limits: `never_paid` until the first paid top-up, `paid` after it, `contract` on an enterprise contract."
+          },
+          "can_import": {
+            "type": "boolean",
+            "description": "`false` when imports are turned off or the application is a sandbox application."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "turned_off",
+              "sandbox"
+            ],
+            "nullable": true,
+            "description": "Why `can_import` is `false`; `null` otherwise."
+          },
+          "checks_can_hold": {
+            "type": "boolean",
+            "description": "`true` when a check can hold a file for review by Didit before anything is written: an organization on the automatic mode that has never paid."
+          },
+          "period": {
+            "type": "object",
+            "required": [
+              "starts_at",
+              "resets_at"
+            ],
+            "properties": {
+              "starts_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "resets_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the monthly limits start again: the first day of the next calendar month, UTC."
+              }
+            }
+          },
+          "lanes": {
+            "type": "object",
+            "required": [
+              "provider",
+              "file"
+            ],
+            "properties": {
+              "provider": {
+                "$ref": "#/components/schemas/ImportLimitLane"
+              },
+              "file": {
+                "$ref": "#/components/schemas/ImportLimitLane"
+              }
+            },
+            "description": "Monthly limits per lane. `provider` counts migrations that read records from another provider with your key (`source=provider`); `file` counts file uploads and file URLs sent through the API."
+          }
+        }
+      },
+      "ImportLimitRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "requested_records",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "declined"
+            ]
+          },
+          "requested_records": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records the request asks to write beyond the monthly limit, for this import."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your note, at most 1000 characters."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "staff_note": {
+            "type": "string",
+            "nullable": true,
+            "description": "The answer from Didit when the request was declined or approved."
+          }
+        }
+      },
+      "ImportLimitRequestInput": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Optional. Tell Didit why you need a higher limit, at most 1000 characters."
           }
         }
       }

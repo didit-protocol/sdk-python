@@ -8,6 +8,7 @@ from didit.types.components.aml_screening_run import AMLScreeningRun
 from didit.types.components.business_session_list_item import BusinessSessionListItem
 from didit.types.components.entity_network_membership_list import EntityNetworkMembershipList
 from didit.types.components.feature_status_override import FeatureStatusOverride
+from didit.types.components.import_limits import ImportLimits
 from didit.types.components.kyb_key_people_party import KYBKeyPeopleParty
 from didit.types.components.review_item import ReviewItem
 from didit.types.components.sandbox_simulate_response import SandboxSimulateResponse
@@ -3634,6 +3635,26 @@ def test_sessions_imports_cancel() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -3768,6 +3789,31 @@ def test_sessions_imports_list_active_jobs() -> None:
                         "created_at": "2026-01-01T00:00:00Z",
                         "started_at": "2026-01-01T00:00:00Z",
                         "completed_at": "2026-01-01T00:00:00Z",
+                        "limit_lane": "provider",
+                        "waiting_reason": "limit",
+                        "checks": [
+                            {
+                                "code": "all_approved_no_media",
+                                "count": 1,
+                                "share": 1.5,
+                                "holds": True,
+                            }
+                        ],
+                        "review_note": "sample",
+                        "limit_request": {
+                            "id": "00000000-0000-4000-8000-000000000007",
+                            "status": "pending",
+                            "requested_records": 1,
+                            "note": "sample",
+                            "created_at": "2026-01-01T00:00:00Z",
+                            "decided_at": "2026-01-01T00:00:00Z",
+                            "staff_note": "sample",
+                        },
+                        "granted_records": 1,
+                        "can_undo": True,
+                        "undone_count": 1,
+                        "undone_at": "2026-01-01T00:00:00Z",
+                        "undone_by": "sample",
                     }
                 ],
                 "running": 1,
@@ -3872,6 +3918,31 @@ def test_sessions_imports_list_jobs() -> None:
                         "created_at": "2026-01-01T00:00:00Z",
                         "started_at": "2026-01-01T00:00:00Z",
                         "completed_at": "2026-01-01T00:00:00Z",
+                        "limit_lane": "provider",
+                        "waiting_reason": "limit",
+                        "checks": [
+                            {
+                                "code": "all_approved_no_media",
+                                "count": 1,
+                                "share": 1.5,
+                                "holds": True,
+                            }
+                        ],
+                        "review_note": "sample",
+                        "limit_request": {
+                            "id": "00000000-0000-4000-8000-000000000007",
+                            "status": "pending",
+                            "requested_records": 1,
+                            "note": "sample",
+                            "created_at": "2026-01-01T00:00:00Z",
+                            "decided_at": "2026-01-01T00:00:00Z",
+                            "staff_note": "sample",
+                        },
+                        "granted_records": 1,
+                        "can_undo": True,
+                        "undone_count": 1,
+                        "undone_at": "2026-01-01T00:00:00Z",
+                        "undone_by": "sample",
                     }
                 ],
                 "counts": {"all": 1, "running_and_waiting": 1, "needs_attention": 1, "done": 1},
@@ -3969,11 +4040,72 @@ def test_sessions_imports_pause() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
         lambda c: c.sessions.imports.pause("00000000-0000-4000-8000-000000000001"),
         lambda c: c.sessions.imports.pause("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_request_limit() -> None:
+    """``POST /v3/session/imports/{importId}/request-limit/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/request-limit/",
+            api="verification",
+            auth="api_key",
+            json_body={"note": "Migrating our full 2023-2026 history from the previous provider."},
+            status=201,
+            response_json={
+                "uuid": "3f9c1a2b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+                "status": "WAITING",
+                "import_type": "user_verification",
+                "source": "file",
+                "limit_lane": "file",
+                "waiting_reason": "limit",
+                "limit_request": {
+                    "id": "7d1f0c1e-2b3a-4c5d-8e9f-0a1b2c3d4e5f",
+                    "status": "pending",
+                    "requested_records": 8011,
+                    "note": "Migrating our full 2023-2026 history from the previous provider.",
+                    "created_at": "2026-11-18T10:15:00Z",
+                    "decided_at": None,
+                    "staff_note": None,
+                },
+            },
+        ),
+        lambda c: c.sessions.imports.request_limit(
+            "00000000-0000-4000-8000-000000000001",
+            note="Migrating our full 2023-2026 history from the previous provider.",
+        ),
+        lambda c: c.sessions.imports.request_limit(
+            "00000000-0000-4000-8000-000000000001",
+            note="Migrating our full 2023-2026 history from the previous provider.",
+        ),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),
     )
@@ -4026,6 +4158,26 @@ def test_sessions_imports_resume() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -4083,6 +4235,26 @@ def test_sessions_imports_retrieve() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -4090,6 +4262,38 @@ def test_sessions_imports_retrieve() -> None:
         lambda c: c.sessions.imports.retrieve("00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_retrieve_limits() -> None:
+    """``GET /v3/session/imports/limits/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/session/imports/limits/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "mode": "automatic",
+                "level": "never_paid",
+                "can_import": True,
+                "reason": None,
+                "checks_can_hold": True,
+                "period": {
+                    "starts_at": "2026-11-01T00:00:00Z",
+                    "resets_at": "2026-12-01T00:00:00Z",
+                },
+                "lanes": {
+                    "provider": {"limit": 2000, "used": 0, "remaining": 2000},
+                    "file": {"limit": 500, "used": 0, "remaining": 500},
+                },
+            },
+        ),
+        lambda c: c.sessions.imports.retrieve_limits(),
+        lambda c: c.sessions.imports.retrieve_limits(),
+        lambda r: isinstance(r, ImportLimits),
+        lambda r: isinstance(r, ImportLimits),
     )
 
 
@@ -4162,6 +4366,26 @@ def test_sessions_imports_retry() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -4226,6 +4450,26 @@ def test_sessions_imports_start() -> None:
                 "face_blocklist_hits_count": 1,
                 "created_by_name": "sample",
                 "created_by_email": "sample",
+                "limit_lane": "provider",
+                "waiting_reason": "limit",
+                "checks": [
+                    {"code": "all_approved_no_media", "count": 1, "share": 1.5, "holds": True}
+                ],
+                "review_note": "sample",
+                "limit_request": {
+                    "id": "00000000-0000-4000-8000-000000000005",
+                    "status": "pending",
+                    "requested_records": 1,
+                    "note": "sample",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "decided_at": "2026-01-01T00:00:00Z",
+                    "staff_note": "sample",
+                },
+                "granted_records": 1,
+                "can_undo": True,
+                "undone_count": 1,
+                "undone_at": "2026-01-01T00:00:00Z",
+                "undone_by": "sample",
             },
             strict_type=SessionImportJob,
         ),
@@ -4235,6 +4479,34 @@ def test_sessions_imports_start() -> None:
         lambda c: c.sessions.imports.start(
             "00000000-0000-4000-8000-000000000001", status_mapping={"key": "Approved"}
         ),
+        lambda r: isinstance(r, SessionImportJob),
+        lambda r: isinstance(r, SessionImportJob),
+    )
+
+
+def test_sessions_imports_undo() -> None:
+    """``POST /v3/session/imports/{importId}/undo/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/session/imports/00000000-0000-4000-8000-000000000001/undo/",
+            api="verification",
+            auth="api_key",
+            status=202,
+            response_json={
+                "uuid": "3f9c1a2b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+                "status": "UNDOING",
+                "import_type": "user_verification",
+                "source": "file",
+                "limit_lane": "file",
+                "can_undo": False,
+                "undone_count": 0,
+                "undone_at": None,
+                "undone_by": None,
+            },
+        ),
+        lambda c: c.sessions.imports.undo("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.sessions.imports.undo("00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, SessionImportJob),
         lambda r: isinstance(r, SessionImportJob),
     )
