@@ -28,7 +28,7 @@ class SessionsImportsCreateParams(TypedDict, total=False):
     """Optional. Inferred from the URL's file extension when omitted."""
 
     source_file_url: str
-    """Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`."""
+    """HTTPS URL of the file, resolving to a public address (private/loopback networks are rejected). Required for a file import and for a provider migration whose provider is read from uploaded record IDs or an export file (`GET /v3/session/imports/providers/` gives each provider's mode). Not needed when `source` is `provider` and Didit reads the account with `credentials`."""
 
     source: Literal["file", "provider"] | str
     """`provider` makes this a migration from another identity verification provider. Omit for a file import."""

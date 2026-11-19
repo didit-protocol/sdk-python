@@ -1072,6 +1072,7 @@ if TYPE_CHECKING:
     from didit.types.components.geolocation_parsed_address import (
         GeolocationParsedAddressDocumentLocation as GeolocationParsedAddressDocumentLocation,
     )
+    from didit.types.components.import_check import ImportCheck as ImportCheck
     from didit.types.components.import_job_summary import ImportJobSummary as ImportJobSummary
     from didit.types.components.import_job_summary import (
         ImportJobSummaryFaceTemplates as ImportJobSummaryFaceTemplates,
@@ -1082,6 +1083,11 @@ if TYPE_CHECKING:
     from didit.types.components.import_job_summary import (
         ImportJobSummaryStartedBy as ImportJobSummaryStartedBy,
     )
+    from didit.types.components.import_limit_lane import ImportLimitLane as ImportLimitLane
+    from didit.types.components.import_limit_request import ImportLimitRequest as ImportLimitRequest
+    from didit.types.components.import_limits import ImportLimits as ImportLimits
+    from didit.types.components.import_limits import ImportLimitsLanes as ImportLimitsLanes
+    from didit.types.components.import_limits import ImportLimitsPeriod as ImportLimitsPeriod
     from didit.types.components.import_provider import ImportProvider as ImportProvider
     from didit.types.components.import_provider import (
         ImportProviderCredentialFields as ImportProviderCredentialFields,
@@ -3088,6 +3094,9 @@ if TYPE_CHECKING:
     from didit.types.sessions.imports.list_providers_response import (
         SessionsImportsListProvidersResponse as SessionsImportsListProvidersResponse,
     )
+    from didit.types.sessions.imports.request_limit_params import (
+        SessionsImportsRequestLimitParams as SessionsImportsRequestLimitParams,
+    )
     from didit.types.sessions.imports.retry_params import (
         SessionsImportsRetryParams as SessionsImportsRetryParams,
     )
@@ -4061,10 +4070,16 @@ _MODULES: dict[str, str] = {
     "IdWalletsStartUaePassParams": "id_wallets.start_uae_pass_params",
     "IdWalletsStartVippsParams": "id_wallets.start_vipps_params",
     "IdWalletsSubmitVerificationResponseParams": "id_wallets.submit_verification_response_params",
+    "ImportCheck": "components.import_check",
     "ImportJobSummary": "components.import_job_summary",
     "ImportJobSummaryFaceTemplates": "components.import_job_summary",
     "ImportJobSummaryProgress": "components.import_job_summary",
     "ImportJobSummaryStartedBy": "components.import_job_summary",
+    "ImportLimitLane": "components.import_limit_lane",
+    "ImportLimitRequest": "components.import_limit_request",
+    "ImportLimits": "components.import_limits",
+    "ImportLimitsLanes": "components.import_limits",
+    "ImportLimitsPeriod": "components.import_limits",
     "ImportProvider": "components.import_provider",
     "ImportProviderCredentialFields": "components.import_provider",
     "InvestigatorAcceptRunParams": "investigator.accept_run_params",
@@ -4497,6 +4512,7 @@ _MODULES: dict[str, str] = {
     "SessionsImportsListJobsResponse": "sessions.imports.list_jobs_response",
     "SessionsImportsListJobsResponseCounts": "sessions.imports.list_jobs_response",
     "SessionsImportsListProvidersResponse": "sessions.imports.list_providers_response",
+    "SessionsImportsRequestLimitParams": "sessions.imports.request_limit_params",
     "SessionsImportsRetryParams": "sessions.imports.retry_params",
     "SessionsImportsStartParams": "sessions.imports.start_params",
     "SessionsListAmlScreeningHistoryResponse": "sessions.list_aml_screening_history_response",
@@ -5370,10 +5386,16 @@ __all__ = [
     "IdWalletsStartUaePassParams",
     "IdWalletsStartVippsParams",
     "IdWalletsSubmitVerificationResponseParams",
+    "ImportCheck",
     "ImportJobSummary",
     "ImportJobSummaryFaceTemplates",
     "ImportJobSummaryProgress",
     "ImportJobSummaryStartedBy",
+    "ImportLimitLane",
+    "ImportLimitRequest",
+    "ImportLimits",
+    "ImportLimitsLanes",
+    "ImportLimitsPeriod",
     "ImportProvider",
     "ImportProviderCredentialFields",
     "InvestigatorAcceptRunParams",
@@ -5806,6 +5828,7 @@ __all__ = [
     "SessionsImportsListJobsResponse",
     "SessionsImportsListJobsResponseCounts",
     "SessionsImportsListProvidersResponse",
+    "SessionsImportsRequestLimitParams",
     "SessionsImportsRetryParams",
     "SessionsImportsStartParams",
     "SessionsListAmlScreeningHistoryResponse",

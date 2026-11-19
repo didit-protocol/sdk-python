@@ -17,6 +17,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
+from didit.types.components.import_limits import ImportLimits
 from didit.types.components.session_import_error import SessionImportError
 from didit.types.components.session_import_job import SessionImportJob
 from didit.types.sessions.imports.check_provider_params import (
@@ -48,7 +49,7 @@ __all__ = [
 class SessionsImports(SyncAPIResource):
     """The ``sessions.imports`` resource of the Didit API.
 
-    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``resume``, ``retrieve``, ``retrieve_template``, ``retry``, ``start``.
+    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``request_limit``, ``resume``, ``retrieve``, ``retrieve_limits``, ``retrieve_template``, ``retry``, ``start``, ``undo``.
     """
 
     @cached_property
@@ -112,7 +113,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionImportJob:
         """Create a verification import job.
 
-        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Imports are disabled by default and must be enabled per organization by Didit.
+        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: `GET /v3/session/imports/providers/` lists the providers and how each is read: with your read-only key, from the record IDs you upload in `file`, or from an export file in Didit's format. Record IDs are namespaced by provider (`<provider>:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Any organization can import without asking Didit first, within a monthly limit that follows what it pays (see `GET /v3/session/imports/limits/`): 2,000 records a month from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit on a contract. A job above the limit writes what fits and then waits (`WAITING`), and continues by itself when the limit goes up; ask for a higher limit with `POST /v3/session/imports/{importId}/request-limit/`. Every source accepts `dry_run`. A job that is not a dry run first checks the whole file or account; for an organization that has never paid, a finding can hold the job (`HELD`) for review by Didit before anything is written. Imported verifications stay in their application: they cannot be shared with another application and never feed cross-organization fraud signals. `POST /v3/session/imports/{importId}/undo/` deletes what an import created.
 
         ``POST /v3/session/imports/``
 
@@ -120,7 +121,7 @@ class SessionsImports(SyncAPIResource):
           import_type: What to import: historical User Verification sessions, historical Business Verification sessions, workflow custom status rules, or historical transaction monitoring records.
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
-          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
+          source_file_url: HTTPS URL of the file, resolving to a public address (private/loopback networks are rejected). Required for a file import and for a provider migration whose provider is read from uploaded record IDs or an export file (`GET /v3/session/imports/providers/` gives each provider's mode). Not needed when `source` is `provider` and Didit reads the account with `credentials`.
           source: `provider` makes this a migration from another identity verification provider. Omit for a file import.
           provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
@@ -412,7 +413,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionImportJob:
         """Start a dry run.
 
-        Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.
+        Start an import whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now. A file or API job runs the checks again over the whole file first.
 
         ``POST /v3/session/imports/{importId}/start/``
 
@@ -540,7 +541,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionImportJob:
         """Cancel an import job.
 
-        Cancel an import. What was imported stays; the uploaded file and the key are erased.
+        Cancel an import. What was imported stays, unless you undo it with `POST /v3/session/imports/{importId}/undo/`; the uploaded file and the key are erased.
 
         ``POST /v3/session/imports/{importId}/cancel/``
 
@@ -627,7 +628,7 @@ class SessionsImports(SyncAPIResource):
     ) -> SessionsImportsListJobsResponse:
         """List import jobs.
 
-        Every import of the application in one shape: verification imports and migrations, people and businesses.
+        Every import of the application in one shape: verification imports and migrations, people and businesses. `limit_lane`, `waiting_reason`, `checks`, `review_note`, `limit_request`, `granted_records` and the Undo fields apply to verification imports; they are `null`, empty or `false` for people and company imports.
 
         ``GET /v3/import-jobs/``
 
@@ -688,11 +689,130 @@ class SessionsImports(SyncAPIResource):
             ),
         )
 
+    def retrieve_limits(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> ImportLimits:
+        """Get import limits.
+
+        Read how many verifications your organization can still import this month. Limits follow what the organization pays and are counted per organization, across all its live applications, per calendar month in UTC, in records written by imports that are not dry runs: 2,000 from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit (`limit: null`) on a contract or when Didit set the organization to always allowed. Records skipped because they were already in Didit, rejected rows and dry runs do not count, and records you undo are given back. `can_import: false` with `reason: turned_off` or `reason: sandbox` means a create call would be refused. Authenticate with your application's API key, or with a console user token that has `write:sessions`.
+
+        ``GET /v3/session/imports/limits/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "ImportLimits",
+            self._client.request(
+                "get",
+                "/v3/session/imports/limits/",
+                cast_to=ImportLimits,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def request_limit(
+        self,
+        import_id: str,
+        *,
+        note: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Request a higher import limit.
+
+        Ask Didit to let one import go past the monthly limit. Allowed on a job that is `READY`, `PENDING`, `PROCESSING` or `WAITING` and whose lane has a limit; one request can be pending per job. `requested_records` is not sent: it is computed from the job's dry run or check pass as what the import still has to write beyond what it may write now (one month of the lane when no pass counted the file). An approval lets that job finish and does not change the organization's monthly limit. A declined request leaves the job waiting for the next month or a top-up, and the answer is in `limit_request.staff_note`. The job continues by itself when the limit goes up. A turned-off organization or a sandbox application is refused.
+
+        ``POST /v3/session/imports/{importId}/request-limit/``
+
+        Args:
+          import_id
+          note: Optional. Tell Didit why you need a higher limit, at most 1000 characters.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/request-limit/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={"note": note},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def undo(
+        self,
+        import_id: str,
+        *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Undo an import.
+
+        Delete what an import created. Every verification (User Verification, Business Verification) and transaction the job created is deleted with its images and videos, its face templates, and the blocklist entries the job added, exactly as `DELETE /v3/session/{sessionId}/delete/` deletes a session. Records that were already in Didit, and the workflow status rules an import changed, are not affected. The records you undo are given back to the month's import limit. Deletion cannot be reversed.
+
+        Allowed when `can_undo` is `true` and the job is `COMPLETED`, `FAILED`, `CANCELLED` or `WAITING` (a waiting job is cancelled first). Imports made before Undo import existed did not record what they created and cannot be undone. The job moves to `UNDOING` and ends `UNDONE` with `undone_count`; poll `GET /v3/session/imports/{importId}/`. Undo is available for User Verification, Business Verification and transaction imports; status rules are not undone. Needs the sessions write and delete privileges (`write:sessions` and `delete:sessions` for a console user; an API key needs sessions write access and `delete:sessions`). Undoing a Business Verification import also needs `delete:businesses`, and a transactions import needs `write:transactions` (an API key needs write access to that resource).
+
+        ``POST /v3/session/imports/{importId}/undo/``
+
+        Args:
+          import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/undo/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncSessionsImports(AsyncAPIResource):
     """The ``sessions.imports`` resource of the Didit API.
 
-    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``resume``, ``retrieve``, ``retrieve_template``, ``retry``, ``start``.
+    Methods: ``cancel``, ``check_provider``, ``create``, ``list_active_jobs``, ``list_errors``, ``list_jobs``, ``list_providers``, ``pause``, ``request_limit``, ``resume``, ``retrieve``, ``retrieve_limits``, ``retrieve_template``, ``retry``, ``start``, ``undo``.
     """
 
     @cached_property
@@ -756,7 +876,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionImportJob:
         """Create a verification import job.
 
-        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: Didit reads Sumsub, Onfido, Persona and ComplyCube with your read-only key, reads Veriff, iDenfy and MetaMap records by the IDs you upload in `file`, and imports an export file in Didit's format for the other providers. Record IDs are namespaced by provider (`sumsub:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Imports are disabled by default and must be enabled per organization by Didit.
+        Create an asynchronous import job for historical User Verification sessions, Business Verification sessions, transaction monitoring records, or workflow custom status rules. Set `source=provider` to migrate from another provider: `GET /v3/session/imports/providers/` lists the providers and how each is read: with your read-only key, from the record IDs you upload in `file`, or from an export file in Didit's format. Record IDs are namespaced by provider (`<provider>:<id>`) so a re-run skips everything already in Didit, and a record imported through a file with the provider's bare ID is recognised too, in both directions, so moving between a file import and a provider migration never imports a record twice. An application can run up to 4 import jobs at once; a job interrupted by a deploy or a worker restart continues from its last imported row by itself. Any organization can import without asking Didit first, within a monthly limit that follows what it pays (see `GET /v3/session/imports/limits/`): 2,000 records a month from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit on a contract. A job above the limit writes what fits and then waits (`WAITING`), and continues by itself when the limit goes up; ask for a higher limit with `POST /v3/session/imports/{importId}/request-limit/`. Every source accepts `dry_run`. A job that is not a dry run first checks the whole file or account; for an organization that has never paid, a finding can hold the job (`HELD`) for review by Didit before anything is written. Imported verifications stay in their application: they cannot be shared with another application and never feed cross-organization fraud signals. `POST /v3/session/imports/{importId}/undo/` deletes what an import created.
 
         ``POST /v3/session/imports/``
 
@@ -764,7 +884,7 @@ class AsyncSessionsImports(AsyncAPIResource):
           import_type: What to import: historical User Verification sessions, historical Business Verification sessions, workflow custom status rules, or historical transaction monitoring records.
           workflow_id: Workflow UUID that imported sessions or status rules should be attached to. Required for user_verification, business_verification, and status_rules. Omit for transactions.
           source_format: Optional. Inferred from the URL's file extension when omitted.
-          source_file_url: Alternative to file upload. Must be an HTTPS URL resolving to a public address (private/loopback networks are rejected). Mutually exclusive with `file`.
+          source_file_url: HTTPS URL of the file, resolving to a public address (private/loopback networks are rejected). Required for a file import and for a provider migration whose provider is read from uploaded record IDs or an export file (`GET /v3/session/imports/providers/` gives each provider's mode). Not needed when `source` is `provider` and Didit reads the account with `credentials`.
           source: `provider` makes this a migration from another identity verification provider. Omit for a file import.
           provider: Migration source, from `GET /v3/session/imports/providers/`. Required when `source` is `provider`.
           credentials: The provider's read-only key, with the field names `credential_fields` lists. Encrypted at rest, never returned, and erased when the import ends. Send it as a JSON string in multipart.
@@ -1056,7 +1176,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionImportJob:
         """Start a dry run.
 
-        Start a migration whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now.
+        Start an import whose dry run finished (`READY`): the same job imports for real, with the status mapping and face templates choice as sent now. A file or API job runs the checks again over the whole file first.
 
         ``POST /v3/session/imports/{importId}/start/``
 
@@ -1184,7 +1304,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionImportJob:
         """Cancel an import job.
 
-        Cancel an import. What was imported stays; the uploaded file and the key are erased.
+        Cancel an import. What was imported stays, unless you undo it with `POST /v3/session/imports/{importId}/undo/`; the uploaded file and the key are erased.
 
         ``POST /v3/session/imports/{importId}/cancel/``
 
@@ -1271,7 +1391,7 @@ class AsyncSessionsImports(AsyncAPIResource):
     ) -> SessionsImportsListJobsResponse:
         """List import jobs.
 
-        Every import of the application in one shape: verification imports and migrations, people and businesses.
+        Every import of the application in one shape: verification imports and migrations, people and businesses. `limit_lane`, `waiting_reason`, `checks`, `review_note`, `limit_request`, `granted_records` and the Undo fields apply to verification imports; they are `null`, empty or `false` for people and company imports.
 
         ``GET /v3/import-jobs/``
 
@@ -1332,6 +1452,125 @@ class AsyncSessionsImports(AsyncAPIResource):
             ),
         )
 
+    async def retrieve_limits(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> ImportLimits:
+        """Get import limits.
+
+        Read how many verifications your organization can still import this month. Limits follow what the organization pays and are counted per organization, across all its live applications, per calendar month in UTC, in records written by imports that are not dry runs: 2,000 from a provider and 500 from a file or the API until the first paid top-up, then 250,000 and 25,000, and no monthly limit (`limit: null`) on a contract or when Didit set the organization to always allowed. Records skipped because they were already in Didit, rejected rows and dry runs do not count, and records you undo are given back. `can_import: false` with `reason: turned_off` or `reason: sandbox` means a create call would be refused. Authenticate with your application's API key, or with a console user token that has `write:sessions`.
+
+        ``GET /v3/session/imports/limits/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "ImportLimits",
+            await self._client.request(
+                "get",
+                "/v3/session/imports/limits/",
+                cast_to=ImportLimits,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def request_limit(
+        self,
+        import_id: str,
+        *,
+        note: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Request a higher import limit.
+
+        Ask Didit to let one import go past the monthly limit. Allowed on a job that is `READY`, `PENDING`, `PROCESSING` or `WAITING` and whose lane has a limit; one request can be pending per job. `requested_records` is not sent: it is computed from the job's dry run or check pass as what the import still has to write beyond what it may write now (one month of the lane when no pass counted the file). An approval lets that job finish and does not change the organization's monthly limit. A declined request leaves the job waiting for the next month or a top-up, and the answer is in `limit_request.staff_note`. The job continues by itself when the limit goes up. A turned-off organization or a sandbox application is refused.
+
+        ``POST /v3/session/imports/{importId}/request-limit/``
+
+        Args:
+          import_id
+          note: Optional. Tell Didit why you need a higher limit, at most 1000 characters.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/request-limit/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                body={"note": note},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def undo(
+        self,
+        import_id: str,
+        *,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> SessionImportJob:
+        """Undo an import.
+
+        Delete what an import created. Every verification (User Verification, Business Verification) and transaction the job created is deleted with its images and videos, its face templates, and the blocklist entries the job added, exactly as `DELETE /v3/session/{sessionId}/delete/` deletes a session. Records that were already in Didit, and the workflow status rules an import changed, are not affected. The records you undo are given back to the month's import limit. Deletion cannot be reversed.
+
+        Allowed when `can_undo` is `true` and the job is `COMPLETED`, `FAILED`, `CANCELLED` or `WAITING` (a waiting job is cancelled first). Imports made before Undo import existed did not record what they created and cannot be undone. The job moves to `UNDOING` and ends `UNDONE` with `undone_count`; poll `GET /v3/session/imports/{importId}/`. Undo is available for User Verification, Business Verification and transaction imports; status rules are not undone. Needs the sessions write and delete privileges (`write:sessions` and `delete:sessions` for a console user; an API key needs sessions write access and `delete:sessions`). Undoing a Business Verification import also needs `delete:businesses`, and a transactions import needs `write:transactions` (an API key needs write access to that resource).
+
+        ``POST /v3/session/imports/{importId}/undo/``
+
+        Args:
+          import_id
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "SessionImportJob",
+            await self._client.request(
+                "post",
+                "/v3/session/imports/{importId}/undo/",
+                cast_to=SessionImportJob,
+                path_params={"importId": import_id},
+                auth="api_key",
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class SessionsImportsWithRawResponse:
     def __init__(self, resource: SessionsImports) -> None:
@@ -1349,6 +1588,9 @@ class SessionsImportsWithRawResponse:
         self.retry = to_raw_response_wrapper(resource.retry)
         self.list_jobs = to_raw_response_wrapper(resource.list_jobs)
         self.list_active_jobs = to_raw_response_wrapper(resource.list_active_jobs)
+        self.retrieve_limits = to_raw_response_wrapper(resource.retrieve_limits)
+        self.request_limit = to_raw_response_wrapper(resource.request_limit)
+        self.undo = to_raw_response_wrapper(resource.undo)
 
 
 class AsyncSessionsImportsWithRawResponse:
@@ -1367,6 +1609,9 @@ class AsyncSessionsImportsWithRawResponse:
         self.retry = async_to_raw_response_wrapper(resource.retry)
         self.list_jobs = async_to_raw_response_wrapper(resource.list_jobs)
         self.list_active_jobs = async_to_raw_response_wrapper(resource.list_active_jobs)
+        self.retrieve_limits = async_to_raw_response_wrapper(resource.retrieve_limits)
+        self.request_limit = async_to_raw_response_wrapper(resource.request_limit)
+        self.undo = async_to_raw_response_wrapper(resource.undo)
 
 
 class SessionsImportsWithStreamingResponse:
@@ -1385,6 +1630,9 @@ class SessionsImportsWithStreamingResponse:
         self.retry = to_streamed_response_wrapper(resource.retry)
         self.list_jobs = to_streamed_response_wrapper(resource.list_jobs)
         self.list_active_jobs = to_streamed_response_wrapper(resource.list_active_jobs)
+        self.retrieve_limits = to_streamed_response_wrapper(resource.retrieve_limits)
+        self.request_limit = to_streamed_response_wrapper(resource.request_limit)
+        self.undo = to_streamed_response_wrapper(resource.undo)
 
 
 class AsyncSessionsImportsWithStreamingResponse:
@@ -1403,3 +1651,6 @@ class AsyncSessionsImportsWithStreamingResponse:
         self.retry = async_to_streamed_response_wrapper(resource.retry)
         self.list_jobs = async_to_streamed_response_wrapper(resource.list_jobs)
         self.list_active_jobs = async_to_streamed_response_wrapper(resource.list_active_jobs)
+        self.retrieve_limits = async_to_streamed_response_wrapper(resource.retrieve_limits)
+        self.request_limit = async_to_streamed_response_wrapper(resource.request_limit)
+        self.undo = async_to_streamed_response_wrapper(resource.undo)

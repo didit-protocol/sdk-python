@@ -5,6 +5,8 @@ import datetime as _dt
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.import_check import ImportCheck
+from didit.types.components.import_limit_request import ImportLimitRequest
 
 __all__ = [
     "ImportJobSummary",
@@ -67,14 +69,27 @@ class ImportJobSummary(BaseModel):
 
     state: (
         Literal[
-            "ready", "queued", "running", "paused", "completed", "errors", "failed", "cancelled"
+            "ready",
+            "queued",
+            "running",
+            "paused",
+            "completed",
+            "errors",
+            "failed",
+            "cancelled",
+            "waiting",
+            "held",
+            "declined",
+            "undoing",
+            "undone",
         ]
         | str
         | None
     ) = None
-    """The job's state as the console shows it; `errors` is a completed job with rejected rows."""
+    """The job's state as the console shows it; `errors` is a completed job with rejected rows. `waiting`: the month's import limit is used up. `held`: a check holds the import for review by Didit. `declined`: Didit declined the held import. `undoing` and `undone`: Undo import is running or finished."""
 
     status: str | None = None
+    """The job's status; the same values as a verification import job's `status`, including `WAITING`, `HELD`, `DECLINED`, `UNDOING` and `UNDONE`."""
 
     is_dry_run: bool | None = None
 
@@ -97,3 +112,32 @@ class ImportJobSummary(BaseModel):
     started_at: _dt.datetime | None = None
 
     completed_at: _dt.datetime | None = None
+
+    limit_lane: Literal["provider", "file"] | str | None = None
+    """The monthly limit this job counts against: `provider` for a migration read from another provider (`source=provider`), `file` for an upload or file URL."""
+
+    waiting_reason: Literal["limit"] | str | None = None
+    """Why a `WAITING` job waits. `null` otherwise."""
+
+    checks: list[ImportCheck] | None = None
+    """What the checks found in the whole file or account. Empty when nothing was flagged."""
+
+    review_note: str | None = None
+    """The note from Didit on a `DECLINED` job."""
+
+    limit_request: ImportLimitRequest | None = None
+    """The request for a higher limit made for this job, or `null`."""
+
+    granted_records: int | None = None
+    """Records Didit approved for this job beyond the monthly limit."""
+
+    can_undo: bool | None = None
+    """`true` when the job recorded what it created, so `POST /v3/session/imports/{importId}/undo/` can delete it. Imports made before Undo import existed did not record it."""
+
+    undone_count: int | None = None
+    """Records deleted by Undo import."""
+
+    undone_at: _dt.datetime | None = None
+
+    undone_by: str | None = None
+    """Who undid the import."""
