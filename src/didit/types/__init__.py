@@ -2278,6 +2278,9 @@ if TYPE_CHECKING:
         TravelRuleSettingsDetailDiditNetwork as TravelRuleSettingsDetailDiditNetwork,
     )
     from didit.types.components.travel_rule_settings_detail import (
+        TravelRuleSettingsDetailDiditNetworkLeiCheck as TravelRuleSettingsDetailDiditNetworkLeiCheck,
+    )
+    from didit.types.components.travel_rule_settings_detail import (
         TravelRuleSettingsDetailNetworks as TravelRuleSettingsDetailNetworks,
     )
     from didit.types.components.travel_rule_test_vasp_inbound_response import (
@@ -4765,6 +4768,7 @@ _MODULES: dict[str, str] = {
     "TravelRuleSendVaspQuestionnaireParams": "travel_rule.send_vasp_questionnaire_params",
     "TravelRuleSettingsDetail": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailDiditNetwork": "components.travel_rule_settings_detail",
+    "TravelRuleSettingsDetailDiditNetworkLeiCheck": "components.travel_rule_settings_detail",
     "TravelRuleSettingsDetailNetworks": "components.travel_rule_settings_detail",
     "TravelRuleShareVaspDocumentsParams": "travel_rule.share_vasp_documents_params",
     "TravelRuleTestVaspInboundResponse": "components.travel_rule_test_vasp_inbound_response",
@@ -6081,6 +6085,7 @@ __all__ = [
     "TravelRuleSendVaspQuestionnaireParams",
     "TravelRuleSettingsDetail",
     "TravelRuleSettingsDetailDiditNetwork",
+    "TravelRuleSettingsDetailDiditNetworkLeiCheck",
     "TravelRuleSettingsDetailNetworks",
     "TravelRuleShareVaspDocumentsParams",
     "TravelRuleTestVaspInboundResponse",

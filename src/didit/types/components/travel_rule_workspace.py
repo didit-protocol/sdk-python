@@ -69,7 +69,7 @@ class TravelRuleWorkspace(BaseModel):
     billing_enabled_at: _dt.datetime | None = None
 
     didit_network: dict[str, object] | None = None
-    """Whether the Didit network lists this VASP and, when not, each condition it still misses."""
+    """Whether the Didit network lists this VASP and, when not, each condition it still misses. Same shape as didit_network in GET /v3/travel-rule/settings/."""
 
     settings: TravelRuleSettingsDetail | None = None
 
