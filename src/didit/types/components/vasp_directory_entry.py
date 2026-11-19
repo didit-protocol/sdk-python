@@ -97,14 +97,14 @@ class VaspDirectoryEntryEssentialChecksChecks(BaseModel):
     """unknown when no source on record can decide the check."""
 
     reason: str | None = None
-    """Machine-readable code of the verdict."""
+    """Machine-readable code of the verdict. lei check: no_lei, no_gleif_record, gleif_lei_unknown (GLEIF has no record of the LEI), gleif_other_lei, gleif_entity_inactive, gleif_lei_not_issued, gleif_name_mismatch, gleif_country_mismatch, gleif_consistent. registration: gleif_issued, gleif_not_issued, no_register and the register reasons. licence: no_licence_record, no_authorisation_date. domain: no_domain."""
 
     detail: str | None = None
     """One-line English explanation."""
 
 
 class VaspDirectoryEntryEssentialChecks(BaseModel):
-    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry, and always empty for a Didit network member."""
+    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry. A Didit network member (kind didit) carries the report too: registration, licence and domain come from the registered directory entry with the same LEI when there is one (else registration fails with no_register, licence is unknown with no_licence_record and domain is unknown with no_domain), and the lei check is GLEIF's answer against the member's own legal name and country."""
 
     level: Literal["essential"] | str | None = None
 
@@ -191,7 +191,7 @@ class VaspDirectoryEntryUmbrella(BaseModel):
 
 
 class VaspDirectoryEntry(BaseModel):
-    """A VASP of the directory or a member of the Didit network, with the routes your application has to it. A customer is a member of the Didit network only while its application is live, its Travel Rule is on, its profile is discoverable, has a legal name and a confirmed compliance email, and Didit has not marked the application as a test, demo or internal one. Each row also carries the shared due-diligence assessment (dd_score, risk_level, responsiveness, essential_checks) and your application's own decision, entity screening and questionnaires, which no other customer sees."""
+    """A VASP of the directory or a member of the Didit network, with the routes your application has to it. A customer is a member of the Didit network only while its application is live, its Travel Rule is on, its profile is discoverable, has a legal name and a confirmed compliance email, has an LEI that GLEIF lists as issued to an active entity and has been reviewed by Didit as a virtual asset service provider, and Didit has not marked the application as a test, demo, internal or not-a-VASP one. Each row also carries the shared due-diligence assessment (dd_score, risk_level, responsiveness, essential_checks) and your application's own decision, entity screening and questionnaires, which no other customer sees."""
 
     id: str | None = None
     """The entry's id, for GET /v3/travel-rule/vasps/{vasp_id}/."""
@@ -259,7 +259,7 @@ class VaspDirectoryEntry(BaseModel):
     """Whether the VASP answers Travel Rule requests: the share of the requests Didit customers started towards it in the last 90 days that it answered. Only requests sent over a network or protocol rail, or by email to a shared address (the entry's compliance address or a platform contact), count; a request sent to an address a customer typed, or to a customer's private contact, never does. An expired request is unanswered; a completed exchange, a decline or a data mismatch is an answer; a cancelled request or an unreachable rail is neither. Always UNKNOWN with zero counts for a Didit network member."""
 
     essential_checks: VaspDirectoryEntryEssentialChecks | None = None
-    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry, and always empty for a Didit network member."""
+    """The essential-checks report of a directory entry, built only from the platform's verified sources: registration (an official register lists the VASP: the EU's interim MiCA register, the public TRISA directory or the global LEI register), licence (a MiCA authorisation is on record and current), domain (the entry's domain matches its TRP endpoint or the website its register gives) and lei (its LEI record is active, issued and consistent with the entry's names and country). The essentials component of dd_score is the share of decided checks that pass. Empty until the weekly directory refresh first checks the entry. A Didit network member (kind didit) carries the report too: registration, licence and domain come from the registered directory entry with the same LEI when there is one (else registration fails with no_register, licence is unknown with no_licence_record and domain is unknown with no_domain), and the lei check is GLEIF's answer against the member's own legal name and country."""
 
     decision: TravelRuleCounterpartyDecision | None = None
     """Your application's decision on this VASP, or for an entity with no decision of its own its brand's (inherited_from names the brand). Null when there is none. Private to your application."""
