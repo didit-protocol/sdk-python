@@ -9,6 +9,7 @@ from didit.types.components.network_graph import NetworkGraph
 from didit.types.components.network_list_item import NetworkListItem
 from didit.types.components.network_map import NetworkMap
 from didit.types.components.network_note import NetworkNote
+from didit.types.components.network_signal_search_response import NetworkSignalSearchResponse
 from didit.types.components.network_timeline import NetworkTimeline
 from didit.types.components.network_timeline_page import NetworkTimelinePage
 from didit.types.networks.list_members_response import NetworksListMembersResponse
@@ -603,7 +604,21 @@ def test_networks_retrieve_graph() -> None:
                 },
                 "depth": 1,
                 "truncated": True,
-                "nodes": [{"id": "sample", "kind": "vendor_user"}],
+                "nodes": [
+                    {
+                        "id": "sample",
+                        "kind": "vendor_user",
+                        "wallet": {
+                            "asset": "USDT",
+                            "network": "tron",
+                            "account_count": 1,
+                            "payout_count": 1,
+                            "paid_out": {"amount": "5950.00", "currency": "USD"},
+                            "first_payout_at": "2026-01-01T00:00:00Z",
+                            "last_payout_at": "2026-01-01T00:00:00Z",
+                        },
+                    }
+                ],
                 "edges": [
                     {
                         "id": "00000000-0000-4000-8000-000000000006",
@@ -746,6 +761,48 @@ def test_networks_retrieve_timeline() -> None:
         ),
         lambda r: (isinstance(r, NetworkTimeline)) or (isinstance(r, NetworkTimelinePage)),
         lambda r: (isinstance(r, NetworkTimeline)) or (isinstance(r, NetworkTimelinePage)),
+    )
+
+
+def test_networks_search_signals() -> None:
+    """``POST /v3/organization/{organization_id}/application/{application_id}/networks/signals/search/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/organization/0b5e8d2c-0000-4000-8000-0000000000aa/application/0b5e8d2c-0000-4000-8000-0000000000bb/networks/signals/search/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "signal_type": "wallet_address",
+                "value": "TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt",
+                "tag": "",
+            },
+            status=200,
+            response_json={
+                "signal_type": "wallet_address",
+                "match_count": 1,
+                "matches": [],
+                "cross_organization": {"available": False, "signals_checked": 0, "insights": []},
+                "wallet": {
+                    "signal_id": "8f1f6b0e-2f64-4f0b-9e0d-3c5b9a2f7d10",
+                    "is_shared_service": False,
+                    "account_count": 3,
+                    "payout_count": 14,
+                    "paid_out": {"amount": "5950.00", "currency": "USD"},
+                    "first_payout_at": "2026-09-02T10:14:00Z",
+                    "last_payout_at": "2026-11-16T18:02:00Z",
+                    "recent_payouts": [],
+                },
+            },
+        ),
+        lambda c: c.networks.search_signals(
+            signal_type="wallet_address", value="TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt", tag=""
+        ),
+        lambda c: c.networks.search_signals(
+            signal_type="wallet_address", value="TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt", tag=""
+        ),
+        lambda r: isinstance(r, NetworkSignalSearchResponse),
+        lambda r: isinstance(r, NetworkSignalSearchResponse),
     )
 
 

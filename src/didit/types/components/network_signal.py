@@ -14,7 +14,16 @@ class NetworkSignal(BaseModel):
     uuid: str | None = None
 
     signal_type: (
-        Literal["ip_address", "device", "face", "document_number", "phone", "email", "address"]
+        Literal[
+            "ip_address",
+            "device",
+            "face",
+            "document_number",
+            "phone",
+            "email",
+            "address",
+            "wallet_address",
+        ]
         | str
         | None
     ) = None

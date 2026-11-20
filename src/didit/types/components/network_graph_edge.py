@@ -21,7 +21,16 @@ class NetworkGraphEdge(BaseModel):
     subject_kind: Literal["vendor_user", "vendor_business", "transaction_party"] | str | None = None
 
     signal_type: (
-        Literal["ip_address", "device", "face", "document_number", "phone", "email", "address"]
+        Literal[
+            "ip_address",
+            "device",
+            "face",
+            "document_number",
+            "phone",
+            "email",
+            "address",
+            "wallet_address",
+        ]
         | str
         | None
     ) = None

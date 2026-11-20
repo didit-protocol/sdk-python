@@ -17,11 +17,12 @@ from didit._response import (
     to_raw_response_wrapper,
     to_streamed_response_wrapper,
 )
-from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
 from didit.types.components.network_detail_response import NetworkDetailResponse
 from didit.types.components.network_graph import NetworkGraph
 from didit.types.components.network_list_item import NetworkListItem
 from didit.types.components.network_map import NetworkMap
+from didit.types.components.network_signal_search_response import NetworkSignalSearchResponse
 from didit.types.components.network_timeline import NetworkTimeline
 from didit.types.components.network_timeline_page import NetworkTimelinePage
 from didit.types.networks.list_members_response import NetworksListMembersResponse
@@ -51,7 +52,7 @@ __all__ = [
 class Networks(SyncAPIResource):
     """The ``networks`` resource of the Didit API.
 
-    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
+    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``, ``search_signals``.
 
     Nested resources: ``notes``.
     """
@@ -156,6 +157,76 @@ class Networks(SyncAPIResource):
                     "limit": limit,
                     "offset": offset,
                     "summary": summary,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def search_signals(
+        self,
+        *,
+        signal_type: Literal[
+            "ip_address",
+            "device",
+            "face",
+            "document_number",
+            "phone",
+            "email",
+            "address",
+            "wallet_address",
+        ]
+        | str,
+        value: str | NotGiven = NOT_GIVEN,
+        image: FileTypes | NotGiven = NOT_GIVEN,
+        issuing_state: str | NotGiven = NOT_GIVEN,
+        document_type: str | NotGiven = NOT_GIVEN,
+        region: str | NotGiven = NOT_GIVEN,
+        tag: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkSignalSearchResponse:
+        """Search signals.
+
+        Check one value against every network of your organization before you open an investigation. Choose a `signal_type` and send its value: an address, a phone number, an email, a device fingerprint, a document number with its issuing state and type, or a face image. A `wallet_address` search takes the address and optionally its destination tag or memo in `tag`, and answers with the `wallet` object: accounts, payouts, the amount paid out and the payout dates. A wallet many accounts use is a shared service: it answers `match_count: 0` and no matches, with `is_shared_service: true`.
+
+        Requires the `read:networks` permission. Searches are limited per organization: when the budget is spent the call answers `429`.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/signals/search/``
+
+        Args:
+          signal_type
+          value: The value to search. Required for every type but `face`, which refuses it. For `wallet_address` it is the address.
+          image: A JPG, JPEG, PNG, WebP or TIFF image of at most 5 MB. `face` only, and required there. Send the request as `multipart/form-data`.
+          issuing_state: `document_number` only, and required there.
+          document_type: `document_number` only, and required there.
+          region: `document_number` only, required for a regionally issued document.
+          tag: The destination tag or memo of a wallet. `wallet_address` only, blank allowed. Any other type returns `400` `tag only applies to wallet_address searches.`
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkSignalSearchResponse",
+            self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/signals/search/",
+                cast_to=NetworkSignalSearchResponse,
+                scope="application",
+                auth="api_key",
+                body={
+                    "signal_type": signal_type,
+                    "value": value,
+                    "image": image,
+                    "issuing_state": issuing_state,
+                    "document_type": document_type,
+                    "region": region,
+                    "tag": tag,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -563,7 +634,7 @@ class Networks(SyncAPIResource):
 class AsyncNetworks(AsyncAPIResource):
     """The ``networks`` resource of the Didit API.
 
-    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``.
+    Methods: ``add_tag``, ``download_report``, ``list``, ``list_members``, ``list_signals``, ``remove_tag``, ``retrieve``, ``retrieve_graph``, ``retrieve_map``, ``retrieve_timeline``, ``search_signals``.
 
     Nested resources: ``notes``.
     """
@@ -668,6 +739,76 @@ class AsyncNetworks(AsyncAPIResource):
                     "limit": limit,
                     "offset": offset,
                     "summary": summary,
+                },
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def search_signals(
+        self,
+        *,
+        signal_type: Literal[
+            "ip_address",
+            "device",
+            "face",
+            "document_number",
+            "phone",
+            "email",
+            "address",
+            "wallet_address",
+        ]
+        | str,
+        value: str | NotGiven = NOT_GIVEN,
+        image: FileTypes | NotGiven = NOT_GIVEN,
+        issuing_state: str | NotGiven = NOT_GIVEN,
+        document_type: str | NotGiven = NOT_GIVEN,
+        region: str | NotGiven = NOT_GIVEN,
+        tag: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> NetworkSignalSearchResponse:
+        """Search signals.
+
+        Check one value against every network of your organization before you open an investigation. Choose a `signal_type` and send its value: an address, a phone number, an email, a device fingerprint, a document number with its issuing state and type, or a face image. A `wallet_address` search takes the address and optionally its destination tag or memo in `tag`, and answers with the `wallet` object: accounts, payouts, the amount paid out and the payout dates. A wallet many accounts use is a shared service: it answers `match_count: 0` and no matches, with `is_shared_service: true`.
+
+        Requires the `read:networks` permission. Searches are limited per organization: when the budget is spent the call answers `429`.
+
+        ``POST /v3/organization/{organization_id}/application/{application_id}/networks/signals/search/``
+
+        Args:
+          signal_type
+          value: The value to search. Required for every type but `face`, which refuses it. For `wallet_address` it is the address.
+          image: A JPG, JPEG, PNG, WebP or TIFF image of at most 5 MB. `face` only, and required there. Send the request as `multipart/form-data`.
+          issuing_state: `document_number` only, and required there.
+          document_type: `document_number` only, and required there.
+          region: `document_number` only, required for a regionally issued document.
+          tag: The destination tag or memo of a wallet. `wallet_address` only, blank allowed. Any other type returns `400` `tag only applies to wallet_address searches.`
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "NetworkSignalSearchResponse",
+            await self._client.request(
+                "post",
+                "/v3/organization/{organization_id}/application/{application_id}/networks/signals/search/",
+                cast_to=NetworkSignalSearchResponse,
+                scope="application",
+                auth="api_key",
+                body={
+                    "signal_type": signal_type,
+                    "value": value,
+                    "image": image,
+                    "issuing_state": issuing_state,
+                    "document_type": document_type,
+                    "region": region,
+                    "tag": tag,
                 },
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -1076,6 +1217,7 @@ class NetworksWithRawResponse:
     def __init__(self, resource: Networks) -> None:
         self._resource = resource
         self.list = to_raw_response_wrapper(resource.list)
+        self.search_signals = to_raw_response_wrapper(resource.search_signals)
         self.retrieve = to_raw_response_wrapper(resource.retrieve)
         self.retrieve_graph = to_raw_response_wrapper(resource.retrieve_graph)
         self.list_members = to_raw_response_wrapper(resource.list_members)
@@ -1097,6 +1239,7 @@ class AsyncNetworksWithRawResponse:
     def __init__(self, resource: AsyncNetworks) -> None:
         self._resource = resource
         self.list = async_to_raw_response_wrapper(resource.list)
+        self.search_signals = async_to_raw_response_wrapper(resource.search_signals)
         self.retrieve = async_to_raw_response_wrapper(resource.retrieve)
         self.retrieve_graph = async_to_raw_response_wrapper(resource.retrieve_graph)
         self.list_members = async_to_raw_response_wrapper(resource.list_members)
@@ -1118,6 +1261,7 @@ class NetworksWithStreamingResponse:
     def __init__(self, resource: Networks) -> None:
         self._resource = resource
         self.list = to_streamed_response_wrapper(resource.list)
+        self.search_signals = to_streamed_response_wrapper(resource.search_signals)
         self.retrieve = to_streamed_response_wrapper(resource.retrieve)
         self.retrieve_graph = to_streamed_response_wrapper(resource.retrieve_graph)
         self.list_members = to_streamed_response_wrapper(resource.list_members)
@@ -1139,6 +1283,7 @@ class AsyncNetworksWithStreamingResponse:
     def __init__(self, resource: AsyncNetworks) -> None:
         self._resource = resource
         self.list = async_to_streamed_response_wrapper(resource.list)
+        self.search_signals = async_to_streamed_response_wrapper(resource.search_signals)
         self.retrieve = async_to_streamed_response_wrapper(resource.retrieve)
         self.retrieve_graph = async_to_streamed_response_wrapper(resource.retrieve_graph)
         self.list_members = async_to_streamed_response_wrapper(resource.list_members)

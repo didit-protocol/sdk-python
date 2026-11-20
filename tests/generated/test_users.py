@@ -16,6 +16,8 @@ from didit.types.components.ongoing_monitoring_toggle_result import (
 )
 from didit.types.components.user_detail_item import UserDetailItem
 from didit.types.components.user_list_item import UserListItem
+from didit.types.components.users_lookup_detail import UsersLookupDetail
+from didit.types.components.users_lookup_response import UsersLookupResponse
 from didit.types.users.batch_delete_response import UsersBatchDeleteResponse
 from didit.types.users.create_response import UsersCreateResponse
 from didit.types.users.upload_face_response import UsersUploadFaceResponse
@@ -106,6 +108,36 @@ def test_users_generate_pdf() -> None:
     )
 
 
+def test_users_get_lookup() -> None:
+    """``GET /v3/users/lookup/{lookup_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/users/lookup/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "lookup_id": "b3a6f0c2-6a2e-4c0a-9d0e-5f3c1d2a7e11",
+                "requested": 4,
+                "found": 3,
+                "not_found": [{"identifier": "usr_7001", "position": 4}],
+                "expires_at": "2026-11-19T10:30:00Z",
+                "identifiers": [
+                    "usr_8842",
+                    "maria.o@gmail.com",
+                    "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                    "usr_7001",
+                ],
+            },
+        ),
+        lambda c: c.users.get_lookup("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.users.get_lookup("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, UsersLookupDetail),
+        lambda r: isinstance(r, UsersLookupDetail),
+    )
+
+
 def test_users_list() -> None:
     """``GET /v3/users/``"""
     check_operation(
@@ -114,7 +146,11 @@ def test_users_list() -> None:
             path="/v3/users/",
             api="verification",
             auth="api_key",
-            query={"limit": ["1"], "offset": ["1"]},
+            query={
+                "limit": ["1"],
+                "offset": ["1"],
+                "lookup": ["00000000-0000-4000-8000-000000000001"],
+            },
             status=200,
             response_json={
                 "count": 2,
@@ -188,8 +224,8 @@ def test_users_list() -> None:
                 ],
             },
         ),
-        lambda c: c.users.list(limit=1, offset=1),
-        lambda c: c.users.list(limit=1, offset=1),
+        lambda c: c.users.list(limit=1, offset=1, lookup="00000000-0000-4000-8000-000000000001"),
+        lambda c: c.users.list(limit=1, offset=1, lookup="00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, SyncPage) and all(isinstance(x1, UserListItem) for x1 in r.results),
         lambda r: (
             isinstance(r, AsyncPage) and all(isinstance(x1, UserListItem) for x1 in r.results)
@@ -237,6 +273,52 @@ def test_users_list_networks() -> None:
         lambda c: c.users.list_networks("00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, EntityNetworkMembershipList),
         lambda r: isinstance(r, EntityNetworkMembershipList),
+    )
+
+
+def test_users_lookup() -> None:
+    """``POST /v3/users/lookup/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/users/lookup/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "identifiers": [
+                    "usr_8842",
+                    "maria.o@gmail.com",
+                    "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                    "usr_7001",
+                ]
+            },
+            status=201,
+            response_json={
+                "lookup_id": "b3a6f0c2-6a2e-4c0a-9d0e-5f3c1d2a7e11",
+                "requested": 4,
+                "found": 3,
+                "not_found": [{"identifier": "usr_7001", "position": 4}],
+                "expires_at": "2026-11-19T10:30:00Z",
+            },
+        ),
+        lambda c: c.users.lookup(
+            identifiers=[
+                "usr_8842",
+                "maria.o@gmail.com",
+                "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                "usr_7001",
+            ]
+        ),
+        lambda c: c.users.lookup(
+            identifiers=[
+                "usr_8842",
+                "maria.o@gmail.com",
+                "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                "usr_7001",
+            ]
+        ),
+        lambda r: isinstance(r, UsersLookupResponse),
+        lambda r: isinstance(r, UsersLookupResponse),
     )
 
 

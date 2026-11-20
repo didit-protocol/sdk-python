@@ -20862,7 +20862,7 @@
     "/v3/users/": {
       "get": {
         "summary": "List users",
-        "description": "List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters — fetch pages and filter client-side.",
+        "description": "List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc, or by the position in your list when `lookup` is set. Pass `lookup` to read only the users a list of identifiers resolved to (see [Look up users](#post-/v3/users/lookup/)). No other filter or search parameter is supported: fetch pages and filter client-side.",
         "operationId": "list_users",
         "x-didit-sdk": {
           "resource": "users",
@@ -20895,6 +20895,16 @@
               "maximum": 1000000
             },
             "description": "Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page over computing this by hand."
+          },
+          {
+            "name": "lookup",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "A `lookup_id` returned by `POST /v3/users/lookup/`. The list returns only the users that lookup matched, ordered by the position of their identifier in the list you submitted, paginated with `limit` and `offset`. An expired or unknown `lookup_id` returns `404` with `code: lookup_not_found`; submit the list again."
           }
         ],
         "x-codeSamples": [
@@ -21138,11 +21148,409 @@
                 "$ref": "#/components/headers/BudgetXRateLimitReset"
               }
             }
+          },
+          "404": {
+            "description": "`lookup` names a lookup that expired (results are kept for 24 hours), does not exist, or belongs to another application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Expired lookup": {
+                    "value": {
+                      "detail": "This lookup does not exist or has expired.",
+                      "code": "lookup_not_found"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
           {
             "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/users/lookup/": {
+      "post": {
+        "summary": "Look up users",
+        "description": "Resolve a list of up to 20,000 identifiers to the users of your application, in one call. Each identifier is matched, in this order, against `vendor_data` (exactly), the Didit user ID (a UUID), then a verified email (case-insensitive). An email can match several users, and all of them count. Blank entries are dropped and duplicates removed, keeping the first; 1 to 20,000 identifiers must remain, and a request sends at most 100,000 entries before that clean-up. The call only reads. It answers with a `lookup_id`, the counts and the identifiers that matched nobody, each with its 1-based `position` in the submitted list.\n\nPass the `lookup_id` as `lookup` to [List users](#get-/v3/users/) to page through exactly the matched users, in the order you submitted them. The result is kept for 24 hours for your application only, then answers `404` with `code: lookup_not_found`.",
+        "operationId": "lookup_users",
+        "x-didit-sdk": {
+          "resource": "users",
+          "method": "lookup",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsersLookupRequest"
+              },
+              "examples": {
+                "Mixed identifiers": {
+                  "value": {
+                    "identifiers": [
+                      "usr_8842",
+                      "maria.o@gmail.com",
+                      "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                      "usr_7001"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The lookup was read. Use `lookup_id` with List users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersLookupResponse"
+                },
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "lookup_id": "b3a6f0c2-6a2e-4c0a-9d0e-5f3c1d2a7e11",
+                      "requested": 4,
+                      "found": 3,
+                      "not_found": [
+                        {
+                          "identifier": "usr_7001",
+                          "position": 4
+                        }
+                      ],
+                      "expires_at": "2026-11-19T10:30:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error. `too_many_identifiers` when the request holds more than 100,000 entries, or more than 20,000 identifiers once blanks and duplicates are removed. An empty list is keyed by field name.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Too many": {
+                    "value": {
+                      "detail": "A lookup takes at most 20000 identifiers.",
+                      "code": "too_many_identifiers"
+                    }
+                  },
+                  "Empty": {
+                    "value": {
+                      "identifiers": [
+                        "Add at least one identifier."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No credentials supplied.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Missing credentials": {
+                    "value": {
+                      "detail": "You must be authenticated with a valid access token to access this endpoint."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid or revoked API key, or the key cannot read users for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; back off and retry after the interval indicated in `Retry-After`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Rate limited": {
+                    "value": {
+                      "detail": "Write request rate limit exceeded. You can make up to 300 requests per minute.",
+                      "reference": "RL-00000000000040008000000000000001",
+                      "limit": 300,
+                      "remaining": 0,
+                      "reset": 1794358860,
+                      "window_seconds": 60
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitBudgetError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/BudgetRetryAfter"
+              },
+              "X-RateLimit-Scope": {
+                "$ref": "#/components/headers/BudgetXRateLimitScope"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/BudgetXRateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/BudgetXRateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/BudgetXRateLimitReset"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.users.lookup(\n    identifiers=[\"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\"],\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.users.lookup({\n  identifiers: [\"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\"],\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Users.Lookup(ctx, didit.UsersLookupRequest{\n\tIdentifiers: []string{\"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\"},\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import java.util.List;\nimport me.didit.Didit;\nimport me.didit.types.UsersLookupRequest;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.users().lookup(UsersLookupRequest.builder()\n        .identifiers(List.of(\"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\"))\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->users->lookup([\n    'identifiers' => ['usr_8842', 'maria.o@gmail.com', 'f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418', 'usr_7001'],\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.users.lookup(identifiers: [\"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\"])\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Users.LookupAsync(new UsersLookupRequest\n{\n    Identifiers = new string[] { \"usr_8842\", \"maria.o@gmail.com\", \"f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418\", \"usr_7001\" },\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/users/lookup/{lookup_id}/": {
+      "get": {
+        "summary": "Get a user lookup",
+        "description": "Read back a lookup made with [Look up users](#post-/v3/users/lookup/): the same counts and `not_found` list, plus the `identifiers` you submitted after blanks and duplicates were removed, in order. A lookup lives 24 hours and belongs to the application that made it; an expired, unknown or other application's `lookup_id` returns `404` with `code: lookup_not_found`.",
+        "operationId": "get_users_lookup",
+        "x-didit-sdk": {
+          "resource": "users",
+          "method": "get_lookup",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "lookup_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The `lookup_id` returned by Look up users."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The lookup, with the identifiers submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersLookupDetail"
+                },
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "lookup_id": "b3a6f0c2-6a2e-4c0a-9d0e-5f3c1d2a7e11",
+                      "requested": 4,
+                      "found": 3,
+                      "not_found": [
+                        {
+                          "identifier": "usr_7001",
+                          "position": 4
+                        }
+                      ],
+                      "expires_at": "2026-11-19T10:30:00Z",
+                      "identifiers": [
+                        "usr_8842",
+                        "maria.o@gmail.com",
+                        "f4e5e1f2-94a9-4f86-8c16-2b7d9b4db418",
+                        "usr_7001"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No credentials supplied.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Missing credentials": {
+                    "value": {
+                      "detail": "You must be authenticated with a valid access token to access this endpoint."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid or revoked API key, or the key cannot read users for this application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Forbidden": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The lookup expired, does not exist, or belongs to another application.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Expired": {
+                    "value": {
+                      "detail": "This lookup does not exist or has expired.",
+                      "code": "lookup_not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; back off and retry after the interval indicated in `Retry-After`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Rate limited": {
+                    "value": {
+                      "detail": "Write request rate limit exceeded. You can make up to 300 requests per minute.",
+                      "reference": "RL-00000000000040008000000000000001",
+                      "limit": 300,
+                      "remaining": 0,
+                      "reset": 1794358860,
+                      "window_seconds": 60
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitBudgetError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/BudgetRetryAfter"
+              },
+              "X-RateLimit-Scope": {
+                "$ref": "#/components/headers/BudgetXRateLimitScope"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/BudgetXRateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/BudgetXRateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/BudgetXRateLimitReset"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.users.get_lookup(\n    \"11111111-2222-3333-4444-555555555555\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.users.getLookup(\"11111111-2222-3333-4444-555555555555\");\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Users.GetLookup(ctx, \"11111111-2222-3333-4444-555555555555\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.users().getLookup(\"11111111-2222-3333-4444-555555555555\");\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->users->getLookup('11111111-2222-3333-4444-555555555555');\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.users.get_lookup(\"11111111-2222-3333-4444-555555555555\")\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Users.GetLookupAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -51290,6 +51698,208 @@
         "security": [
           {
             "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v3/organization/{organization_id}/application/{application_id}/networks/signals/search/": {
+      "post": {
+        "summary": "Search signals",
+        "description": "Check one value against every network of your organization before you open an investigation. Choose a `signal_type` and send its value: an address, a phone number, an email, a device fingerprint, a document number with its issuing state and type, or a face image. A `wallet_address` search takes the address and optionally its destination tag or memo in `tag`, and answers with the `wallet` object: accounts, payouts, the amount paid out and the payout dates. A wallet many accounts use is a shared service: it answers `match_count: 0` and no matches, with `is_shared_service: true`.\n\nRequires the `read:networks` permission. Searches are limited per organization: when the budget is spent the call answers `429`.",
+        "operationId": "search_network_signals",
+        "x-didit-sdk": {
+          "resource": "networks",
+          "method": "search_signals",
+          "auth": "api_key",
+          "server": true,
+          "scope": "application"
+        },
+        "tags": [
+          "Networks"
+        ],
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Organization UUID."
+          },
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Application UUID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSignalSearchRequest"
+              },
+              "examples": {
+                "Wallet address": {
+                  "value": {
+                    "signal_type": "wallet_address",
+                    "value": "TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt",
+                    "tag": ""
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSignalSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The matches for the value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkSignalSearchResponse"
+                },
+                "examples": {
+                  "Wallet address": {
+                    "value": {
+                      "signal_type": "wallet_address",
+                      "match_count": 1,
+                      "matches": [],
+                      "cross_organization": {
+                        "available": false,
+                        "signals_checked": 0,
+                        "insights": []
+                      },
+                      "wallet": {
+                        "signal_id": "8f1f6b0e-2f64-4f0b-9e0d-3c5b9a2f7d10",
+                        "is_shared_service": false,
+                        "account_count": 3,
+                        "payout_count": 14,
+                        "paid_out": {
+                          "amount": "5950.00",
+                          "currency": "USD"
+                        },
+                        "first_payout_at": "2026-09-02T10:14:00Z",
+                        "last_payout_at": "2026-11-16T18:02:00Z",
+                        "recent_payouts": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error, keyed by field, for example `tag only applies to wallet_address searches.`",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "tag": [
+                        "tag only applies to wallet_address searches."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No credentials supplied.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "detail": "You must be authenticated with a valid access token to access this endpoint."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller lacks the `read:networks` permission.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The organization's search budget is spent; retry after the interval in `Retry-After`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Example": {
+                    "value": {
+                      "detail": "Request was throttled."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\nclient = Didit()\n\nresult = client.networks.search_signals(\n    signal_type=\"wallet_address\",\n    value=\"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\",\n    tag=\"\",\n)\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nconst didit = new Didit();\n\nconst result = await didit.networks.searchSignals({\n  signal_type: \"wallet_address\",\n  value: \"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\",\n  tag: \"\",\n});\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nclient := didit.NewClient()\n\nresult, err := client.Networks.SearchSignals(ctx, didit.NetworkSignalSearchRequest{\n\tSignalType: \"wallet_address\",\n\tValue:      didit.String(\"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\"),\n\tTag:        didit.String(\"\"),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\nimport me.didit.types.NetworkSignalSearchRequest;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nDidit client = new Didit();\n\nvar result = client.networks().searchSignals(NetworkSignalSearchRequest.builder()\n        .signalType(NetworkSignalSearchRequest.SignalType.of(\"wallet_address\"))\n        .value(\"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\")\n        .tag(\"\")\n        .build());\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\n$didit = new DiditClient();\n\n$result = $didit->networks->searchSignals([\n    'signal_type' => 'wallet_address',\n    'value' => 'TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt',\n    'tag' => '',\n]);\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n# and DIDIT_APPLICATION_ID.\ndidit = Didit::Client.new\n\nresult = didit.networks.search_signals(\n  signal_type: \"wallet_address\",\n  value: \"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\",\n  tag: \"\"\n)\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY, DIDIT_ORGANIZATION_ID\n// and DIDIT_APPLICATION_ID.\nusing var client = new DiditClient();\n\nvar result = await client.Networks.SearchSignalsAsync(new NetworkSignalSearchRequest\n{\n    SignalType = \"wallet_address\",\n    Value = \"TXyZ1k3m9q2Ho8vJ6cWn5aRb4dLpUe7sFt\",\n    Tag = \"\",\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -107166,7 +107776,8 @@
                 "document_number",
                 "phone",
                 "email",
-                "address"
+                "address",
+                "wallet_address"
               ]
             },
             "description": "The distinct signal types present in this network."
@@ -107245,7 +107856,7 @@
       },
       "NetworkGraphNode": {
         "type": "object",
-        "description": "A subject node or a signal node, distinguished by kind. Subject nodes (kind: vendor_user | vendor_business | transaction_party) carry id, kind, subject, node_status (approved | in_review | declined | not_completed), and tags. Signal nodes (kind: signal) carry id, kind, uuid, signal_type, subject_count, coverage, is_hub, is_datacenter_ip, is_high_collision_device, node_status (signal_active | signal_guarded), tags, risk_evidence, first_seen_at, and last_seen_at.",
+        "description": "A subject node or a signal node, distinguished by kind. Subject nodes (kind: vendor_user | vendor_business | transaction_party) carry id, kind, subject, node_status (approved | in_review | declined | not_completed), and tags. Signal nodes (kind: signal) carry id, kind, uuid, signal_type, subject_count, coverage, is_hub, is_datacenter_ip, is_high_collision_device, node_status (signal_active | signal_guarded), tags, risk_evidence, first_seen_at, and last_seen_at. A signal node with `signal_type: wallet_address` also carries `wallet`: where the money went through that wallet. Every other node has no `wallet` key.",
         "properties": {
           "id": {
             "type": "string"
@@ -107258,6 +107869,62 @@
               "transaction_party",
               "signal"
             ]
+          },
+          "wallet": {
+            "type": "object",
+            "description": "Only on a signal node of type `wallet_address`.",
+            "properties": {
+              "asset": {
+                "type": "string",
+                "nullable": true,
+                "example": "USDT",
+                "description": "The currency most of the payouts to this wallet were made in."
+              },
+              "network": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "tron",
+                  "bitcoin",
+                  "solana",
+                  null
+                ],
+                "description": "The blockchain, read from the address format only. `null` for EVM addresses and other formats."
+              },
+              "account_count": {
+                "type": "integer",
+                "description": "Users and businesses of the application the wallet links."
+              },
+              "payout_count": {
+                "type": "integer",
+                "description": "The application's outbound transactions to this wallet."
+              },
+              "paid_out": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "example": "5950.00"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "example": "USD"
+                  }
+                },
+                "description": "Sum of each payout's amount in the application's default currency. Payouts without one are counted but not summed. `null` when none."
+              },
+              "first_payout_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "last_payout_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
           }
         }
       },
@@ -107293,7 +107960,8 @@
               "document_number",
               "phone",
               "email",
-              "address"
+              "address",
+              "wallet_address"
             ]
           },
           "confidence": {
@@ -107451,7 +108119,8 @@
               "document_number",
               "phone",
               "email",
-              "address"
+              "address",
+              "wallet_address"
             ]
           },
           "subject_count": {
@@ -107596,7 +108265,8 @@
                 "document_number",
                 "phone",
                 "email",
-                "address"
+                "address",
+                "wallet_address"
               ]
             }
           },
@@ -133704,26 +134374,6 @@
           }
         }
       },
-      "ImportedSessionNotShareableError": {
-        "type": "object",
-        "description": "The session was imported from another provider, so it cannot be shared with another application: Didit did not run its checks. Nothing is created or copied.",
-        "required": [
-          "detail",
-          "code"
-        ],
-        "properties": {
-          "detail": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string",
-            "enum": [
-              "imported_session_not_shareable"
-            ],
-            "description": "Stable error code for a share or share import refused because the session was imported from another provider."
-          }
-        }
-      },
       "InFiledReportError": {
         "type": "object",
         "description": "The deletion is refused because the selected data is in a finalized regulatory report. Nothing is deleted. Delete the report, then repeat the request.",
@@ -138477,6 +139127,395 @@
           "document_location": {
             "latitude": 40.4169,
             "longitude": -3.7035
+          }
+        }
+      },
+      "UsersLookupRequest": {
+        "type": "object",
+        "required": [
+          "identifiers"
+        ],
+        "properties": {
+          "identifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Each entry is a `vendor_data` value, a Didit user ID or a verified email. Send at most 100,000 entries. Blank entries are dropped and duplicates removed, keeping the first, and at most 20,000 identifiers must remain. Either limit exceeded is a `400` with `code: too_many_identifiers`, and an empty list is a `400` too.",
+            "example": [
+              "usr_8842",
+              "maria.o@gmail.com"
+            ],
+            "maxItems": 100000
+          }
+        }
+      },
+      "UsersLookupNotFound": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "The identifier that matched no user."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-based position in the submitted list, after blanks and duplicates were removed."
+          }
+        },
+        "required": [
+          "identifier",
+          "position"
+        ]
+      },
+      "UsersLookupResponse": {
+        "type": "object",
+        "properties": {
+          "lookup_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Pass it as `lookup` to List users."
+          },
+          "requested": {
+            "type": "integer",
+            "description": "Identifiers read, after blanks and duplicates were removed."
+          },
+          "found": {
+            "type": "integer",
+            "description": "Identifiers that matched at least one user."
+          },
+          "not_found": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsersLookupNotFound"
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the result expires (24 hours after the lookup)."
+          }
+        },
+        "required": [
+          "lookup_id",
+          "requested",
+          "found",
+          "not_found",
+          "expires_at"
+        ]
+      },
+      "UsersLookupDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UsersLookupResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "identifiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The identifiers submitted, after blanks and duplicates were removed, in order."
+              }
+            },
+            "required": [
+              "identifiers"
+            ]
+          }
+        ]
+      },
+      "NetworkSignalSearchRequest": {
+        "type": "object",
+        "required": [
+          "signal_type"
+        ],
+        "properties": {
+          "signal_type": {
+            "type": "string",
+            "enum": [
+              "ip_address",
+              "device",
+              "face",
+              "document_number",
+              "phone",
+              "email",
+              "address",
+              "wallet_address"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "The value to search. Required for every type but `face`, which refuses it. For `wallet_address` it is the address."
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "A JPG, JPEG, PNG, WebP or TIFF image of at most 5 MB. `face` only, and required there. Send the request as `multipart/form-data`."
+          },
+          "issuing_state": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "`document_number` only, and required there."
+          },
+          "document_type": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "`document_number` only, and required there."
+          },
+          "region": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "`document_number` only, required for a regionally issued document."
+          },
+          "tag": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "The destination tag or memo of a wallet. `wallet_address` only, blank allowed. Any other type returns `400` `tag only applies to wallet_address searches.`"
+          }
+        }
+      },
+      "NetworkSignalSearchRecentPayout": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transaction_number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "txn_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "txn_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amount": {
+            "type": "string",
+            "example": "1800"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "paid_out": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "example": "5950.00"
+              },
+              "currency": {
+                "type": "string",
+                "example": "USD"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ]
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "vendor_user_id": {
+                "type": "string",
+                "nullable": true
+              },
+              "vendor_data": {
+                "type": "string",
+                "nullable": true
+              },
+              "full_name": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "NetworkSignalSearchWallet": {
+        "type": "object",
+        "description": "Only on a `wallet_address` search: what the address did in your organization.",
+        "properties": {
+          "signal_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "is_shared_service": {
+            "type": "boolean",
+            "description": "`true` for an address many accounts use (an exchange or payment service). It links nobody, so `match_count` is 0 and `matches` is empty."
+          },
+          "account_count": {
+            "type": "integer"
+          },
+          "payout_count": {
+            "type": "integer"
+          },
+          "paid_out": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "example": "5950.00"
+              },
+              "currency": {
+                "type": "string",
+                "example": "USD"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "description": "Sum of each payout's amount in the application's default currency. Payouts without one are counted but not summed."
+          },
+          "first_payout_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_payout_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "recent_payouts": {
+            "type": "array",
+            "description": "The newest 5 payouts.",
+            "items": {
+              "$ref": "#/components/schemas/NetworkSignalSearchRecentPayout"
+            }
+          }
+        }
+      },
+      "NetworkSignalSearchMatch": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signal_type": {
+            "type": "string"
+          },
+          "quality_flags": {
+            "type": "object",
+            "properties": {
+              "is_datacenter_ip": {
+                "type": "boolean"
+              },
+              "is_high_collision_device": {
+                "type": "boolean"
+              },
+              "is_hub": {
+                "type": "boolean"
+              }
+            }
+          },
+          "subject_count": {
+            "type": "integer"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A subject with `subject`, `verification_status`, `risk`, `confidence`, `first_seen_at`, `last_seen_at`, `observation_count` and `provenance`."
+            }
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkListItem"
+            }
+          }
+        }
+      },
+      "NetworkSignalSearchResponse": {
+        "type": "object",
+        "required": [
+          "signal_type",
+          "match_count",
+          "matches"
+        ],
+        "properties": {
+          "signal_type": {
+            "type": "string"
+          },
+          "match_count": {
+            "type": "integer"
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkSignalSearchMatch"
+            }
+          },
+          "enrichment_available": {
+            "type": "boolean"
+          },
+          "enrichment": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Email and phone searches only, optional: `data`, `score`, `session_id`, `observed_at`."
+          },
+          "cross_organization": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "signals_checked": {
+                "type": "integer"
+              },
+              "insights": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "wallet": {
+            "$ref": "#/components/schemas/NetworkSignalSearchWallet"
+          }
+        }
+      },
+      "ImportedSessionNotShareableError": {
+        "type": "object",
+        "description": "The session was imported from another provider, so it cannot be shared with another application: Didit did not run its checks. Nothing is created or copied.",
+        "required": [
+          "detail",
+          "code"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "imported_session_not_shareable"
+            ],
+            "description": "Stable error code for a share or share import refused because the session was imported from another provider."
           }
         }
       },

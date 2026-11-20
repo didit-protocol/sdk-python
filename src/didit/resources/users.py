@@ -25,6 +25,8 @@ from didit.types.components.ongoing_monitoring_job import OngoingMonitoringJob
 from didit.types.components.ongoing_monitoring_toggle_result import OngoingMonitoringToggleResult
 from didit.types.components.user_detail_item import UserDetailItem
 from didit.types.components.user_list_item import UserListItem
+from didit.types.components.users_lookup_detail import UsersLookupDetail
+from didit.types.components.users_lookup_response import UsersLookupResponse
 from didit.types.users.batch_delete_response import UsersBatchDeleteResponse
 from didit.types.users.create_response import UsersCreateResponse
 from didit.types.users.list_response import UsersListResponse
@@ -43,7 +45,7 @@ __all__ = [
 class Users(SyncAPIResource):
     """The ``users`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``create``, ``generate_pdf``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``update``, ``update_status``, ``upload_face``.
+    Methods: ``batch_delete``, ``create``, ``generate_pdf``, ``get_lookup``, ``list``, ``list_networks``, ``lookup``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``update``, ``update_status``, ``upload_face``.
     """
 
     @cached_property
@@ -61,6 +63,7 @@ class Users(SyncAPIResource):
         *,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        lookup: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -68,13 +71,14 @@ class Users(SyncAPIResource):
     ) -> SyncPage[UserListItem]:
         """List users.
 
-        List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters - fetch pages and filter client-side.
+        List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc, or by the position in your list when `lookup` is set. Pass `lookup` to read only the users a list of identifiers resolved to (see [Look up users](#post-/v3/users/lookup/)). No other filter or search parameter is supported: fetch pages and filter client-side.
 
         ``GET /v3/users/``
 
         Args:
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page over computing this by hand.
+          lookup: A `lookup_id` returned by `POST /v3/users/lookup/`. The list returns only the users that lookup matched, ordered by the position of their identifier in the list you submitted, paginated with `limit` and `offset`. An expired or unknown `lookup_id` returns `404` with `code: lookup_not_found`; submit the list again.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -88,7 +92,83 @@ class Users(SyncAPIResource):
                 cast_to=UsersListResponse,
                 item_type=UserListItem,
                 auth="api_key",
-                query={"limit": limit, "offset": offset},
+                query={"limit": limit, "offset": offset, "lookup": lookup},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def lookup(
+        self,
+        *,
+        identifiers: Sequence[str],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> UsersLookupResponse:
+        """Look up users.
+
+        Resolve a list of up to 20,000 identifiers to the users of your application, in one call. Each identifier is matched, in this order, against `vendor_data` (exactly), the Didit user ID (a UUID), then a verified email (case-insensitive). An email can match several users, and all of them count. Blank entries are dropped and duplicates removed, keeping the first; 1 to 20,000 identifiers must remain, and a request sends at most 100,000 entries before that clean-up. The call only reads. It answers with a `lookup_id`, the counts and the identifiers that matched nobody, each with its 1-based `position` in the submitted list.
+
+        Pass the `lookup_id` as `lookup` to [List users](#get-/v3/users/) to page through exactly the matched users, in the order you submitted them. The result is kept for 24 hours for your application only, then answers `404` with `code: lookup_not_found`.
+
+        ``POST /v3/users/lookup/``
+
+        Args:
+          identifiers: Each entry is a `vendor_data` value, a Didit user ID or a verified email. Send at most 100,000 entries. Blank entries are dropped and duplicates removed, keeping the first, and at most 20,000 identifiers must remain. Either limit exceeded is a `400` with `code: too_many_identifiers`, and an empty list is a `400` too.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "UsersLookupResponse",
+            self._client.request(
+                "post",
+                "/v3/users/lookup/",
+                cast_to=UsersLookupResponse,
+                auth="api_key",
+                body={"identifiers": identifiers},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def get_lookup(
+        self,
+        lookup_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> UsersLookupDetail:
+        """Get a user lookup.
+
+        Read back a lookup made with [Look up users](#post-/v3/users/lookup/): the same counts and `not_found` list, plus the `identifiers` you submitted after blanks and duplicates were removed, in order. A lookup lives 24 hours and belongs to the application that made it; an expired, unknown or other application's `lookup_id` returns `404` with `code: lookup_not_found`.
+
+        ``GET /v3/users/lookup/{lookup_id}/``
+
+        Args:
+          lookup_id: The `lookup_id` returned by Look up users.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "UsersLookupDetail",
+            self._client.request(
+                "get",
+                "/v3/users/lookup/{lookup_id}/",
+                cast_to=UsersLookupDetail,
+                path_params={"lookup_id": lookup_id},
+                auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -701,7 +781,7 @@ class Users(SyncAPIResource):
 class AsyncUsers(AsyncAPIResource):
     """The ``users`` resource of the Didit API.
 
-    Methods: ``batch_delete``, ``create``, ``generate_pdf``, ``list``, ``list_networks``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``update``, ``update_status``, ``upload_face``.
+    Methods: ``batch_delete``, ``create``, ``generate_pdf``, ``get_lookup``, ``list``, ``list_networks``, ``lookup``, ``retrieve``, ``retrieve_ongoing_monitoring_job``, ``set_aml_monitoring``, ``set_ongoing_monitoring``, ``update``, ``update_status``, ``upload_face``.
     """
 
     @cached_property
@@ -719,6 +799,7 @@ class AsyncUsers(AsyncAPIResource):
         *,
         limit: int | NotGiven = NOT_GIVEN,
         offset: int | NotGiven = NOT_GIVEN,
+        lookup: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -726,13 +807,14 @@ class AsyncUsers(AsyncAPIResource):
     ) -> AsyncPaginator[UserListItem]:
         """List users.
 
-        List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc. This endpoint does not support filtering or search parameters - fetch pages and filter client-side.
+        List [users](/entities/users) Didit assembles from KYC sessions sharing the same `vendor_data` (free-form string, NOT a UUID), plus users created via the API. Paginated, ordered by `last_session_at` desc, or by the position in your list when `lookup` is set. Pass `lookup` to read only the users a list of identifiers resolved to (see [Look up users](#post-/v3/users/lookup/)). No other filter or search parameter is supported: fetch pages and filter client-side.
 
         ``GET /v3/users/``
 
         Args:
           limit: Page size. Defaults to 50 when omitted. There is no enforced maximum, but keep pages small for latency.
           offset: Zero-based offset of the first record to return. Prefer following the `next` URL from the previous page over computing this by hand.
+          lookup: A `lookup_id` returned by `POST /v3/users/lookup/`. The list returns only the users that lookup matched, ordered by the position of their identifier in the list you submitted, paginated with `limit` and `offset`. An expired or unknown `lookup_id` returns `404` with `code: lookup_not_found`; submit the list again.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -746,7 +828,83 @@ class AsyncUsers(AsyncAPIResource):
                 cast_to=UsersListResponse,
                 item_type=UserListItem,
                 auth="api_key",
-                query={"limit": limit, "offset": offset},
+                query={"limit": limit, "offset": offset, "lookup": lookup},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def lookup(
+        self,
+        *,
+        identifiers: Sequence[str],
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> UsersLookupResponse:
+        """Look up users.
+
+        Resolve a list of up to 20,000 identifiers to the users of your application, in one call. Each identifier is matched, in this order, against `vendor_data` (exactly), the Didit user ID (a UUID), then a verified email (case-insensitive). An email can match several users, and all of them count. Blank entries are dropped and duplicates removed, keeping the first; 1 to 20,000 identifiers must remain, and a request sends at most 100,000 entries before that clean-up. The call only reads. It answers with a `lookup_id`, the counts and the identifiers that matched nobody, each with its 1-based `position` in the submitted list.
+
+        Pass the `lookup_id` as `lookup` to [List users](#get-/v3/users/) to page through exactly the matched users, in the order you submitted them. The result is kept for 24 hours for your application only, then answers `404` with `code: lookup_not_found`.
+
+        ``POST /v3/users/lookup/``
+
+        Args:
+          identifiers: Each entry is a `vendor_data` value, a Didit user ID or a verified email. Send at most 100,000 entries. Blank entries are dropped and duplicates removed, keeping the first, and at most 20,000 identifiers must remain. Either limit exceeded is a `400` with `code: too_many_identifiers`, and an empty list is a `400` too.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "UsersLookupResponse",
+            await self._client.request(
+                "post",
+                "/v3/users/lookup/",
+                cast_to=UsersLookupResponse,
+                auth="api_key",
+                body={"identifiers": identifiers},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def get_lookup(
+        self,
+        lookup_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> UsersLookupDetail:
+        """Get a user lookup.
+
+        Read back a lookup made with [Look up users](#post-/v3/users/lookup/): the same counts and `not_found` list, plus the `identifiers` you submitted after blanks and duplicates were removed, in order. A lookup lives 24 hours and belongs to the application that made it; an expired, unknown or other application's `lookup_id` returns `404` with `code: lookup_not_found`.
+
+        ``GET /v3/users/lookup/{lookup_id}/``
+
+        Args:
+          lookup_id: The `lookup_id` returned by Look up users.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "UsersLookupDetail",
+            await self._client.request(
+                "get",
+                "/v3/users/lookup/{lookup_id}/",
+                cast_to=UsersLookupDetail,
+                path_params={"lookup_id": lookup_id},
+                auth="api_key",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1360,6 +1518,8 @@ class UsersWithRawResponse:
     def __init__(self, resource: Users) -> None:
         self._resource = resource
         self.list = to_raw_response_wrapper(resource.list)
+        self.lookup = to_raw_response_wrapper(resource.lookup)
+        self.get_lookup = to_raw_response_wrapper(resource.get_lookup)
         self.retrieve = to_raw_response_wrapper(resource.retrieve)
         self.update = to_raw_response_wrapper(resource.update)
         self.generate_pdf = to_raw_response_wrapper(resource.generate_pdf)
@@ -1379,6 +1539,8 @@ class AsyncUsersWithRawResponse:
     def __init__(self, resource: AsyncUsers) -> None:
         self._resource = resource
         self.list = async_to_raw_response_wrapper(resource.list)
+        self.lookup = async_to_raw_response_wrapper(resource.lookup)
+        self.get_lookup = async_to_raw_response_wrapper(resource.get_lookup)
         self.retrieve = async_to_raw_response_wrapper(resource.retrieve)
         self.update = async_to_raw_response_wrapper(resource.update)
         self.generate_pdf = async_to_raw_response_wrapper(resource.generate_pdf)
@@ -1398,6 +1560,8 @@ class UsersWithStreamingResponse:
     def __init__(self, resource: Users) -> None:
         self._resource = resource
         self.list = to_streamed_response_wrapper(resource.list)
+        self.lookup = to_streamed_response_wrapper(resource.lookup)
+        self.get_lookup = to_streamed_response_wrapper(resource.get_lookup)
         self.retrieve = to_streamed_response_wrapper(resource.retrieve)
         self.update = to_streamed_response_wrapper(resource.update)
         self.generate_pdf = to_streamed_response_wrapper(resource.generate_pdf)
@@ -1417,6 +1581,8 @@ class AsyncUsersWithStreamingResponse:
     def __init__(self, resource: AsyncUsers) -> None:
         self._resource = resource
         self.list = async_to_streamed_response_wrapper(resource.list)
+        self.lookup = async_to_streamed_response_wrapper(resource.lookup)
+        self.get_lookup = async_to_streamed_response_wrapper(resource.get_lookup)
         self.retrieve = async_to_streamed_response_wrapper(resource.retrieve)
         self.update = async_to_streamed_response_wrapper(resource.update)
         self.generate_pdf = async_to_streamed_response_wrapper(resource.generate_pdf)
