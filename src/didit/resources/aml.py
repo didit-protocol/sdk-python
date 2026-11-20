@@ -82,7 +82,7 @@ class Aml(SyncAPIResource):
 
         **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) - configure a client timeout of **at least 60 seconds**.
 
-        **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps re-screening the profile and requires `save_api_request=true` (enforced with a `400`).
+        **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps the profile under provider-driven monitoring, so the provider's updates reach the report, and requires `save_api_request=true` (enforced with a `400`).
 
         **Idempotency.** Send an `Idempotency-Key` header when retrying after a timeout or transient error. The key is scoped to your application and the exact request body. The first completed request stores its response; later identical retries return that same response and do not run or bill another AML screening. If the original request is still running, retry later with the same key. If the same key is reused with a different body, the API returns `409`.
 
@@ -105,7 +105,7 @@ class Aml(SyncAPIResource):
           aml_country_weight: Weight of country/nationality in the per-hit match score.
           aml_match_score_threshold: Per-hit cutoff: hits with `match_score` below this are `False Positive` (excluded from risk assessment); at or above are `Unreviewed` possible matches.
           include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered - use a ≥60 s client timeout.
-          include_ongoing_monitoring: Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`).
+          include_ongoing_monitoring: Keep this profile under provider-driven ongoing monitoring and push the provider's updates via webhook. Requires `save_api_request=true` (else `400`).
           save_api_request: Persist the screening as a session (console visibility, decision endpoint, webhooks, hit review). Set to `false` for a stateless check.
           vendor_data: Your identifier for the screened user; echoed back and stored with the session.
           metadata: Free-form JSON stored with the request and echoed back.
@@ -241,7 +241,7 @@ class AsyncAml(AsyncAPIResource):
 
         **Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) - configure a client timeout of **at least 60 seconds**.
 
-        **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps re-screening the profile and requires `save_api_request=true` (enforced with a `400`).
+        **Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps the profile under provider-driven monitoring, so the provider's updates reach the report, and requires `save_api_request=true` (enforced with a `400`).
 
         **Idempotency.** Send an `Idempotency-Key` header when retrying after a timeout or transient error. The key is scoped to your application and the exact request body. The first completed request stores its response; later identical retries return that same response and do not run or bill another AML screening. If the original request is still running, retry later with the same key. If the same key is reused with a different body, the API returns `409`.
 
@@ -264,7 +264,7 @@ class AsyncAml(AsyncAPIResource):
           aml_country_weight: Weight of country/nationality in the per-hit match score.
           aml_match_score_threshold: Per-hit cutoff: hits with `match_score` below this are `False Positive` (excluded from risk assessment); at or above are `Unreviewed` possible matches.
           include_adverse_media: Also search news media for negative coverage. Adds up to ~30 s of latency while results are gathered - use a ≥60 s client timeout.
-          include_ongoing_monitoring: Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`).
+          include_ongoing_monitoring: Keep this profile under provider-driven ongoing monitoring and push the provider's updates via webhook. Requires `save_api_request=true` (else `400`).
           save_api_request: Persist the screening as a session (console visibility, decision endpoint, webhooks, hit review). Set to `false` for a stateless check.
           vendor_data: Your identifier for the screened user; echoed back and stored with the session.
           metadata: Free-form JSON stored with the request and echoed back.
