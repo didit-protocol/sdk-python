@@ -1226,6 +1226,12 @@ if TYPE_CHECKING:
     from didit.types.components.network_graph import NetworkGraphMetrics as NetworkGraphMetrics
     from didit.types.components.network_graph_edge import NetworkGraphEdge as NetworkGraphEdge
     from didit.types.components.network_graph_node import NetworkGraphNode as NetworkGraphNode
+    from didit.types.components.network_graph_node import (
+        NetworkGraphNodeWallet as NetworkGraphNodeWallet,
+    )
+    from didit.types.components.network_graph_node import (
+        NetworkGraphNodeWalletPaidOut as NetworkGraphNodeWalletPaidOut,
+    )
     from didit.types.components.network_list_counts import NetworkListCounts as NetworkListCounts
     from didit.types.components.network_list_counts import (
         NetworkListCountsFacets as NetworkListCountsFacets,
@@ -1272,6 +1278,33 @@ if TYPE_CHECKING:
     )
     from didit.types.components.network_risk_display import NetworkRiskDisplay as NetworkRiskDisplay
     from didit.types.components.network_signal import NetworkSignal as NetworkSignal
+    from didit.types.components.network_signal_search_match import (
+        NetworkSignalSearchMatch as NetworkSignalSearchMatch,
+    )
+    from didit.types.components.network_signal_search_match import (
+        NetworkSignalSearchMatchQualityFlags as NetworkSignalSearchMatchQualityFlags,
+    )
+    from didit.types.components.network_signal_search_recent_payout import (
+        NetworkSignalSearchRecentPayout as NetworkSignalSearchRecentPayout,
+    )
+    from didit.types.components.network_signal_search_recent_payout import (
+        NetworkSignalSearchRecentPayoutAccount as NetworkSignalSearchRecentPayoutAccount,
+    )
+    from didit.types.components.network_signal_search_recent_payout import (
+        NetworkSignalSearchRecentPayoutPaidOut as NetworkSignalSearchRecentPayoutPaidOut,
+    )
+    from didit.types.components.network_signal_search_response import (
+        NetworkSignalSearchResponse as NetworkSignalSearchResponse,
+    )
+    from didit.types.components.network_signal_search_response import (
+        NetworkSignalSearchResponseCrossOrganization as NetworkSignalSearchResponseCrossOrganization,
+    )
+    from didit.types.components.network_signal_search_wallet import (
+        NetworkSignalSearchWallet as NetworkSignalSearchWallet,
+    )
+    from didit.types.components.network_signal_search_wallet import (
+        NetworkSignalSearchWalletPaidOut as NetworkSignalSearchWalletPaidOut,
+    )
     from didit.types.components.network_tag import NetworkTag as NetworkTag
     from didit.types.components.network_timeline import NetworkTimeline as NetworkTimeline
     from didit.types.components.network_timeline_account import (
@@ -2422,6 +2455,13 @@ if TYPE_CHECKING:
     from didit.types.components.user_session_list_item import (
         UserSessionListItemTopWarnings as UserSessionListItemTopWarnings,
     )
+    from didit.types.components.users_lookup_detail import UsersLookupDetail as UsersLookupDetail
+    from didit.types.components.users_lookup_not_found import (
+        UsersLookupNotFound as UsersLookupNotFound,
+    )
+    from didit.types.components.users_lookup_response import (
+        UsersLookupResponse as UsersLookupResponse,
+    )
     from didit.types.components.vasp_directory_entry import VaspDirectoryEntry as VaspDirectoryEntry
     from didit.types.components.vasp_directory_entry import (
         VaspDirectoryEntryAliases as VaspDirectoryEntryAliases,
@@ -2919,6 +2959,9 @@ if TYPE_CHECKING:
     )
     from didit.types.networks.remove_tag_params import (
         NetworksRemoveTagParams as NetworksRemoveTagParams,
+    )
+    from didit.types.networks.search_signals_params import (
+        NetworksSearchSignalsParams as NetworksSearchSignalsParams,
     )
     from didit.types.passive_liveness.check_params import (
         PassiveLivenessCheckParams as PassiveLivenessCheckParams,
@@ -3515,6 +3558,7 @@ if TYPE_CHECKING:
         UsersCreateResponseVerificationLink as UsersCreateResponseVerificationLink,
     )
     from didit.types.users.list_response import UsersListResponse as UsersListResponse
+    from didit.types.users.lookup_params import UsersLookupParams as UsersLookupParams
     from didit.types.users.set_aml_monitoring_params import (
         UsersSetAmlMonitoringParams as UsersSetAmlMonitoringParams,
     )
@@ -4202,6 +4246,8 @@ _MODULES: dict[str, str] = {
     "NetworkGraphEdge": "components.network_graph_edge",
     "NetworkGraphMetrics": "components.network_graph",
     "NetworkGraphNode": "components.network_graph_node",
+    "NetworkGraphNodeWallet": "components.network_graph_node",
+    "NetworkGraphNodeWalletPaidOut": "components.network_graph_node",
     "NetworkListCounts": "components.network_list_counts",
     "NetworkListCountsFacets": "components.network_list_counts",
     "NetworkListCountsFacetsAssignee": "components.network_list_counts",
@@ -4224,6 +4270,15 @@ _MODULES: dict[str, str] = {
     "NetworkPatternScore": "components.network_pattern_score",
     "NetworkRiskDisplay": "components.network_risk_display",
     "NetworkSignal": "components.network_signal",
+    "NetworkSignalSearchMatch": "components.network_signal_search_match",
+    "NetworkSignalSearchMatchQualityFlags": "components.network_signal_search_match",
+    "NetworkSignalSearchRecentPayout": "components.network_signal_search_recent_payout",
+    "NetworkSignalSearchRecentPayoutAccount": "components.network_signal_search_recent_payout",
+    "NetworkSignalSearchRecentPayoutPaidOut": "components.network_signal_search_recent_payout",
+    "NetworkSignalSearchResponse": "components.network_signal_search_response",
+    "NetworkSignalSearchResponseCrossOrganization": "components.network_signal_search_response",
+    "NetworkSignalSearchWallet": "components.network_signal_search_wallet",
+    "NetworkSignalSearchWalletPaidOut": "components.network_signal_search_wallet",
     "NetworkTag": "components.network_tag",
     "NetworkTimeline": "components.network_timeline",
     "NetworkTimelineAccount": "components.network_timeline_account",
@@ -4250,6 +4305,7 @@ _MODULES: dict[str, str] = {
     "NetworksNotesCreateParams": "networks.notes.create_params",
     "NetworksNotesListResponse": "networks.notes.list_response",
     "NetworksRemoveTagParams": "networks.remove_tag_params",
+    "NetworksSearchSignalsParams": "networks.search_signals_params",
     "OngoingMonitoringJob": "components.ongoing_monitoring_job",
     "OngoingMonitoringJobEstimate": "components.ongoing_monitoring_job",
     "OngoingMonitoringJobOutcomes": "components.ongoing_monitoring_job",
@@ -4845,6 +4901,10 @@ _MODULES: dict[str, str] = {
     "UsersCreateResponseTagsTag": "users.create_response",
     "UsersCreateResponseVerificationLink": "users.create_response",
     "UsersListResponse": "users.list_response",
+    "UsersLookupDetail": "components.users_lookup_detail",
+    "UsersLookupNotFound": "components.users_lookup_not_found",
+    "UsersLookupParams": "users.lookup_params",
+    "UsersLookupResponse": "components.users_lookup_response",
     "UsersSetAmlMonitoringParams": "users.set_aml_monitoring_params",
     "UsersSetOngoingMonitoringParams": "users.set_ongoing_monitoring_params",
     "UsersUpdateParams": "users.update_params",
@@ -5519,6 +5579,8 @@ __all__ = [
     "NetworkGraphEdge",
     "NetworkGraphMetrics",
     "NetworkGraphNode",
+    "NetworkGraphNodeWallet",
+    "NetworkGraphNodeWalletPaidOut",
     "NetworkListCounts",
     "NetworkListCountsFacets",
     "NetworkListCountsFacetsAssignee",
@@ -5541,6 +5603,15 @@ __all__ = [
     "NetworkPatternScore",
     "NetworkRiskDisplay",
     "NetworkSignal",
+    "NetworkSignalSearchMatch",
+    "NetworkSignalSearchMatchQualityFlags",
+    "NetworkSignalSearchRecentPayout",
+    "NetworkSignalSearchRecentPayoutAccount",
+    "NetworkSignalSearchRecentPayoutPaidOut",
+    "NetworkSignalSearchResponse",
+    "NetworkSignalSearchResponseCrossOrganization",
+    "NetworkSignalSearchWallet",
+    "NetworkSignalSearchWalletPaidOut",
     "NetworkTag",
     "NetworkTimeline",
     "NetworkTimelineAccount",
@@ -5567,6 +5638,7 @@ __all__ = [
     "NetworksNotesCreateParams",
     "NetworksNotesListResponse",
     "NetworksRemoveTagParams",
+    "NetworksSearchSignalsParams",
     "OngoingMonitoringJob",
     "OngoingMonitoringJobEstimate",
     "OngoingMonitoringJobOutcomes",
@@ -6162,6 +6234,10 @@ __all__ = [
     "UsersCreateResponseTagsTag",
     "UsersCreateResponseVerificationLink",
     "UsersListResponse",
+    "UsersLookupDetail",
+    "UsersLookupNotFound",
+    "UsersLookupParams",
+    "UsersLookupResponse",
     "UsersSetAmlMonitoringParams",
     "UsersSetOngoingMonitoringParams",
     "UsersUpdateParams",

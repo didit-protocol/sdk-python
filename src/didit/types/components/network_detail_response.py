@@ -49,7 +49,16 @@ class NetworkDetailResponse(BaseModel):
 
     signal_types: (
         list[
-            Literal["ip_address", "device", "face", "document_number", "phone", "email", "address"]
+            Literal[
+                "ip_address",
+                "device",
+                "face",
+                "document_number",
+                "phone",
+                "email",
+                "address",
+                "wallet_address",
+            ]
             | str
         ]
         | None
