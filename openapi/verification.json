@@ -10125,7 +10125,7 @@
             }
           }
         ],
-        "description": "Screen a person or company against PEP, sanctions, warning/watchlist, and adverse-media datasets in one call.\n\n**Two-score model.** Each hit carries a `match_score` (0–100, identity confidence) and a `risk_score` (0–100, entity risk). Hits whose `match_score` is below `aml_match_score_threshold` (default **93**) are tagged `review_status: \"False Positive\"` and ignored for risk purposes; the highest `risk_score` among the remaining hits becomes `aml.score`. The final `aml.status` follows your thresholds: `score` > `aml_score_review_threshold` (default **100**) → `Declined`; `score` > `aml_score_approve_threshold` (default **80**) → `In Review`; otherwise `Approved`. Whenever `score` is non-zero and ≥ the approve threshold a `POSSIBLE_MATCH_FOUND` warning is added (a score of exactly 0 never warns).\n\n**Match-score weights.** `aml_name_weight` + `aml_dob_weight` + `aml_country_weight` must sum to exactly 100 (defaults 60/25/15). Components missing from the request are re-normalized away; a matching `document_number` acts as a golden key that overrides `match_score` to 100.\n\n**Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) — configure a client timeout of **at least 60 seconds**.\n\n**Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps re-screening the profile and requires `save_api_request=true` (enforced with a `400`).\n\n**Idempotency.** Send an `Idempotency-Key` header when retrying after a timeout or transient error. The key is scoped to your application and the exact request body. The first completed request stores its response; later identical retries return that same response and do not run or bill another AML screening. If the original request is still running, retry later with the same key. If the same key is reused with a different body, the API returns `409`.\n\n**Billing.** One AML API credit is charged after the first successful screening. Replayed idempotent responses are not charged again; an insufficient balance returns `403` before any new screening happens.\n\n**Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result — `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.",
+        "description": "Screen a person or company against PEP, sanctions, warning/watchlist, and adverse-media datasets in one call.\n\n**Two-score model.** Each hit carries a `match_score` (0–100, identity confidence) and a `risk_score` (0–100, entity risk). Hits whose `match_score` is below `aml_match_score_threshold` (default **93**) are tagged `review_status: \"False Positive\"` and ignored for risk purposes; the highest `risk_score` among the remaining hits becomes `aml.score`. The final `aml.status` follows your thresholds: `score` > `aml_score_review_threshold` (default **100**) → `Declined`; `score` > `aml_score_approve_threshold` (default **80**) → `In Review`; otherwise `Approved`. Whenever `score` is non-zero and ≥ the approve threshold a `POSSIBLE_MATCH_FOUND` warning is added (a score of exactly 0 never warns).\n\n**Match-score weights.** `aml_name_weight` + `aml_dob_weight` + `aml_country_weight` must sum to exactly 100 (defaults 60/25/15). Components missing from the request are re-normalized away; a matching `document_number` acts as a golden key that overrides `match_score` to 100.\n\n**Latency.** Plain screenings typically complete in a few seconds. With `include_adverse_media=true` the API waits for adverse-media enrichment (an initial ~5 s pause plus up to ~25 s of polling) — configure a client timeout of **at least 60 seconds**.\n\n**Persistence.** `save_api_request` defaults to **true**: the screening is stored as a session (`request_id` works with `GET /v3/session/{sessionId}/decision/`), it appears in the console, a `status.updated` webhook fires, and hit review statuses can be updated later. With `save_api_request=false` nothing is stored and `request_id` is a transient correlation id. `include_ongoing_monitoring=true` keeps the profile under provider-driven monitoring, so the provider's updates reach the report, and requires `save_api_request=true` (enforced with a `400`).\n\n**Idempotency.** Send an `Idempotency-Key` header when retrying after a timeout or transient error. The key is scoped to your application and the exact request body. The first completed request stores its response; later identical retries return that same response and do not run or bill another AML screening. If the original request is still running, retry later with the same key. If the same key is reused with a different body, the API returns `409`.\n\n**Billing.** One AML API credit is charged after the first successful screening. Replayed idempotent responses are not charged again; an insufficient balance returns `403` before any new screening happens.\n\n**Sandbox.** Keys from sandbox applications skip screening and billing entirely and return a mocked result — `Approved` with zero hits unless you pass `sandbox_scenario`. `save_api_request` works the same as on live keys, so a saved sandbox screening is retrievable through `GET /v3/session/{sessionId}/decision/` and `GET /v3/session/{sessionId}/generate-pdf/`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -10216,7 +10216,7 @@
                   "include_ongoing_monitoring": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Keep re-screening this profile and push changes via webhook. Requires `save_api_request=true` (else `400`)."
+                    "description": "Keep this profile under provider-driven ongoing monitoring and push the provider's updates via webhook. Requires `save_api_request=true` (else `400`)."
                   },
                   "save_api_request": {
                     "type": "boolean",
@@ -34629,7 +34629,7 @@
     "/v3/session/{sessionId}/update-aml-hit-status/": {
       "patch": {
         "summary": "Update an AML hit review status",
-        "description": "Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array — see the session decision). A hit id returned in the earlier format is still accepted; the response always names the hit by its current `id`.\n\n`review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`. Reviewer decisions are preserved across ongoing-monitoring updates, so a hit you mark `False Positive` stays that way when the provider re-screens.\n\nA successful call fires a `data.updated` webhook and appends an activity entry (with actor attribution) to the session's review trail. For graph workflows with multiple AML checks, pass `node_id` to target a specific check.\n\nAuthenticate with your API key (`x-api-key`) or a user authorization header — either must carry the `write:sessions` privilege.",
+        "description": "Set the review status of a **single AML hit** (a potential sanction / PEP / watchlist / adverse-media match) returned by AML screening, without changing the overall session decision. Identify the hit by its `hit_id` (the `id` of an entry in the AML check's `hits` array — see the session decision). A hit id returned in the earlier format is still accepted; the response always names the hit by its current `id`.\n\n`review_status` is one of `Unreviewed`, `Confirmed Match`, `False Positive`, or `Inconclusive`. Reviewer decisions are preserved across ongoing-monitoring updates, so a hit you mark `False Positive` stays that way when the provider sends an update.\n\nA successful call fires a `data.updated` webhook and appends an activity entry (with actor attribution) to the session's review trail. For graph workflows with multiple AML checks, pass `node_id` to target a specific check.\n\nAuthenticate with your API key (`x-api-key`) or a user authorization header — either must carry the `write:sessions` privilege.",
         "operationId": "patch_v3_session_update_aml_hit_status",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -81925,7 +81925,7 @@
     "/v3/session/{sessionId}/aml-screening-history/": {
       "get": {
         "summary": "List AML screening history",
-        "description": "List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the evidence that a clean subject was still being screened. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. Pass `month` to read one calendar month at a time. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).",
+        "description": "List every completed ongoing-monitoring re-screen of a session's AML check, newest first by `completed_at`, including the runs where nothing changed: alerts, activity entries and webhooks fire only when a result moves, so this history is the record of the re-screens a clean subject had. The daily monitoring date is `last_ongoing_screening_at` on the AML report. Works for KYC and KYB session IDs; pass `node_id` when the session ran more than one AML step. Only ongoing-monitoring re-screens are listed (the first screening is part of the session decision) and runs from before this history existed are not reconstructed, so a session without ongoing monitoring returns an empty list. `count` is exact up to 100 and capped at 100 above that, so follow `next` until it is `null`. Pass `month` to read one calendar month at a time. A scoped API key needs `decisions: read`; see [Continuous AML monitoring](https://docs.didit.me/core-technology/aml-screening/continuous-monitoring-aml-screening).",
         "operationId": "get_v3_session_aml_screening_history",
         "x-didit-sdk": {
           "resource": "sessions",
@@ -124497,7 +124497,7 @@
         ]
       },
       "SessionDataUpdatedEvent": {
-        "description": "Data of a verification session changed without a status change, for example after a manual review edit, a step override or an ongoing-monitoring rescreen. `decision` is sent only for `Approved`, `Declined`, `In Review` and `Abandoned`; it has the shape of `GET /v3/session/{sessionId}/decision/` for destinations on webhook version 3 (the default), and the older reduced shape for version 1 or 2 destinations. Business sessions always receive the version 3 business decision.",
+        "description": "Data of a verification session changed without a status change, for example after a manual review edit, a step override or an ongoing-monitoring update. `decision` is sent only for `Approved`, `Declined`, `In Review` and `Abandoned`; it has the shape of `GET /v3/session/{sessionId}/decision/` for destinations on webhook version 3 (the default), and the older reduced shape for version 1 or 2 destinations. Business sessions always receive the version 3 business decision.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -126086,25 +126086,25 @@
           },
           "is_ongoing_monitoring_enabled": {
             "type": "boolean",
-            "description": "Whether AML ongoing monitoring is enabled for this screening. When `true`, the entity is re-screened periodically and any new hits update the report."
+            "description": "Whether AML ongoing monitoring is enabled for this screening. When `true`, the provider watches the entity and any hit it adds, changes or withdraws updates the report. Didit does not screen the entity again."
           },
           "next_ongoing_monitoring_bill_date": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date (YYYY-MM-DD) when this ongoing-monitoring subscription will next be billed. Computed as the date of the last ongoing-monitoring billing plus 365 days when `is_ongoing_monitoring_enabled = true`; otherwise `null`. This is a billing date, not a screening date - use `last_ongoing_screening_at` for that."
+            "description": "Date (YYYY-MM-DD) when this ongoing-monitoring subscription will next be billed. Computed as the date of the last ongoing-monitoring billing plus 365 days when `is_ongoing_monitoring_enabled = true`; otherwise `null`. This is a billing date, not the monitoring date - use `last_ongoing_screening_at` for the daily monitoring date."
           },
           "last_ongoing_screening_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When ongoing monitoring last completed a re-screening of this record, whether or not the result changed. `null` when the record has never been re-screened; it is never back-filled from the enablement or billing date."
+            "description": "The last day ongoing monitoring was in force for this record. Didit dates it every day while monitoring is enabled and the provider is watching the subject, and again whenever the provider sends an update, whether or not any hit changed. It is not the time of a screening: ongoing monitoring waits for the provider's updates and does not screen the subject again. `null` when no monitoring day has been recorded for the record; it is never back-filled from the enablement or billing date."
           },
           "last_ongoing_screening_datasets_updated_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "The most recent AML dataset update date the provider reported at the time of that screening. `null` when the provider reported no dataset dates; never estimated."
+            "description": "The most recent AML dataset update date the provider reported with a screening of this record. `null` when the provider reported no dataset dates; never estimated."
           },
           "warnings": {
             "type": "array",
@@ -140211,7 +140211,7 @@
     "data.updated": {
       "post": {
         "summary": "Session data changed",
-        "description": "Data of a verification session changed without a status change, for example after a manual review edit, a step override or an ongoing-monitoring rescreen. `decision` is sent only for `Approved`, `Declined`, `In Review` and `Abandoned`; it has the shape of `GET /v3/session/{sessionId}/decision/` for destinations on webhook version 3 (the default), and the older reduced shape for version 1 or 2 destinations. Business sessions always receive the version 3 business decision.",
+        "description": "Data of a verification session changed without a status change, for example after a manual review edit, a step override or an ongoing-monitoring update. `decision` is sent only for `Approved`, `Declined`, `In Review` and `Abandoned`; it has the shape of `GET /v3/session/{sessionId}/decision/` for destinations on webhook version 3 (the default), and the older reduced shape for version 1 or 2 destinations. Business sessions always receive the version 3 business decision.",
         "tags": [
           "Webhook"
         ],
