@@ -655,6 +655,54 @@ def test_component_that_is_the_whole_request_body_is_the_params_type() -> None:
     )
 
 
+# A request body whose oneOf/anyOf only narrows which properties are required ----------
+
+_MESSAGES_SEND = "/v3/messages/"
+
+
+def test_one_of_body_that_only_adds_required_is_one_params_type(openapi: pathlib.Path) -> None:
+    """``POST /v3/messages/``: branches that only add ``required`` describe one object.
+
+    Read as a union, each branch is a bare ``object`` (a mypy and pyright failure where
+    the body reaches the client); the object's own properties are its type.
+    """
+    spec = _read(openapi / "verification.json")
+    media = spec["paths"][_MESSAGES_SEND]["post"]["requestBody"]["content"]["application/json"]
+    media.pop("examples", None)
+    media["schema"] = {
+        "type": "object",
+        "description": "Send exactly one of `body` or `template_id`.",
+        "required": ["to"],
+        "oneOf": [{"required": ["body"]}, {"required": ["template_id"]}],
+        "properties": {
+            "to": {"type": "string"},
+            "body": {"type": "string"},
+            "template_id": {"type": "string"},
+        },
+    }
+    _write(openapi / "verification.json", spec)
+    files = generate(openapi)
+    params = files["src/didit/types/messages/send_params.py"]
+    assert "class MessagesSendParams(TypedDict, total=False):" in params
+    assert "to: Required[str]" in params
+    assert "body: str" in params
+    assert "template_id: str" in params
+    resource = files["src/didit/resources/messages.py"]
+    assert "body: object" not in resource
+    assert "to: str," in resource
+    assert '"template_id": template_id,' in resource
+
+
+def test_one_of_body_with_distinct_variants_stays_a_union() -> None:
+    _, _, methods = build(REPO / "openapi")
+    method = next(m for m in methods if m.resource == "transactions" and m.name == "batch_delete")
+    assert method.whole_body is not None
+    assert method.whole_body.annotation.expr == (
+        "TransactionsBatchDeleteParamsSelectedTransactions"
+        " | TransactionsBatchDeleteParamsAllTransactions"
+    )
+
+
 def test_two_different_types_with_one_name_still_collide(openapi: pathlib.Path) -> None:
     spec = _read(openapi / "verification.json")
     body = spec["paths"][_LINKS_PATH]["post"]["requestBody"]["content"]["application/json"]
