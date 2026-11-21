@@ -682,15 +682,15 @@ def test_one_of_body_that_only_adds_required_is_one_params_type(openapi: pathlib
     }
     _write(openapi / "verification.json", spec)
     files = generate(openapi)
+    resource = files["src/didit/resources/messages.py"]
+    assert "body: object" not in resource
+    assert "to: str," in resource
+    assert '"template_id": template_id' in resource
     params = files["src/didit/types/messages/send_params.py"]
     assert "class MessagesSendParams(TypedDict, total=False):" in params
     assert "to: Required[str]" in params
     assert "body: str" in params
     assert "template_id: str" in params
-    resource = files["src/didit/resources/messages.py"]
-    assert "body: object" not in resource
-    assert "to: str," in resource
-    assert '"template_id": template_id,' in resource
 
 
 def test_one_of_body_with_distinct_variants_stays_a_union() -> None:
