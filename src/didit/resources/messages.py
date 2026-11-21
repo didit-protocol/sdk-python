@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from functools import cached_property
-from typing import Literal, cast
+from typing import Literal, Mapping, Sequence, cast
 
 import httpx
 
@@ -22,6 +22,7 @@ from didit.types.components.message import Message
 from didit.types.components.message_list import MessageList
 from didit.types.components.message_prices import MessagePrices
 from didit.types.components.messages_settings import MessagesSettings
+from didit.types.messages.send_params import MessagesSendParamsOptions
 
 __all__ = [
     "Messages",
@@ -119,7 +120,18 @@ class Messages(SyncAPIResource):
     def send(
         self,
         *,
-        body: object,
+        to: str,
+        to_email: str | NotGiven = NOT_GIVEN,
+        channels: Sequence[Literal["sms", "whatsapp", "email"] | str] | NotGiven = NOT_GIVEN,
+        body: str | NotGiven = NOT_GIVEN,
+        template_id: str | NotGiven = NOT_GIVEN,
+        variables: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        locale: str | NotGiven = NOT_GIVEN,
+        subject: str | NotGiven = NOT_GIVEN,
+        schedule_at: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        expires_at: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        correlation_id: str | NotGiven = NOT_GIVEN,
+        options: MessagesSendParamsOptions | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -143,7 +155,18 @@ class Messages(SyncAPIResource):
         ``POST /v3/messages/``
 
         Args:
-          body
+          to: Recipient: an E.164 phone number (`+447700900123`), or an email address for email.
+          to_email: The email address for the `email` channel when `to` is a phone number.
+          channels: Channels to try, in order. The next one is used when a channel cannot take the message (switched off, opted out, no approved WhatsApp template...) or the message fails on it. Default `["sms"]` for a phone number, `["email"]` for an email address.
+          body: Free text, sent as written, for SMS and email. On WhatsApp free text goes out only inside a 24-hour reply window (the person wrote to you first); outside it WhatsApp delivers only an approved template, so use `template_id`, or a free-text WhatsApp attempt falls back to the next channel. Limits: SMS 1,000, WhatsApp 4,096, email 10,000 characters.
+          template_id: One of your message templates; each channel uses the template's text for that channel.
+          variables: Values for the template's `{{variables}}`. Every variable of the text used needs one.
+          locale: BCP-47 language of the template text. Default: the recipient country's language, then English.
+          subject: Subject of a free-text email.
+          schedule_at: When to send it, up to 90 days ahead. Default: now.
+          expires_at: Validity: never sent after it. After the send time, at most 72 hours after it.
+          correlation_id: Your reference, returned in every response and webhook, filterable in the list.
+          options
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -157,7 +180,20 @@ class Messages(SyncAPIResource):
                 "/v3/messages/",
                 cast_to=Message,
                 auth="api_key",
-                body=body,
+                body={
+                    "to": to,
+                    "to_email": to_email,
+                    "channels": channels,
+                    "body": body,
+                    "template_id": template_id,
+                    "variables": variables,
+                    "locale": locale,
+                    "subject": subject,
+                    "schedule_at": schedule_at,
+                    "expires_at": expires_at,
+                    "correlation_id": correlation_id,
+                    "options": options,
+                },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -484,7 +520,18 @@ class AsyncMessages(AsyncAPIResource):
     async def send(
         self,
         *,
-        body: object,
+        to: str,
+        to_email: str | NotGiven = NOT_GIVEN,
+        channels: Sequence[Literal["sms", "whatsapp", "email"] | str] | NotGiven = NOT_GIVEN,
+        body: str | NotGiven = NOT_GIVEN,
+        template_id: str | NotGiven = NOT_GIVEN,
+        variables: Mapping[str, str] | NotGiven = NOT_GIVEN,
+        locale: str | NotGiven = NOT_GIVEN,
+        subject: str | NotGiven = NOT_GIVEN,
+        schedule_at: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        expires_at: str | _dt.datetime | NotGiven = NOT_GIVEN,
+        correlation_id: str | NotGiven = NOT_GIVEN,
+        options: MessagesSendParamsOptions | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -508,7 +555,18 @@ class AsyncMessages(AsyncAPIResource):
         ``POST /v3/messages/``
 
         Args:
-          body
+          to: Recipient: an E.164 phone number (`+447700900123`), or an email address for email.
+          to_email: The email address for the `email` channel when `to` is a phone number.
+          channels: Channels to try, in order. The next one is used when a channel cannot take the message (switched off, opted out, no approved WhatsApp template...) or the message fails on it. Default `["sms"]` for a phone number, `["email"]` for an email address.
+          body: Free text, sent as written, for SMS and email. On WhatsApp free text goes out only inside a 24-hour reply window (the person wrote to you first); outside it WhatsApp delivers only an approved template, so use `template_id`, or a free-text WhatsApp attempt falls back to the next channel. Limits: SMS 1,000, WhatsApp 4,096, email 10,000 characters.
+          template_id: One of your message templates; each channel uses the template's text for that channel.
+          variables: Values for the template's `{{variables}}`. Every variable of the text used needs one.
+          locale: BCP-47 language of the template text. Default: the recipient country's language, then English.
+          subject: Subject of a free-text email.
+          schedule_at: When to send it, up to 90 days ahead. Default: now.
+          expires_at: Validity: never sent after it. After the send time, at most 72 hours after it.
+          correlation_id: Your reference, returned in every response and webhook, filterable in the list.
+          options
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -522,7 +580,20 @@ class AsyncMessages(AsyncAPIResource):
                 "/v3/messages/",
                 cast_to=Message,
                 auth="api_key",
-                body=body,
+                body={
+                    "to": to,
+                    "to_email": to_email,
+                    "channels": channels,
+                    "body": body,
+                    "template_id": template_id,
+                    "variables": variables,
+                    "locale": locale,
+                    "subject": subject,
+                    "schedule_at": schedule_at,
+                    "expires_at": expires_at,
+                    "correlation_id": correlation_id,
+                    "options": options,
+                },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
