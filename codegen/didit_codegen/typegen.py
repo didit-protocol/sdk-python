@@ -68,19 +68,25 @@ def required_variants(schema: Json, key: str) -> list[Json] | None:
         not schema.get("properties")
         or not members
         or not all(
-            isinstance(m, dict)
-            and "required" in m
-            and m.keys() <= {"required", "title", "description"}
-            for m in members
+            isinstance(member, dict)
+            and "required" in member
+            and member.keys() <= {"required", "title", "description"}
+            for member in members
         )
     ):
         return None
 
     parent = {k: v for k, v in schema.items() if k not in (key, "title", "nullable")}
-    requirements = [set(m["required"]) for m in members]
+    requirements = [set(member["required"]) for member in members]
     variants = []
     for i, member in enumerate(members):
         required = requirements[i].union(parent.get("required", []))
+        properties = dict(parent["properties"])
+        extra = parent.get("additionalProperties", {})
+        if extra is False and not required <= properties.keys():
+            continue
+        for field_name in sorted(required - properties.keys()):
+            properties[field_name] = extra if isinstance(extra, dict) else {}
         # For oneOf, at least one key from each competing branch must be absent.
         # anyOf allows multiple branches to match, so it needs no exclusions.
         competing = [
@@ -90,10 +96,7 @@ def required_variants(schema: Json, key: str) -> list[Json] | None:
         ]
         exclusions = dict.fromkeys(frozenset(keys) for keys in product(*competing))
         for n, absent in enumerate(exclusions, start=1):
-            props = dict(parent["properties"])
-            for field_name in sorted(required - props.keys()):
-                props[field_name] = parent.get("additionalProperties", {})
-            props.update({k: {"not": {}} for k in sorted(absent)})
+            props = properties | {k: {"not": {}} for k in sorted(absent)}
             variant = {**parent, **member, "properties": props, "required": sorted(required)}
             if len(exclusions) > 1 and member.get("title"):
                 variant["title"] = f"{member['title']} Variant {n}"

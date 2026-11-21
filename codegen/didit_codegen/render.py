@@ -536,6 +536,8 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
     out.append("\n".join(std) + "\n\n")
     if has_methods:
         out.append("import httpx\n")
+    if NEVER in deps:
+        out.append("from typing_extensions import Never\n")
     if has_deprecated:
         out.append("from typing_extensions import deprecated\n")
     if has_methods or has_deprecated:

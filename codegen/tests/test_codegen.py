@@ -20,7 +20,8 @@ import spec_sync  # noqa: E402
 from didit_codegen import naming  # noqa: E402
 from didit_codegen.generate import GENERATED_ROOTS, build, generate  # noqa: E402
 from didit_codegen.render import HEADER  # noqa: E402
-from didit_codegen.spec import CodegenError, SdkNaming, load  # noqa: E402
+from didit_codegen.render_tests import conforms  # noqa: E402
+from didit_codegen.spec import CodegenError, SdkNaming, Spec, load  # noqa: E402
 
 NOW = dt.datetime(2026, 10, 18, 6, 0, tzinfo=dt.timezone.utc)
 
@@ -706,6 +707,19 @@ missing_to: MessagesSendParams = {{"body": "hello"}}  # type: ignore
         timeout=60,
     )
     assert check.returncode == 0, check.stdout + check.stderr
+
+
+def test_one_of_allows_partial_matches_of_a_competing_branch() -> None:
+    spec = Spec("test", {})
+    schema = {
+        "properties": {name: {"type": "string"} for name in ("body", "template_id", "locale")},
+        "oneOf": [{"required": ["body"]}, {"required": ["template_id", "locale"]}],
+    }
+    assert conforms(spec, schema, {"body": "hi", "locale": "en"}, request=True)
+    assert conforms(spec, schema, {"body": "hi", "template_id": "welcome"}, request=True)
+    assert conforms(spec, schema, {"locale": "en", "template_id": "welcome"}, request=True)
+    assert not conforms(spec, schema, {"locale": "en"}, request=True)
+    assert not conforms(spec, schema, {"body": "hi", "locale": "en", "template_id": "welcome"}, request=True)
 
 
 def test_one_of_body_with_distinct_variants_stays_a_union() -> None:
