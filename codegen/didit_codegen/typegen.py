@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from itertools import product
 from typing import Any, Literal
 
 from .naming import identifier, pascal, snake
@@ -25,6 +26,7 @@ SEQUENCE = "@Sequence"
 MAPPING = "@Mapping"
 FIELD = "@Field"
 REQUIRED = "@Required"
+NEVER = "@Never"
 
 
 @dataclass(frozen=True)
@@ -59,43 +61,47 @@ def union(anns: list[Ann]) -> Ann:
     return Ann(expr, frozenset(deps))
 
 
-# Keys with which a ``oneOf``/``anyOf`` branch describes a shape of its own. A branch
-# without any of them (``{"required": ["body"]}``) only narrows which of the object's
-# properties are required.
-_SHAPE_KEYS = (
-    "$ref",
-    "type",
-    "properties",
-    "additionalProperties",
-    "items",
-    "allOf",
-    "oneOf",
-    "anyOf",
-    "enum",
-)
-
-
-def _only_narrows_required(schema: Json, key: str) -> bool:
-    """Whether every ``oneOf``/``anyOf`` branch only adds ``required`` to this object.
-
-    ``{"type": "object", "required": ["to"], "properties": {...}, "oneOf": [{"required":
-    ["body"]}, {"required": ["template_id"]}]}`` (``POST /v3/messages/``) is one object
-    whose properties are required either-or. Read as a union, each branch is ``object``
-    and the body loses its type; the object's own properties are the type.
-    """
-    if not isinstance(schema, dict) or not schema.get("properties"):
-        return False
+def required_variants(schema: Json, key: str) -> list[Json] | None:
+    """Expand branches that select required keys from a shared set of properties."""
     members = schema.get(key)
-    if not isinstance(members, list) or not members:
-        return False
-    return all(
-        isinstance(member, dict) and not any(k in member for k in _SHAPE_KEYS) for member in members
-    )
+    if (
+        not schema.get("properties")
+        or not members
+        or not all(
+            isinstance(member, dict)
+            and "required" in member
+            and member.keys() <= {"required", "title", "description"}
+            for member in members
+        )
+    ):
+        return None
 
-
-def _without_composition(schema: Json) -> Json:
-    """The object around a ``oneOf``/``anyOf`` that only narrows ``required``."""
-    return {k: v for k, v in schema.items() if k not in ("oneOf", "anyOf")}
+    parent = {k: v for k, v in schema.items() if k not in (key, "title", "nullable")}
+    requirements = [set(member["required"]) for member in members]
+    variants = []
+    for i, member in enumerate(members):
+        required = requirements[i].union(parent.get("required", []))
+        properties = dict(parent["properties"])
+        extra = parent.get("additionalProperties", {})
+        if extra is False and not required <= properties.keys():
+            continue
+        for field_name in sorted(required - properties.keys()):
+            properties[field_name] = extra if isinstance(extra, dict) else {}
+        # For oneOf, at least one key from each competing branch must be absent.
+        # anyOf allows multiple branches to match, so it needs no exclusions.
+        competing = [
+            sorted(keys - required)
+            for j, keys in enumerate(requirements)
+            if key == "oneOf" and j != i
+        ]
+        exclusions = dict.fromkeys(frozenset(keys) for keys in product(*competing))
+        for n, absent in enumerate(exclusions, start=1):
+            props = properties | {k: {"not": {}} for k in sorted(absent)}
+            variant = {**parent, **member, "properties": props, "required": sorted(required)}
+            if len(exclusions) > 1 and member.get("title"):
+                variant["title"] = f"{member['title']} Variant {n}"
+            variants.append(variant)
+    return variants
 
 
 def _split_union(expr: str) -> list[str]:
@@ -302,16 +308,6 @@ class TypeBuilder:
             return self._model(spec, schema, define_as or hint, module, mode="response")
         for key in ("oneOf", "anyOf"):
             if key in schema:
-                if _only_narrows_required(schema, key):
-                    # The branches only say which of the object's own properties are
-                    # required: one object, not a union of ``object``.
-                    return self._model(
-                        spec,
-                        _without_composition(schema),
-                        define_as or hint,
-                        module,
-                        mode="response",
-                    )
                 members = [
                     self.response(spec, member, self._variant_name(spec, member, hint, i), module)
                     for i, member in enumerate(schema[key])
@@ -387,23 +383,27 @@ class TypeBuilder:
             )
         for key in ("oneOf", "anyOf"):
             if key in schema:
-                if _only_narrows_required(schema, key):
-                    return self._model(
-                        spec,
-                        _without_composition(schema),
-                        define_as or hint + suffix,
-                        module,
-                        mode="param",
-                        suffix=suffix,
-                        hint=hint,
+                variants = required_variants(schema, key)
+                members = schema[key] if variants is None else variants
+                if variants == []:
+                    raise CodegenError(f"{hint}: {key} has no possible request variant.")
+                ann = union(
+                    [
+                        self.param(
+                            spec, member, self._variant_name(spec, member, hint, i), module, suffix
+                        )
+                        for i, member in enumerate(members)
+                    ]
+                )
+                if variants is not None:
+                    name = define_as or hint + suffix
+                    self.registry.add(
+                        TypeDef("alias", name, module, _description(schema), alias=ann)
                     )
-                members = [
-                    self.param(
-                        spec, member, self._variant_name(spec, member, hint, i), module, suffix
-                    )
-                    for i, member in enumerate(schema[key])
-                ]
-                return union(members)
+                    return Ann(name, frozenset({name}))
+                return ann
+        if schema.get("not") == {}:
+            return Ann("Never", frozenset({NEVER}))
         if "enum" in schema:
             return self._enum(schema)
         kind = schema.get("type")

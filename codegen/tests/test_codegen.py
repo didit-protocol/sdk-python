@@ -6,6 +6,7 @@ import datetime as dt
 import json
 import pathlib
 import shutil
+import subprocess
 import sys
 from typing import Any
 
@@ -19,7 +20,8 @@ import spec_sync  # noqa: E402
 from didit_codegen import naming  # noqa: E402
 from didit_codegen.generate import GENERATED_ROOTS, build, generate  # noqa: E402
 from didit_codegen.render import HEADER  # noqa: E402
-from didit_codegen.spec import CodegenError, SdkNaming, load  # noqa: E402
+from didit_codegen.render_tests import conforms  # noqa: E402
+from didit_codegen.spec import CodegenError, SdkNaming, Spec, load  # noqa: E402
 
 NOW = dt.datetime(2026, 10, 18, 6, 0, tzinfo=dt.timezone.utc)
 
@@ -660,20 +662,18 @@ def test_component_that_is_the_whole_request_body_is_the_params_type() -> None:
 _MESSAGES_SEND = "/v3/messages/"
 
 
-def test_one_of_body_that_only_adds_required_is_one_params_type(openapi: pathlib.Path) -> None:
-    """``POST /v3/messages/``: branches that only add ``required`` describe one object.
-
-    Read as a union, each branch is a bare ``object`` (a mypy and pyright failure where
-    the body reaches the client); the object's own properties are its type.
-    """
+@pytest.mark.parametrize("composition", ["oneOf", "anyOf"])
+def test_body_branches_preserve_shared_and_variant_requirements(
+    openapi: pathlib.Path, tmp_path: pathlib.Path, composition: str
+) -> None:
     spec = _read(openapi / "verification.json")
     media = spec["paths"][_MESSAGES_SEND]["post"]["requestBody"]["content"]["application/json"]
     media.pop("examples", None)
     media["schema"] = {
         "type": "object",
-        "description": "Send exactly one of `body` or `template_id`.",
+        "title": "SendMessage",
         "required": ["to"],
-        "oneOf": [{"required": ["body"]}, {"required": ["template_id"]}],
+        composition: [{"required": ["body"]}, {"required": ["template_id"]}],
         "properties": {
             "to": {"type": "string"},
             "body": {"type": "string"},
@@ -683,14 +683,45 @@ def test_one_of_body_that_only_adds_required_is_one_params_type(openapi: pathlib
     _write(openapi / "verification.json", spec)
     files = generate(openapi)
     resource = files["src/didit/resources/messages.py"]
-    assert "body: object" not in resource
-    assert "to: str," in resource
-    assert '"template_id": template_id' in resource
-    params = files["src/didit/types/messages/send_params.py"]
-    assert "class MessagesSendParams(TypedDict, total=False):" in params
-    assert "to: Required[str]" in params
-    assert "body: str" in params
-    assert "template_id: str" in params
+    assert resource.count("body: MessagesSendParams,") == 2
+    assert 'body={"to": "sample", "body": "sample"}' in files["tests/generated/test_messages.py"]
+
+    # Strict mypy reports an unused ignore if a forbidden combination becomes valid.
+    both = "  # type: ignore" if composition == "oneOf" else ""
+    caller = tmp_path / "caller.py"
+    caller.write_text(
+        files["src/didit/types/messages/send_params.py"]
+        + f"""
+text: MessagesSendParams = {{"to": "recipient", "body": "hello"}}
+template: MessagesSendParams = {{"to": "recipient", "template_id": "welcome"}}
+both: MessagesSendParams = {{"to": "recipient", "body": "hello", "template_id": "welcome"}}{both}
+neither: MessagesSendParams = {{"to": "recipient"}}  # type: ignore
+missing_to: MessagesSendParams = {{"body": "hello"}}  # type: ignore
+""",
+        encoding="utf-8",
+    )
+    check = subprocess.run(
+        [sys.executable, "-m", "mypy", "--strict", str(caller)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert check.returncode == 0, check.stdout + check.stderr
+
+
+def test_one_of_allows_partial_matches_of_a_competing_branch() -> None:
+    spec = Spec("test", {})
+    schema = {
+        "properties": {name: {"type": "string"} for name in ("body", "template_id", "locale")},
+        "oneOf": [{"required": ["body"]}, {"required": ["template_id", "locale"]}],
+    }
+    assert conforms(spec, schema, {"body": "hi", "locale": "en"}, request=True)
+    assert conforms(spec, schema, {"body": "hi", "template_id": "welcome"}, request=True)
+    assert conforms(spec, schema, {"locale": "en", "template_id": "welcome"}, request=True)
+    assert not conforms(spec, schema, {"locale": "en"}, request=True)
+    assert not conforms(
+        spec, schema, {"body": "hi", "locale": "en", "template_id": "welcome"}, request=True
+    )
 
 
 def test_one_of_body_with_distinct_variants_stays_a_union() -> None:

@@ -17,7 +17,7 @@ from typing import Any
 from .ops import Arg, Method
 from .render import HEADER
 from .spec import Spec
-from .typegen import Registry, _split_union
+from .typegen import Registry, _split_union, required_variants
 
 Json = Any
 
@@ -86,6 +86,9 @@ def sample(spec: Spec, schema: Json, *, request: bool, depth: int = 0, full: boo
         return sample(spec, merged, request=request, depth=depth + 1, full=full)
     for key in ("oneOf", "anyOf"):
         if schema.get(key):
+            variants = required_variants(schema, key) if request else None
+            if variants is not None:
+                return sample(spec, variants[0], request=True, depth=depth + 1, full=False)
             return sample(spec, schema[key][0], request=request, depth=depth + 1, full=full)
     if "enum" in schema:
         values = [v for v in schema["enum"] if v is not None]
@@ -156,6 +159,8 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
     if depth > 20 or not isinstance(schema, dict):
         return True
     schema = spec.resolve(schema)
+    if schema.get("not") == {}:
+        return False
     if value is None:
         return schema.get("nullable") is True or not schema
     if "allOf" in schema:
@@ -165,9 +170,10 @@ def conforms(spec: Spec, schema: Json, value: Json, *, request: bool, depth: int
         )
     for key in ("oneOf", "anyOf"):
         if key in schema:
+            variants = required_variants(schema, key) if request else None
             return any(
                 conforms(spec, part, value, request=request, depth=depth + 1)
-                for part in schema[key]
+                for part in (schema[key] if variants is None else variants)
             )
     if "enum" in schema:
         if all(isinstance(v, str) for v in schema["enum"] if v is not None):

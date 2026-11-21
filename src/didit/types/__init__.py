@@ -3038,7 +3038,16 @@ if TYPE_CHECKING:
     from didit.types.lists.update_response import ListsUpdateResponse as ListsUpdateResponse
     from didit.types.messages.send_params import MessagesSendParams as MessagesSendParams
     from didit.types.messages.send_params import (
-        MessagesSendParamsOptions as MessagesSendParamsOptions,
+        MessagesSendParamsVariant1 as MessagesSendParamsVariant1,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant1Options as MessagesSendParamsVariant1Options,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant2 as MessagesSendParamsVariant2,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant2Options as MessagesSendParamsVariant2Options,
     )
     from didit.types.messages.update_settings_params import (
         MessagesUpdateSettingsParams as MessagesUpdateSettingsParams,
@@ -4377,7 +4386,10 @@ _MODULES: dict[str, str] = {
     "MessagePrice": "components.message_price",
     "MessagePrices": "components.message_prices",
     "MessagesSendParams": "messages.send_params",
-    "MessagesSendParamsOptions": "messages.send_params",
+    "MessagesSendParamsVariant1": "messages.send_params",
+    "MessagesSendParamsVariant1Options": "messages.send_params",
+    "MessagesSendParamsVariant2": "messages.send_params",
+    "MessagesSendParamsVariant2Options": "messages.send_params",
     "MessagesSettings": "components.messages_settings",
     "MessagesUpdateSettingsParams": "messages.update_settings_params",
     "MonitoringEvent": "components.monitoring_event",
@@ -5781,7 +5793,10 @@ __all__ = [
     "MessagePrice",
     "MessagePrices",
     "MessagesSendParams",
-    "MessagesSendParamsOptions",
+    "MessagesSendParamsVariant1",
+    "MessagesSendParamsVariant1Options",
+    "MessagesSendParamsVariant2",
+    "MessagesSendParamsVariant2Options",
     "MessagesSettings",
     "MessagesUpdateSettingsParams",
     "MonitoringEvent",
