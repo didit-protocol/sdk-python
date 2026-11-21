@@ -719,7 +719,9 @@ def test_one_of_allows_partial_matches_of_a_competing_branch() -> None:
     assert conforms(spec, schema, {"body": "hi", "template_id": "welcome"}, request=True)
     assert conforms(spec, schema, {"locale": "en", "template_id": "welcome"}, request=True)
     assert not conforms(spec, schema, {"locale": "en"}, request=True)
-    assert not conforms(spec, schema, {"body": "hi", "locale": "en", "template_id": "welcome"}, request=True)
+    assert not conforms(
+        spec, schema, {"body": "hi", "locale": "en", "template_id": "welcome"}, request=True
+    )
 
 
 def test_one_of_body_with_distinct_variants_stays_a_union() -> None:
