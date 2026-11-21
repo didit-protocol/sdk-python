@@ -83761,6 +83761,149 @@
         }
       }
     },
+    "/v3/organization/price-book/": {
+      "get": {
+        "summary": "Get the price book (public, unauthenticated)",
+        "description": "Returns Didit's public list prices: every plan with its monthly and yearly price and its discount, the white label price, Didit's fee on each Messages channel, and every flat usage price. Use it to quote Didit's prices in your own product or to check a price before you build a workflow.\n\nPublic: send no auth header. The response contains no organization data and is the same for every caller. It carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.\n\n**Messages fees.** An SMS costs the carrier's price per segment plus Didit's fee per segment (`message_fee_usd_by_channel.sms`, also `messages_fee_usd`). A WhatsApp message sent from Didit's number costs WhatsApp's rate plus Didit's own WhatsApp fee (`message_fee_usd_by_channel.whatsapp`); sent from your own WhatsApp Business account, WhatsApp bills you directly and Didit charges only its fee. The carrier's and WhatsApp's parts are passed on at cost.\n\nThese are list prices before your plan discount, which applies to Didit's fee only on carrier-priced items and to the whole price everywhere else. A negotiated or contract price replaces the list price for your organization. Per-item prices are on their own feeds, such as [phone verification prices](/getting-started/phone-verification-pricing) and [bank verification prices](/getting-started/bank-verification-pricing).",
+        "operationId": "get_v3_price_book",
+        "tags": [
+          "Pricing"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "The `ETag` of a price book you already hold: the response is `304 Not Modified`, with no body, when nothing changed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "pricing",
+          "method": "price_book",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "Didit's public list prices.",
+            "headers": {
+              "ETag": {
+                "description": "A weak validator of the response body, to send back in `If-None-Match`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPriceBook"
+                },
+                "examples": {
+                  "Price book": {
+                    "summary": "Plans, the Messages fees and one flat line",
+                    "value": {
+                      "currency": "USD",
+                      "plans": [
+                        {
+                          "key": "free",
+                          "price_usd_month": "0.00",
+                          "price_usd_year": null,
+                          "discount_percent": 0,
+                          "transactions_included_per_month": 1000
+                        },
+                        {
+                          "key": "growth",
+                          "price_usd_month": "99.00",
+                          "price_usd_year": "1128.00",
+                          "discount_percent": 4,
+                          "transactions_included_per_month": 10000
+                        },
+                        {
+                          "key": "scale",
+                          "price_usd_month": "299.00",
+                          "price_usd_year": "3408.00",
+                          "discount_percent": 10,
+                          "transactions_included_per_month": 100000
+                        },
+                        {
+                          "key": "enterprise",
+                          "price_usd_month": null,
+                          "price_usd_year": null,
+                          "discount_percent": null,
+                          "transactions_included_per_month": null
+                        }
+                      ],
+                      "white_label_usd": "0.10",
+                      "messages_fee_usd": "0.02",
+                      "message_fee_usd_by_channel": {
+                        "sms": "0.02",
+                        "whatsapp": "0.004"
+                      },
+                      "lines": [
+                        {
+                          "key": "message_email",
+                          "product": "identity",
+                          "feature": "email",
+                          "unit": "message",
+                          "list_price_usd": "0.02"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified: the `ETag` you sent in `If-None-Match` still matches. No body."
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# This call needs no API key.\nclient = Didit()\n\nresult = client.pricing.price_book()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// This call needs no API key.\nconst didit = new Didit();\n\nconst result = await didit.pricing.priceBook();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// This call needs no API key.\nclient := didit.NewClient()\n\nresult, err := client.Pricing.PriceBook(ctx, didit.PricingPriceBookParams{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// This call needs no API key.\nDidit client = new Didit();\n\nvar result = client.pricing().priceBook();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// This call needs no API key.\n$didit = new DiditClient();\n\n$result = $didit->pricing->priceBook();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# This call needs no API key.\ndidit = Didit::Client.new\n\nresult = didit.pricing.price_book\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// This call needs no API key.\nusing var client = new DiditClient();\n\nvar result = await client.Pricing.PriceBookAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
     "/v3/session/{sessionId}/simulate/": {
       "post": {
         "summary": "Simulate a sandbox session's status",
@@ -139870,6 +140013,152 @@
             "type": "string",
             "maxLength": 1000,
             "description": "Optional. Tell Didit why you need a higher limit, at most 1000 characters."
+          }
+        }
+      },
+      "PublicPriceBookPlan": {
+        "type": "object",
+        "required": [
+          "key",
+          "price_usd_month",
+          "price_usd_year",
+          "discount_percent",
+          "transactions_included_per_month"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "free",
+              "growth",
+              "scale",
+              "enterprise"
+            ],
+            "description": "The plan."
+          },
+          "price_usd_month": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "The plan's monthly price in USD. Null on Enterprise, which has contract terms.",
+            "nullable": true
+          },
+          "price_usd_year": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "The plan paid a year up front; its credit still lands monthly. Null on Free and Enterprise.",
+            "nullable": true
+          },
+          "discount_percent": {
+            "type": "integer",
+            "description": "The discount the plan takes off every list price (on a carrier-priced item, off Didit's fee only). Null on Enterprise.",
+            "nullable": true
+          },
+          "transactions_included_per_month": {
+            "type": "integer",
+            "description": "Monitored transactions included each month. Null on Enterprise, whose contract sets it.",
+            "nullable": true
+          }
+        }
+      },
+      "PublicPriceBookMessageFees": {
+        "type": "object",
+        "required": [
+          "sms",
+          "whatsapp"
+        ],
+        "description": "Didit's fee on each carrier-priced Messages channel, excluding the carrier's or WhatsApp's price, which is passed on at cost. Null where the fee is not published.",
+        "properties": {
+          "sms": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "Didit's fee per SMS segment (the standard fee; a few countries take less).",
+            "nullable": true
+          },
+          "whatsapp": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "Didit's fee per WhatsApp message, on top of WhatsApp's rate from Didit's number, alone from your own WhatsApp Business account.",
+            "nullable": true
+          }
+        }
+      },
+      "PublicPriceBookLine": {
+        "type": "object",
+        "required": [
+          "key",
+          "product",
+          "feature",
+          "unit",
+          "list_price_usd"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The usage type the price applies to, as usage and invoices name it."
+          },
+          "product": {
+            "type": "string",
+            "description": "The product the usage belongs to."
+          },
+          "feature": {
+            "type": "string",
+            "description": "Together with `key`, identifies a price, including the managed and own-provider variants of one usage."
+          },
+          "unit": {
+            "type": "string",
+            "description": "What one unit of the price is."
+          },
+          "list_price_usd": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "The list price of one unit in USD, before your plan discount."
+          }
+        }
+      },
+      "PublicPriceBook": {
+        "type": "object",
+        "required": [
+          "currency",
+          "plans",
+          "white_label_usd",
+          "messages_fee_usd",
+          "message_fee_usd_by_channel",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD"
+            ]
+          },
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicPriceBookPlan"
+            }
+          },
+          "white_label_usd": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "The white label price per finished session.",
+            "nullable": true
+          },
+          "messages_fee_usd": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$",
+            "description": "Didit's fee per SMS segment, excluding the carrier's price. A WhatsApp message's own, lower fee is in `message_fee_usd_by_channel`.",
+            "nullable": true
+          },
+          "message_fee_usd_by_channel": {
+            "$ref": "#/components/schemas/PublicPriceBookMessageFees"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicPriceBookLine"
+            },
+            "description": "Flat usage prices. A price a catalog sets per item (a phone code by country and channel, a database or ID number lookup by service, a KYB registry check by country and tier, a bank check by market) is on that catalog's own public feed."
           }
         }
       }

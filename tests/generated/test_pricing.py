@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from didit.types.components.bank_verification_pricing import BankVerificationPricing
+from didit.types.components.public_price_book import PublicPriceBook
 from tests.harness import Expect, check_operation
 
 
@@ -56,4 +57,66 @@ def test_pricing_bank_verification() -> None:
         lambda c: c.pricing.bank_verification(),
         lambda r: isinstance(r, BankVerificationPricing),
         lambda r: isinstance(r, BankVerificationPricing),
+    )
+
+
+def test_pricing_price_book() -> None:
+    """``GET /v3/organization/price-book/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/price-book/",
+            api="verification",
+            auth="none",
+            status=200,
+            response_json={
+                "currency": "USD",
+                "plans": [
+                    {
+                        "key": "free",
+                        "price_usd_month": "0.00",
+                        "price_usd_year": None,
+                        "discount_percent": 0,
+                        "transactions_included_per_month": 1000,
+                    },
+                    {
+                        "key": "growth",
+                        "price_usd_month": "99.00",
+                        "price_usd_year": "1128.00",
+                        "discount_percent": 4,
+                        "transactions_included_per_month": 10000,
+                    },
+                    {
+                        "key": "scale",
+                        "price_usd_month": "299.00",
+                        "price_usd_year": "3408.00",
+                        "discount_percent": 10,
+                        "transactions_included_per_month": 100000,
+                    },
+                    {
+                        "key": "enterprise",
+                        "price_usd_month": None,
+                        "price_usd_year": None,
+                        "discount_percent": None,
+                        "transactions_included_per_month": None,
+                    },
+                ],
+                "white_label_usd": "0.10",
+                "messages_fee_usd": "0.02",
+                "message_fee_usd_by_channel": {"sms": "0.02", "whatsapp": "0.004"},
+                "lines": [
+                    {
+                        "key": "message_email",
+                        "product": "identity",
+                        "feature": "email",
+                        "unit": "message",
+                        "list_price_usd": "0.02",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.pricing.price_book(),
+        lambda c: c.pricing.price_book(),
+        lambda r: isinstance(r, PublicPriceBook),
+        lambda r: isinstance(r, PublicPriceBook),
     )

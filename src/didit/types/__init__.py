@@ -1447,6 +1447,16 @@ if TYPE_CHECKING:
     from didit.types.components.phone_verification_send_response import (
         PhoneVerificationSendResponse as PhoneVerificationSendResponse,
     )
+    from didit.types.components.public_price_book import PublicPriceBook as PublicPriceBook
+    from didit.types.components.public_price_book_line import (
+        PublicPriceBookLine as PublicPriceBookLine,
+    )
+    from didit.types.components.public_price_book_message_fees import (
+        PublicPriceBookMessageFees as PublicPriceBookMessageFees,
+    )
+    from didit.types.components.public_price_book_plan import (
+        PublicPriceBookPlan as PublicPriceBookPlan,
+    )
     from didit.types.components.questionnaire_detail import (
         QuestionnaireDetail as QuestionnaireDetail,
     )
@@ -4478,6 +4488,10 @@ _MODULES: dict[str, str] = {
     "ProofOfAddressVerifyResponsePoaPoaParsedAddress": "proof_of_address.verify_response",
     "ProofOfAddressVerifyResponsePoaPoaParsedAddressDocumentLocation": "proof_of_address.verify_response",
     "ProofOfAddressVerifyResponsePoaWarnings": "proof_of_address.verify_response",
+    "PublicPriceBook": "components.public_price_book",
+    "PublicPriceBookLine": "components.public_price_book_line",
+    "PublicPriceBookMessageFees": "components.public_price_book_message_fees",
+    "PublicPriceBookPlan": "components.public_price_book_plan",
     "QuestionnaireDetail": "components.questionnaire_detail",
     "QuestionnaireListItem": "components.questionnaire_list_item",
     "QuestionnairesCreateParams": "questionnaires.create_params",
@@ -5867,6 +5881,10 @@ __all__ = [
     "ProofOfAddressVerifyResponsePoaPoaParsedAddress",
     "ProofOfAddressVerifyResponsePoaPoaParsedAddressDocumentLocation",
     "ProofOfAddressVerifyResponsePoaWarnings",
+    "PublicPriceBook",
+    "PublicPriceBookLine",
+    "PublicPriceBookMessageFees",
+    "PublicPriceBookPlan",
     "QuestionnaireDetail",
     "QuestionnaireListItem",
     "QuestionnairesCreateParams",
