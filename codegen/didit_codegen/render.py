@@ -14,6 +14,7 @@ from .typegen import (
     FILE_TYPES,
     LITERAL,
     MAPPING,
+    NEVER,
     SEQUENCE,
     Registry,
     TypeDef,
@@ -128,6 +129,8 @@ def _imports_for(defs: list[TypeDef], registry: Registry, module: str) -> list[s
     if uses_field:
         third.append("from pydantic import Field")
     te: list[str] = []
+    if NEVER in deps:
+        te.append("Never")
     if "typeddict" in kinds:
         if any(f.required for td in defs if td.kind == "typeddict" for f in td.fields):
             te.append("Required")
@@ -533,6 +536,8 @@ def _render_resource(node: ResourceNode, registry: Registry) -> str:
     out.append("\n".join(std) + "\n\n")
     if has_methods:
         out.append("import httpx\n")
+    if NEVER in deps:
+        out.append("from typing_extensions import Never\n")
     if has_deprecated:
         out.append("from typing_extensions import deprecated\n")
     if has_methods or has_deprecated:

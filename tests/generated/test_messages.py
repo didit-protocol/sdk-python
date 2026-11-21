@@ -388,16 +388,20 @@ def test_messages_send() -> None:
             },
         ),
         lambda c: c.messages.send(
-            to="+447700900123",
-            channels=["sms"],
-            body="Your order 1042 ships today.",
-            correlation_id="order-1042",
+            body={
+                "to": "+447700900123",
+                "channels": ["sms"],
+                "body": "Your order 1042 ships today.",
+                "correlation_id": "order-1042",
+            }
         ),
         lambda c: c.messages.send(
-            to="+447700900123",
-            channels=["sms"],
-            body="Your order 1042 ships today.",
-            correlation_id="order-1042",
+            body={
+                "to": "+447700900123",
+                "channels": ["sms"],
+                "body": "Your order 1042 ships today.",
+                "correlation_id": "order-1042",
+            }
         ),
         lambda r: isinstance(r, Message),
         lambda r: isinstance(r, Message),

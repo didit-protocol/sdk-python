@@ -270,6 +270,7 @@ See [`examples/authentication.py`](examples/authentication.py).
 Choices the shared design leaves to each language, made the Python way:
 
 - Method arguments: path ids are positional; body and query fields are keyword-only and default to `NOT_GIVEN`, so an omitted field is left out of the request and `None` is sent as JSON `null`. Each request body also has a `TypedDict` (`SessionsCreateParams`) for building it as a dict.
+- Pass a union request body as one dict. For example, `client.messages.send(body={"to": recipient, "body": "Hello"})` sends free text. To use a template, supply `template_id` in place of `body` inside the dict. Both forms require `to`.
 - Field names are the API's own. A name that is a Python keyword or would shadow a model method gets a trailing underscore in Python (`from_`), and keeps its wire name in `to_dict()`. A query parameter with the same name as a body field gets a `_query` suffix (`node_id_query`).
 - Enums are open: `Literal["Approved", "Declined", ...] | str`, so a new value from the API never raises.
 - Dates and date-times are `datetime.date` and `datetime.datetime` in responses, and accept either the object or an ISO 8601 string in requests. Decimal amounts stay strings, as the API sends them.
