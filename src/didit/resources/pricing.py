@@ -17,6 +17,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.bank_verification_pricing import BankVerificationPricing
+from didit.types.components.public_price_book import PublicPriceBook
 
 __all__ = [
     "Pricing",
@@ -31,7 +32,7 @@ __all__ = [
 class Pricing(SyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``.
+    Methods: ``bank_verification``, ``price_book``.
     """
 
     @cached_property
@@ -84,11 +85,51 @@ class Pricing(SyncAPIResource):
             ),
         )
 
+    def price_book(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PublicPriceBook:
+        """Get the price book (public, unauthenticated).
+
+        Returns Didit's public list prices: every plan with its monthly and yearly price and its discount, the white label price, Didit's fee on each Messages channel, and every flat usage price. Use it to quote Didit's prices in your own product or to check a price before you build a workflow.
+
+        Public: send no auth header. The response contains no organization data and is the same for every caller. It carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
+
+        **Messages fees.** An SMS costs the carrier's price per segment plus Didit's fee per segment (`message_fee_usd_by_channel.sms`, also `messages_fee_usd`). A WhatsApp message sent from Didit's number costs WhatsApp's rate plus Didit's own WhatsApp fee (`message_fee_usd_by_channel.whatsapp`); sent from your own WhatsApp Business account, WhatsApp bills you directly and Didit charges only its fee. The carrier's and WhatsApp's parts are passed on at cost.
+
+        These are list prices before your plan discount, which applies to Didit's fee only on carrier-priced items and to the whole price everywhere else. A negotiated or contract price replaces the list price for your organization. Per-item prices are on their own feeds, such as [phone verification prices](/getting-started/phone-verification-pricing) and [bank verification prices](/getting-started/bank-verification-pricing).
+
+        ``GET /v3/organization/price-book/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PublicPriceBook",
+            self._client.request(
+                "get",
+                "/v3/organization/price-book/",
+                cast_to=PublicPriceBook,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncPricing(AsyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``.
+    Methods: ``bank_verification``, ``price_book``.
     """
 
     @cached_property
@@ -141,26 +182,70 @@ class AsyncPricing(AsyncAPIResource):
             ),
         )
 
+    async def price_book(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PublicPriceBook:
+        """Get the price book (public, unauthenticated).
+
+        Returns Didit's public list prices: every plan with its monthly and yearly price and its discount, the white label price, Didit's fee on each Messages channel, and every flat usage price. Use it to quote Didit's prices in your own product or to check a price before you build a workflow.
+
+        Public: send no auth header. The response contains no organization data and is the same for every caller. It carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
+
+        **Messages fees.** An SMS costs the carrier's price per segment plus Didit's fee per segment (`message_fee_usd_by_channel.sms`, also `messages_fee_usd`). A WhatsApp message sent from Didit's number costs WhatsApp's rate plus Didit's own WhatsApp fee (`message_fee_usd_by_channel.whatsapp`); sent from your own WhatsApp Business account, WhatsApp bills you directly and Didit charges only its fee. The carrier's and WhatsApp's parts are passed on at cost.
+
+        These are list prices before your plan discount, which applies to Didit's fee only on carrier-priced items and to the whole price everywhere else. A negotiated or contract price replaces the list price for your organization. Per-item prices are on their own feeds, such as [phone verification prices](/getting-started/phone-verification-pricing) and [bank verification prices](/getting-started/bank-verification-pricing).
+
+        ``GET /v3/organization/price-book/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PublicPriceBook",
+            await self._client.request(
+                "get",
+                "/v3/organization/price-book/",
+                cast_to=PublicPriceBook,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class PricingWithRawResponse:
     def __init__(self, resource: Pricing) -> None:
         self._resource = resource
         self.bank_verification = to_raw_response_wrapper(resource.bank_verification)
+        self.price_book = to_raw_response_wrapper(resource.price_book)
 
 
 class AsyncPricingWithRawResponse:
     def __init__(self, resource: AsyncPricing) -> None:
         self._resource = resource
         self.bank_verification = async_to_raw_response_wrapper(resource.bank_verification)
+        self.price_book = async_to_raw_response_wrapper(resource.price_book)
 
 
 class PricingWithStreamingResponse:
     def __init__(self, resource: Pricing) -> None:
         self._resource = resource
         self.bank_verification = to_streamed_response_wrapper(resource.bank_verification)
+        self.price_book = to_streamed_response_wrapper(resource.price_book)
 
 
 class AsyncPricingWithStreamingResponse:
     def __init__(self, resource: AsyncPricing) -> None:
         self._resource = resource
         self.bank_verification = async_to_streamed_response_wrapper(resource.bank_verification)
+        self.price_book = async_to_streamed_response_wrapper(resource.price_book)
