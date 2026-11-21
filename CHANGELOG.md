@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.1](https://github.com/didit-protocol/sdk-python/compare/v1.30.0...v1.30.1) (2026-11-21)
+
+
+### Documentation
+
+* **design:** API key on account_base_url for authentication_setup ([#109](https://github.com/didit-protocol/sdk-python/issues/109)) ([4004d1b](https://github.com/didit-protocol/sdk-python/commit/4004d1bbc7847ddba425741126f82a2f323e9055))
+
 ## [1.30.0](https://github.com/didit-protocol/sdk-python/compare/v1.29.0...v1.30.0) (2026-11-20)
 
 
