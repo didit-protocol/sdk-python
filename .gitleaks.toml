@@ -44,3 +44,14 @@ paths = [
 regexes = [
   '''^SECRET\-0123456789abcdef$''',
 ]
+
+[[allowlists]]
+description = "Publishable keys from the spec examples that the generated tests inline: pk_test_ or pk_live_ followed by the base64 of the issuer URL, public by design (a browser sends them)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^tests/generated/''',
+]
+regexes = [
+  '''^pk_(test|live)_[A-Za-z0-9_-]+$''',
+]
