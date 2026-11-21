@@ -17498,6 +17498,30 @@
                       "business_name": "Northwind Trading Ltd"
                     }
                   }
+                },
+                "Person, Spain": {
+                  "summary": "An IBAN, for a SEPA direct debit mandate, checked against a person's name",
+                  "value": {
+                    "country": "ESP",
+                    "account": {
+                      "iban": "ES5500000000000000000001"
+                    },
+                    "holder": {
+                      "full_name": "Maria Garcia"
+                    }
+                  }
+                },
+                "Company, Spain": {
+                  "summary": "An IBAN checked against a company's name",
+                  "value": {
+                    "country": "ESP",
+                    "account": {
+                      "iban": "ES2800000000000000000002"
+                    },
+                    "holder": {
+                      "business_name": "Northwind Trading S.L."
+                    }
+                  }
                 }
               }
             }
