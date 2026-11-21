@@ -64,9 +64,15 @@ def union(anns: list[Ann]) -> Ann:
 def required_variants(schema: Json, key: str) -> list[Json] | None:
     """Expand branches that select required keys from a shared set of properties."""
     members = schema.get(key)
-    if not schema.get("properties") or not members or not all(
-        isinstance(m, dict) and "required" in m and m.keys() <= {"required", "title", "description"}
-        for m in members
+    if (
+        not schema.get("properties")
+        or not members
+        or not all(
+            isinstance(m, dict)
+            and "required" in m
+            and m.keys() <= {"required", "title", "description"}
+            for m in members
+        )
     ):
         return None
 
@@ -378,15 +384,19 @@ class TypeBuilder:
                 members = schema[key] if variants is None else variants
                 if variants == []:
                     raise CodegenError(f"{hint}: {key} has no possible request variant.")
-                ann = union([
-                    self.param(
-                        spec, member, self._variant_name(spec, member, hint, i), module, suffix
-                    )
-                    for i, member in enumerate(members)
-                ])
+                ann = union(
+                    [
+                        self.param(
+                            spec, member, self._variant_name(spec, member, hint, i), module, suffix
+                        )
+                        for i, member in enumerate(members)
+                    ]
+                )
                 if variants is not None:
                     name = define_as or hint + suffix
-                    self.registry.add(TypeDef("alias", name, module, _description(schema), alias=ann))
+                    self.registry.add(
+                        TypeDef("alias", name, module, _description(schema), alias=ann)
+                    )
                     return Ann(name, frozenset({name}))
                 return ann
         if schema.get("not") == {}:
