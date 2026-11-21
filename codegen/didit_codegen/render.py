@@ -14,6 +14,7 @@ from .typegen import (
     FILE_TYPES,
     LITERAL,
     MAPPING,
+    NEVER,
     SEQUENCE,
     Registry,
     TypeDef,
@@ -128,6 +129,8 @@ def _imports_for(defs: list[TypeDef], registry: Registry, module: str) -> list[s
     if uses_field:
         third.append("from pydantic import Field")
     te: list[str] = []
+    if NEVER in deps:
+        te.append("Never")
     if "typeddict" in kinds:
         if any(f.required for td in defs if td.kind == "typeddict" for f in td.fields):
             te.append("Required")
