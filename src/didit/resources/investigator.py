@@ -32,6 +32,7 @@ from didit.types.investigator.list_queue_response import InvestigatorListQueueRe
 from didit.types.investigator.retrieve_dashboard_response import (
     InvestigatorRetrieveDashboardResponse,
 )
+from didit.types.investigator.retrieve_offer_response import InvestigatorRetrieveOfferResponse
 from didit.types.investigator.retrieve_performance_response import (
     InvestigatorRetrievePerformanceResponse,
 )
@@ -53,7 +54,7 @@ __all__ = [
 class Investigator(SyncAPIResource):
     """The ``investigator`` resource of the Didit API.
 
-    Methods: ``accept_run``, ``batch_accept_runs``, ``export_activity``, ``list_activity``, ``list_guardrails``, ``list_queue``, ``override_run``, ``retrieve_dashboard``, ``retrieve_performance``, ``retrieve_run``, ``retrieve_settings``, ``retrieve_summary``, ``retrieve_transaction``, ``update_settings``.
+    Methods: ``accept_run``, ``batch_accept_runs``, ``export_activity``, ``list_activity``, ``list_guardrails``, ``list_queue``, ``override_run``, ``retrieve_dashboard``, ``retrieve_offer``, ``retrieve_performance``, ``retrieve_run``, ``retrieve_settings``, ``retrieve_summary``, ``retrieve_transaction``, ``update_settings``.
     """
 
     @cached_property
@@ -698,11 +699,45 @@ class Investigator(SyncAPIResource):
             ),
         )
 
+    def retrieve_offer(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> InvestigatorRetrieveOfferResponse:
+        """Investigator agent offer.
+
+        Whether to offer the Investigator agent to this application: its decisions taken by hand in the last 30 days, the average handling time, the people who stopped halfway and whether follow-ups are on. Read from the daily analytics, never from a scan of sessions. `show` is true when 20 or more decisions were taken by hand and the agent is not set up, or when follow-ups are off and 50 or more people stopped halfway.
+
+        ``GET /v3/investigator/offer/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "InvestigatorRetrieveOfferResponse",
+            self._client.request(
+                "get",
+                "/v3/investigator/offer/",
+                cast_to=InvestigatorRetrieveOfferResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncInvestigator(AsyncAPIResource):
     """The ``investigator`` resource of the Didit API.
 
-    Methods: ``accept_run``, ``batch_accept_runs``, ``export_activity``, ``list_activity``, ``list_guardrails``, ``list_queue``, ``override_run``, ``retrieve_dashboard``, ``retrieve_performance``, ``retrieve_run``, ``retrieve_settings``, ``retrieve_summary``, ``retrieve_transaction``, ``update_settings``.
+    Methods: ``accept_run``, ``batch_accept_runs``, ``export_activity``, ``list_activity``, ``list_guardrails``, ``list_queue``, ``override_run``, ``retrieve_dashboard``, ``retrieve_offer``, ``retrieve_performance``, ``retrieve_run``, ``retrieve_settings``, ``retrieve_summary``, ``retrieve_transaction``, ``update_settings``.
     """
 
     @cached_property
@@ -1347,6 +1382,40 @@ class AsyncInvestigator(AsyncAPIResource):
             ),
         )
 
+    async def retrieve_offer(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> InvestigatorRetrieveOfferResponse:
+        """Investigator agent offer.
+
+        Whether to offer the Investigator agent to this application: its decisions taken by hand in the last 30 days, the average handling time, the people who stopped halfway and whether follow-ups are on. Read from the daily analytics, never from a scan of sessions. `show` is true when 20 or more decisions were taken by hand and the agent is not set up, or when follow-ups are off and 50 or more people stopped halfway.
+
+        ``GET /v3/investigator/offer/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "InvestigatorRetrieveOfferResponse",
+            await self._client.request(
+                "get",
+                "/v3/investigator/offer/",
+                cast_to=InvestigatorRetrieveOfferResponse,
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class InvestigatorWithRawResponse:
     def __init__(self, resource: Investigator) -> None:
@@ -1365,6 +1434,7 @@ class InvestigatorWithRawResponse:
         self.export_activity = to_raw_response_wrapper(resource.export_activity)
         self.retrieve_settings = to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_raw_response_wrapper(resource.update_settings)
+        self.retrieve_offer = to_raw_response_wrapper(resource.retrieve_offer)
 
 
 class AsyncInvestigatorWithRawResponse:
@@ -1384,6 +1454,7 @@ class AsyncInvestigatorWithRawResponse:
         self.export_activity = async_to_raw_response_wrapper(resource.export_activity)
         self.retrieve_settings = async_to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_raw_response_wrapper(resource.update_settings)
+        self.retrieve_offer = async_to_raw_response_wrapper(resource.retrieve_offer)
 
 
 class InvestigatorWithStreamingResponse:
@@ -1403,6 +1474,7 @@ class InvestigatorWithStreamingResponse:
         self.export_activity = to_streamed_response_wrapper(resource.export_activity)
         self.retrieve_settings = to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_streamed_response_wrapper(resource.update_settings)
+        self.retrieve_offer = to_streamed_response_wrapper(resource.retrieve_offer)
 
 
 class AsyncInvestigatorWithStreamingResponse:
@@ -1426,3 +1498,4 @@ class AsyncInvestigatorWithStreamingResponse:
         self.export_activity = async_to_streamed_response_wrapper(resource.export_activity)
         self.retrieve_settings = async_to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_streamed_response_wrapper(resource.update_settings)
+        self.retrieve_offer = async_to_streamed_response_wrapper(resource.retrieve_offer)
