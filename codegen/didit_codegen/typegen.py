@@ -306,7 +306,11 @@ class TypeBuilder:
                     # The branches only say which of the object's own properties are
                     # required: one object, not a union of ``object``.
                     return self._model(
-                        spec, _without_composition(schema), define_as or hint, module, mode="response"
+                        spec,
+                        _without_composition(schema),
+                        define_as or hint,
+                        module,
+                        mode="response",
                     )
                 members = [
                     self.response(spec, member, self._variant_name(spec, member, hint, i), module)
