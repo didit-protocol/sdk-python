@@ -62,7 +62,7 @@ def union(anns: list[Ann]) -> Ann:
 # Keys with which a ``oneOf``/``anyOf`` branch describes a shape of its own. A branch
 # without any of them (``{"required": ["body"]}``) only narrows which of the object's
 # properties are required.
-SHAPE_KEYS = (
+_SHAPE_KEYS = (
     "$ref",
     "type",
     "properties",
@@ -75,7 +75,7 @@ SHAPE_KEYS = (
 )
 
 
-def only_narrows_required(schema: Json, key: str) -> bool:
+def _only_narrows_required(schema: Json, key: str) -> bool:
     """Whether every ``oneOf``/``anyOf`` branch only adds ``required`` to this object.
 
     ``{"type": "object", "required": ["to"], "properties": {...}, "oneOf": [{"required":
@@ -89,7 +89,7 @@ def only_narrows_required(schema: Json, key: str) -> bool:
     if not isinstance(members, list) or not members:
         return False
     return all(
-        isinstance(member, dict) and not any(k in member for k in SHAPE_KEYS) for member in members
+        isinstance(member, dict) and not any(k in member for k in _SHAPE_KEYS) for member in members
     )
 
 
@@ -302,7 +302,7 @@ class TypeBuilder:
             return self._model(spec, schema, define_as or hint, module, mode="response")
         for key in ("oneOf", "anyOf"):
             if key in schema:
-                if only_narrows_required(schema, key):
+                if _only_narrows_required(schema, key):
                     # The branches only say which of the object's own properties are
                     # required: one object, not a union of ``object``.
                     return self._model(
@@ -387,7 +387,7 @@ class TypeBuilder:
             )
         for key in ("oneOf", "anyOf"):
             if key in schema:
-                if only_narrows_required(schema, key):
+                if _only_narrows_required(schema, key):
                     return self._model(
                         spec,
                         _without_composition(schema),
