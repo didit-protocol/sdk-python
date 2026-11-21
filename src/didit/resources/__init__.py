@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from didit.resources.ip import AsyncIp, Ip
     from didit.resources.kyb import AsyncKyb, Kyb
     from didit.resources.lists import AsyncLists, Lists
+    from didit.resources.messages import AsyncMessages, Messages
     from didit.resources.monitoring_events import AsyncMonitoringEvents, MonitoringEvents
     from didit.resources.networks import AsyncNetworks, Networks
     from didit.resources.passive_liveness import AsyncPassiveLiveness, PassiveLiveness
@@ -222,6 +223,12 @@ class SyncRootResources(SyncAPIClient):
         from didit.resources.lists import Lists
 
         return Lists(self)
+
+    @cached_property
+    def messages(self) -> Messages:
+        from didit.resources.messages import Messages
+
+        return Messages(self)
 
     @cached_property
     def monitoring_events(self) -> MonitoringEvents:
@@ -496,6 +503,12 @@ class AsyncRootResources(AsyncAPIClient):
         from didit.resources.lists import AsyncLists
 
         return AsyncLists(self)
+
+    @cached_property
+    def messages(self) -> AsyncMessages:
+        from didit.resources.messages import AsyncMessages
+
+        return AsyncMessages(self)
 
     @cached_property
     def monitoring_events(self) -> AsyncMonitoringEvents:
