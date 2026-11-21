@@ -59,6 +59,45 @@ def union(anns: list[Ann]) -> Ann:
     return Ann(expr, frozenset(deps))
 
 
+# Keys with which a ``oneOf``/``anyOf`` branch describes a shape of its own. A branch
+# without any of them (``{"required": ["body"]}``) only narrows which of the object's
+# properties are required.
+_SHAPE_KEYS = (
+    "$ref",
+    "type",
+    "properties",
+    "additionalProperties",
+    "items",
+    "allOf",
+    "oneOf",
+    "anyOf",
+    "enum",
+)
+
+
+def _only_narrows_required(schema: Json, key: str) -> bool:
+    """Whether every ``oneOf``/``anyOf`` branch only adds ``required`` to this object.
+
+    ``{"type": "object", "required": ["to"], "properties": {...}, "oneOf": [{"required":
+    ["body"]}, {"required": ["template_id"]}]}`` (``POST /v3/messages/``) is one object
+    whose properties are required either-or. Read as a union, each branch is ``object``
+    and the body loses its type; the object's own properties are the type.
+    """
+    if not isinstance(schema, dict) or not schema.get("properties"):
+        return False
+    members = schema.get(key)
+    if not isinstance(members, list) or not members:
+        return False
+    return all(
+        isinstance(member, dict) and not any(k in member for k in _SHAPE_KEYS) for member in members
+    )
+
+
+def _without_composition(schema: Json) -> Json:
+    """The object around a ``oneOf``/``anyOf`` that only narrows ``required``."""
+    return {k: v for k, v in schema.items() if k not in ("oneOf", "anyOf")}
+
+
 def _split_union(expr: str) -> list[str]:
     out: list[str] = []
     depth = 0
@@ -263,6 +302,16 @@ class TypeBuilder:
             return self._model(spec, schema, define_as or hint, module, mode="response")
         for key in ("oneOf", "anyOf"):
             if key in schema:
+                if _only_narrows_required(schema, key):
+                    # The branches only say which of the object's own properties are
+                    # required: one object, not a union of ``object``.
+                    return self._model(
+                        spec,
+                        _without_composition(schema),
+                        define_as or hint,
+                        module,
+                        mode="response",
+                    )
                 members = [
                     self.response(spec, member, self._variant_name(spec, member, hint, i), module)
                     for i, member in enumerate(schema[key])
@@ -338,6 +387,16 @@ class TypeBuilder:
             )
         for key in ("oneOf", "anyOf"):
             if key in schema:
+                if _only_narrows_required(schema, key):
+                    return self._model(
+                        spec,
+                        _without_composition(schema),
+                        define_as or hint + suffix,
+                        module,
+                        mode="param",
+                        suffix=suffix,
+                        hint=hint,
+                    )
                 members = [
                     self.param(
                         spec, member, self._variant_name(spec, member, hint, i), module, suffix

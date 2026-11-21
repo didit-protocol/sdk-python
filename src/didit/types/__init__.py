@@ -3036,6 +3036,10 @@ if TYPE_CHECKING:
     from didit.types.lists.list_response import ListsListResponse as ListsListResponse
     from didit.types.lists.update_params import ListsUpdateParams as ListsUpdateParams
     from didit.types.lists.update_response import ListsUpdateResponse as ListsUpdateResponse
+    from didit.types.messages.send_params import MessagesSendParams as MessagesSendParams
+    from didit.types.messages.send_params import (
+        MessagesSendParamsOptions as MessagesSendParamsOptions,
+    )
     from didit.types.messages.update_settings_params import (
         MessagesUpdateSettingsParams as MessagesUpdateSettingsParams,
     )
@@ -4372,6 +4376,8 @@ _MODULES: dict[str, str] = {
     "MessageList": "components.message_list",
     "MessagePrice": "components.message_price",
     "MessagePrices": "components.message_prices",
+    "MessagesSendParams": "messages.send_params",
+    "MessagesSendParamsOptions": "messages.send_params",
     "MessagesSettings": "components.messages_settings",
     "MessagesUpdateSettingsParams": "messages.update_settings_params",
     "MonitoringEvent": "components.monitoring_event",
@@ -5774,6 +5780,8 @@ __all__ = [
     "MessageList",
     "MessagePrice",
     "MessagePrices",
+    "MessagesSendParams",
+    "MessagesSendParamsOptions",
     "MessagesSettings",
     "MessagesUpdateSettingsParams",
     "MonitoringEvent",
