@@ -16,7 +16,7 @@ class InvestigatorQueueRow(BaseModel):
 
     queue: Literal["kyc", "kyb", "aml", "transactions", "cases"] | str | None = None
 
-    stage: Literal["shadow", "live"] | str | None = None
+    stage: Literal["none", "shadow", "live"] | str | None = None
 
     subject: dict[str, object] | None = None
     """The item under review: `id`, `number`, `status`, `name` and, depending on the kind, `country`, `workflow`, `vendor_data`, `txn_id`, `amount`, `currency`, `direction`, `title` or `priority`."""
@@ -41,3 +41,9 @@ class InvestigatorQueueRow(BaseModel):
     due_at: _dt.datetime | None = None
 
     prepared_at: _dt.datetime | None = None
+
+    free_report: bool | None = None
+    """True for one of the organization's free reports: a review run at stage `none`, with no setup, never charged."""
+
+    example: bool | None = None
+    """True for an example report shown on a sandbox application. Example reports are read only and never cost anything."""

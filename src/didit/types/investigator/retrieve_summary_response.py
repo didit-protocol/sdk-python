@@ -5,11 +5,22 @@ import datetime as _dt
 
 from didit._models import BaseModel
 
-__all__ = ["InvestigatorRetrieveSummaryResponse"]
+__all__ = ["InvestigatorRetrieveSummaryResponse", "InvestigatorRetrieveSummaryResponseFreeReports"]
+
+
+class InvestigatorRetrieveSummaryResponseFreeReports(BaseModel):
+    """The organization's free reports: the first reports run with no setup, on any plan, and are never charged."""
+
+    limit: int | None = None
+
+    used: int | None = None
+
+    remaining: int | None = None
 
 
 class InvestigatorRetrieveSummaryResponse(BaseModel):
     stage: str | None = None
+    """`none` (not set up; free reports still run while `free_reports.remaining` is above 0), `shadow` or `live`."""
 
     last_report_at: _dt.datetime | None = None
 
@@ -24,3 +35,6 @@ class InvestigatorRetrieveSummaryResponse(BaseModel):
     automation_rate_month: float | None = None
 
     preparing: int | None = None
+
+    free_reports: InvestigatorRetrieveSummaryResponseFreeReports | None = None
+    """The organization's free reports: the first reports run with no setup, on any plan, and are never charged."""

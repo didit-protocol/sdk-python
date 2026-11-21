@@ -83,6 +83,39 @@ if TYPE_CHECKING:
     from didit.types.aml_monitoring.retrieve_job_response import (
         AmlMonitoringRetrieveJobResponseResults as AmlMonitoringRetrieveJobResponseResults,
     )
+    from didit.types.authentication_setup.set_domain_params import (
+        AuthenticationSetupSetDomainParams as AuthenticationSetupSetDomainParams,
+    )
+    from didit.types.authentication_setup.set_method_params import (
+        AuthenticationSetupSetMethodParams as AuthenticationSetupSetMethodParams,
+    )
+    from didit.types.authentication_setup.update_branding_params import (
+        AuthenticationSetupUpdateBrandingParams as AuthenticationSetupUpdateBrandingParams,
+    )
+    from didit.types.authentication_setup.update_configuration_params import (
+        AuthenticationSetupUpdateConfigurationParams as AuthenticationSetupUpdateConfigurationParams,
+    )
+    from didit.types.authentication_setup.update_native_apps_params import (
+        AuthenticationSetupUpdateNativeAppsParams as AuthenticationSetupUpdateNativeAppsParams,
+    )
+    from didit.types.authentication_setup.update_onboarding_params import (
+        AuthenticationSetupUpdateOnboardingParams as AuthenticationSetupUpdateOnboardingParams,
+    )
+    from didit.types.authentication_setup.update_protection_params import (
+        AuthenticationSetupUpdateProtectionParams as AuthenticationSetupUpdateProtectionParams,
+    )
+    from didit.types.authentication_setup.update_settings_params import (
+        AuthenticationSetupUpdateSettingsParams as AuthenticationSetupUpdateSettingsParams,
+    )
+    from didit.types.authentication_setup.update_verified_params import (
+        AuthenticationSetupUpdateVerifiedParams as AuthenticationSetupUpdateVerifiedParams,
+    )
+    from didit.types.authentication_setup.update_verified_params import (
+        AuthenticationSetupUpdateVerifiedParamsRules as AuthenticationSetupUpdateVerifiedParamsRules,
+    )
+    from didit.types.authentication_setup.update_verified_params import (
+        AuthenticationSetupUpdateVerifiedParamsWorkflows as AuthenticationSetupUpdateVerifiedParamsWorkflows,
+    )
     from didit.types.bank.account_check_params import (
         BankAccountCheckParams as BankAccountCheckParams,
     )
@@ -1921,6 +1954,85 @@ if TYPE_CHECKING:
     from didit.types.components.session_webhook_delivery import (
         SessionWebhookDelivery as SessionWebhookDelivery,
     )
+    from didit.types.components.setup_android_app import SetupAndroidApp as SetupAndroidApp
+    from didit.types.components.setup_android_app import (
+        SetupAndroidAppParam as SetupAndroidAppParam,
+    )
+    from didit.types.components.setup_brand import SetupBrand as SetupBrand
+    from didit.types.components.setup_branding import SetupBranding as SetupBranding
+    from didit.types.components.setup_branding import SetupBrandingBadge as SetupBrandingBadge
+    from didit.types.components.setup_branding import SetupBrandingDefaults as SetupBrandingDefaults
+    from didit.types.components.setup_branding_texts import SetupBrandingTexts as SetupBrandingTexts
+    from didit.types.components.setup_branding_texts import (
+        SetupBrandingTextsParam as SetupBrandingTextsParam,
+    )
+    from didit.types.components.setup_configuration import SetupConfiguration as SetupConfiguration
+    from didit.types.components.setup_custom_domain import SetupCustomDomain as SetupCustomDomain
+    from didit.types.components.setup_custom_domain import (
+        SetupCustomDomainCertificate as SetupCustomDomainCertificate,
+    )
+    from didit.types.components.setup_custom_domain import (
+        SetupCustomDomainDnsRecord as SetupCustomDomainDnsRecord,
+    )
+    from didit.types.components.setup_didit_test_credentials import (
+        SetupDiditTestCredentials as SetupDiditTestCredentials,
+    )
+    from didit.types.components.setup_domain import SetupDomain as SetupDomain
+    from didit.types.components.setup_email import SetupEmail as SetupEmail
+    from didit.types.components.setup_email_summary import SetupEmailSummary as SetupEmailSummary
+    from didit.types.components.setup_emails import SetupEmails as SetupEmails
+    from didit.types.components.setup_emails import SetupEmailsSenders as SetupEmailsSenders
+    from didit.types.components.setup_emails import (
+        SetupEmailsSendersEmail as SetupEmailsSendersEmail,
+    )
+    from didit.types.components.setup_emails import SetupEmailsSendersSms as SetupEmailsSendersSms
+    from didit.types.components.setup_method_result import SetupMethodResult as SetupMethodResult
+    from didit.types.components.setup_method_summary import SetupMethodSummary as SetupMethodSummary
+    from didit.types.components.setup_native_apps import SetupNativeApps as SetupNativeApps
+    from didit.types.components.setup_onboarding import SetupOnboarding as SetupOnboarding
+    from didit.types.components.setup_protection import SetupProtection as SetupProtection
+    from didit.types.components.setup_protection import (
+        SetupProtectionAttackMode as SetupProtectionAttackMode,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonth as SetupProtectionCalendarMonth,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonthChallenges as SetupProtectionCalendarMonthChallenges,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonthProtections as SetupProtectionCalendarMonthProtections,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonthProtectionsCounts as SetupProtectionCalendarMonthProtectionsCounts,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonthProtectionsCountsDelta as SetupProtectionCalendarMonthProtectionsCountsDelta,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionCalendarMonthProtectionsPreviousCounts as SetupProtectionCalendarMonthProtectionsPreviousCounts,
+    )
+    from didit.types.components.setup_protection import (
+        SetupProtectionChallengesDaily as SetupProtectionChallengesDaily,
+    )
+    from didit.types.components.setup_protection import SetupProtectionDaily as SetupProtectionDaily
+    from didit.types.components.setup_protection_policy import (
+        SetupProtectionPolicy as SetupProtectionPolicy,
+    )
+    from didit.types.components.setup_protection_policy import (
+        SetupProtectionPolicyCounts as SetupProtectionPolicyCounts,
+    )
+    from didit.types.components.setup_provider_credentials import (
+        SetupProviderCredentials as SetupProviderCredentials,
+    )
+    from didit.types.components.setup_settings import SetupSettings as SetupSettings
+    from didit.types.components.setup_verified import SetupVerified as SetupVerified
+    from didit.types.components.setup_verified import SetupVerifiedSignup as SetupVerifiedSignup
+    from didit.types.components.setup_verified import SetupVerifiedWallet as SetupVerifiedWallet
+    from didit.types.components.setup_verified import (
+        SetupVerifiedWorkflows as SetupVerifiedWorkflows,
+    )
+    from didit.types.components.setup_verified_rule import SetupVerifiedRule as SetupVerifiedRule
     from didit.types.components.signature_field import SignatureField as SignatureField
     from didit.types.components.signature_field_anchor import (
         SignatureFieldAnchor as SignatureFieldAnchor,
@@ -2793,11 +2905,17 @@ if TYPE_CHECKING:
     from didit.types.investigator.retrieve_dashboard_response import (
         InvestigatorRetrieveDashboardResponse as InvestigatorRetrieveDashboardResponse,
     )
+    from didit.types.investigator.retrieve_offer_response import (
+        InvestigatorRetrieveOfferResponse as InvestigatorRetrieveOfferResponse,
+    )
     from didit.types.investigator.retrieve_performance_response import (
         InvestigatorRetrievePerformanceResponse as InvestigatorRetrievePerformanceResponse,
     )
     from didit.types.investigator.retrieve_summary_response import (
         InvestigatorRetrieveSummaryResponse as InvestigatorRetrieveSummaryResponse,
+    )
+    from didit.types.investigator.retrieve_summary_response import (
+        InvestigatorRetrieveSummaryResponseFreeReports as InvestigatorRetrieveSummaryResponseFreeReports,
     )
     from didit.types.investigator.retrieve_transaction_response import (
         InvestigatorRetrieveTransactionResponse as InvestigatorRetrieveTransactionResponse,
@@ -3753,6 +3871,17 @@ _MODULES: dict[str, str] = {
     "AsyncReportFile": "components.async_report_file",
     "AsyncReportList": "components.async_report_list",
     "AsyncReportListCounts": "components.async_report_list",
+    "AuthenticationSetupSetDomainParams": "authentication_setup.set_domain_params",
+    "AuthenticationSetupSetMethodParams": "authentication_setup.set_method_params",
+    "AuthenticationSetupUpdateBrandingParams": "authentication_setup.update_branding_params",
+    "AuthenticationSetupUpdateConfigurationParams": "authentication_setup.update_configuration_params",
+    "AuthenticationSetupUpdateNativeAppsParams": "authentication_setup.update_native_apps_params",
+    "AuthenticationSetupUpdateOnboardingParams": "authentication_setup.update_onboarding_params",
+    "AuthenticationSetupUpdateProtectionParams": "authentication_setup.update_protection_params",
+    "AuthenticationSetupUpdateSettingsParams": "authentication_setup.update_settings_params",
+    "AuthenticationSetupUpdateVerifiedParams": "authentication_setup.update_verified_params",
+    "AuthenticationSetupUpdateVerifiedParamsRules": "authentication_setup.update_verified_params",
+    "AuthenticationSetupUpdateVerifiedParamsWorkflows": "authentication_setup.update_verified_params",
     "BankAccountCheckBusinessHolder": "components.bank_account_check_business_holder",
     "BankAccountCheckHolder": "components.bank_account_check_holder",
     "BankAccountCheckParams": "bank.account_check_params",
@@ -4144,8 +4273,10 @@ _MODULES: dict[str, str] = {
     "InvestigatorOverrideRunParams": "investigator.override_run_params",
     "InvestigatorQueueRow": "components.investigator_queue_row",
     "InvestigatorRetrieveDashboardResponse": "investigator.retrieve_dashboard_response",
+    "InvestigatorRetrieveOfferResponse": "investigator.retrieve_offer_response",
     "InvestigatorRetrievePerformanceResponse": "investigator.retrieve_performance_response",
     "InvestigatorRetrieveSummaryResponse": "investigator.retrieve_summary_response",
+    "InvestigatorRetrieveSummaryResponseFreeReports": "investigator.retrieve_summary_response",
     "InvestigatorRetrieveTransactionResponse": "investigator.retrieve_transaction_response",
     "InvestigatorRunDetail": "components.investigator_run_detail",
     "InvestigatorSettings": "components.investigator_settings",
@@ -4630,6 +4761,49 @@ _MODULES: dict[str, str] = {
     "SessionsUpdateStatusResponse": "sessions.update_status_response",
     "SessionsUploadKybDocumentsParams": "sessions.upload_kyb_documents_params",
     "SessionsUploadKybDocumentsResponse": "sessions.upload_kyb_documents_response",
+    "SetupAndroidApp": "components.setup_android_app",
+    "SetupAndroidAppParam": "components.setup_android_app",
+    "SetupBrand": "components.setup_brand",
+    "SetupBranding": "components.setup_branding",
+    "SetupBrandingBadge": "components.setup_branding",
+    "SetupBrandingDefaults": "components.setup_branding",
+    "SetupBrandingTexts": "components.setup_branding_texts",
+    "SetupBrandingTextsParam": "components.setup_branding_texts",
+    "SetupConfiguration": "components.setup_configuration",
+    "SetupCustomDomain": "components.setup_custom_domain",
+    "SetupCustomDomainCertificate": "components.setup_custom_domain",
+    "SetupCustomDomainDnsRecord": "components.setup_custom_domain",
+    "SetupDiditTestCredentials": "components.setup_didit_test_credentials",
+    "SetupDomain": "components.setup_domain",
+    "SetupEmail": "components.setup_email",
+    "SetupEmailSummary": "components.setup_email_summary",
+    "SetupEmails": "components.setup_emails",
+    "SetupEmailsSenders": "components.setup_emails",
+    "SetupEmailsSendersEmail": "components.setup_emails",
+    "SetupEmailsSendersSms": "components.setup_emails",
+    "SetupMethodResult": "components.setup_method_result",
+    "SetupMethodSummary": "components.setup_method_summary",
+    "SetupNativeApps": "components.setup_native_apps",
+    "SetupOnboarding": "components.setup_onboarding",
+    "SetupProtection": "components.setup_protection",
+    "SetupProtectionAttackMode": "components.setup_protection",
+    "SetupProtectionCalendarMonth": "components.setup_protection",
+    "SetupProtectionCalendarMonthChallenges": "components.setup_protection",
+    "SetupProtectionCalendarMonthProtections": "components.setup_protection",
+    "SetupProtectionCalendarMonthProtectionsCounts": "components.setup_protection",
+    "SetupProtectionCalendarMonthProtectionsCountsDelta": "components.setup_protection",
+    "SetupProtectionCalendarMonthProtectionsPreviousCounts": "components.setup_protection",
+    "SetupProtectionChallengesDaily": "components.setup_protection",
+    "SetupProtectionDaily": "components.setup_protection",
+    "SetupProtectionPolicy": "components.setup_protection_policy",
+    "SetupProtectionPolicyCounts": "components.setup_protection_policy",
+    "SetupProviderCredentials": "components.setup_provider_credentials",
+    "SetupSettings": "components.setup_settings",
+    "SetupVerified": "components.setup_verified",
+    "SetupVerifiedRule": "components.setup_verified_rule",
+    "SetupVerifiedSignup": "components.setup_verified",
+    "SetupVerifiedWallet": "components.setup_verified",
+    "SetupVerifiedWorkflows": "components.setup_verified",
     "SignatureField": "components.signature_field",
     "SignatureFieldAnchor": "components.signature_field_anchor",
     "SignatureFieldResult": "components.signature_field_result",
@@ -5086,6 +5260,17 @@ __all__ = [
     "AsyncReportFile",
     "AsyncReportList",
     "AsyncReportListCounts",
+    "AuthenticationSetupSetDomainParams",
+    "AuthenticationSetupSetMethodParams",
+    "AuthenticationSetupUpdateBrandingParams",
+    "AuthenticationSetupUpdateConfigurationParams",
+    "AuthenticationSetupUpdateNativeAppsParams",
+    "AuthenticationSetupUpdateOnboardingParams",
+    "AuthenticationSetupUpdateProtectionParams",
+    "AuthenticationSetupUpdateSettingsParams",
+    "AuthenticationSetupUpdateVerifiedParams",
+    "AuthenticationSetupUpdateVerifiedParamsRules",
+    "AuthenticationSetupUpdateVerifiedParamsWorkflows",
     "BankAccountCheckBusinessHolder",
     "BankAccountCheckHolder",
     "BankAccountCheckParams",
@@ -5477,8 +5662,10 @@ __all__ = [
     "InvestigatorOverrideRunParams",
     "InvestigatorQueueRow",
     "InvestigatorRetrieveDashboardResponse",
+    "InvestigatorRetrieveOfferResponse",
     "InvestigatorRetrievePerformanceResponse",
     "InvestigatorRetrieveSummaryResponse",
+    "InvestigatorRetrieveSummaryResponseFreeReports",
     "InvestigatorRetrieveTransactionResponse",
     "InvestigatorRunDetail",
     "InvestigatorSettings",
@@ -5963,6 +6150,49 @@ __all__ = [
     "SessionsUpdateStatusResponse",
     "SessionsUploadKybDocumentsParams",
     "SessionsUploadKybDocumentsResponse",
+    "SetupAndroidApp",
+    "SetupAndroidAppParam",
+    "SetupBrand",
+    "SetupBranding",
+    "SetupBrandingBadge",
+    "SetupBrandingDefaults",
+    "SetupBrandingTexts",
+    "SetupBrandingTextsParam",
+    "SetupConfiguration",
+    "SetupCustomDomain",
+    "SetupCustomDomainCertificate",
+    "SetupCustomDomainDnsRecord",
+    "SetupDiditTestCredentials",
+    "SetupDomain",
+    "SetupEmail",
+    "SetupEmailSummary",
+    "SetupEmails",
+    "SetupEmailsSenders",
+    "SetupEmailsSendersEmail",
+    "SetupEmailsSendersSms",
+    "SetupMethodResult",
+    "SetupMethodSummary",
+    "SetupNativeApps",
+    "SetupOnboarding",
+    "SetupProtection",
+    "SetupProtectionAttackMode",
+    "SetupProtectionCalendarMonth",
+    "SetupProtectionCalendarMonthChallenges",
+    "SetupProtectionCalendarMonthProtections",
+    "SetupProtectionCalendarMonthProtectionsCounts",
+    "SetupProtectionCalendarMonthProtectionsCountsDelta",
+    "SetupProtectionCalendarMonthProtectionsPreviousCounts",
+    "SetupProtectionChallengesDaily",
+    "SetupProtectionDaily",
+    "SetupProtectionPolicy",
+    "SetupProtectionPolicyCounts",
+    "SetupProviderCredentials",
+    "SetupSettings",
+    "SetupVerified",
+    "SetupVerifiedRule",
+    "SetupVerifiedSignup",
+    "SetupVerifiedWallet",
+    "SetupVerifiedWorkflows",
     "SignatureField",
     "SignatureFieldAnchor",
     "SignatureFieldResult",

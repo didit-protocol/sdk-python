@@ -15,6 +15,7 @@ from didit.types.investigator.list_guardrails_response import InvestigatorListGu
 from didit.types.investigator.retrieve_dashboard_response import (
     InvestigatorRetrieveDashboardResponse,
 )
+from didit.types.investigator.retrieve_offer_response import InvestigatorRetrieveOfferResponse
 from didit.types.investigator.retrieve_performance_response import (
     InvestigatorRetrievePerformanceResponse,
 )
@@ -262,7 +263,7 @@ def test_investigator_list_queue() -> None:
                         "run_id": "00000000-0000-4000-8000-000000000005",
                         "kind": "session",
                         "queue": "kyc",
-                        "stage": "shadow",
+                        "stage": "none",
                         "subject": {},
                         "recommendation": "approve",
                         "recommendation_detail": "sample",
@@ -274,6 +275,8 @@ def test_investigator_list_queue() -> None:
                         "waiting_since": "2026-01-01T00:00:00Z",
                         "due_at": "2026-01-01T00:00:00Z",
                         "prepared_at": "2026-01-01T00:00:00Z",
+                        "free_report": True,
+                        "example": True,
                     }
                 ],
             },
@@ -403,6 +406,32 @@ def test_investigator_retrieve_dashboard() -> None:
     )
 
 
+def test_investigator_retrieve_offer() -> None:
+    """``GET /v3/investigator/offer/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/investigator/offer/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "show": True,
+                "manual_decisions_30d": 1,
+                "avg_handling_seconds": 1,
+                "stopped_halfway_30d": 1,
+                "stage": "none",
+                "followups_on": True,
+            },
+            strict_type=InvestigatorRetrieveOfferResponse,
+        ),
+        lambda c: c.investigator.retrieve_offer(),
+        lambda c: c.investigator.retrieve_offer(),
+        lambda r: isinstance(r, InvestigatorRetrieveOfferResponse),
+        lambda r: isinstance(r, InvestigatorRetrieveOfferResponse),
+    )
+
+
 def test_investigator_retrieve_performance() -> None:
     """``GET /v3/investigator/performance/``"""
     check_operation(
@@ -441,7 +470,7 @@ def test_investigator_retrieve_run() -> None:
                 "run_id": "00000000-0000-4000-8000-000000000004",
                 "kind": "session",
                 "queue": "kyc",
-                "stage": "shadow",
+                "stage": "none",
                 "subject": {},
                 "recommendation": "approve",
                 "recommendation_detail": "sample",
@@ -453,6 +482,8 @@ def test_investigator_retrieve_run() -> None:
                 "waiting_since": "2026-01-01T00:00:00Z",
                 "due_at": "2026-01-01T00:00:00Z",
                 "prepared_at": "2026-01-01T00:00:00Z",
+                "free_report": True,
+                "example": True,
                 "status": "sample",
                 "is_open": True,
                 "lookups": 1,
@@ -555,6 +586,7 @@ def test_investigator_retrieve_summary() -> None:
                 "decided_today": 1,
                 "automation_rate_month": 1.5,
                 "preparing": 1,
+                "free_reports": {"limit": 1, "used": 1, "remaining": 1},
             },
             strict_type=InvestigatorRetrieveSummaryResponse,
         ),

@@ -87086,7 +87086,8 @@
                   "additionalProperties": true,
                   "properties": {
                     "stage": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "`none` (not set up; free reports still run while `free_reports.remaining` is above 0), `shadow` or `live`."
                     },
                     "last_report_at": {
                       "type": "string",
@@ -87111,6 +87112,21 @@
                     },
                     "preparing": {
                       "type": "integer"
+                    },
+                    "free_reports": {
+                      "type": "object",
+                      "description": "The organization's free reports: the first reports run with no setup, on any plan, and are never charged.",
+                      "properties": {
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "used": {
+                          "type": "integer"
+                        },
+                        "remaining": {
+                          "type": "integer"
+                        }
+                      }
                     }
                   }
                 }
@@ -99433,6 +99449,109 @@
             "lang": "csharp",
             "label": ".NET",
             "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Sessions.Imports.UndoAsync(\"11111111-2222-3333-4444-555555555555\");\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+          }
+        ]
+      }
+    },
+    "/v3/investigator/offer/": {
+      "get": {
+        "operationId": "investigator_offer",
+        "summary": "Investigator agent offer",
+        "description": "Whether to offer the Investigator agent to this application: its decisions taken by hand in the last 30 days, the average handling time, the people who stopped halfway and whether follow-ups are on. Read from the daily analytics, never from a scan of sessions. `show` is true when 20 or more decisions were taken by hand and the agent is not set up, or when follow-ups are off and 50 or more people stopped halfway.",
+        "tags": [
+          "Investigator"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "show": {
+                      "type": "boolean"
+                    },
+                    "manual_decisions_30d": {
+                      "type": "integer"
+                    },
+                    "avg_handling_seconds": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "stopped_halfway_30d": {
+                      "type": "integer"
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "shadow",
+                        "live"
+                      ]
+                    },
+                    "followups_on": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          },
+          "403": {
+            "description": "The key lacks read access to the application settings."
+          }
+        },
+        "parameters": [],
+        "x-didit-sdk": {
+          "resource": "investigator",
+          "method": "retrieve_offer",
+          "auth": "api_key",
+          "server": true
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from didit import Didit\n\n# Reads DIDIT_API_KEY.\nclient = Didit()\n\nresult = client.investigator.retrieve_offer()\nprint(result)"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "import Didit from \"@didit-protocol/sdk-node\";\n\n// Reads DIDIT_API_KEY.\nconst didit = new Didit();\n\nconst result = await didit.investigator.retrieveOffer();\nconsole.log(result);"
+          },
+          {
+            "lang": "go",
+            "label": "Go",
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.Investigator.RetrieveOffer(ctx)\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+          },
+          {
+            "lang": "java",
+            "label": "Java",
+            "source": "import me.didit.Didit;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.investigator().retrieveOffer();\nSystem.out.println(result);"
+          },
+          {
+            "lang": "php",
+            "label": "PHP",
+            "source": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse Didit\\DiditClient;\n\n// Reads DIDIT_API_KEY.\n$didit = new DiditClient();\n\n$result = $didit->investigator->retrieveOffer();\nprint_r($result->toArray());"
+          },
+          {
+            "lang": "ruby",
+            "label": "Ruby",
+            "source": "require \"didit\"\n\n# Reads DIDIT_API_KEY.\ndidit = Didit::Client.new\n\nresult = didit.investigator.retrieve_offer\nputs result.to_h"
+          },
+          {
+            "lang": "csharp",
+            "label": ".NET",
+            "source": "using System;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.Investigator.RetrieveOfferAsync();\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
@@ -132090,6 +132209,7 @@
           "stage": {
             "type": "string",
             "enum": [
+              "none",
               "shadow",
               "live"
             ]
@@ -132145,6 +132265,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "free_report": {
+            "type": "boolean",
+            "description": "True for one of the organization's free reports: a review run at stage `none`, with no setup, never charged."
+          },
+          "example": {
+            "type": "boolean",
+            "description": "True for an example report shown on a sandbox application. Example reports are read only and never cost anything."
           }
         }
       },
