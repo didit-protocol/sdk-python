@@ -5,7 +5,9 @@ DIDIT_API_KEY=... python examples/bank_wait_for_connection.py
 A sandbox application is enough: Bank data is on for sandbox applications first.
 In your own product, send the person to ``link.url`` and wait for the
 ``bank.connection.created`` webhook instead of polling; the function below shows
-both. The async client has the same methods; use ``await`` and ``asyncio.sleep``.
+both. ``link.url`` and ``link.client_token`` are credentials: hand them to the
+person's browser and never write them to a log. The async client has the same
+methods; use ``await`` and ``asyncio.sleep``.
 """
 
 from __future__ import annotations
@@ -27,7 +29,8 @@ def connection_from_webhook(body: bytes, headers: Mapping[str, str], secret: str
     """
     event = didit.webhooks.verify(body, headers, secret)
     if isinstance(event, didit.webhooks.BankConnectionCreatedEvent):
-        return event.data.connection_id if event.data else None
+        # bank.connection.created carries its fields next to the envelope, not under ``data``.
+        return event.connection_id
     return None
 
 
@@ -65,10 +68,11 @@ def main() -> None:
     with Didit() as client:
         # The smallest link: one person, one bank, accounts only, one-time read.
         link = client.bank.create_link(vendor_data="example-user")
-        print("Send the person to:", link.url)
-        print("The url and the client token are credentials: never log one.")
         if link.url is None:
             raise SystemExit("the link came back without a url")
+        # Hand link.url to the person's browser (a redirect, a button, a QR code).
+        # link.url and link.client_token are credentials: never print or log them.
+        print("Link created:", link.id, "- send the person to its url and wait for the connection.")
 
         try:
             connection = wait_for_connection(client, link.id)

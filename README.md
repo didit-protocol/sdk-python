@@ -201,7 +201,7 @@ async for session in async_client.sessions.list(limit=100):
     ...
 ```
 
-Bank lists (`client.bank.*`) are the exception: they use cursor pagination and return `{items, next_cursor}` as it comes, with no auto-pagination, because one cursor read is pinned. Send `cursor` (a stored `next_cursor`) and `limit`, and keep the last cursor only after you have read every page:
+Bank lists (`client.bank.*`) are the exception: they use cursor pagination and return `{items, next_cursor}` as it comes, with no auto-pagination, because one cursor read is pinned. Send `cursor` (a stored `next_cursor`) and `limit`, and keep the last cursor only after you have read every page. `list_transactions` is a different read: it takes `page_token` and returns `{items, next_page_token}` for one pinned range, and `sync_transactions` (the change feed) takes `cursor` and `page_token` and returns `added`, `modified` and `removed` with `has_more`, `next_cursor` and `next_page_token`:
 
 ```python
 cursor = ""
@@ -263,7 +263,7 @@ asyncio.run(main())
 - `X-Signature-Simple` (deprecated) counts only with `allow_simple=True`; it covers the envelope, not the body, so `event.body_authenticated` is then `False` and you should re-fetch the record from the API.
 - `didit.webhooks.verify_parsed(payload, headers, secret)` is for frameworks that only give you the parsed JSON; it can check `X-Signature-V2` only.
 
-Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdatedEvent`, `UserDataUpdatedEvent`, `BusinessStatusUpdatedEvent`, `BusinessDataUpdatedEvent`, `ActivityCreatedEvent`, `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent`, `TravelRuleStatusUpdatedEvent`, `WorkflowComplianceChangedEvent`, `KybRegistrySearchResolvedEvent`, `UnknownEvent` (with the whole `payload`) for types this version does not know, and the sixteen Bank data events from `bank.link.completed` to `bank.sync.recovered`, whose ids and statuses are on `event.data` (see [Bank data](#bank-data)). `client.webhooks.verify(...)` does the same as `didit.webhooks.verify(...)`.
+Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdatedEvent`, `UserDataUpdatedEvent`, `BusinessStatusUpdatedEvent`, `BusinessDataUpdatedEvent`, `ActivityCreatedEvent`, `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent`, `TravelRuleStatusUpdatedEvent`, `WorkflowComplianceChangedEvent`, `KybRegistrySearchResolvedEvent`, `UnknownEvent` (with the whole `payload`) for types this version does not know, and the sixteen Bank data events from `bank.link.completed` to `bank.sync.recovered` (see [Bank data](#bank-data)). A `bank.link.*` event nests its ids and status in `event.data`; every other Bank data event carries them next to the envelope, so read `event.connection_id`, `event.initial_status`, `event.accounts` and the rest on the event itself. `client.webhooks.verify(...)` does the same as `didit.webhooks.verify(...)`.
 
 ## Authentication
 
