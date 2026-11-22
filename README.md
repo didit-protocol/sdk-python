@@ -112,7 +112,7 @@ Their webhooks arrive as `TransactionCreatedEvent`, `TransactionStatusUpdatedEve
 link = client.bank.create_link(access="ongoing", country="ESP")  # send the person to link.url
 connection = client.bank.get_connection("c0a80104-1111-4111-8111-111111111111")
 account_ids = [a.id for a in connection.accounts]
-page = client.bank.list_accounts(connection.id)   # cursor pagination: page.next_cursor
+page = client.bank.list_accounts(connection.id)  # cursor pagination: page.next_cursor
 changes = client.bank.sync_transactions(connection.id, cursor="")  # the change feed
 balances = client.bank.get_balances(account_ids[0])  # amounts are decimal strings
 ```
