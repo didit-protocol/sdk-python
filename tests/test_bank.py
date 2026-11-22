@@ -103,8 +103,9 @@ def test_a_deleted_connection_reads_as_its_minimal_record() -> None:
     assert connection.erasure is not None
     assert connection.erasure.status == "erased"
     # Nothing else survives the deletion, and reading it never raises.
-    assert connection.consent is None
-    assert connection.accounts is None
+    deleted: Any = connection
+    assert deleted.consent is None
+    assert deleted.accounts is None
 
 
 def test_ids_and_tokens_are_opaque_and_never_validated() -> None:
