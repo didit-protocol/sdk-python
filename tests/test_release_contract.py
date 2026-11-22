@@ -36,7 +36,8 @@ RELEASED_EVENTS: list[str] = SPEC["components"]["schemas"]["WebhookEvent"]["enum
 SECRET = "whsec_test_release_contract_0001"
 NOW = 1_760_702_400
 
-# The events DESIGN 9.4 types, plus the registry-search event it names there.
+# The events DESIGN 9.4 types (and section 16 for Bank data), plus the registry-search
+# event 9.4 names there.
 # Everything else the released document accepts arrives as UnknownEvent, which
 # keeps the whole body in ``payload`` (DESIGN 9.4).
 TYPED_EVENTS = {
@@ -52,6 +53,23 @@ TYPED_EVENTS = {
     "travel_rule.status.updated",
     "workflow.compliance_changed",
     "kyb.registry_search.resolved",
+    # Bank data (DESIGN 9.4 and 16).
+    "bank.link.completed",
+    "bank.link.cancelled",
+    "bank.link.expired",
+    "bank.link.failed",
+    "bank.connection.created",
+    "bank.connection.updated",
+    "bank.connection.consent_expiring",
+    "bank.connection.renewal_required",
+    "bank.connection.renewed",
+    "bank.connection.revoked",
+    "bank.connection.deleted",
+    "bank.connection.history_complete",
+    "bank.data.updated",
+    "bank.sync.completed",
+    "bank.sync.failed",
+    "bank.sync.recovered",
 }
 
 
