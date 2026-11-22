@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from itertools import product
 from typing import Any, Literal
 
 from .naming import identifier, pascal, snake
@@ -25,6 +26,7 @@ SEQUENCE = "@Sequence"
 MAPPING = "@Mapping"
 FIELD = "@Field"
 REQUIRED = "@Required"
+NEVER = "@Never"
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,49 @@ def union(anns: list[Ann]) -> Ann:
     if nullable:
         expr += " | None"
     return Ann(expr, frozenset(deps))
+
+
+def required_variants(schema: Json, key: str) -> list[Json] | None:
+    """Expand branches that select required keys from a shared set of properties."""
+    members = schema.get(key)
+    if (
+        not schema.get("properties")
+        or not members
+        or not all(
+            isinstance(member, dict)
+            and "required" in member
+            and member.keys() <= {"required", "title", "description"}
+            for member in members
+        )
+    ):
+        return None
+
+    parent = {k: v for k, v in schema.items() if k not in (key, "title", "nullable")}
+    requirements = [set(member["required"]) for member in members]
+    variants = []
+    for i, member in enumerate(members):
+        required = requirements[i].union(parent.get("required", []))
+        properties = dict(parent["properties"])
+        extra = parent.get("additionalProperties", {})
+        if extra is False and not required <= properties.keys():
+            continue
+        for field_name in sorted(required - properties.keys()):
+            properties[field_name] = extra if isinstance(extra, dict) else {}
+        # For oneOf, at least one key from each competing branch must be absent.
+        # anyOf allows multiple branches to match, so it needs no exclusions.
+        competing = [
+            sorted(keys - required)
+            for j, keys in enumerate(requirements)
+            if key == "oneOf" and j != i
+        ]
+        exclusions = dict.fromkeys(frozenset(keys) for keys in product(*competing))
+        for n, absent in enumerate(exclusions, start=1):
+            props = properties | {k: {"not": {}} for k in sorted(absent)}
+            variant = {**parent, **member, "properties": props, "required": sorted(required)}
+            if len(exclusions) > 1 and member.get("title"):
+                variant["title"] = f"{member['title']} Variant {n}"
+            variants.append(variant)
+    return variants
 
 
 def _split_union(expr: str) -> list[str]:
@@ -338,13 +383,27 @@ class TypeBuilder:
             )
         for key in ("oneOf", "anyOf"):
             if key in schema:
-                members = [
-                    self.param(
-                        spec, member, self._variant_name(spec, member, hint, i), module, suffix
+                variants = required_variants(schema, key)
+                members = schema[key] if variants is None else variants
+                if variants == []:
+                    raise CodegenError(f"{hint}: {key} has no possible request variant.")
+                ann = union(
+                    [
+                        self.param(
+                            spec, member, self._variant_name(spec, member, hint, i), module, suffix
+                        )
+                        for i, member in enumerate(members)
+                    ]
+                )
+                if variants is not None:
+                    name = define_as or hint + suffix
+                    self.registry.add(
+                        TypeDef("alias", name, module, _description(schema), alias=ann)
                     )
-                    for i, member in enumerate(schema[key])
-                ]
-                return union(members)
+                    return Ann(name, frozenset({name}))
+                return ann
+        if schema.get("not") == {}:
+            return Ann("Never", frozenset({NEVER}))
         if "enum" in schema:
             return self._enum(schema)
         kind = schema.get("type")

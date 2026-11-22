@@ -42,6 +42,7 @@ WebhookEvent: TypeAlias = (
         "investigator.sla.breached",
         "investigator.qa.failed",
         "investigator.external.report.ready",
+        "message.status.updated",
     ]
     | str
 )

@@ -1208,6 +1208,16 @@ if TYPE_CHECKING:
         KYBRegistryUboResolutionUnresolved as KYBRegistryUboResolutionUnresolved,
     )
     from didit.types.components.login_response import LoginResponse as LoginResponse
+    from didit.types.components.message import Message as Message
+    from didit.types.components.message_attempt import MessageAttempt as MessageAttempt
+    from didit.types.components.message_channel_price import (
+        MessageChannelPrice as MessageChannelPrice,
+    )
+    from didit.types.components.message_error import MessageError as MessageError
+    from didit.types.components.message_list import MessageList as MessageList
+    from didit.types.components.message_price import MessagePrice as MessagePrice
+    from didit.types.components.message_prices import MessagePrices as MessagePrices
+    from didit.types.components.messages_settings import MessagesSettings as MessagesSettings
     from didit.types.components.monitoring_event import MonitoringEvent as MonitoringEvent
     from didit.types.components.monitoring_event_create_request import (
         MonitoringEventCreateRequest as MonitoringEventCreateRequest,
@@ -3026,6 +3036,22 @@ if TYPE_CHECKING:
     from didit.types.lists.list_response import ListsListResponse as ListsListResponse
     from didit.types.lists.update_params import ListsUpdateParams as ListsUpdateParams
     from didit.types.lists.update_response import ListsUpdateResponse as ListsUpdateResponse
+    from didit.types.messages.send_params import MessagesSendParams as MessagesSendParams
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant1 as MessagesSendParamsVariant1,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant1Options as MessagesSendParamsVariant1Options,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant2 as MessagesSendParamsVariant2,
+    )
+    from didit.types.messages.send_params import (
+        MessagesSendParamsVariant2Options as MessagesSendParamsVariant2Options,
+    )
+    from didit.types.messages.update_settings_params import (
+        MessagesUpdateSettingsParams as MessagesUpdateSettingsParams,
+    )
     from didit.types.monitoring_events.create_batch_params import (
         MonitoringEventsCreateBatchParams as MonitoringEventsCreateBatchParams,
     )
@@ -4352,6 +4378,20 @@ _MODULES: dict[str, str] = {
     "ListsUpdateParams": "lists.update_params",
     "ListsUpdateResponse": "lists.update_response",
     "LoginResponse": "components.login_response",
+    "Message": "components.message",
+    "MessageAttempt": "components.message_attempt",
+    "MessageChannelPrice": "components.message_channel_price",
+    "MessageError": "components.message_error",
+    "MessageList": "components.message_list",
+    "MessagePrice": "components.message_price",
+    "MessagePrices": "components.message_prices",
+    "MessagesSendParams": "messages.send_params",
+    "MessagesSendParamsVariant1": "messages.send_params",
+    "MessagesSendParamsVariant1Options": "messages.send_params",
+    "MessagesSendParamsVariant2": "messages.send_params",
+    "MessagesSendParamsVariant2Options": "messages.send_params",
+    "MessagesSettings": "components.messages_settings",
+    "MessagesUpdateSettingsParams": "messages.update_settings_params",
     "MonitoringEvent": "components.monitoring_event",
     "MonitoringEventCreateRequest": "components.monitoring_event_create_request",
     "MonitoringEventCreateRequestBusiness": "components.monitoring_event_create_request",
@@ -5745,6 +5785,20 @@ __all__ = [
     "ListsUpdateParams",
     "ListsUpdateResponse",
     "LoginResponse",
+    "Message",
+    "MessageAttempt",
+    "MessageChannelPrice",
+    "MessageError",
+    "MessageList",
+    "MessagePrice",
+    "MessagePrices",
+    "MessagesSendParams",
+    "MessagesSendParamsVariant1",
+    "MessagesSendParamsVariant1Options",
+    "MessagesSendParamsVariant2",
+    "MessagesSendParamsVariant2Options",
+    "MessagesSettings",
+    "MessagesUpdateSettingsParams",
     "MonitoringEvent",
     "MonitoringEventCreateRequest",
     "MonitoringEventCreateRequestBusiness",
