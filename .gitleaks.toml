@@ -1,0 +1,57 @@
+# gitleaks configuration, used by the secret-scan job in .github/workflows/ci.yml.
+# Keep the allowlists narrow: never allowlist a directory or a whole rule.
+title = "didit-protocol/sdk-python"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Upstream copies, synced byte for byte by the spec sync workflow and never edited by hand"
+paths = [
+  '''^openapi/verification\.json$''',
+  '''^openapi/account\.json$''',
+  '''^openapi/authentication\.json$''',
+  '''^openapi/webhook-vectors\.json$''',
+]
+
+[[allowlists]]
+description = "Earlier upstream copies of openapi/verification.json, pinned by commit for the spec sync classification tests"
+paths = [
+  '''^codegen/tests/fixtures/verification-[0-9a-f]{40}\.json$''',
+]
+
+[[allowlists]]
+# Exact values only: a path in a global allowlist makes gitleaks skip the whole file.
+description = "The public sdk-python commits those fixtures come from, named in the classification tests"
+regexes = [
+  '''^(9fe57fc69299601e59cc7a64c1db370fea5c7461|e002a815773bbd1599256e2774046ee76520c6c8|fe9f57a1dfb6374bfd391750d2044fc7a206e4ea|ccc799410f82eee1c25c7ce5abc6caa53846be6b)$''',
+]
+
+[[allowlists]]
+description = "Synthetic webhook secrets used by the test suite"
+regexes = [
+  '''^whsec_test_[A-Za-z0-9_]+$''',
+]
+
+# Synthetic consent-redaction test value: this one value, in this one test file, for this one rule.
+[[allowlists]]
+description = "Synthetic agent consent redaction test value"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^tests/test_authentication\.py$''',
+]
+regexes = [
+  '''^SECRET\-0123456789abcdef$''',
+]
+
+[[allowlists]]
+description = "Publishable keys from the spec examples that the generated tests inline: pk_test_ or pk_live_ followed by the base64 of the issuer URL, public by design (a browser sends them)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^tests/generated/''',
+]
+regexes = [
+  '''^pk_(test|live)_[A-Za-z0-9_-]+$''',
+]
