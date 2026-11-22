@@ -20,9 +20,9 @@ def test_pricing_bank_verification() -> None:
             response_json={
                 "currency": "USD",
                 "statement_upload": {
-                    "price_usd": "0.0000",
+                    "price_usd": "0.2000",
                     "included_after_charged_bank_attempt": True,
-                    "standalone_available": False,
+                    "standalone_available": True,
                 },
                 "own_provider_fee_usd": "0.0200",
                 "countries": {
@@ -34,6 +34,11 @@ def test_pricing_bank_verification() -> None:
                                 "market": "UK and EEA",
                                 "price_usd": "0.7900",
                                 "add_ons": {"balance": "0.3500", "transactions": "1.3000"},
+                                "ongoing": {"available": True, "price_usd_per_month": "0.9000"},
+                                "one_time_data": {
+                                    "balances_usd": "0.3500",
+                                    "transactions_usd": "1.3000",
+                                },
                             },
                             "account_lookup": {"available": True, "price_usd": "0.4000"},
                         },
@@ -46,6 +51,8 @@ def test_pricing_bank_verification() -> None:
                                 "market": None,
                                 "price_usd": None,
                                 "add_ons": {},
+                                "ongoing": {"available": False, "price_usd_per_month": None},
+                                "one_time_data": None,
                             },
                             "account_lookup": {"available": False, "price_usd": None},
                         },

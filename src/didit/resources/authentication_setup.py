@@ -583,6 +583,9 @@ class AuthenticationSetup(SyncAPIResource):
         application_id: str,
         key: str,
         *,
+        organization: str | NotGiven = NOT_GIVEN,
+        role: Literal["member", "billing", "admin"] | str | NotGiven = NOT_GIVEN,
+        agent: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -590,7 +593,7 @@ class AuthenticationSetup(SyncAPIResource):
     ) -> SetupEmail:
         """Preview a sign-in email.
 
-        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
+        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/emails/{key}/``
 
@@ -598,6 +601,9 @@ class AuthenticationSetup(SyncAPIResource):
           organization_id: UUID of the organization that owns the application.
           application_id: UUID of the application: live or sandbox. A named key configures its own application only.
           key: The email: `code`, `magic`, `reset`, `device`, `invite`, `org`, `agent` or `agentoff`.
+          organization: For `org` only: the organization the invitation is for, so the preview shows it as it will be sent. At most 200 characters, the longest organization name an application holds. Without it, a sample organization (a console session sees the application's first customer organization).
+          role: For `org` only: the role the invitation grants.
+          agent: For `agentoff` only: the name of the agent whose access ends. At most 200 characters, the longest agent name an application registers. Without it, the agent of the application's latest agent client in a console session, or a sample name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -616,6 +622,7 @@ class AuthenticationSetup(SyncAPIResource):
                 },
                 auth="api_key",
                 api="account",
+                query={"organization": organization, "role": role, "agent": agent},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -1636,6 +1643,9 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
         application_id: str,
         key: str,
         *,
+        organization: str | NotGiven = NOT_GIVEN,
+        role: Literal["member", "billing", "admin"] | str | NotGiven = NOT_GIVEN,
+        agent: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
@@ -1643,7 +1653,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
     ) -> SetupEmail:
         """Preview a sign-in email.
 
-        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
+        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/emails/{key}/``
 
@@ -1651,6 +1661,9 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
           organization_id: UUID of the organization that owns the application.
           application_id: UUID of the application: live or sandbox. A named key configures its own application only.
           key: The email: `code`, `magic`, `reset`, `device`, `invite`, `org`, `agent` or `agentoff`.
+          organization: For `org` only: the organization the invitation is for, so the preview shows it as it will be sent. At most 200 characters, the longest organization name an application holds. Without it, a sample organization (a console session sees the application's first customer organization).
+          role: For `org` only: the role the invitation grants.
+          agent: For `agentoff` only: the name of the agent whose access ends. At most 200 characters, the longest agent name an application registers. Without it, the agent of the application's latest agent client in a console session, or a sample name.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1669,6 +1682,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
                 },
                 auth="api_key",
                 api="account",
+                query={"organization": organization, "role": role, "agent": agent},
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,

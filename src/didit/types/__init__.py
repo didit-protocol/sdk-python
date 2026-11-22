@@ -122,6 +122,16 @@ if TYPE_CHECKING:
     from didit.types.bank.account_check_params import (
         BankAccountCheckParamsAccount as BankAccountCheckParamsAccount,
     )
+    from didit.types.bank.create_link_params import BankCreateLinkParams as BankCreateLinkParams
+    from didit.types.bank.create_link_params import (
+        BankCreateLinkParamsSandbox as BankCreateLinkParamsSandbox,
+    )
+    from didit.types.bank.refresh_connection_params import (
+        BankRefreshConnectionParams as BankRefreshConnectionParams,
+    )
+    from didit.types.bank.renew_connection_params import (
+        BankRenewConnectionParams as BankRenewConnectionParams,
+    )
     from didit.types.billing.retrieve_balance_response import (
         BillingRetrieveBalanceResponse as BillingRetrieveBalanceResponse,
     )
@@ -561,6 +571,7 @@ if TYPE_CHECKING:
     from didit.types.components.async_report_list import (
         AsyncReportListCounts as AsyncReportListCounts,
     )
+    from didit.types.components.bank_account import BankAccount as BankAccount
     from didit.types.components.bank_account_check_business_holder import (
         BankAccountCheckBusinessHolder as BankAccountCheckBusinessHolder,
     )
@@ -576,12 +587,111 @@ if TYPE_CHECKING:
     from didit.types.components.bank_account_check_response import (
         BankAccountCheckResponse as BankAccountCheckResponse,
     )
+    from didit.types.components.bank_account_holder import BankAccountHolder as BankAccountHolder
+    from didit.types.components.bank_account_identifiers import (
+        BankAccountIdentifiers as BankAccountIdentifiers,
+    )
+    from didit.types.components.bank_account_identifiers import (
+        BankAccountIdentifiersOther as BankAccountIdentifiersOther,
+    )
+    from didit.types.components.bank_account_list import BankAccountList as BankAccountList
+    from didit.types.components.bank_account_sync import BankAccountSync as BankAccountSync
+    from didit.types.components.bank_balance import BankBalance as BankBalance
+    from didit.types.components.bank_balances import BankBalances as BankBalances
+    from didit.types.components.bank_connection import BankConnection as BankConnection
+    from didit.types.components.bank_connection import (
+        BankConnectionEndUser as BankConnectionEndUser,
+    )
+    from didit.types.components.bank_connection_account_summary import (
+        BankConnectionAccountSummary as BankConnectionAccountSummary,
+    )
+    from didit.types.components.bank_connection_billing import (
+        BankConnectionBilling as BankConnectionBilling,
+    )
+    from didit.types.components.bank_connection_consent import (
+        BankConnectionConsent as BankConnectionConsent,
+    )
+    from didit.types.components.bank_connection_deletion import (
+        BankConnectionDeletion as BankConnectionDeletion,
+    )
+    from didit.types.components.bank_connection_erasure import (
+        BankConnectionErasure as BankConnectionErasure,
+    )
+    from didit.types.components.bank_connection_list import BankConnectionList as BankConnectionList
+    from didit.types.components.bank_connection_ownership import (
+        BankConnectionOwnership as BankConnectionOwnership,
+    )
+    from didit.types.components.bank_connection_sync import BankConnectionSync as BankConnectionSync
+    from didit.types.components.bank_coverage import BankCoverage as BankCoverage
+    from didit.types.components.bank_coverage_country import (
+        BankCoverageCountry as BankCoverageCountry,
+    )
+    from didit.types.components.bank_date_range import BankDateRange as BankDateRange
+    from didit.types.components.bank_history_coverage import (
+        BankHistoryCoverage as BankHistoryCoverage,
+    )
+    from didit.types.components.bank_institution import BankInstitution as BankInstitution
+    from didit.types.components.bank_institution_list import (
+        BankInstitutionList as BankInstitutionList,
+    )
+    from didit.types.components.bank_institution_summary import (
+        BankInstitutionSummary as BankInstitutionSummary,
+    )
+    from didit.types.components.bank_link import BankLink as BankLink
+    from didit.types.components.bank_link_end_user import BankLinkEndUser as BankLinkEndUser
+    from didit.types.components.bank_link_error import BankLinkError as BankLinkError
+    from didit.types.components.bank_link_ownership_request import (
+        BankLinkOwnershipRequest as BankLinkOwnershipRequest,
+    )
+    from didit.types.components.bank_link_ownership_request import (
+        BankLinkOwnershipRequestBusiness as BankLinkOwnershipRequestBusiness,
+    )
+    from didit.types.components.bank_link_ownership_request import (
+        BankLinkOwnershipRequestReferenceIdentity as BankLinkOwnershipRequestReferenceIdentity,
+    )
+    from didit.types.components.bank_link_quote import BankLinkQuote as BankLinkQuote
+    from didit.types.components.bank_link_quote_line import BankLinkQuoteLine as BankLinkQuoteLine
+    from didit.types.components.bank_refresh_accepted import (
+        BankRefreshAccepted as BankRefreshAccepted,
+    )
+    from didit.types.components.bank_removed_transaction import (
+        BankRemovedTransaction as BankRemovedTransaction,
+    )
     from didit.types.components.bank_sign_in_pricing import BankSignInPricing as BankSignInPricing
     from didit.types.components.bank_sign_in_pricing import (
         BankSignInPricingAddOns as BankSignInPricingAddOns,
     )
+    from didit.types.components.bank_sign_in_pricing import (
+        BankSignInPricingOneTimeData as BankSignInPricingOneTimeData,
+    )
+    from didit.types.components.bank_sign_in_pricing import (
+        BankSignInPricingOngoing as BankSignInPricingOngoing,
+    )
     from didit.types.components.bank_statement_upload_pricing import (
         BankStatementUploadPricing as BankStatementUploadPricing,
+    )
+    from didit.types.components.bank_sync_budget import BankSyncBudget as BankSyncBudget
+    from didit.types.components.bank_sync_completed import BankSyncCompleted as BankSyncCompleted
+    from didit.types.components.bank_sync_error import BankSyncError as BankSyncError
+    from didit.types.components.bank_sync_run import BankSyncRun as BankSyncRun
+    from didit.types.components.bank_sync_run import BankSyncRunError as BankSyncRunError
+    from didit.types.components.bank_sync_run_list import BankSyncRunList as BankSyncRunList
+    from didit.types.components.bank_sync_run_result import BankSyncRunResult as BankSyncRunResult
+    from didit.types.components.bank_transaction import BankTransaction as BankTransaction
+    from didit.types.components.bank_transaction import (
+        BankTransactionExchange as BankTransactionExchange,
+    )
+    from didit.types.components.bank_transaction_changes import (
+        BankTransactionChanges as BankTransactionChanges,
+    )
+    from didit.types.components.bank_transaction_counterparty import (
+        BankTransactionCounterparty as BankTransactionCounterparty,
+    )
+    from didit.types.components.bank_transaction_page import (
+        BankTransactionPage as BankTransactionPage,
+    )
+    from didit.types.components.bank_transaction_remittance import (
+        BankTransactionRemittance as BankTransactionRemittance,
     )
     from didit.types.components.bank_verification_pricing import (
         BankVerificationPricing as BankVerificationPricing,
@@ -3918,6 +4028,7 @@ _MODULES: dict[str, str] = {
     "AuthenticationSetupUpdateVerifiedParams": "authentication_setup.update_verified_params",
     "AuthenticationSetupUpdateVerifiedParamsRules": "authentication_setup.update_verified_params",
     "AuthenticationSetupUpdateVerifiedParamsWorkflows": "authentication_setup.update_verified_params",
+    "BankAccount": "components.bank_account",
     "BankAccountCheckBusinessHolder": "components.bank_account_check_business_holder",
     "BankAccountCheckHolder": "components.bank_account_check_holder",
     "BankAccountCheckParams": "bank.account_check_params",
@@ -3925,9 +4036,62 @@ _MODULES: dict[str, str] = {
     "BankAccountCheckPersonHolder": "components.bank_account_check_person_holder",
     "BankAccountCheckPricing": "components.bank_account_check_pricing",
     "BankAccountCheckResponse": "components.bank_account_check_response",
+    "BankAccountHolder": "components.bank_account_holder",
+    "BankAccountIdentifiers": "components.bank_account_identifiers",
+    "BankAccountIdentifiersOther": "components.bank_account_identifiers",
+    "BankAccountList": "components.bank_account_list",
+    "BankAccountSync": "components.bank_account_sync",
+    "BankBalance": "components.bank_balance",
+    "BankBalances": "components.bank_balances",
+    "BankConnection": "components.bank_connection",
+    "BankConnectionAccountSummary": "components.bank_connection_account_summary",
+    "BankConnectionBilling": "components.bank_connection_billing",
+    "BankConnectionConsent": "components.bank_connection_consent",
+    "BankConnectionDeletion": "components.bank_connection_deletion",
+    "BankConnectionEndUser": "components.bank_connection",
+    "BankConnectionErasure": "components.bank_connection_erasure",
+    "BankConnectionList": "components.bank_connection_list",
+    "BankConnectionOwnership": "components.bank_connection_ownership",
+    "BankConnectionSync": "components.bank_connection_sync",
+    "BankCoverage": "components.bank_coverage",
+    "BankCoverageCountry": "components.bank_coverage_country",
+    "BankCreateLinkParams": "bank.create_link_params",
+    "BankCreateLinkParamsSandbox": "bank.create_link_params",
+    "BankDateRange": "components.bank_date_range",
+    "BankHistoryCoverage": "components.bank_history_coverage",
+    "BankInstitution": "components.bank_institution",
+    "BankInstitutionList": "components.bank_institution_list",
+    "BankInstitutionSummary": "components.bank_institution_summary",
+    "BankLink": "components.bank_link",
+    "BankLinkEndUser": "components.bank_link_end_user",
+    "BankLinkError": "components.bank_link_error",
+    "BankLinkOwnershipRequest": "components.bank_link_ownership_request",
+    "BankLinkOwnershipRequestBusiness": "components.bank_link_ownership_request",
+    "BankLinkOwnershipRequestReferenceIdentity": "components.bank_link_ownership_request",
+    "BankLinkQuote": "components.bank_link_quote",
+    "BankLinkQuoteLine": "components.bank_link_quote_line",
+    "BankRefreshAccepted": "components.bank_refresh_accepted",
+    "BankRefreshConnectionParams": "bank.refresh_connection_params",
+    "BankRemovedTransaction": "components.bank_removed_transaction",
+    "BankRenewConnectionParams": "bank.renew_connection_params",
     "BankSignInPricing": "components.bank_sign_in_pricing",
     "BankSignInPricingAddOns": "components.bank_sign_in_pricing",
+    "BankSignInPricingOneTimeData": "components.bank_sign_in_pricing",
+    "BankSignInPricingOngoing": "components.bank_sign_in_pricing",
     "BankStatementUploadPricing": "components.bank_statement_upload_pricing",
+    "BankSyncBudget": "components.bank_sync_budget",
+    "BankSyncCompleted": "components.bank_sync_completed",
+    "BankSyncError": "components.bank_sync_error",
+    "BankSyncRun": "components.bank_sync_run",
+    "BankSyncRunError": "components.bank_sync_run",
+    "BankSyncRunList": "components.bank_sync_run_list",
+    "BankSyncRunResult": "components.bank_sync_run_result",
+    "BankTransaction": "components.bank_transaction",
+    "BankTransactionChanges": "components.bank_transaction_changes",
+    "BankTransactionCounterparty": "components.bank_transaction_counterparty",
+    "BankTransactionExchange": "components.bank_transaction",
+    "BankTransactionPage": "components.bank_transaction_page",
+    "BankTransactionRemittance": "components.bank_transaction_remittance",
     "BankVerificationPricing": "components.bank_verification_pricing",
     "BankVerificationPricingCountry": "components.bank_verification_pricing_country",
     "BankVerificationPricingMethods": "components.bank_verification_pricing_methods",
@@ -5325,6 +5489,7 @@ __all__ = [
     "AuthenticationSetupUpdateVerifiedParams",
     "AuthenticationSetupUpdateVerifiedParamsRules",
     "AuthenticationSetupUpdateVerifiedParamsWorkflows",
+    "BankAccount",
     "BankAccountCheckBusinessHolder",
     "BankAccountCheckHolder",
     "BankAccountCheckParams",
@@ -5332,9 +5497,62 @@ __all__ = [
     "BankAccountCheckPersonHolder",
     "BankAccountCheckPricing",
     "BankAccountCheckResponse",
+    "BankAccountHolder",
+    "BankAccountIdentifiers",
+    "BankAccountIdentifiersOther",
+    "BankAccountList",
+    "BankAccountSync",
+    "BankBalance",
+    "BankBalances",
+    "BankConnection",
+    "BankConnectionAccountSummary",
+    "BankConnectionBilling",
+    "BankConnectionConsent",
+    "BankConnectionDeletion",
+    "BankConnectionEndUser",
+    "BankConnectionErasure",
+    "BankConnectionList",
+    "BankConnectionOwnership",
+    "BankConnectionSync",
+    "BankCoverage",
+    "BankCoverageCountry",
+    "BankCreateLinkParams",
+    "BankCreateLinkParamsSandbox",
+    "BankDateRange",
+    "BankHistoryCoverage",
+    "BankInstitution",
+    "BankInstitutionList",
+    "BankInstitutionSummary",
+    "BankLink",
+    "BankLinkEndUser",
+    "BankLinkError",
+    "BankLinkOwnershipRequest",
+    "BankLinkOwnershipRequestBusiness",
+    "BankLinkOwnershipRequestReferenceIdentity",
+    "BankLinkQuote",
+    "BankLinkQuoteLine",
+    "BankRefreshAccepted",
+    "BankRefreshConnectionParams",
+    "BankRemovedTransaction",
+    "BankRenewConnectionParams",
     "BankSignInPricing",
     "BankSignInPricingAddOns",
+    "BankSignInPricingOneTimeData",
+    "BankSignInPricingOngoing",
     "BankStatementUploadPricing",
+    "BankSyncBudget",
+    "BankSyncCompleted",
+    "BankSyncError",
+    "BankSyncRun",
+    "BankSyncRunError",
+    "BankSyncRunList",
+    "BankSyncRunResult",
+    "BankTransaction",
+    "BankTransactionChanges",
+    "BankTransactionCounterparty",
+    "BankTransactionExchange",
+    "BankTransactionPage",
+    "BankTransactionRemittance",
     "BankVerificationPricing",
     "BankVerificationPricingCountry",
     "BankVerificationPricingMethods",

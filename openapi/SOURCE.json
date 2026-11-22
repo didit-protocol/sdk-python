@@ -1,13 +1,13 @@
 {
  "verification.json": {
   "url": "https://docs.didit.me/openapi-25.json",
-  "sha256": "17f41e7945d1df2ad698d4c5b1f5b6003442c666cbe81b44203d07d16c2766b8",
-  "fetched_at": "2026-11-21T21:04:00Z"
+  "sha256": "8679c71f0bcbe791f5182d3b1954b9a36388b90364ec6a45cd4d8d735bbdf517",
+  "fetched_at": "2026-11-22T20:10:55Z"
  },
  "account.json": {
   "url": "https://docs.didit.me/openapi-auth.json",
-  "sha256": "ad62ebe753a36a98b8a7516e099efe7f1fae4229491c6702248c02c61afbc220",
-  "fetched_at": "2026-11-21T21:04:00Z"
+  "sha256": "23f77d2d7418d2567d8ef7197e150f78f8677411eeef878ba1711015762de3e6",
+  "fetched_at": "2026-11-22T20:10:55Z"
  },
  "webhook-vectors.json": {
   "generator": "product-automations scripts/server-sdks/make_vectors.py (seeded 2026-10-17)",
@@ -15,7 +15,7 @@
  },
  "authentication.json": {
   "url": "https://docs.didit.me/openapi-authentication.json",
-  "sha256": "e365ac52a28d8a68d8c1b9497509f882ea075ecdfad491aa5b36dc720c33405b",
-  "fetched_at": "2026-11-21T21:04:00Z"
+  "sha256": "aaff0e1576cdd670d3006c2a3ae948da9eed16b949fef7844262df296b361092",
+  "fetched_at": "2026-11-22T20:10:55Z"
  }
 }

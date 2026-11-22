@@ -49,7 +49,7 @@ class TravelRuleUpdateSettingsParams(TypedDict, total=False):
     """Decimal string, 0 or more."""
 
     data_sharing_fields: TravelRuleDataSharingFieldsParam
-    """Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR or FATF Recommendation 16), an empty list included, is refused with `400`."""
+    """Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR, FINTRAC for `canada`, FinCEN for `us`, or FATF Recommendation 16), an empty list included, is refused with `400`."""
 
     matching_rules: TravelRuleMatchingRulesParam
     """Merged per entity type, and per field inside it. A field that entity type does not compare (for example `date_of_birth` for `company`) is refused with `400`."""
