@@ -54,7 +54,7 @@ def wait_for_connection(
         link = client.bank.get_link(link_id)
 
     connection = client.bank.get_connection(link.connection_id)
-    while not connection.sync.initial_complete:
+    while connection.sync is None or not connection.sync.initial_complete:
         if connection.status in ("failed", "revoked", "deleted"):
             raise RuntimeError(f"connection {connection.id} is {connection.status}")
         if time.monotonic() > deadline:

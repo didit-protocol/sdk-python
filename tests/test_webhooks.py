@@ -514,9 +514,7 @@ def test_events_keep_unknown_fields_and_survive_bad_shapes() -> None:
 # Bank data events: every one from its recorded payload (DESIGN 16.3). The link events
 # nest their fields under ``data``; the connection, data and sync events carry them next
 # to the envelope, exactly as the backend sends them.
-BANK_EVENTS: list[
-    tuple[str, str, type[webhooks.WebhookEventBase], bool, dict[str, Any]]
-] = [
+BANK_EVENTS: list[tuple[str, str, type[webhooks.WebhookEventBase], bool, dict[str, Any]]] = [
     (
         "bank.link.completed",
         "bank_link_completed",
@@ -704,8 +702,9 @@ def test_bank_events_parse_from_their_recorded_payload(
     assert isinstance(event, cls)
     assert event.webhook_type == webhook_type
     if nested:
-        assert isinstance(event.data, webhooks.BankLinkEventData)  # pyright: ignore[reportAttributeAccessIssue]
-        carrier: Any = event.data
+        nested_data: Any = getattr(event, "data", None)
+        assert isinstance(nested_data, webhooks.BankLinkEventData)
+        carrier: Any = nested_data
     else:
         carrier = event
     for field, value in expected.items():
@@ -740,7 +739,8 @@ def test_bank_events_keep_every_payload_field() -> None:
         {"webhook_type": "bank.data.updated", "accounts": "not-a-list"}
     )
     assert isinstance(wrong_shape, webhooks.BankDataUpdatedEvent)
-    assert wrong_shape.accounts == "not-a-list"
+    kept: Any = wrong_shape.accounts
+    assert kept == "not-a-list"
     # The link events keep their fields under ``data``; the connection events do not.
     link: Any = webhooks.parse_event(
         {"webhook_type": "bank.link.completed", "data": {"link_id": _BANK_LINK}}
