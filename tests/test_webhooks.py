@@ -619,11 +619,17 @@ def test_bank_events_keep_every_payload_field() -> None:
 
 
 def test_every_bank_event_type_is_typed() -> None:
-    assert {name for name, _, _ in BANK_EVENTS} == {
+    typed = {cls.model_fields["webhook_type"].default for _, cls, _ in BANK_EVENTS}
+    registered = {
         name
-        for name in webhooks._events._BY_TYPE
-        if name.startswith("bank.")  # pyright: ignore[reportPrivateUsage]
+        for name in webhooks._events._BY_TYPE  # pyright: ignore[reportPrivateUsage]
+        if name.startswith("bank.")
     }
+    assert typed == registered
+    assert (
+        all(name == cls.model_fields["webhook_type"].default for name, cls, _ in BANK_EVENTS)
+        is False
+    )  # vector names are snake_case
 
 
 def test_travel_rule_vector_parses_to_its_event(monkeypatch: pytest.MonkeyPatch) -> None:
