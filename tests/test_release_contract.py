@@ -18,7 +18,7 @@ import importlib
 import json
 import pathlib
 import sys
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -145,7 +145,7 @@ def _document_event(webhook_type: str) -> dict[str, Any]:
         for part in schema.get("allOf", []):
             enum = part.get("properties", {}).get("webhook_type", {}).get("enum", [])
             if webhook_type in enum:
-                return schema
+                return cast("dict[str, Any]", schema)
     raise AssertionError(f"no schema for {webhook_type}")
 
 
