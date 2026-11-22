@@ -653,7 +653,8 @@ def test_bank_events_keep_every_payload_field() -> None:
         {"webhook_type": "bank.data.updated", "data": "not-an-object"}
     )
     assert isinstance(wrong_shape, webhooks.BankDataUpdatedEvent)
-    assert wrong_shape.data == "not-an-object"
+    kept: Any = wrong_shape.data
+    assert kept == "not-an-object"
 
 
 def test_every_bank_event_type_is_typed() -> None:
