@@ -13,6 +13,7 @@ Use a sandbox application while you try them.
 | `aml_screening.py` | AML screening with an idempotency key, and error handling |
 | `transaction_screening.py` | Transactions (KYT): submit one, then list with auto-pagination |
 | `travel_rule.py` | Travel Rule settings, VASP directory, wallet addresses, wallet screening |
+| `bank_wait_for_connection.py` | Create a Bank Link, wait for `bank.connection.created`, read accounts and balances |
 | `authentication.py` | Verify a Didit Authentication access token in your backend (needs `didit-sdk[auth]`) |
 | `webhooks/fastapi_app.py` | Webhook receiver for FastAPI |
 | `webhooks/flask_app.py` | Webhook receiver for Flask |

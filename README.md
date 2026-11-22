@@ -69,7 +69,7 @@ client.cases.list()  # application scoped, see Configuration
 client.account.login(email="you@example.com", password="...")
 ```
 
-The resource tree covers sessions (with imports and reviews), the standalone APIs (`id_verification`, `face_match`, `face_search`, `passive_liveness`, `age_estimation`, `proof_of_address`, `document_ai`, `aml`, `database_validation`, `phone`, `email`, `ip`, `kyb`), `id_wallets`, `fraud_checks`, `users`, `businesses`, `transactions`, `wallet_screening`, `travel_rule`, `workflows`, `questionnaires`, `webhooks.destinations`, `billing`, `pricing`, `biometric_templates`, `customization`, `cases`, `regulatory_reports`, `report_templates`, `networks` and `account`. The API reference at [docs.didit.me](https://docs.didit.me) documents every endpoint; each SDK method's docstring names the endpoint it calls.
+The resource tree covers sessions (with imports and reviews), the standalone APIs (`id_verification`, `face_match`, `face_search`, `passive_liveness`, `age_estimation`, `proof_of_address`, `document_ai`, `aml`, `database_validation`, `phone`, `email`, `ip`, `kyb`), `id_wallets`, `fraud_checks`, `users`, `businesses`, `transactions`, `wallet_screening`, `travel_rule`, `workflows`, `questionnaires`, `webhooks.destinations`, `billing`, `pricing`, `biometric_templates`, `customization`, `cases`, `regulatory_reports`, `report_templates`, `networks`, `bank` and `account`. The API reference at [docs.didit.me](https://docs.didit.me) documents every endpoint; each SDK method's docstring names the endpoint it calls.
 
 Request and response types live in `didit.types`, named after the method (`SessionsCreateResponse`, `SessionsCreateParams`) or after the API schema (`TransactionDetail`). Responses are [pydantic](https://docs.pydantic.dev) models:
 
@@ -103,6 +103,21 @@ client.travel_rule.wallet_addresses.create(address="bc1q...", chain="BTC")
 ```
 
 Their webhooks arrive as `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent` and `TravelRuleStatusUpdatedEvent`.
+
+## Bank data
+
+`client.bank.*` covers the Bank data API: Bank Link, connections, accounts, balances, transactions, the change feed, sync runs, institutions and coverage. Bank data needs an API key that carries the `bank-data` permission; a full-access key is refused with `403 bank_data_access_denied`.
+
+```python
+link = client.bank.create_link(access="ongoing", country="ESP")  # send the person to link.url
+connection = client.bank.get_connection("c0a80104-1111-4111-8111-111111111111")
+account_ids = [a.id for a in connection.accounts]
+page = client.bank.list_accounts(connection.id)   # cursor pagination: page.next_cursor
+changes = client.bank.sync_transactions(connection.id, cursor="")  # the change feed
+balances = client.bank.get_balances(account_ids[0])  # amounts are decimal strings
+```
+
+`examples/bank_wait_for_connection.py` creates a link, waits for `bank.connection.created` (the webhook, or polling until `sync.initial_complete`) and reads the accounts.
 
 ## Configuration
 
@@ -186,6 +201,19 @@ async for session in async_client.sessions.list(limit=100):
     ...
 ```
 
+Bank lists (`client.bank.*`) are the exception: they use cursor pagination and return `{items, next_cursor}` as it comes, with no auto-pagination, because one cursor read is pinned. Send `cursor` (a stored `next_cursor`) and `limit`, and keep the last cursor only after you have read every page:
+
+```python
+cursor = ""
+while True:
+    page = client.bank.list_connections(cursor=cursor, limit=100)
+    for connection in page.items:
+        ...
+    if not page.next_cursor:
+        break
+    cursor = page.next_cursor
+```
+
 Next links are followed only on the API's own origin (a relative link resolves against the page that returned it); the API key is never sent anywhere else. A list that keeps returning a link it already returned raises `DiditError` instead of looping forever.
 
 ## Files and binary responses
@@ -235,7 +263,7 @@ asyncio.run(main())
 - `X-Signature-Simple` (deprecated) counts only with `allow_simple=True`; it covers the envelope, not the body, so `event.body_authenticated` is then `False` and you should re-fetch the record from the API.
 - `didit.webhooks.verify_parsed(payload, headers, secret)` is for frameworks that only give you the parsed JSON; it can check `X-Signature-V2` only.
 
-Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdatedEvent`, `UserDataUpdatedEvent`, `BusinessStatusUpdatedEvent`, `BusinessDataUpdatedEvent`, `ActivityCreatedEvent`, `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent`, `TravelRuleStatusUpdatedEvent`, `WorkflowComplianceChangedEvent`, `KybRegistrySearchResolvedEvent`, and `UnknownEvent` (with the whole `payload`) for types this version does not know. `client.webhooks.verify(...)` does the same as `didit.webhooks.verify(...)`.
+Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdatedEvent`, `UserDataUpdatedEvent`, `BusinessStatusUpdatedEvent`, `BusinessDataUpdatedEvent`, `ActivityCreatedEvent`, `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent`, `TravelRuleStatusUpdatedEvent`, `WorkflowComplianceChangedEvent`, `KybRegistrySearchResolvedEvent`, `UnknownEvent` (with the whole `payload`) for types this version does not know, and the sixteen Bank data events from `bank.link.completed` to `bank.sync.recovered`, whose ids and statuses are on `event.data` (see [Bank data](#bank-data)). `client.webhooks.verify(...)` does the same as `didit.webhooks.verify(...)`.
 
 ## Authentication
 
