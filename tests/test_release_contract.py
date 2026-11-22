@@ -179,6 +179,32 @@ def test_bank_event_models_carry_the_document_fields(webhook_type: str) -> None:
         )
 
 
+BANK_VECTORS: list[dict[str, Any]] = [
+    vector
+    for vector in json.loads((ROOT / "openapi" / "webhook-vectors.json").read_text("utf-8"))[
+        "vectors"
+    ]
+    if str(vector["name"]).startswith("bank_")
+]
+
+
+@pytest.mark.parametrize("vector", BANK_VECTORS, ids=[vector["name"] for vector in BANK_VECTORS])
+def test_bank_vectors_carry_the_document_fields(vector: dict[str, Any]) -> None:
+    """A vector's body is the shape the contract documents for its event.
+
+    The vectors prove the bytes a receiver gets verify; this holds their bodies to the
+    fields the document gives each event, so a vector that keeps a superseded shape (the
+    nested ``data`` connection events used to have, ``account_ids`` before ``accounts``)
+    fails here as well, not only in the typed models.
+    """
+    body = cast("dict[str, Any]", json.loads(vector["body"]))
+    document = _document_properties(_document_event(body["webhook_type"]))
+    assert set(body) - ENVELOPE_FIELDS == set(document) - ENVELOPE_FIELDS
+    nested = document.get("data")
+    if nested is not None:
+        assert set(body["data"]) == set(_document_properties(_resolve(nested)))
+
+
 def test_version_contract_agrees_across_release_files() -> None:
     """release.yml refuses a tag that disagrees with these files; keep them in step."""
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
