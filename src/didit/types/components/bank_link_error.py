@@ -24,6 +24,7 @@ class BankLinkError(BaseModel):
             "read_limit",
             "renewal_not_needed",
             "renewal_window_expired",
+            "first_sync_failed",
         ]
         | str
     )

@@ -13,6 +13,9 @@ class BankConnectionErasure(BaseModel):
     """Progress of a deletion you asked for."""
 
     status: Literal["pending", "erased", "failed"] | str
-    """`pending` while deletion runs, `erased` when no stored copy and no access at the bank remain, `failed` when it could not be confirmed within 24 hours. A failed deletion keeps every read and write of the connection blocked, is retried, and Didit is alerted."""
+    """`pending` while deletion runs, `erased` when no stored copy and no access at the bank remain, `failed` when it could not be confirmed within 24 hours. A failed deletion keeps the connection's data closed, is retried, and Didit is alerted."""
 
     requested_at: _dt.datetime
+
+    erased_at: _dt.datetime | None
+    """When the deletion finished. `null` until `status` is `erased`."""

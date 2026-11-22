@@ -17,5 +17,5 @@ class BankSyncError(BaseModel):
     message: str
     """Plain-language explanation."""
 
-    at: _dt.datetime | None = None
-    """When it happened."""
+    at: _dt.datetime | None
+    """When it happened. `null` on a per-account result."""

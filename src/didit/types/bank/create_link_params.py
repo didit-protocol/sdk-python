@@ -9,7 +9,38 @@ from typing_extensions import TypedDict
 from didit.types.components.bank_link_end_user import BankLinkEndUser
 from didit.types.components.bank_link_ownership_request import BankLinkOwnershipRequest
 
-__all__ = ["BankCreateLinkParams"]
+__all__ = ["BankCreateLinkParams", "BankCreateLinkParamsSandbox"]
+
+
+class BankCreateLinkParamsSandbox(TypedDict, total=False):
+    """Sandbox applications only: shapes what the Didit Test Bank does in this link, so a test can reach each outcome. Ignored in a live application."""
+
+    persona: (
+        Literal[
+            "personal_basic",
+            "business_multi",
+            "long_history",
+            "pending",
+            "sparse_fields",
+            "no_ongoing",
+        ]
+        | str
+    )
+    """The account set the Test Bank offers. `no_ongoing` makes the bank refuse ongoing access."""
+
+    switches: Sequence[
+        Literal[
+            "partial_grant",
+            "renewal_other_login",
+            "expired_cursor",
+            "webhook_twice",
+            "midnight_booking",
+            "blocked_popup",
+            "bank_app_return",
+        ]
+        | str
+    ]
+    """Behaviours to switch on for the run."""
 
 
 class BankCreateLinkParams(TypedDict, total=False):
@@ -40,13 +71,13 @@ class BankCreateLinkParams(TypedDict, total=False):
     """Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`."""
 
     history_from: str | _dt.date
-    """Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days answers `400 window_not_available`."""
+    """Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`."""
 
     extended_history: Literal["standard", "allow_extra_auth"] | str
     """`allow_extra_auth` lets a bank that asks for one more confirmation release older history."""
 
     consent_days: int
-    """Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`."""
+    """Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`. With `access: one_time` it answers `400 invalid_request` with `field: consent_days`."""
 
     ownership: BankLinkOwnershipRequest
     """Optional comparison of the account holder with a person or a company."""
@@ -55,13 +86,13 @@ class BankCreateLinkParams(TypedDict, total=False):
     """The person or company that connects the account."""
 
     redirect_url: str
-    """Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered in your application settings. Without one, the flow ends on Didit's own result page."""
+    """Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered for your application (scheme, host, port, path and query: no prefix, no trailing-slash or case tolerance), otherwise the call answers `400 redirect_url_not_registered`. In sandbox only, a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Without one, automatic return to your page is not promised: after a full-page bank hop the person returns to the page that opened the link when its origin is in `allowed_origins`, and otherwise the flow ends on Didit's own result page."""
 
     allowed_origins: Sequence[str]
-    """HTTPS origins allowed to embed this link. Must be among your application's allowed domains, which are the default."""
+    """HTTPS origins allowed to embed this link, up to 50. Must be among your application's allowed domains, which are the default; an origin outside them answers `403 link_origin_not_allowed`."""
 
     language: str
-    """Optional language code. Otherwise the browser language."""
+    """Optional language code such as `es` or `pt-BR`. Otherwise the browser language."""
 
     vendor_data: str
     """Your own reference, returned on the link and the connection."""
@@ -73,7 +104,10 @@ class BankCreateLinkParams(TypedDict, total=False):
     """`reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection."""
 
     allow_one_time_fallback: bool
-    """With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs."""
+    """With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs. Only with `access: ongoing`: with one-time access it answers `400 invalid_request` with `field: allow_one_time_fallback`."""
 
     accept_reduced_grant: bool
     """When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged."""
+
+    sandbox: BankCreateLinkParamsSandbox
+    """Sandbox applications only: shapes what the Didit Test Bank does in this link, so a test can reach each outcome. Ignored in a live application."""

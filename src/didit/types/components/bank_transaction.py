@@ -45,7 +45,7 @@ class BankTransaction(BaseModel):
     transaction_date: _dt.date | None
 
     effective_date: _dt.date
-    """The date the date filters use, as the bank reports it in its own time zone with nothing converted: the booking date of a booked transaction, and for a pending one its transaction date or, failing that, the date it was first seen."""
+    """The date the date filters use, as the bank reports it in its own time zone with nothing converted: for a booked transaction its booking date, else its value date, else the date it was first seen; for a pending one its transaction date, else the date it was first seen."""
 
     amount: str
     """Signed amount as a decimal string. Negative is money out."""

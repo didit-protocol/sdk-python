@@ -8,7 +8,7 @@ __all__ = ["BankConnectionDeletion"]
 
 
 class BankConnectionDeletion(BaseModel):
-    """Accepted deletion. The connection's bank data is being deleted and every read and write of it is refused; the connection reads as a minimal record with this `erasure` status."""
+    """Accepted deletion. The connection's bank data is being deleted and its data operations answer `409 connection_not_active`; reading the connection returns a minimal record with this `erasure` status."""
 
     id: str
     """The connection id."""

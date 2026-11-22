@@ -22,20 +22,20 @@ class BankConnectionEndUser(BaseModel):
 
 
 class BankConnection(BaseModel):
-    """The person's permission for your application to read one bank. A renewal keeps the connection id and every account id."""
+    """The person's permission for your application to read one bank. A renewal keeps the connection id and every account id. A deleted connection answers only `id`, `status`, `status_reason`, `created_at` and `erasure`: every other field is absent, and no bank, person or account data remains in it."""
 
     id: str
     """Identifier of the connection."""
 
-    environment: Literal["live", "sandbox"] | str
+    environment: Literal["live", "sandbox"] | str | None = None
 
-    access: Literal["one_time", "ongoing"] | str
+    access: Literal["one_time", "ongoing"] | str | None = None
 
     status: (
         Literal["pending", "active", "renewal_required", "paused", "revoked", "deleted", "failed"]
         | str
     )
-    """`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you. `deleted`: only the id, dates and reason remain. `failed`: the first sync never succeeded."""
+    """`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. `failed`: the first sync never succeeded."""
 
     status_reason: (
         Literal[
@@ -49,48 +49,52 @@ class BankConnection(BaseModel):
             "insufficient_balance",
             "paused_by_customer",
             "first_sync_failed",
+            "deleted_by_customer",
+            "retention_elapsed",
+            "application_deleted",
+            "restored_after_deletion",
         ]
         | str
         | None
     )
-    """Why the connection is in this status. `paused_by_customer` is reserved."""
+    """Why the connection is in this status. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed`, `application_deleted` or `restored_after_deletion`."""
 
-    institution: BankInstitutionSummary
+    institution: BankInstitutionSummary | None = None
     """The bank a connection or link is for."""
 
-    segment: Literal["personal", "business"] | str | None
+    segment: Literal["personal", "business"] | str | None = None
 
-    data: list[Literal["accounts", "balances", "transactions"] | str]
+    data: list[Literal["accounts", "balances", "transactions"] | str] | None = None
     """The scopes the person accepted."""
 
-    consent: BankConnectionConsent
+    consent: BankConnectionConsent | None = None
     """The person's consent for this connection."""
 
-    sync: BankConnectionSync
+    sync: BankConnectionSync | None = None
     """Synchronisation state of a connection."""
 
-    accounts: list[BankConnectionAccountSummary]
+    accounts: list[BankConnectionAccountSummary] | None = None
     """Summary of every account in the connection. Read the full account with `get_account`."""
 
-    ownership: BankConnectionOwnership
+    ownership: BankConnectionOwnership | None = None
     """The optional comparison of the account holder with a person or company."""
 
-    end_user: BankConnectionEndUser
+    end_user: BankConnectionEndUser | None = None
 
-    manage_url: str | None
-    """Reserved. Always `null` for now."""
+    manage_url: str | None = None
+    """Reserved. Always `null`."""
 
-    billing: BankConnectionBilling
+    billing: BankConnectionBilling | None = None
     """What this connection costs. Sandbox is never charged."""
 
-    possible_duplicate_of: str | None
+    possible_duplicate_of: str | None = None
     """Set when this connection may duplicate another active one but no `end_user.reference` allowed a certain match."""
 
     erasure: BankConnectionErasure | None
     """Set after `delete_connection`; otherwise `null`."""
 
-    vendor_data: str | None
+    vendor_data: str | None = None
 
     created_at: _dt.datetime
 
-    updated_at: _dt.datetime
+    updated_at: _dt.datetime | None = None

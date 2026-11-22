@@ -33,5 +33,5 @@ class BankCoverageCountry(BaseModel):
     history_days_max: int | None
     """The deepest history any bank in the country delivers, in days."""
 
-    business_accounts: bool | None
+    business_accounts: bool
     """Whether at least one bank supports business accounts."""

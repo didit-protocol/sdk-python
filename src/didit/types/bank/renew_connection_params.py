@@ -12,9 +12,10 @@ class BankRenewConnectionParams(TypedDict, total=False):
     """Optional settings of a renew link. The rest comes from the connection."""
 
     redirect_url: str
-    """Where the browser goes at the end. Must exactly match a registered redirect URL."""
+    """Where the browser goes at the end. Must exactly match a registered redirect URL (scheme, host, port, path and query), otherwise `400 redirect_url_not_registered`. In sandbox only, a plain `http` localhost address needs no registration."""
 
     allowed_origins: Sequence[str]
+    """HTTPS origins allowed to embed this link, up to 50, among your application's allowed domains."""
 
     language: str
 

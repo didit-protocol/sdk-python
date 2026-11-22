@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+from typing import Literal
 
 from didit._models import BaseModel
 
@@ -11,7 +12,7 @@ __all__ = ["BankConnectionBilling"]
 class BankConnectionBilling(BaseModel):
     """What this connection costs. Sandbox is never charged."""
 
-    unit: str
+    unit: Literal["connection_month", "one_time"] | str
     """Billing unit, `connection_month` for ongoing access, `one_time` otherwise."""
 
     price_usd: str | None

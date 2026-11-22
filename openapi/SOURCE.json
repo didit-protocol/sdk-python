@@ -1,8 +1,19 @@
 {
  "verification.json": {
-  "url": "https://docs.didit.me/openapi-25.json",
-  "sha256": "2b1388353e84db0c870d14bbd954101bb9d838d61d94d5af61500eb27e30564b",
-  "fetched_at": "2026-11-22T09:41:44Z"
+  "url": "https://raw.githubusercontent.com/didit-protocol/mintlify-docs/2c9baeb40e9845d0aec5567ce4e744d89b950388/openapi-25.json",
+  "branch": "docs/bank-data-openapi-contract",
+  "commit": "2c9baeb40e9845d0aec5567ce4e744d89b950388",
+  "pull_request": "https://github.com/didit-protocol/mintlify-docs/pull/719",
+  "omitted_paths": [
+   "/v3/messages/",
+   "/v3/messages/prices/",
+   "/v3/messages/settings/",
+   "/v3/messages/{message_id}/",
+   "/v3/messages/{message_id}/cancel/"
+  ],
+  "omitted_reason": "the five /v3/messages operations are sdk-python #115 and #116, not this change; the daily sync restores them when it syncs the published document",
+  "sha256": "f7394a0d4a04b6550077ee3bc71bffe42acb62711caf3c38d4327a404990e179",
+  "fetched_at": "2026-11-22T10:30:00Z"
  },
  "account.json": {
   "url": "https://docs.didit.me/openapi-auth.json",

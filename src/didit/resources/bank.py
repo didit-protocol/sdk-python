@@ -18,6 +18,7 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.bank.account_check_params import BankAccountCheckParamsAccount
+from didit.types.bank.create_link_params import BankCreateLinkParamsSandbox
 from didit.types.components.bank_account import BankAccount
 from didit.types.components.bank_account_check_holder import BankAccountCheckHolder
 from didit.types.components.bank_account_check_response import BankAccountCheckResponse
@@ -156,6 +157,7 @@ class Bank(SyncAPIResource):
         duplicates: Literal["reuse", "allow"] | str | NotGiven = NOT_GIVEN,
         allow_one_time_fallback: bool | NotGiven = NOT_GIVEN,
         accept_reduced_grant: bool | NotGiven = NOT_GIVEN,
+        sandbox: BankCreateLinkParamsSandbox | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -185,19 +187,20 @@ class Bank(SyncAPIResource):
           segment: Filters the picker and tells the bank which login to open where the bank separates them. Default `any`.
           data: What to read. `accounts` is always included: name, type, currency, identifiers and the holder name where the bank shares it. Default `["accounts"]`.
           history_days: Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`.
-          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days answers `400 window_not_available`.
+          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
           extended_history: `allow_extra_auth` lets a bank that asks for one more confirmation release older history.
-          consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`.
+          consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`. With `access: one_time` it answers `400 invalid_request` with `field: consent_days`.
           ownership: Optional comparison of the account holder with a person or a company.
           end_user: The person or company that connects the account.
-          redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered in your application settings. Without one, the flow ends on Didit's own result page.
-          allowed_origins: HTTPS origins allowed to embed this link. Must be among your application's allowed domains, which are the default.
-          language: Optional language code. Otherwise the browser language.
+          redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered for your application (scheme, host, port, path and query: no prefix, no trailing-slash or case tolerance), otherwise the call answers `400 redirect_url_not_registered`. In sandbox only, a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Without one, automatic return to your page is not promised: after a full-page bank hop the person returns to the page that opened the link when its origin is in `allowed_origins`, and otherwise the flow ends on Didit's own result page.
+          allowed_origins: HTTPS origins allowed to embed this link, up to 50. Must be among your application's allowed domains, which are the default; an origin outside them answers `403 link_origin_not_allowed`.
+          language: Optional language code such as `es` or `pt-BR`. Otherwise the browser language.
           vendor_data: Your own reference, returned on the link and the connection.
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
-          allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs.
+          allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs. Only with `access: ongoing`: with one-time access it answers `400 invalid_request` with `field: allow_one_time_fallback`.
           accept_reduced_grant: When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged.
+          sandbox: Sandbox applications only: shapes what the Didit Test Bank does in this link, so a test can reach each outcome. Ignored in a live application.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -233,6 +236,7 @@ class Bank(SyncAPIResource):
                     "duplicates": duplicates,
                     "allow_one_time_fallback": allow_one_time_fallback,
                     "accept_reduced_grant": accept_reduced_grant,
+                    "sandbox": sandbox,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
@@ -450,7 +454,7 @@ class Bank(SyncAPIResource):
 
         Deletes the connection's bank data and stops access at the bank. The connection's accounts, balances, transactions, sync history, consent records and ownership results are deleted. Deletion is irreversible.
 
-        It starts at once: from the moment you call, every read and write of the connection answers `409 connection_not_active`, and the response is `202` with `erasure.status` `pending`. The connection then reads with `erasure.status` `erased`, or `failed` if deletion could not be confirmed within 24 hours; a failed deletion is retried until it completes. A deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and it holds no accounts, balances, transactions, consent or sync data.
+        It starts at once: the response is `202` with `erasure.status` `pending`, and from that moment the connection's data operations (refresh, sync runs, accounts, balances, transactions and the change feed) answer `409 connection_not_active`. The connection then reads with `erasure.status` `erased`, or `failed` if deletion could not be confirmed within 24 hours; a failed deletion is retried until it completes. A deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and it holds no accounts, balances, transactions, consent or sync data.
 
         Not affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call returns the current state. To stop access without deleting, use `revoke_connection`.
 
@@ -497,7 +501,7 @@ class Bank(SyncAPIResource):
 
         Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `"wait": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.
 
-        Live syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day per account under the European rules, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.
+        Live syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.
 
         When a sync stores changes, `bank.data.updated` tells you; then read the change feed.
 
@@ -644,8 +648,8 @@ class Bank(SyncAPIResource):
 
         Args:
           id: The connection id.
-          redirect_url: Where the browser goes at the end. Must exactly match a registered redirect URL.
-          allowed_origins
+          redirect_url: Where the browser goes at the end. Must exactly match a registered redirect URL (scheme, host, port, path and query), otherwise `400 redirect_url_not_registered`. In sandbox only, a plain `http` localhost address needs no registration.
+          allowed_origins: HTTPS origins allowed to embed this link, up to 50, among your application's allowed domains.
           language
           expires_in: Lifetime in seconds, 300 to 86400.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
@@ -735,7 +739,7 @@ class Bank(SyncAPIResource):
     ) -> BankAccountList:
         """List accounts of a connection.
 
-        Lists every account of the connection with full identifiers and holders. A read never bills.
+        Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
         Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. Reading accounts, balances and transactions in a live application also needs the application setting "Bank data in the API"; a sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
@@ -860,7 +864,7 @@ class Bank(SyncAPIResource):
     ) -> BankTransactionPage:
         """List account transactions.
 
-        Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: the booking date of a booked transaction, and for a pending one its transaction date or, failing that, the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.
+        Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: for a booked transaction its booking date, else its value date, else the date it was first seen; for a pending one its transaction date, else the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.
 
         The first page pins which transactions are included and each is served in its current state: a transaction removed while you page drops out of later pages and is reported by the change feed (`sync_transactions`). `page_token` continues one read and lives one hour; an expired token answers `410 page_expired`, so restart the read from its original query. To keep a copy up to date, use the change feed instead of re-reading ranges.
 
@@ -931,7 +935,7 @@ class Bank(SyncAPIResource):
         Args:
           id: The connection id.
           cursor: The `next_cursor` you stored. Empty or omitted starts from the beginning.
-          limit: Page size, 1 to 500.
+          limit: Page size, 1 to 500. Default 100.
           page_token: Continues the same read while `has_more` is `true`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -984,7 +988,7 @@ class Bank(SyncAPIResource):
           country: Only banks in this country, an ISO 3166-1 alpha-3 code. A country Bank Link does not serve answers `400 invalid_request` with `field: country`.
           segment: Only banks that serve this segment.
           access: Only banks that offer this access mode.
-          q: Search by name.
+          q: Search by name or id, case-insensitive.
           limit: Page size, 1 to 500. Default 100.
           cursor: Opaque cursor from the previous page's `next_cursor`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -1197,6 +1201,7 @@ class AsyncBank(AsyncAPIResource):
         duplicates: Literal["reuse", "allow"] | str | NotGiven = NOT_GIVEN,
         allow_one_time_fallback: bool | NotGiven = NOT_GIVEN,
         accept_reduced_grant: bool | NotGiven = NOT_GIVEN,
+        sandbox: BankCreateLinkParamsSandbox | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -1226,19 +1231,20 @@ class AsyncBank(AsyncAPIResource):
           segment: Filters the picker and tells the bank which login to open where the bank separates them. Default `any`.
           data: What to read. `accounts` is always included: name, type, currency, identifiers and the holder name where the bank shares it. Default `["accounts"]`.
           history_days: Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`.
-          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days answers `400 window_not_available`.
+          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
           extended_history: `allow_extra_auth` lets a bank that asks for one more confirmation release older history.
-          consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`.
+          consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`. With `access: one_time` it answers `400 invalid_request` with `field: consent_days`.
           ownership: Optional comparison of the account holder with a person or a company.
           end_user: The person or company that connects the account.
-          redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered in your application settings. Without one, the flow ends on Didit's own result page.
-          allowed_origins: HTTPS origins allowed to embed this link. Must be among your application's allowed domains, which are the default.
-          language: Optional language code. Otherwise the browser language.
+          redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). Must exactly match a redirect URL registered for your application (scheme, host, port, path and query: no prefix, no trailing-slash or case tolerance), otherwise the call answers `400 redirect_url_not_registered`. In sandbox only, a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Without one, automatic return to your page is not promised: after a full-page bank hop the person returns to the page that opened the link when its origin is in `allowed_origins`, and otherwise the flow ends on Didit's own result page.
+          allowed_origins: HTTPS origins allowed to embed this link, up to 50. Must be among your application's allowed domains, which are the default; an origin outside them answers `403 link_origin_not_allowed`.
+          language: Optional language code such as `es` or `pt-BR`. Otherwise the browser language.
           vendor_data: Your own reference, returned on the link and the connection.
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
-          allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs.
+          allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs. Only with `access: ongoing`: with one-time access it answers `400 invalid_request` with `field: allow_one_time_fallback`.
           accept_reduced_grant: When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged.
+          sandbox: Sandbox applications only: shapes what the Didit Test Bank does in this link, so a test can reach each outcome. Ignored in a live application.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1274,6 +1280,7 @@ class AsyncBank(AsyncAPIResource):
                     "duplicates": duplicates,
                     "allow_one_time_fallback": allow_one_time_fallback,
                     "accept_reduced_grant": accept_reduced_grant,
+                    "sandbox": sandbox,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
@@ -1491,7 +1498,7 @@ class AsyncBank(AsyncAPIResource):
 
         Deletes the connection's bank data and stops access at the bank. The connection's accounts, balances, transactions, sync history, consent records and ownership results are deleted. Deletion is irreversible.
 
-        It starts at once: from the moment you call, every read and write of the connection answers `409 connection_not_active`, and the response is `202` with `erasure.status` `pending`. The connection then reads with `erasure.status` `erased`, or `failed` if deletion could not be confirmed within 24 hours; a failed deletion is retried until it completes. A deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and it holds no accounts, balances, transactions, consent or sync data.
+        It starts at once: the response is `202` with `erasure.status` `pending`, and from that moment the connection's data operations (refresh, sync runs, accounts, balances, transactions and the change feed) answer `409 connection_not_active`. The connection then reads with `erasure.status` `erased`, or `failed` if deletion could not be confirmed within 24 hours; a failed deletion is retried until it completes. A deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and it holds no accounts, balances, transactions, consent or sync data.
 
         Not affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call returns the current state. To stop access without deleting, use `revoke_connection`.
 
@@ -1538,7 +1545,7 @@ class AsyncBank(AsyncAPIResource):
 
         Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `"wait": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.
 
-        Live syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day per account under the European rules, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.
+        Live syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.
 
         When a sync stores changes, `bank.data.updated` tells you; then read the change feed.
 
@@ -1685,8 +1692,8 @@ class AsyncBank(AsyncAPIResource):
 
         Args:
           id: The connection id.
-          redirect_url: Where the browser goes at the end. Must exactly match a registered redirect URL.
-          allowed_origins
+          redirect_url: Where the browser goes at the end. Must exactly match a registered redirect URL (scheme, host, port, path and query), otherwise `400 redirect_url_not_registered`. In sandbox only, a plain `http` localhost address needs no registration.
+          allowed_origins: HTTPS origins allowed to embed this link, up to 50, among your application's allowed domains.
           language
           expires_in: Lifetime in seconds, 300 to 86400.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
@@ -1776,7 +1783,7 @@ class AsyncBank(AsyncAPIResource):
     ) -> BankAccountList:
         """List accounts of a connection.
 
-        Lists every account of the connection with full identifiers and holders. A read never bills.
+        Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
         Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. Reading accounts, balances and transactions in a live application also needs the application setting "Bank data in the API"; a sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
@@ -1901,7 +1908,7 @@ class AsyncBank(AsyncAPIResource):
     ) -> BankTransactionPage:
         """List account transactions.
 
-        Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: the booking date of a booked transaction, and for a pending one its transaction date or, failing that, the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.
+        Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: for a booked transaction its booking date, else its value date, else the date it was first seen; for a pending one its transaction date, else the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.
 
         The first page pins which transactions are included and each is served in its current state: a transaction removed while you page drops out of later pages and is reported by the change feed (`sync_transactions`). `page_token` continues one read and lives one hour; an expired token answers `410 page_expired`, so restart the read from its original query. To keep a copy up to date, use the change feed instead of re-reading ranges.
 
@@ -1972,7 +1979,7 @@ class AsyncBank(AsyncAPIResource):
         Args:
           id: The connection id.
           cursor: The `next_cursor` you stored. Empty or omitted starts from the beginning.
-          limit: Page size, 1 to 500.
+          limit: Page size, 1 to 500. Default 100.
           page_token: Continues the same read while `has_more` is `true`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -2025,7 +2032,7 @@ class AsyncBank(AsyncAPIResource):
           country: Only banks in this country, an ISO 3166-1 alpha-3 code. A country Bank Link does not serve answers `400 invalid_request` with `field: country`.
           segment: Only banks that serve this segment.
           access: Only banks that offer this access mode.
-          q: Search by name.
+          q: Search by name or id, case-insensitive.
           limit: Page size, 1 to 500. Default 100.
           cursor: Opaque cursor from the previous page's `next_cursor`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.

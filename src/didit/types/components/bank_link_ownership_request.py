@@ -39,7 +39,7 @@ class BankLinkOwnershipRequest(TypedDict, total=False):
     """Optional comparison of the account holder with a person or a company."""
 
     compare: Literal["none", "person", "business"] | str
-    """What the holder of the account is compared with. `none` (default) gives no verdict and needs no reference. `person` needs `reference_identity` or `session_id`. `business` needs `business` or `business_session_id`."""
+    """What the holder of the account is compared with. `none` (default) gives no verdict and needs no reference. `person` needs `reference_identity` or `session_id`. `business` needs `business` or `business_session_id`. Send exactly one reference of the kind you compare with, and none with `none`."""
 
     match: Literal["any_holder", "all_holders"] | str
     """Whether one legal holder or every legal holder must match. Representatives never count."""
