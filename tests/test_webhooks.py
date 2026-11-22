@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import hmac
 import json
@@ -27,10 +28,16 @@ SECRET = "whsec_test_unit_secret_0001"
 PREVIOUS = "whsec_test_unit_secret_0000"
 NOW = 1_760_702_400
 _BANK_CONNECTION = "c0a80104-1111-4111-8111-111111111111"
+_BANK_SYNC = "5e1d0000-1111-4111-8111-111111111111"
+_BANK_LINK = "11f00000-1111-4111-8111-111111111111"
 _BANK_ACCOUNT = "a11ce000-1111-4111-8111-111111111111"
 _BANK_ACCOUNT_2 = "a11ce001-1111-4111-8111-111111111111"
 _LINK_CONNECTION = "c0a80101-1111-4111-8111-111111111111"
 _LINK_CHECK = "c0a80102-1111-4111-8111-111111111111"
+
+
+def _utc(year: int, month: int, day: int, hour: int) -> datetime.datetime:
+    return datetime.datetime(year, month, day, hour, tzinfo=datetime.timezone.utc)
 
 
 @pytest.fixture
@@ -504,116 +511,189 @@ def test_events_keep_unknown_fields_and_survive_bad_shapes() -> None:
     assert loose.status == ["not", "a", "string"]
 
 
-# Bank data events: every one from its recorded payload (spec 16).
-BANK_EVENTS: list[tuple[str, str, type[webhooks.WebhookEventBase], dict[str, Any]]] = [
+# Bank data events: every one from its recorded payload (DESIGN 16.3). The link events
+# nest their fields under ``data``; the connection, data and sync events carry them next
+# to the envelope, exactly as the backend sends them.
+BANK_EVENTS: list[
+    tuple[str, str, type[webhooks.WebhookEventBase], bool, dict[str, Any]]
+] = [
     (
         "bank.link.completed",
         "bank_link_completed",
         webhooks.BankLinkCompletedEvent,
-        {"connection_id": _LINK_CONNECTION, "check_id": _LINK_CHECK, "error_code": None},
+        True,
+        {
+            "link_id": _BANK_LINK,
+            "status": "completed",
+            "connection_id": _LINK_CONNECTION,
+            "check_id": _LINK_CHECK,
+            "error_code": None,
+        },
     ),
     (
         "bank.link.cancelled",
         "bank_link_cancelled",
         webhooks.BankLinkCancelledEvent,
-        {"status": "cancelled", "connection_id": None},
+        True,
+        {"status": "cancelled", "connection_id": None, "check_id": None},
     ),
     (
         "bank.link.expired",
         "bank_link_expired",
         webhooks.BankLinkExpiredEvent,
-        {"status": "expired"},
+        True,
+        {"status": "expired", "connection_id": None},
     ),
     (
         "bank.link.failed",
         "bank_link_failed",
         webhooks.BankLinkFailedEvent,
+        True,
         {"status": "failed", "error_code": "duplicate_conflict"},
     ),
     (
         "bank.connection.created",
         "bank_connection_created",
         webhooks.BankConnectionCreatedEvent,
-        {"status": "active", "status_reason": "collection_complete"},
+        False,
+        {"connection_id": _BANK_CONNECTION, "initial_status": "succeeded"},
     ),
     (
         "bank.connection.updated",
         "bank_connection_updated",
         webhooks.BankConnectionUpdatedEvent,
-        {"status": "renewal_required", "status_reason": "consent_lapsed"},
+        False,
+        {"connection_id": _BANK_CONNECTION, "status": "active", "revocation_status": "pending"},
     ),
     (
         "bank.connection.consent_expiring",
         "bank_connection_consent_expiring",
         webhooks.BankConnectionConsentExpiringEvent,
-        {"days_left": 7, "renew_url": "https://verify.didit.me/bank/link/example-renew"},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "days_left": 7,
+            "consent_expires_at": _utc(2025, 10, 24, 12),
+            "renew_by": _utc(2025, 10, 24, 12),
+        },
     ),
     (
         "bank.connection.renewal_required",
         "bank_connection_renewal_required",
         webhooks.BankConnectionRenewalRequiredEvent,
-        {"status": "renewal_required", "status_reason": "bank_requires_sign_in"},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "status": "renewal_required",
+            "reason": "bank_requires_sign_in",
+            "renew_by": _utc(2025, 10, 24, 12),
+            "renewable_until": _utc(2025, 11, 23, 12),
+        },
     ),
     (
         "bank.connection.renewed",
         "bank_connection_renewed",
         webhooks.BankConnectionRenewedEvent,
-        {"status": "active", "status_reason": None},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "status": "active",
+            "consent_version": 2,
+            "link_id": _BANK_LINK,
+            "consent_expires_at": _utc(2026, 4, 17, 12),
+        },
     ),
     (
         "bank.connection.revoked",
         "bank_connection_revoked",
         webhooks.BankConnectionRevokedEvent,
-        {"status": "revoked", "ended_by": "end_user"},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "status": "revoked",
+            "ended_by": "end_user",
+            "status_reason": "revoked_by_end_user",
+            "ended_at": _utc(2025, 10, 17, 12),
+            "retain_until": _utc(2026, 10, 17, 12),
+        },
     ),
     (
         "bank.connection.deleted",
         "bank_connection_deleted",
         webhooks.BankConnectionDeletedEvent,
-        {"erasure_status": "erased"},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "status": "deleted",
+            "erasure_status": "erased",
+            "reason": "deleted_by_customer",
+            "erased_at": _utc(2025, 10, 17, 12),
+        },
     ),
     (
         "bank.connection.history_complete",
         "bank_connection_history_complete",
         webhooks.BankConnectionHistoryCompleteEvent,
-        {"status": "active"},
+        False,
+        {"connection_id": _BANK_CONNECTION, "status": "partial"},
     ),
     (
         "bank.data.updated",
         "bank_data_updated",
         webhooks.BankDataUpdatedEvent,
-        {"added": 12, "modified": 3, "removed": 1, "balances_changed": True},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "sync_id": _BANK_SYNC,
+            "trigger": "scheduled",
+            "balances_changed": True,
+        },
     ),
     (
         "bank.sync.completed",
         "bank_sync_completed",
         webhooks.BankSyncCompletedEvent,
-        {"trigger": "scheduled", "outcome": "partial", "changed": True},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "sync_id": _BANK_SYNC,
+            "trigger": "scheduled",
+            "outcome": "partial",
+            "changed": True,
+        },
     ),
     (
         "bank.sync.failed",
         "bank_sync_failed",
         webhooks.BankSyncFailedEvent,
-        {"error_code": "bank_unavailable"},
+        False,
+        {
+            "connection_id": _BANK_CONNECTION,
+            "sync_id": _BANK_SYNC,
+            "error_code": "bank_unavailable",
+            "failing_since": _utc(2025, 10, 16, 12),
+        },
     ),
     (
         "bank.sync.recovered",
         "bank_sync_recovered",
         webhooks.BankSyncRecoveredEvent,
-        {"connection_id": _BANK_CONNECTION},
+        False,
+        {"connection_id": _BANK_CONNECTION, "sync_id": _BANK_SYNC},
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    ("webhook_type", "vector_name", "cls", "expected"),
+    ("webhook_type", "vector_name", "cls", "nested", "expected"),
     BANK_EVENTS,
-    ids=[vector_name for _, vector_name, _, _ in BANK_EVENTS],
+    ids=[vector_name for _, vector_name, _, _, _ in BANK_EVENTS],
 )
 def test_bank_events_parse_from_their_recorded_payload(
     webhook_type: str,
     vector_name: str,
     cls: type[webhooks.WebhookEventBase],
+    nested: bool,
     expected: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -621,11 +701,20 @@ def test_bank_events_parse_from_their_recorded_payload(
     monkeypatch.setattr("didit.webhooks._verify.time.time", lambda: float(vector["now"]))
     event = webhooks.verify(vector["body"], vector["headers"], vector["secret"])
     assert type(event) is cls
-    bank: Any = event
-    assert bank.webhook_type == webhook_type
-    assert bank.data is not None
+    assert isinstance(event, cls)
+    assert event.webhook_type == webhook_type
+    if nested:
+        assert isinstance(event.data, webhooks.BankLinkEventData)  # pyright: ignore[reportAttributeAccessIssue]
+        carrier: Any = event.data
+    else:
+        carrier = event
     for field, value in expected.items():
-        assert getattr(bank.data, field) == value
+        assert getattr(carrier, field) == value, field
+    if isinstance(event, webhooks.BankDataUpdatedEvent):
+        assert [(a.account_id, a.added, a.modified, a.removed) for a in event.accounts or []] == [
+            (_BANK_ACCOUNT, 12, 3, 1),
+            (_BANK_ACCOUNT_2, 0, 1, 0),
+        ]
     # The parsed-payload entry point builds the same typed event.
     assert type(webhooks.parse_event(json.loads(vector["body"]))) is cls
 
@@ -633,28 +722,38 @@ def test_bank_events_parse_from_their_recorded_payload(
 def test_bank_events_keep_every_payload_field() -> None:
     payload = {
         "webhook_type": "bank.data.updated",
-        "data": {
-            "connection_id": _BANK_CONNECTION,
-            "account_ids": [_BANK_ACCOUNT, _BANK_ACCOUNT_2],
-            "added": 2,
-            "modified": 0,
-            "removed": 0,
-            "balances_changed": False,
-            "a_field_from_a_later_version": "kept",
-        },
+        "connection_id": _BANK_CONNECTION,
+        "sync_id": _BANK_SYNC,
+        "trigger": "initial",
+        "accounts": [{"account_id": _BANK_ACCOUNT, "added": 2, "modified": 0, "removed": 0}],
+        "balances_changed": False,
+        "a_field_from_a_later_version": "kept",
     }
     event: Any = webhooks.parse_event(payload)
     assert isinstance(event, webhooks.BankDataUpdatedEvent)
-    assert isinstance(event.data, webhooks.BankDataUpdatedData)
-    assert event.data.account_ids == [_BANK_ACCOUNT, _BANK_ACCOUNT_2]
-    assert event.data.model_extra == {"a_field_from_a_later_version": "kept"}
+    assert isinstance(event.accounts, list)
+    assert isinstance(event.accounts[0], webhooks.BankDataUpdatedAccount)
+    assert event.accounts[0].account_id == _BANK_ACCOUNT
+    assert event.model_extra == {"a_field_from_a_later_version": "kept"}
     # A payload that does not match the schema still parses, keeping what the API sent.
     wrong_shape: Any = webhooks.parse_event(
-        {"webhook_type": "bank.data.updated", "data": "not-an-object"}
+        {"webhook_type": "bank.data.updated", "accounts": "not-a-list"}
     )
     assert isinstance(wrong_shape, webhooks.BankDataUpdatedEvent)
-    kept: Any = wrong_shape.data
-    assert kept == "not-an-object"
+    assert wrong_shape.accounts == "not-a-list"
+    # The link events keep their fields under ``data``; the connection events do not.
+    link: Any = webhooks.parse_event(
+        {"webhook_type": "bank.link.completed", "data": {"link_id": _BANK_LINK}}
+    )
+    assert isinstance(link, webhooks.BankLinkCompletedEvent)
+    assert isinstance(link.data, webhooks.BankLinkEventData)
+    assert link.data.link_id == _BANK_LINK
+    connection: Any = webhooks.parse_event(
+        {"webhook_type": "bank.connection.created", "connection_id": _BANK_CONNECTION}
+    )
+    assert isinstance(connection, webhooks.BankConnectionCreatedEvent)
+    assert connection.connection_id == _BANK_CONNECTION
+    assert "data" not in type(connection).model_fields
 
 
 def test_every_bank_event_type_is_typed() -> None:
@@ -663,7 +762,7 @@ def test_every_bank_event_type_is_typed() -> None:
         for name in webhooks._events._BY_TYPE  # pyright: ignore[reportPrivateUsage]
         if name.startswith("bank.")
     }
-    assert {webhook_type for webhook_type, _, _, _ in BANK_EVENTS} == registered
+    assert {webhook_type for webhook_type, _, _, _, _ in BANK_EVENTS} == registered
 
 
 def test_travel_rule_vector_parses_to_its_event(monkeypatch: pytest.MonkeyPatch) -> None:
