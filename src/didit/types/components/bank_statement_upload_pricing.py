@@ -10,10 +10,10 @@ class BankStatementUploadPricing(BaseModel):
     """How the bank statement upload is priced."""
 
     price_usd: str
-    """Price of a statement upload after a charged bank attempt. Decimal string with 4 decimals, in USD."""
+    """Price of a statement upload with no charged bank attempt before it. After a charged bank attempt in the same session the statement costs nothing extra. Decimal string with 4 decimals, in USD."""
 
     included_after_charged_bank_attempt: bool
     """`true` when the upload is included at no extra charge after a charged bank attempt in the same session."""
 
     standalone_available: bool
-    """`true` when a statement upload can run on its own, with no bank attempt first. `false` in production; sandbox sessions can test it without billing."""
+    """`true` when a statement upload can run on its own, with no bank attempt first, at `price_usd`."""

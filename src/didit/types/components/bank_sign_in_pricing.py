@@ -3,7 +3,12 @@ from __future__ import annotations
 
 from didit._models import BaseModel
 
-__all__ = ["BankSignInPricing", "BankSignInPricingAddOns"]
+__all__ = [
+    "BankSignInPricing",
+    "BankSignInPricingAddOns",
+    "BankSignInPricingOneTimeData",
+    "BankSignInPricingOngoing",
+]
 
 
 class BankSignInPricingAddOns(BaseModel):
@@ -14,6 +19,27 @@ class BankSignInPricingAddOns(BaseModel):
 
     transactions: str | None = None
     """Transactions add-on."""
+
+
+class BankSignInPricingOneTimeData(BaseModel):
+    balances_usd: str | None
+    """Price of one read of balances only. Decimal string with 4 decimals in USD."""
+
+    transactions_usd: str | None
+    """Price of one read of transactions, with or without balances. Decimal string with 4 decimals in USD."""
+
+    bundle_included: bool | None = None
+    """`true` when `transactions_usd` is the one-time bundle: one read that carries transactions and balances together, so the `balance` add-on is not charged on top of it. Absent - never `false` - where `transactions_usd` is the separate transactions add-on price, including while the one-time bundle is not offered in the country."""
+
+
+class BankSignInPricingOngoing(BaseModel):
+    """Ongoing access to bank data (Bank Link `access: ongoing`). Present only where Bank data is switched on."""
+
+    available: bool
+    """`true` only where at least one bank offers ongoing access in this country."""
+
+    price_usd_per_month: str | None
+    """List price per active connection per calendar month, a decimal string with 4 decimals in USD. `null` when not available. Ongoing access is billed per active connection per month, with every account, reads, refreshes within the bank's limits and renewals included; the current price is on the pricing page (https://docs.didit.me/getting-started/pricing). Amounts in examples are illustrative; the price for a country is shown on the pricing page."""
 
 
 class BankSignInPricing(BaseModel):
@@ -30,3 +56,9 @@ class BankSignInPricing(BaseModel):
 
     add_ons: BankSignInPricingAddOns
     """Add-ons priced in this country, each a decimal string with 4 decimals in USD, added to the bank sign-in price. Only the add-ons the country offers are listed; empty when bank sign-in is not available."""
+
+    ongoing: BankSignInPricingOngoing | None = None
+    """Ongoing access to bank data (Bank Link `access: ongoing`). Present only where Bank data is switched on."""
+
+    one_time_data: BankSignInPricingOneTimeData | None = None
+    """One-time data prices of a Bank Link, present only where Bank data is switched on. `null` where the country offers no one-time data: use `add_ons`. Where the country offers the one-time bundle, the object also carries `bundle_included: true` and `transactions_usd` is that bundle: one read of transactions and balances."""

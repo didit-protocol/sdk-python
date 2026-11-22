@@ -300,7 +300,7 @@ class TravelRule(SyncAPIResource):
           threshold_amount: Decimal string, zero or greater, in your application's default currency. Minimum transfer amount that triggers a managed exchange.
           ownership_validation_mode: See the response field of the same name.
           simplified_validation_threshold: Decimal string, 0 or more.
-          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR or FATF Recommendation 16), an empty list included, is refused with `400`.
+          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR, FINTRAC for `canada`, FinCEN for `us`, or FATF Recommendation 16), an empty list included, is refused with `400`.
           matching_rules: Merged per entity type, and per field inside it. A field that entity type does not compare (for example `date_of_birth` for `company`) is refused with `400`.
           inbound_auto_accept
           allow_self_declaration
@@ -1490,7 +1490,7 @@ class AsyncTravelRule(AsyncAPIResource):
           threshold_amount: Decimal string, zero or greater, in your application's default currency. Minimum transfer amount that triggers a managed exchange.
           ownership_validation_mode: See the response field of the same name.
           simplified_validation_threshold: Decimal string, 0 or more.
-          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR or FATF Recommendation 16), an empty list included, is refused with `400`.
+          data_sharing_fields: Merged per entity type: an entity type you leave out keeps its current choice. A choice that cannot meet the originator obligations of your `jurisdiction` regime (EU TFR, FINTRAC for `canada`, FinCEN for `us`, or FATF Recommendation 16), an empty list included, is refused with `400`.
           matching_rules: Merged per entity type, and per field inside it. A field that entity type does not compare (for example `date_of_birth` for `company`) is refused with `400`.
           inbound_auto_accept
           allow_self_declaration

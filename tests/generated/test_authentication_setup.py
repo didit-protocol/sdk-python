@@ -224,6 +224,7 @@ def test_authentication_setup_get_email() -> None:
             path="/organizations/a1b2c3d4-5678-90ab-cdef-111111111111/applications/7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d/authentication/emails/code/",
             api="account",
             auth="api_key",
+            query={"organization": ["Northwind Traders"], "role": ["member"], "agent": ["Nova"]},
             status=200,
             response_json={
                 "key": "code",
@@ -235,10 +236,20 @@ def test_authentication_setup_get_email() -> None:
             },
         ),
         lambda c: c.authentication_setup.get_email(
-            "a1b2c3d4-5678-90ab-cdef-111111111111", "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d", "code"
+            "a1b2c3d4-5678-90ab-cdef-111111111111",
+            "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d",
+            "code",
+            organization="Northwind Traders",
+            role="member",
+            agent="Nova",
         ),
         lambda c: c.authentication_setup.get_email(
-            "a1b2c3d4-5678-90ab-cdef-111111111111", "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d", "code"
+            "a1b2c3d4-5678-90ab-cdef-111111111111",
+            "7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d",
+            "code",
+            organization="Northwind Traders",
+            role="member",
+            agent="Nova",
         ),
         lambda r: isinstance(r, SetupEmail),
         lambda r: isinstance(r, SetupEmail),

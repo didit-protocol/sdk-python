@@ -3752,7 +3752,7 @@
           "Setup"
         ],
         "summary": "Preview a sign-in email",
-        "description": "Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{\"error\": \"email_not_sent_by_authentication\"}`.",
+        "description": "Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{\"error\": \"email_not_sent_by_authentication\"}`.",
         "operationId": "authentication_get_email",
         "security": [
           {
@@ -3787,6 +3787,43 @@
                 "agentoff"
               ],
               "example": "code"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "query",
+            "required": false,
+            "description": "For `org` only: the organization the invitation is for, so the preview shows it as it will be sent. At most 200 characters, the longest organization name an application holds. Without it, a sample organization (a console session sees the application's first customer organization).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "example": "Northwind Traders"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "description": "For `org` only: the role the invitation grants.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "member",
+                "billing",
+                "admin"
+              ],
+              "example": "member"
+            }
+          },
+          {
+            "name": "agent",
+            "in": "query",
+            "required": false,
+            "description": "For `agentoff` only: the name of the agent whose access ends. At most 200 characters, the longest agent name an application registers. Without it, the agent of the application's latest agent client in a console session, or a sample name.",
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "example": "Nova"
             }
           }
         ],
@@ -3844,7 +3881,7 @@
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.GetEmail(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", \"code\")\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.GetEmail(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", \"code\", didit.AuthenticationSetupGetEmailParams{})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
