@@ -42,6 +42,23 @@ WebhookEvent: TypeAlias = (
         "investigator.sla.breached",
         "investigator.qa.failed",
         "investigator.external.report.ready",
+        "bank.link.completed",
+        "bank.link.cancelled",
+        "bank.link.expired",
+        "bank.link.failed",
+        "bank.connection.created",
+        "bank.connection.updated",
+        "bank.connection.consent_expiring",
+        "bank.connection.renewal_required",
+        "bank.connection.renewed",
+        "bank.connection.revoked",
+        "bank.connection.deleted",
+        "bank.connection.history_complete",
+        "bank.data.updated",
+        "bank.sync.completed",
+        "bank.sync.failed",
+        "bank.sync.recovered",
+        "message.status.updated",
     ]
     | str
 )
