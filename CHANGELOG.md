@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.33.0](https://github.com/didit-protocol/sdk-python/compare/v1.32.0...v1.33.0) (2026-11-22)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-21 ([43d4f8f](https://github.com/didit-protocol/sdk-python/commit/43d4f8f7b15f71f88fd65c5b5485ac6df607151b))
+* **spec:** sync API spec 2026-11-21 ([9ae8616](https://github.com/didit-protocol/sdk-python/commit/9ae8616905b4d551a7436db4f9fe39c231b4c112))
+* **spec:** sync API spec 2026-11-21 ([72d8a6a](https://github.com/didit-protocol/sdk-python/commit/72d8a6a223782aef743750c124dd6a18e6e2a3a9))
+* **spec:** sync API spec 2026-11-21 ([4123279](https://github.com/didit-protocol/sdk-python/commit/41232799be3b355ebab9e2ac5afd2cd3f79c6d3b))
+* **spec:** sync API spec 2026-11-21 ([4b3344c](https://github.com/didit-protocol/sdk-python/commit/4b3344cea0371b8d2b66673016114d51998b367b))
+* **spec:** sync API spec 2026-11-21 ([3538825](https://github.com/didit-protocol/sdk-python/commit/3538825ff2fc5d48a59d769b20b525b47db21955))
+
 ## [1.32.0](https://github.com/didit-protocol/sdk-python/compare/v1.31.0...v1.32.0) (2026-11-21)
 
 
