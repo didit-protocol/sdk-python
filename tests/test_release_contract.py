@@ -124,6 +124,61 @@ def test_typed_events_are_the_design_set() -> None:
     assert TYPED_EVENTS - {"kyb.registry_search.resolved"} <= set(RELEASED_EVENTS)
 
 
+ENVELOPE_FIELDS = {
+    "event_id",
+    "webhook_type",
+    "timestamp",
+    "created_at",
+    "application_id",
+    "environment",
+}
+SCHEMAS: dict[str, Any] = SPEC["components"]["schemas"]
+
+
+def _resolve(part: dict[str, Any]) -> dict[str, Any]:
+    ref = part.get("$ref")
+    return SCHEMAS[ref.rsplit("/", 1)[-1]] if ref else part
+
+
+def _document_event(webhook_type: str) -> dict[str, Any]:
+    for schema in SCHEMAS.values():
+        for part in schema.get("allOf", []):
+            enum = part.get("properties", {}).get("webhook_type", {}).get("enum", [])
+            if webhook_type in enum:
+                return schema
+    raise AssertionError(f"no schema for {webhook_type}")
+
+
+def _document_properties(schema: dict[str, Any]) -> dict[str, Any]:
+    properties: dict[str, Any] = {}
+    for part in schema.get("allOf", [schema]):
+        properties.update(_resolve(part).get("properties", {}))
+    return properties
+
+
+@pytest.mark.parametrize(
+    "webhook_type", sorted(name for name in TYPED_EVENTS if name.startswith("bank."))
+)
+def test_bank_event_models_carry_the_document_fields(webhook_type: str) -> None:
+    """The typed bank.* events read exactly the fields the contract gives them (DESIGN 16.3).
+
+    The connection, data and sync events carry them next to the envelope; only the
+    link events nest them under ``data``. A contract revision that changes that shape
+    fails here instead of leaving the typed events empty on a real delivery.
+    """
+    cls = _BY_TYPE[webhook_type]
+    document = _document_properties(_document_event(webhook_type))
+    model = set(cls.model_fields) - ENVELOPE_FIELDS
+    assert model == set(document) - ENVELOPE_FIELDS
+    nested = document.get("data")
+    if nested is None:
+        assert "data" not in model
+    else:
+        assert set(webhooks.BankLinkEventData.model_fields) == set(
+            _document_properties(_resolve(nested))
+        )
+
+
 def test_version_contract_agrees_across_release_files() -> None:
     """release.yml refuses a tag that disagrees with these files; keep them in step."""
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
