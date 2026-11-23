@@ -312,7 +312,7 @@ The `bank` resource exposes the Bank verification API: Bank Link, connections, a
 
 ### 16.2 Pagination, amounts and retries
 
-Bank lists are cursor-paginated and are the exception to section 8: `list_connections`, `list_accounts`, `list_sync_runs` and `list_institutions` take `limit` and `cursor` and return `{items, next_cursor}`; pass `next_cursor` as `cursor` to read the next page. `list_transactions` takes `limit` and `page_token` and returns `{items, next_page_token}`; `sync_transactions` takes `cursor`, `limit` and `page_token` and returns changes with `has_more`, `next_cursor` and `next_page_token`. There is no auto-pagination for these lists: the cursor is opaque and the response is not the page envelope of section 8.
+Bank lists are cursor-paginated and are the exception to section 8: `list_connections`, `list_accounts`, `list_sync_runs` and `list_institutions` take `limit` and `cursor` and return `{items, next_cursor}`; pass `next_cursor` as `cursor` to read the next page. `list_transactions` takes `limit` and `page_token` and returns `{items, has_more, next_page_token}`; `sync_transactions` takes `cursor`, `limit` and `page_token` and returns changes with `has_more`, `next_cursor` and `next_page_token`. There is no auto-pagination for these lists: the cursor is opaque and the response is not the page envelope of section 8.
 Amounts are decimal strings exactly as the API sends them, never floats. Every write takes an `Idempotency-Key` through the per-request option (section 6); a retry sends the same key.
 A live sync beyond the bank's daily limit answers `429` with `code: refresh_limit_reached` and `Retry-After`; the error exposes the header like every other rate limit (section 7).
 
