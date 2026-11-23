@@ -146635,14 +146635,14 @@
           },
           "history_days": {
             "type": "integer",
-            "description": "Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`.",
+            "description": "The most days of transaction history to request, 1 to 365, default 90. It is a request \"up to\": when the bank or the connection can give less, the link still completes with the history it can give, and each account reports what was obtained in `history_coverage`. Cannot be sent with `history_from`.",
             "minimum": 1,
             "maximum": 365,
             "default": 90
           },
           "history_from": {
             "type": "string",
-            "description": "Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.",
+            "description": "The earliest date of history to request, instead of `history_days`; it is a request \"up to\", like `history_days`: when the bank or the connection can give less, the link still completes with the history it can give and `history_coverage` reports it. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.",
             "format": "date"
           },
           "extended_history": {
@@ -146715,12 +146715,12 @@
           },
           "accept_reduced_grant": {
             "type": "boolean",
-            "description": "When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged.",
+            "description": "When the bank or the person grants less data than the link required (a data scope or an account), complete the link and charge only what was granted. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged. A shorter history than asked for is never a reduced grant: the link completes and `history_coverage` reports what was obtained.",
             "default": false
           },
           "sandbox": {
             "type": "object",
-            "description": "Sandbox applications only: picks the Didit Test Bank customer. Ignored in a live application.",
+            "description": "Sandbox applications only: picks the Didit Test Bank customer. A live application that sends it, with any key, answers `400 invalid_request` with `field: sandbox` and no link is created.",
             "properties": {
               "persona": {
                 "type": "string",
@@ -148530,7 +148530,7 @@
           },
           "history_days_max": {
             "type": "integer",
-            "description": "The deepest history the bank delivers, in days. `null` when not observed.",
+            "description": "The most history a link can obtain at this bank today, in days. `null` when not observed.",
             "nullable": true
           },
           "pending_transactions": {
@@ -148693,7 +148693,7 @@
           },
           "history_days_max": {
             "type": "integer",
-            "description": "The deepest history any bank in the country delivers, in days.",
+            "description": "The most history a link can obtain at any bank in the country today, in days.",
             "nullable": true
           },
           "business_accounts": {
