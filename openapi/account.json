@@ -2514,7 +2514,7 @@
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.UpdateConfiguration(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", didit.SetupConfigurationUpdate{\n\tSessionLifetime: didit.Int(604800),\n\tSignupPolicy:    didit.Some(didit.SetupConfigurationUpdateSignupPolicy(\"invited\")),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.UpdateConfiguration(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", didit.SetupConfigurationUpdate{\n\tSessionLifetime: didit.Some[any](604800),\n\tSignupPolicy:    didit.Some(didit.SetupConfigurationUpdateSignupPolicy(\"invited\")),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
@@ -4266,12 +4266,12 @@
           {
             "lang": "go",
             "label": "Go",
-            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.UpdateProtection(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", didit.SetupProtectionUpdate{\n\tEnabled:  didit.Bool(true),\n\tPolicies: didit.Some(map[string]string{\"bots\": \"block\", \"stuffing\": \"challenge\", \"brute\": \"challenge\"}),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
+            "source": "ctx := context.Background()\n// Reads DIDIT_API_KEY.\nclient := didit.NewClient()\n\nresult, err := client.AuthenticationSetup.UpdateProtection(ctx, \"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", didit.SetupProtectionUpdate{\n\tEnabled:  didit.Bool(true),\n\tPolicies: didit.Some(map[string]didit.SetupProtectionUpdatePolicies{\"bots\": \"block\", \"stuffing\": \"challenge\", \"brute\": \"challenge\"}),\n})\nif err != nil {\n\tlog.Fatal(err)\n}\nfmt.Printf(\"%+v\\n\", result)"
           },
           {
             "lang": "java",
             "label": "Java",
-            "source": "import java.util.Map;\nimport me.didit.Didit;\nimport me.didit.types.SetupProtectionUpdate;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.authenticationSetup().updateProtection(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", SetupProtectionUpdate.builder()\n        .enabled(true)\n        .policies(Map.of(\"bots\", \"block\", \"stuffing\", \"challenge\", \"brute\", \"challenge\"))\n        .build());\nSystem.out.println(result);"
+            "source": "import java.util.Map;\nimport me.didit.Didit;\nimport me.didit.types.SetupProtectionUpdate;\n\n// Reads DIDIT_API_KEY.\nDidit client = new Didit();\n\nvar result = client.authenticationSetup().updateProtection(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", SetupProtectionUpdate.builder()\n        .enabled(true)\n        .policies(Map.of(\"bots\", SetupProtectionUpdate.PoliciesValue.of(\"block\"), \"stuffing\", SetupProtectionUpdate.PoliciesValue.of(\"challenge\"), \"brute\", SetupProtectionUpdate.PoliciesValue.of(\"challenge\")))\n        .build());\nSystem.out.println(result);"
           },
           {
             "lang": "php",
@@ -4286,7 +4286,7 @@
           {
             "lang": "csharp",
             "label": ".NET",
-            "source": "using System;\nusing System.Collections.Generic;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.AuthenticationSetup.UpdateProtectionAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", new SetupProtectionUpdate\n{\n    Enabled = true,\n    Policies = new Dictionary<string, string> { [\"bots\"] = \"block\", [\"stuffing\"] = \"challenge\", [\"brute\"] = \"challenge\" },\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
+            "source": "using System;\nusing System.Collections.Generic;\nusing System.Text.Json;\nusing Didit;\n\n// Reads DIDIT_API_KEY.\nusing var client = new DiditClient();\n\nvar result = await client.AuthenticationSetup.UpdateProtectionAsync(\"a1b2c3d4-5678-90ab-cdef-111111111111\", \"7b0a6c2e-3f41-4c9a-8d55-1e2f3a4b5c6d\", new SetupProtectionUpdate\n{\n    Enabled = true,\n    Policies = new Dictionary<string, SetupProtectionUpdatePoliciesValue> { [\"bots\"] = \"block\", [\"stuffing\"] = \"challenge\", [\"brute\"] = \"challenge\" },\n});\nConsole.WriteLine(JsonSerializer.Serialize(result));"
           }
         ]
       }
