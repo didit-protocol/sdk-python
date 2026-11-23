@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.35.0](https://github.com/didit-protocol/sdk-python/compare/v1.34.0...v1.35.0) (2026-11-23)
+
+
+### Features
+
+* **bank:** typed bank.* webhook events ([#119](https://github.com/didit-protocol/sdk-python/issues/119)) ([5d21a9a](https://github.com/didit-protocol/sdk-python/commit/5d21a9a783fdededa77379686671cdca71faf224))
+
 ## [1.34.0](https://github.com/didit-protocol/sdk-python/compare/v1.33.0...v1.34.0) (2026-11-22)
 
 
