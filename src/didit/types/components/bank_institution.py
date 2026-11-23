@@ -35,7 +35,7 @@ class BankInstitution(BaseModel):
     """The longest consent the bank allows, in days. `null` when not observed."""
 
     history_days_max: int | None
-    """The deepest history the bank delivers, in days. `null` when not observed."""
+    """The most history a link can obtain at this bank today, in days. `null` when not observed."""
 
     pending_transactions: bool | None
     """Whether the bank reports pending transactions."""

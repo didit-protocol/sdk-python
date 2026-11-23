@@ -186,8 +186,8 @@ class Bank(SyncAPIResource):
           institution_id: Optional bank to preselect, from `list_institutions`. Skips the picker.
           segment: Filters the picker and tells the bank which login to open where the bank separates them. Default `any`.
           data: What to read. `accounts` is always included: name, type, currency, identifiers and the holder name where the bank shares it. Default `["accounts"]`.
-          history_days: Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`.
-          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
+          history_days: The most days of transaction history to request, 1 to 365, default 90. It is a request "up to": when the bank or the connection can give less, the link still completes with the history it can give, and each account reports what was obtained in `history_coverage`. Cannot be sent with `history_from`.
+          history_from: The earliest date of history to request, instead of `history_days`; it is a request "up to", like `history_days`: when the bank or the connection can give less, the link still completes with the history it can give and `history_coverage` reports it. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
           extended_history: `allow_extra_auth` lets a bank that asks for one more confirmation release older history.
           consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`. With `access: one_time` it answers `400 invalid_request` with `field: consent_days`.
           ownership: Optional comparison of the account holder with a person or a company.
@@ -199,8 +199,8 @@ class Bank(SyncAPIResource):
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
           allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs. Only with `access: ongoing`: with one-time access it answers `400 invalid_request` with `field: allow_one_time_fallback`.
-          accept_reduced_grant: When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged.
-          sandbox: Sandbox applications only: picks the Didit Test Bank customer. Ignored in a live application.
+          accept_reduced_grant: When the bank or the person grants less data than the link required (a data scope or an account), complete the link and charge only what was granted. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged. A shorter history than asked for is never a reduced grant: the link completes and `history_coverage` reports what was obtained.
+          sandbox: Sandbox applications only: picks the Didit Test Bank customer. A live application that sends it, with any key, answers `400 invalid_request` with `field: sandbox` and no link is created.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1234,8 +1234,8 @@ class AsyncBank(AsyncAPIResource):
           institution_id: Optional bank to preselect, from `list_institutions`. Skips the picker.
           segment: Filters the picker and tells the bank which login to open where the bank separates them. Default `any`.
           data: What to read. `accounts` is always included: name, type, currency, identifiers and the holder name where the bank shares it. Default `["accounts"]`.
-          history_days: Days of transaction history to request, 1 to 365, default 90. The bank may deliver less: each account reports what it delivered in `history_coverage`. Cannot be sent with `history_from`.
-          history_from: Start date of the history to request, instead of `history_days`. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
+          history_days: The most days of transaction history to request, 1 to 365, default 90. It is a request "up to": when the bank or the connection can give less, the link still completes with the history it can give, and each account reports what was obtained in `history_coverage`. Cannot be sent with `history_from`.
+          history_from: The earliest date of history to request, instead of `history_days`; it is a request "up to", like `history_days`: when the bank or the connection can give less, the link still completes with the history it can give and `history_coverage` reports it. Cannot be sent with `history_days`: both together answer `400 history_window_ambiguous`. A date older than 365 days, or in the future, answers `400 window_not_available`.
           extended_history: `allow_extra_auth` lets a bank that asks for one more confirmation release older history.
           consent_days: Ongoing only. How many days to ask the bank to keep access open, 1 or more. Default: the longest the bank allows. The connection reports the date the bank actually granted in `consent.expires_at`. With `access: one_time` it answers `400 invalid_request` with `field: consent_days`.
           ownership: Optional comparison of the account holder with a person or a company.
@@ -1247,8 +1247,8 @@ class AsyncBank(AsyncAPIResource):
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
           allow_one_time_fallback: With `ongoing`, lets the person continue with a one-time read at a bank that cannot keep access open, after confirming the reduced access on its own screen. The quote shows what that costs. Only with `access: ongoing`: with one-time access it answers `400 invalid_request` with `field: allow_one_time_fallback`.
-          accept_reduced_grant: When the bank or the person grants less than you asked for, complete the link and charge only the granted scopes. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged.
-          sandbox: Sandbox applications only: picks the Didit Test Bank customer. Ignored in a live application.
+          accept_reduced_grant: When the bank or the person grants less data than the link required (a data scope or an account), complete the link and charge only what was granted. Otherwise the link ends `failed` with `reduced_grant` and nothing is charged. A shorter history than asked for is never a reduced grant: the link completes and `history_coverage` reports what was obtained.
+          sandbox: Sandbox applications only: picks the Didit Test Bank customer. A live application that sends it, with any key, answers `400 invalid_request` with `field: sandbox` and no link is created.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
