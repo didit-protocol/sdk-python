@@ -26,7 +26,7 @@ class BankSignInPricingOneTimeData(BaseModel):
     """Price of one read of balances only. Decimal string with 4 decimals in USD."""
 
     transactions_usd: str | None
-    """Price of one read of transactions, with or without balances. Decimal string with 4 decimals in USD."""
+    """Price of one read of transactions. Where `bundle_included` is `true` it also covers balances; otherwise balances are a separate line (`balances_usd`). Decimal string with 4 decimals in USD."""
 
     bundle_included: bool | None = None
     """`true` when `transactions_usd` is the one-time bundle: one read that carries transactions and balances together, so the `balance` add-on is not charged on top of it. Absent - never `false` - where `transactions_usd` is the separate transactions add-on price, including while the one-time bundle is not offered in the country."""
