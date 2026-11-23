@@ -353,6 +353,8 @@ class Bank(SyncAPIResource):
 
         Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.
 
+        Connections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).
+
         Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
 
         In this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.
@@ -360,7 +362,7 @@ class Bank(SyncAPIResource):
         ``GET /v3/bank/connections/``
 
         Args:
-          status: Only connections in this status.
+          status: Only connections in this status, one value. Without this filter the list leaves out `deleted` connections; `status=deleted` returns only them. A deleted connection carries no bank data.
           access: Only this access mode.
           institution_id: Only this bank.
           country: Only banks in this country.
@@ -1401,6 +1403,8 @@ class AsyncBank(AsyncAPIResource):
 
         Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.
 
+        Connections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).
+
         Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
 
         In this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.
@@ -1408,7 +1412,7 @@ class AsyncBank(AsyncAPIResource):
         ``GET /v3/bank/connections/``
 
         Args:
-          status: Only connections in this status.
+          status: Only connections in this status, one value. Without this filter the list leaves out `deleted` connections; `status=deleted` returns only them. A deleted connection carries no bank data.
           access: Only this access mode.
           institution_id: Only this bank.
           country: Only banks in this country.
