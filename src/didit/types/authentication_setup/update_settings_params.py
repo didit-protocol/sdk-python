@@ -9,7 +9,7 @@ __all__ = ["AuthenticationSetupUpdateSettingsParams"]
 
 
 class AuthenticationSetupUpdateSettingsParams(TypedDict, total=False):
-    """Every field is optional. Changing the application’s `agent_humans_only` setting requires an owner or admin. Enabling it also requires an enrolled passkey. A named key receives 403 `owner_or_admin_required`."""
+    """Every field is optional. Changing the application’s `agent_humans_only` setting requires an owner or admin. Enabling it also requires an enrolled passkey. An API key receives 403 `owner_or_admin_required`."""
 
     sign_in_ui: Literal["hosted", "own"] | str
 

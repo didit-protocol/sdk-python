@@ -53,7 +53,7 @@ __all__ = [
 class Bank(SyncAPIResource):
     """The ``bank`` resource of the Didit API.
 
-    Methods: ``account_check``, ``cancel_link``, ``create_link``, ``delete_connection``, ``get_account``, ``get_balances``, ``get_connection``, ``get_coverage``, ``get_institution``, ``get_link``, ``get_sync_run``, ``list_accounts``, ``list_connections``, ``list_institutions``, ``list_sync_runs``, ``list_transactions``, ``refresh_connection``, ``renew_connection``, ``revoke_connection``, ``sync_transactions``.
+    Methods: ``account_check``, ``cancel_link``, ``create_link``, ``delete_connection``, ``get_account``, ``get_balances``, ``get_connection``, ``get_coverage``, ``get_institution``, ``get_link``, ``get_sync_run``, ``list_accounts``, ``list_connections``, ``list_institutions``, ``list_sync_runs``, ``list_transactions``, ``refresh_connection``, ``renew_connection``, ``revoke_connection``, ``simulate_connection``, ``simulate_link``, ``sync_transactions``.
     """
 
     @cached_property
@@ -174,7 +174,7 @@ class Bank(SyncAPIResource):
 
         Confirm the outcome yourself with `get_link` or the `bank.link.completed` webhook; never trust a link id sent by the browser. History: send `history_from` or `history_days`, not both. Where the bank allows, ongoing access keeps working until the consent ends; the real date is on each connection.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``POST /v3/bank/links/``
 
@@ -194,7 +194,7 @@ class Bank(SyncAPIResource):
           end_user: The person or company that connects the account.
           redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet. Without a `redirect_url` the person finishes on Didit's own result page.
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
-          language: Optional language code such as `es` or `pt-BR`. Otherwise the browser language.
+          language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           vendor_data: Your own reference, returned on the link and the connection.
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
@@ -261,7 +261,7 @@ class Bank(SyncAPIResource):
 
         A link that fails is not an HTTP error: it reads `200` with `status: failed` and an `error` object, for example `duplicate_conflict` with `conflicts_with`. `url` and `client_token` are returned only when the link is created.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/links/{id}/``
 
@@ -327,6 +327,89 @@ class Bank(SyncAPIResource):
             ),
         )
 
+    def simulate_link(
+        self,
+        id: str,
+        *,
+        persona: Literal[
+            "personal_basic",
+            "business_multi",
+            "long_history",
+            "pending",
+            "sparse_fields",
+            "no_ongoing",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        outcome: Literal[
+            "completed",
+            "cancelled",
+            "failed",
+            "duplicate_conflict",
+            "reduced_grant",
+            "renewal_login_mismatch",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        error_code: Literal[
+            "duplicate_conflict",
+            "renewal_login_mismatch",
+            "reduced_grant",
+            "corporate_approval_not_supported",
+            "ongoing_access_not_available",
+            "bank_unavailable",
+            "bank_cancelled",
+            "consent_declined",
+            "read_limit",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankLink:
+        """Simulate a bank link (sandbox).
+
+        Finishes a link of your sandbox application in one call, as if the person had gone through the Didit Test Bank: you choose the Test Bank customer (`persona`) and how the link ends (`outcome`). The link goes through the same completion code as a real bank sign-in, so the connection, its accounts, the first sync and the `bank.*` webhooks happen exactly as they would for a real person. Answers the link, so read `status` and `connection_id`.
+
+        `outcome` is `completed` (the default: the person agrees and the connection is created), `cancelled` (the person leaves, the link ends `cancelled`), `failed` (the link ends `failed`; `error_code` picks the reason, `bank_unavailable` by default), `duplicate_conflict` (the person already has a connection with the same bank), `reduced_grant` (the person shares less than you asked for) or `renewal_login_mismatch` (a renewal with another bank login; on a connect link it ends as the failure it is). `error_code` is only accepted with `outcome: failed`.
+
+        A link that allows the one-time fallback and meets a bank that cannot keep access open accepts the reduced access and finishes in the same call. A link that is no longer open (completed, cancelled, expired or failed) is returned unchanged, so the call is safe to repeat.
+
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.
+
+        ``POST /v3/bank/links/{id}/simulate/``
+
+        Args:
+          id: The link id.
+          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open).
+          outcome: How the link ends.
+          error_code: The failure the link records. Only accepted with `outcome: failed`, where it defaults to `bank_unavailable`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankLink",
+            self._client.request(
+                "post",
+                "/v3/bank/links/{id}/simulate/",
+                cast_to=BankLink,
+                path_params={"id": id},
+                auth="api_key",
+                body={"persona": persona, "outcome": outcome, "error_code": error_code},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     def list_connections(
         self,
         *,
@@ -355,7 +438,7 @@ class Bank(SyncAPIResource):
 
         Connections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         In this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.
 
@@ -416,7 +499,7 @@ class Bank(SyncAPIResource):
 
         Returns the connection with its consent, sync state and a summary of each account. Read the data itself with the accounts, balances and transactions operations. A connection that was deleted reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and no accounts, balances, transactions, consent or sync data.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/``
 
@@ -460,7 +543,7 @@ class Bank(SyncAPIResource):
 
         Not affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call is safe. To stop access without deleting, use `revoke_connection`.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``DELETE /v3/bank/connections/{id}/``
 
@@ -507,7 +590,7 @@ class Bank(SyncAPIResource):
 
         When a sync stores changes, `bank.data.updated` tells you; then read the change feed.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         Refreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.
 
@@ -554,7 +637,7 @@ class Bank(SyncAPIResource):
 
         Lists what each sync of a connection did, newest first, per account and resource.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/sync-runs/``
 
@@ -597,7 +680,7 @@ class Bank(SyncAPIResource):
 
         Returns one sync run with its results per account and resource.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/sync-runs/{sync_id}/``
 
@@ -648,7 +731,7 @@ class Bank(SyncAPIResource):
 
         Until the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``POST /v3/bank/connections/{id}/renew/``
 
@@ -656,7 +739,7 @@ class Bank(SyncAPIResource):
           id: The connection id.
           redirect_url: Where the browser goes at the end. In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet.
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
-          language
+          language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           expires_in: Lifetime in seconds, 300 to 86400.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -702,7 +785,7 @@ class Bank(SyncAPIResource):
 
         Revoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         Revoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.
 
@@ -732,6 +815,87 @@ class Bank(SyncAPIResource):
             ),
         )
 
+    def simulate_connection(
+        self,
+        id: str,
+        *,
+        action: Literal[
+            "new_transactions",
+            "pending_posted",
+            "booking_correction",
+            "consent_expiring",
+            "consent_expired",
+            "revoked_by_user",
+            "revoked_by_bank",
+            "sync_failed",
+            "sync_recovered",
+            "webhook_twice",
+            "midnight_booking",
+            "budget_used",
+            "budget_reset",
+        ]
+        | str,
+        days: int | NotGiven = NOT_GIVEN,
+        count: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankConnection:
+        """Simulate a bank connection event (sandbox).
+
+        Moves a sandbox connection through time without waiting: new transactions, a pending row that posts, a consent that is about to end or has ended, a revocation, a failing sync, a duplicate webhook or a used-up refresh allowance. It uses the real sync engine and the real webhooks, so `bank.*` deliveries, the change feed and `sync` behave as they do for a real bank. Answers the connection as `get_connection` would.
+
+        `action` is required and is one of:
+
+        - `new_transactions`: the bank adds `count` booked transactions (1 to 500, default 3). A sync follows.
+        - `pending_posted`: one day passes at the bank: pending rows leave the change feed as `removed` and their booked rows arrive as `added`. It needs a test customer with pending transactions (`pending`); with `personal_basic` nothing changes. A sync follows.
+        - `booking_correction`: the next sync returns booked rows again with a corrected booking, so they arrive as `modified`. A sync follows.
+        - `midnight_booking`: a row is booked across midnight, to test day boundaries. A sync follows.
+        - `consent_expiring`: the consent now ends in `days` days and the expiry notice is sent (`bank.connection.consent_expiring`). `days` accepts only the notification thresholds, 14, 7 or 1 (default 7); any other value answers `400 invalid_request` with `field` `days`.
+        - `consent_expired`: the consent has ended now and the connection becomes `renewal_required`.
+        - `revoked_by_user` and `revoked_by_bank`: the bank tells Didit the consent ended, as if the person or the bank had revoked it. The connection reads `revoked` with `status_reason` `revoked_by_end_user` or `revoked_by_bank`, and `consent.ended_by` is `end_user` or `bank`.
+        - `sync_failed`: the bank fails every read until `sync_recovered`; the connection has been failing for 24 hours, so `bank.sync.failed` is sent. A sync follows.
+        - `sync_recovered`: the bank answers again. A sync follows.
+        - `webhook_twice`: the last `bank.*` webhook of this connection is delivered again with the same `event_id` and a fresh signature, to test your deduplication. It answers `400 invalid_request` if the connection has no delivery yet.
+        - `budget_used`: today's refresh allowance is used up on the bank's own day, so the next `refresh_connection` answers `429 refresh_limit_reached` with `Retry-After`, and `sync.live_syncs_left_today` and the `sync.budgets` `remaining` read 0.
+        - `budget_reset`: today's refresh allowance is restored: `sync.live_syncs_left_today` and the `remaining` of `sync.budgets` read what they read on a new connection.
+
+        `days` is only accepted with `consent_expiring` and `count` only with `new_transactions`: sent with another action, each answers `400 invalid_request` with `field` naming it.
+
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.
+
+        ``POST /v3/bank/connections/{id}/simulate/``
+
+        Args:
+          id: The connection id.
+          action: What happens. The operation description explains each value.
+          days: Only for `consent_expiring`: days until the consent ends. Only the notification thresholds are accepted: 14, 7 or 1. Any other value, or `days` with another action, answers `400 invalid_request` with `field` `days`.
+          count: Only for `new_transactions`: how many booked transactions the bank adds. With another action it answers `400 invalid_request` with `field` `count`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankConnection",
+            self._client.request(
+                "post",
+                "/v3/bank/connections/{id}/simulate/",
+                cast_to=BankConnection,
+                path_params={"id": id},
+                auth="api_key",
+                body={"action": action, "days": days, "count": count},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     def list_accounts(
         self,
         id: str,
@@ -747,7 +911,7 @@ class Bank(SyncAPIResource):
 
         Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/accounts/``
 
@@ -789,7 +953,7 @@ class Bank(SyncAPIResource):
 
         Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/``
 
@@ -828,7 +992,7 @@ class Bank(SyncAPIResource):
 
         Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/balances/``
 
@@ -876,7 +1040,7 @@ class Bank(SyncAPIResource):
 
         Response headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/transactions/``
 
@@ -934,7 +1098,7 @@ class Bank(SyncAPIResource):
 
         The change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/transactions/sync/``
 
@@ -982,7 +1146,7 @@ class Bank(SyncAPIResource):
 
         Lists the banks per country with their capabilities: segments, access modes, the longest consent and deepest history the bank offers, whether it reports pending transactions, which transaction fields it is known to send, and how the person signs in. Values come from observed data, refreshed daily; a value never observed is `null`. The same data feeds the bank picker, so use it to know what to expect before you create a link. `access` lists `ongoing` only where ongoing access is available.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         The list is sorted by name, then id.
 
@@ -1037,7 +1201,7 @@ class Bank(SyncAPIResource):
 
         Returns one bank with its capabilities. The id is Didit's slug, as listed by `list_institutions`.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/institutions/{id}/``
 
@@ -1075,7 +1239,7 @@ class Bank(SyncAPIResource):
 
         Returns one entry per country: whether bank sign-in and the account check are available, and whether ongoing access is available, with how many banks offer it, the longest consent and deepest history any of them allows, and whether business accounts are supported. Ongoing access is counted only where a bank is switched on for it. Use it to decide which countries to offer; use `list_institutions` for a single bank.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/coverage/``
 
@@ -1103,7 +1267,7 @@ class Bank(SyncAPIResource):
 class AsyncBank(AsyncAPIResource):
     """The ``bank`` resource of the Didit API.
 
-    Methods: ``account_check``, ``cancel_link``, ``create_link``, ``delete_connection``, ``get_account``, ``get_balances``, ``get_connection``, ``get_coverage``, ``get_institution``, ``get_link``, ``get_sync_run``, ``list_accounts``, ``list_connections``, ``list_institutions``, ``list_sync_runs``, ``list_transactions``, ``refresh_connection``, ``renew_connection``, ``revoke_connection``, ``sync_transactions``.
+    Methods: ``account_check``, ``cancel_link``, ``create_link``, ``delete_connection``, ``get_account``, ``get_balances``, ``get_connection``, ``get_coverage``, ``get_institution``, ``get_link``, ``get_sync_run``, ``list_accounts``, ``list_connections``, ``list_institutions``, ``list_sync_runs``, ``list_transactions``, ``refresh_connection``, ``renew_connection``, ``revoke_connection``, ``simulate_connection``, ``simulate_link``, ``sync_transactions``.
     """
 
     @cached_property
@@ -1224,7 +1388,7 @@ class AsyncBank(AsyncAPIResource):
 
         Confirm the outcome yourself with `get_link` or the `bank.link.completed` webhook; never trust a link id sent by the browser. History: send `history_from` or `history_days`, not both. Where the bank allows, ongoing access keeps working until the consent ends; the real date is on each connection.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``POST /v3/bank/links/``
 
@@ -1244,7 +1408,7 @@ class AsyncBank(AsyncAPIResource):
           end_user: The person or company that connects the account.
           redirect_url: Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet. Without a `redirect_url` the person finishes on Didit's own result page.
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
-          language: Optional language code such as `es` or `pt-BR`. Otherwise the browser language.
+          language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           vendor_data: Your own reference, returned on the link and the connection.
           expires_in: Lifetime of the link in seconds, 300 to 86400. Default 3600.
           duplicates: `reuse` (default) completes a link that resolves to accounts you already share as a renewal of that connection. `allow` creates an independent second connection.
@@ -1311,7 +1475,7 @@ class AsyncBank(AsyncAPIResource):
 
         A link that fails is not an HTTP error: it reads `200` with `status: failed` and an `error` object, for example `duplicate_conflict` with `conflicts_with`. `url` and `client_token` are returned only when the link is created.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/links/{id}/``
 
@@ -1377,6 +1541,89 @@ class AsyncBank(AsyncAPIResource):
             ),
         )
 
+    async def simulate_link(
+        self,
+        id: str,
+        *,
+        persona: Literal[
+            "personal_basic",
+            "business_multi",
+            "long_history",
+            "pending",
+            "sparse_fields",
+            "no_ongoing",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        outcome: Literal[
+            "completed",
+            "cancelled",
+            "failed",
+            "duplicate_conflict",
+            "reduced_grant",
+            "renewal_login_mismatch",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        error_code: Literal[
+            "duplicate_conflict",
+            "renewal_login_mismatch",
+            "reduced_grant",
+            "corporate_approval_not_supported",
+            "ongoing_access_not_available",
+            "bank_unavailable",
+            "bank_cancelled",
+            "consent_declined",
+            "read_limit",
+        ]
+        | str
+        | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankLink:
+        """Simulate a bank link (sandbox).
+
+        Finishes a link of your sandbox application in one call, as if the person had gone through the Didit Test Bank: you choose the Test Bank customer (`persona`) and how the link ends (`outcome`). The link goes through the same completion code as a real bank sign-in, so the connection, its accounts, the first sync and the `bank.*` webhooks happen exactly as they would for a real person. Answers the link, so read `status` and `connection_id`.
+
+        `outcome` is `completed` (the default: the person agrees and the connection is created), `cancelled` (the person leaves, the link ends `cancelled`), `failed` (the link ends `failed`; `error_code` picks the reason, `bank_unavailable` by default), `duplicate_conflict` (the person already has a connection with the same bank), `reduced_grant` (the person shares less than you asked for) or `renewal_login_mismatch` (a renewal with another bank login; on a connect link it ends as the failure it is). `error_code` is only accepted with `outcome: failed`.
+
+        A link that allows the one-time fallback and meets a bank that cannot keep access open accepts the reduced access and finishes in the same call. A link that is no longer open (completed, cancelled, expired or failed) is returned unchanged, so the call is safe to repeat.
+
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.
+
+        ``POST /v3/bank/links/{id}/simulate/``
+
+        Args:
+          id: The link id.
+          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open).
+          outcome: How the link ends.
+          error_code: The failure the link records. Only accepted with `outcome: failed`, where it defaults to `bank_unavailable`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankLink",
+            await self._client.request(
+                "post",
+                "/v3/bank/links/{id}/simulate/",
+                cast_to=BankLink,
+                path_params={"id": id},
+                auth="api_key",
+                body={"persona": persona, "outcome": outcome, "error_code": error_code},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     async def list_connections(
         self,
         *,
@@ -1405,7 +1652,7 @@ class AsyncBank(AsyncAPIResource):
 
         Connections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         In this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.
 
@@ -1466,7 +1713,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns the connection with its consent, sync state and a summary of each account. Read the data itself with the accounts, balances and transactions operations. A connection that was deleted reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and no accounts, balances, transactions, consent or sync data.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/``
 
@@ -1510,7 +1757,7 @@ class AsyncBank(AsyncAPIResource):
 
         Not affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call is safe. To stop access without deleting, use `revoke_connection`.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``DELETE /v3/bank/connections/{id}/``
 
@@ -1557,7 +1804,7 @@ class AsyncBank(AsyncAPIResource):
 
         When a sync stores changes, `bank.data.updated` tells you; then read the change feed.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         Refreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.
 
@@ -1604,7 +1851,7 @@ class AsyncBank(AsyncAPIResource):
 
         Lists what each sync of a connection did, newest first, per account and resource.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/sync-runs/``
 
@@ -1647,7 +1894,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns one sync run with its results per account and resource.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/connections/{id}/sync-runs/{sync_id}/``
 
@@ -1698,7 +1945,7 @@ class AsyncBank(AsyncAPIResource):
 
         Until the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``POST /v3/bank/connections/{id}/renew/``
 
@@ -1706,7 +1953,7 @@ class AsyncBank(AsyncAPIResource):
           id: The connection id.
           redirect_url: Where the browser goes at the end. In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet.
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
-          language
+          language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           expires_in: Lifetime in seconds, 300 to 86400.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -1752,7 +1999,7 @@ class AsyncBank(AsyncAPIResource):
 
         Revoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.
 
-        Needs an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         Revoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.
 
@@ -1782,6 +2029,87 @@ class AsyncBank(AsyncAPIResource):
             ),
         )
 
+    async def simulate_connection(
+        self,
+        id: str,
+        *,
+        action: Literal[
+            "new_transactions",
+            "pending_posted",
+            "booking_correction",
+            "consent_expiring",
+            "consent_expired",
+            "revoked_by_user",
+            "revoked_by_bank",
+            "sync_failed",
+            "sync_recovered",
+            "webhook_twice",
+            "midnight_booking",
+            "budget_used",
+            "budget_reset",
+        ]
+        | str,
+        days: int | NotGiven = NOT_GIVEN,
+        count: int | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankConnection:
+        """Simulate a bank connection event (sandbox).
+
+        Moves a sandbox connection through time without waiting: new transactions, a pending row that posts, a consent that is about to end or has ended, a revocation, a failing sync, a duplicate webhook or a used-up refresh allowance. It uses the real sync engine and the real webhooks, so `bank.*` deliveries, the change feed and `sync` behave as they do for a real bank. Answers the connection as `get_connection` would.
+
+        `action` is required and is one of:
+
+        - `new_transactions`: the bank adds `count` booked transactions (1 to 500, default 3). A sync follows.
+        - `pending_posted`: one day passes at the bank: pending rows leave the change feed as `removed` and their booked rows arrive as `added`. It needs a test customer with pending transactions (`pending`); with `personal_basic` nothing changes. A sync follows.
+        - `booking_correction`: the next sync returns booked rows again with a corrected booking, so they arrive as `modified`. A sync follows.
+        - `midnight_booking`: a row is booked across midnight, to test day boundaries. A sync follows.
+        - `consent_expiring`: the consent now ends in `days` days and the expiry notice is sent (`bank.connection.consent_expiring`). `days` accepts only the notification thresholds, 14, 7 or 1 (default 7); any other value answers `400 invalid_request` with `field` `days`.
+        - `consent_expired`: the consent has ended now and the connection becomes `renewal_required`.
+        - `revoked_by_user` and `revoked_by_bank`: the bank tells Didit the consent ended, as if the person or the bank had revoked it. The connection reads `revoked` with `status_reason` `revoked_by_end_user` or `revoked_by_bank`, and `consent.ended_by` is `end_user` or `bank`.
+        - `sync_failed`: the bank fails every read until `sync_recovered`; the connection has been failing for 24 hours, so `bank.sync.failed` is sent. A sync follows.
+        - `sync_recovered`: the bank answers again. A sync follows.
+        - `webhook_twice`: the last `bank.*` webhook of this connection is delivered again with the same `event_id` and a fresh signature, to test your deduplication. It answers `400 invalid_request` if the connection has no delivery yet.
+        - `budget_used`: today's refresh allowance is used up on the bank's own day, so the next `refresh_connection` answers `429 refresh_limit_reached` with `Retry-After`, and `sync.live_syncs_left_today` and the `sync.budgets` `remaining` read 0.
+        - `budget_reset`: today's refresh allowance is restored: `sync.live_syncs_left_today` and the `remaining` of `sync.budgets` read what they read on a new connection.
+
+        `days` is only accepted with `consent_expiring` and `count` only with `new_transactions`: sent with another action, each answers `400 invalid_request` with `field` naming it.
+
+        Needs an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.
+
+        ``POST /v3/bank/connections/{id}/simulate/``
+
+        Args:
+          id: The connection id.
+          action: What happens. The operation description explains each value.
+          days: Only for `consent_expiring`: days until the consent ends. Only the notification thresholds are accepted: 14, 7 or 1. Any other value, or `days` with another action, answers `400 invalid_request` with `field` `days`.
+          count: Only for `new_transactions`: how many booked transactions the bank adds. With another action it answers `400 invalid_request` with `field` `count`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankConnection",
+            await self._client.request(
+                "post",
+                "/v3/bank/connections/{id}/simulate/",
+                cast_to=BankConnection,
+                path_params={"id": id},
+                auth="api_key",
+                body={"action": action, "days": days, "count": count},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
     async def list_accounts(
         self,
         id: str,
@@ -1797,7 +2125,7 @@ class AsyncBank(AsyncAPIResource):
 
         Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/accounts/``
 
@@ -1839,7 +2167,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/``
 
@@ -1878,7 +2206,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/balances/``
 
@@ -1926,7 +2254,7 @@ class AsyncBank(AsyncAPIResource):
 
         Response headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/transactions/``
 
@@ -1984,7 +2312,7 @@ class AsyncBank(AsyncAPIResource):
 
         The change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/transactions/sync/``
 
@@ -2032,7 +2360,7 @@ class AsyncBank(AsyncAPIResource):
 
         Lists the banks per country with their capabilities: segments, access modes, the longest consent and deepest history the bank offers, whether it reports pending transactions, which transaction fields it is known to send, and how the person signs in. Values come from observed data, refreshed daily; a value never observed is `null`. The same data feeds the bank picker, so use it to know what to expect before you create a link. `access` lists `ongoing` only where ongoing access is available.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         The list is sorted by name, then id.
 
@@ -2087,7 +2415,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns one bank with its capabilities. The id is Didit's slug, as listed by `list_institutions`.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/institutions/{id}/``
 
@@ -2125,7 +2453,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns one entry per country: whether bank sign-in and the account check are available, and whether ongoing access is available, with how many banks offer it, the longest consent and deepest history any of them allows, and whether business accounts are supported. Ongoing access is counted only where a bank is switched on for it. Use it to decide which countries to offer; use `list_institutions` for a single bank.
 
-        Needs an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.
 
         ``GET /v3/bank/coverage/``
 
@@ -2157,6 +2485,7 @@ class BankWithRawResponse:
         self.create_link = to_raw_response_wrapper(resource.create_link)
         self.get_link = to_raw_response_wrapper(resource.get_link)
         self.cancel_link = to_raw_response_wrapper(resource.cancel_link)
+        self.simulate_link = to_raw_response_wrapper(resource.simulate_link)
         self.list_connections = to_raw_response_wrapper(resource.list_connections)
         self.get_connection = to_raw_response_wrapper(resource.get_connection)
         self.delete_connection = to_raw_response_wrapper(resource.delete_connection)
@@ -2165,6 +2494,7 @@ class BankWithRawResponse:
         self.get_sync_run = to_raw_response_wrapper(resource.get_sync_run)
         self.renew_connection = to_raw_response_wrapper(resource.renew_connection)
         self.revoke_connection = to_raw_response_wrapper(resource.revoke_connection)
+        self.simulate_connection = to_raw_response_wrapper(resource.simulate_connection)
         self.list_accounts = to_raw_response_wrapper(resource.list_accounts)
         self.get_account = to_raw_response_wrapper(resource.get_account)
         self.get_balances = to_raw_response_wrapper(resource.get_balances)
@@ -2182,6 +2512,7 @@ class AsyncBankWithRawResponse:
         self.create_link = async_to_raw_response_wrapper(resource.create_link)
         self.get_link = async_to_raw_response_wrapper(resource.get_link)
         self.cancel_link = async_to_raw_response_wrapper(resource.cancel_link)
+        self.simulate_link = async_to_raw_response_wrapper(resource.simulate_link)
         self.list_connections = async_to_raw_response_wrapper(resource.list_connections)
         self.get_connection = async_to_raw_response_wrapper(resource.get_connection)
         self.delete_connection = async_to_raw_response_wrapper(resource.delete_connection)
@@ -2190,6 +2521,7 @@ class AsyncBankWithRawResponse:
         self.get_sync_run = async_to_raw_response_wrapper(resource.get_sync_run)
         self.renew_connection = async_to_raw_response_wrapper(resource.renew_connection)
         self.revoke_connection = async_to_raw_response_wrapper(resource.revoke_connection)
+        self.simulate_connection = async_to_raw_response_wrapper(resource.simulate_connection)
         self.list_accounts = async_to_raw_response_wrapper(resource.list_accounts)
         self.get_account = async_to_raw_response_wrapper(resource.get_account)
         self.get_balances = async_to_raw_response_wrapper(resource.get_balances)
@@ -2207,6 +2539,7 @@ class BankWithStreamingResponse:
         self.create_link = to_streamed_response_wrapper(resource.create_link)
         self.get_link = to_streamed_response_wrapper(resource.get_link)
         self.cancel_link = to_streamed_response_wrapper(resource.cancel_link)
+        self.simulate_link = to_streamed_response_wrapper(resource.simulate_link)
         self.list_connections = to_streamed_response_wrapper(resource.list_connections)
         self.get_connection = to_streamed_response_wrapper(resource.get_connection)
         self.delete_connection = to_streamed_response_wrapper(resource.delete_connection)
@@ -2215,6 +2548,7 @@ class BankWithStreamingResponse:
         self.get_sync_run = to_streamed_response_wrapper(resource.get_sync_run)
         self.renew_connection = to_streamed_response_wrapper(resource.renew_connection)
         self.revoke_connection = to_streamed_response_wrapper(resource.revoke_connection)
+        self.simulate_connection = to_streamed_response_wrapper(resource.simulate_connection)
         self.list_accounts = to_streamed_response_wrapper(resource.list_accounts)
         self.get_account = to_streamed_response_wrapper(resource.get_account)
         self.get_balances = to_streamed_response_wrapper(resource.get_balances)
@@ -2232,6 +2566,7 @@ class AsyncBankWithStreamingResponse:
         self.create_link = async_to_streamed_response_wrapper(resource.create_link)
         self.get_link = async_to_streamed_response_wrapper(resource.get_link)
         self.cancel_link = async_to_streamed_response_wrapper(resource.cancel_link)
+        self.simulate_link = async_to_streamed_response_wrapper(resource.simulate_link)
         self.list_connections = async_to_streamed_response_wrapper(resource.list_connections)
         self.get_connection = async_to_streamed_response_wrapper(resource.get_connection)
         self.delete_connection = async_to_streamed_response_wrapper(resource.delete_connection)
@@ -2240,6 +2575,7 @@ class AsyncBankWithStreamingResponse:
         self.get_sync_run = async_to_streamed_response_wrapper(resource.get_sync_run)
         self.renew_connection = async_to_streamed_response_wrapper(resource.renew_connection)
         self.revoke_connection = async_to_streamed_response_wrapper(resource.revoke_connection)
+        self.simulate_connection = async_to_streamed_response_wrapper(resource.simulate_connection)
         self.list_accounts = async_to_streamed_response_wrapper(resource.list_accounts)
         self.get_account = async_to_streamed_response_wrapper(resource.get_account)
         self.get_balances = async_to_streamed_response_wrapper(resource.get_balances)

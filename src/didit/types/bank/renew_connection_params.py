@@ -18,6 +18,7 @@ class BankRenewConnectionParams(TypedDict, total=False):
     """Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50."""
 
     language: str
+    """Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English."""
 
     expires_in: int
     """Lifetime in seconds, 300 to 86400."""

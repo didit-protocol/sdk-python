@@ -1312,6 +1312,167 @@ def test_bank_revoke_connection() -> None:
     )
 
 
+def test_bank_simulate_connection() -> None:
+    """``POST /v3/bank/connections/{id}/simulate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/bank/connections/00000000-0000-4000-8000-000000000001/simulate/",
+            api="verification",
+            auth="api_key",
+            json_body={"action": "new_transactions", "count": 5},
+            status=200,
+            response_json={
+                "id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                "environment": "sandbox",
+                "access": "ongoing",
+                "status": "active",
+                "status_reason": None,
+                "institution": {
+                    "id": "es-banco-norte",
+                    "name": "Banco Norte",
+                    "country": "ESP",
+                    "logo_url": "https://static.example.com/banks/es-banco-norte.png",
+                },
+                "segment": "business",
+                "data": ["accounts", "balances", "transactions"],
+                "consent": {
+                    "status": "granted",
+                    "version": 1,
+                    "granted_at": "2026-11-21T12:04:11Z",
+                    "expires_at": "2027-05-20T12:04:11Z",
+                    "days_granted": 180,
+                    "renewed_count": 0,
+                    "scopes_requested": ["accounts", "balances", "transactions"],
+                    "scopes_granted": ["accounts", "balances", "transactions"],
+                    "accounts_granted": [
+                        "a71f0c2e-5d38-4b96-a1c4-3e9f8d2b7a10",
+                        "c3d84e19-2a7b-4f60-b5e1-9a0c6d3f8e72",
+                    ],
+                    "renewal_action": "bank_auth",
+                    "renew_by": "2027-05-20T12:04:11Z",
+                    "reconfirm_by": None,
+                    "renewable_until": None,
+                    "retain_until": None,
+                    "ended_at": None,
+                    "ended_by": None,
+                },
+                "sync": {
+                    "status": "ok",
+                    "initial_status": "succeeded",
+                    "initial_complete": True,
+                    "history_complete": True,
+                    "last_synced_at": "2026-11-21T12:04:40Z",
+                    "next_sync_at": "2026-11-22T06:00:00Z",
+                    "budgets": [
+                        {
+                            "scope": "connection",
+                            "resource": "all",
+                            "limit": 4,
+                            "remaining": 3,
+                            "resets_at": "2026-11-22T00:00:00Z",
+                        }
+                    ],
+                    "last_error": None,
+                    "frequency_per_day": 1,
+                    "live_syncs_left_today": 3,
+                },
+                "accounts": [
+                    {
+                        "id": "a71f0c2e-5d38-4b96-a1c4-3e9f8d2b7a10",
+                        "name": "Cuenta negocio",
+                        "type": "current",
+                        "usage": "business",
+                        "currency": "EUR",
+                        "iban_last4": "1332",
+                        "status": "open",
+                    },
+                    {
+                        "id": "c3d84e19-2a7b-4f60-b5e1-9a0c6d3f8e72",
+                        "name": "Cuenta de ahorro",
+                        "type": "savings",
+                        "usage": "business",
+                        "currency": "EUR",
+                        "iban_last4": "7708",
+                        "status": "open",
+                    },
+                ],
+                "ownership": {"compare": "none", "match": None, "check_id": None, "result": None},
+                "end_user": {"reference": "client-7731"},
+                "manage_url": None,
+                "billing": {
+                    "unit": "connection_month",
+                    "price_usd": "0.9000",
+                    "billed_through": "2026-11-30",
+                },
+                "possible_duplicate_of": None,
+                "erasure": None,
+                "vendor_data": "client-7731",
+                "created_at": "2026-11-21T12:03:02Z",
+                "updated_at": "2026-11-21T12:04:40Z",
+            },
+        ),
+        lambda c: c.bank.simulate_connection(
+            "00000000-0000-4000-8000-000000000001", action="new_transactions", count=5
+        ),
+        lambda c: c.bank.simulate_connection(
+            "00000000-0000-4000-8000-000000000001", action="new_transactions", count=5
+        ),
+        lambda r: isinstance(r, BankConnection),
+        lambda r: isinstance(r, BankConnection),
+    )
+
+
+def test_bank_simulate_link() -> None:
+    """``POST /v3/bank/links/{id}/simulate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/bank/links/00000000-0000-4000-8000-000000000001/simulate/",
+            api="verification",
+            auth="api_key",
+            json_body={"persona": "personal_basic", "outcome": "completed"},
+            status=200,
+            response_json={
+                "id": "0b9c4f1e-6a2d-4e8b-9f31-7c5d2e1a8b40",
+                "mode": "connect",
+                "access": "ongoing",
+                "status": "completed",
+                "url": None,
+                "client_token": None,
+                "expires_at": "2026-11-21T13:00:00Z",
+                "connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                "check_id": None,
+                "reused": False,
+                "error": None,
+                "quote": {
+                    "id": "7a3e9c52-1d84-4b06-8f2a-c5e0b9d17a43",
+                    "lines": [
+                        {
+                            "meter": "bank_data_connection_month",
+                            "unit": "connection_month",
+                            "price_usd": "0.9000",
+                        }
+                    ],
+                    "fallback_lines": None,
+                    "total_usd": "0.9000",
+                    "valid_until": "2026-11-21T13:00:00Z",
+                    "scopes": ["accounts", "balances", "transactions"],
+                },
+                "vendor_data": "client-7731",
+            },
+        ),
+        lambda c: c.bank.simulate_link(
+            "00000000-0000-4000-8000-000000000001", persona="personal_basic", outcome="completed"
+        ),
+        lambda c: c.bank.simulate_link(
+            "00000000-0000-4000-8000-000000000001", persona="personal_basic", outcome="completed"
+        ),
+        lambda r: isinstance(r, BankLink),
+        lambda r: isinstance(r, BankLink),
+    )
+
+
 def test_bank_sync_transactions() -> None:
     """``GET /v3/bank/connections/{id}/transactions/sync/``"""
     check_operation(

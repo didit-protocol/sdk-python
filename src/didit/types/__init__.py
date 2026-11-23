@@ -132,6 +132,12 @@ if TYPE_CHECKING:
     from didit.types.bank.renew_connection_params import (
         BankRenewConnectionParams as BankRenewConnectionParams,
     )
+    from didit.types.bank.simulate_connection_params import (
+        BankSimulateConnectionParams as BankSimulateConnectionParams,
+    )
+    from didit.types.bank.simulate_link_params import (
+        BankSimulateLinkParams as BankSimulateLinkParams,
+    )
     from didit.types.billing.retrieve_balance_response import (
         BillingRetrieveBalanceResponse as BillingRetrieveBalanceResponse,
     )
@@ -693,6 +699,33 @@ if TYPE_CHECKING:
     from didit.types.components.bank_transaction_remittance import (
         BankTransactionRemittance as BankTransactionRemittance,
     )
+    from didit.types.components.bank_verification_country_coverage import (
+        BankVerificationCountryCoverage as BankVerificationCountryCoverage,
+    )
+    from didit.types.components.bank_verification_coverage import (
+        BankVerificationCoverage as BankVerificationCoverage,
+    )
+    from didit.types.components.bank_verification_coverage import (
+        BankVerificationCoverageCountriesValue as BankVerificationCoverageCountriesValue,
+    )
+    from didit.types.components.bank_verification_coverage import (
+        BankVerificationCoverageCountriesValueBanksBySegment as BankVerificationCoverageCountriesValueBanksBySegment,
+    )
+    from didit.types.components.bank_verification_coverage_availability import (
+        BankVerificationCoverageAvailability as BankVerificationCoverageAvailability,
+    )
+    from didit.types.components.bank_verification_coverage_bank import (
+        BankVerificationCoverageBank as BankVerificationCoverageBank,
+    )
+    from didit.types.components.bank_verification_coverage_open import (
+        BankVerificationCoverageOpen as BankVerificationCoverageOpen,
+    )
+    from didit.types.components.bank_verification_one_time_availability import (
+        BankVerificationOneTimeAvailability as BankVerificationOneTimeAvailability,
+    )
+    from didit.types.components.bank_verification_ongoing_availability import (
+        BankVerificationOngoingAvailability as BankVerificationOngoingAvailability,
+    )
     from didit.types.components.bank_verification_pricing import (
         BankVerificationPricing as BankVerificationPricing,
     )
@@ -725,6 +758,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.bank_verification_result import (
         BankVerificationResultRoute as BankVerificationResultRoute,
+    )
+    from didit.types.components.bank_verification_workflows_availability import (
+        BankVerificationWorkflowsAvailability as BankVerificationWorkflowsAvailability,
     )
     from didit.types.components.billing_top_up_charge import (
         BillingTopUpCharge as BillingTopUpCharge,
@@ -4078,6 +4114,8 @@ _MODULES: dict[str, str] = {
     "BankSignInPricingAddOns": "components.bank_sign_in_pricing",
     "BankSignInPricingOneTimeData": "components.bank_sign_in_pricing",
     "BankSignInPricingOngoing": "components.bank_sign_in_pricing",
+    "BankSimulateConnectionParams": "bank.simulate_connection_params",
+    "BankSimulateLinkParams": "bank.simulate_link_params",
     "BankStatementUploadPricing": "components.bank_statement_upload_pricing",
     "BankSyncBudget": "components.bank_sync_budget",
     "BankSyncCompleted": "components.bank_sync_completed",
@@ -4092,6 +4130,15 @@ _MODULES: dict[str, str] = {
     "BankTransactionExchange": "components.bank_transaction",
     "BankTransactionPage": "components.bank_transaction_page",
     "BankTransactionRemittance": "components.bank_transaction_remittance",
+    "BankVerificationCountryCoverage": "components.bank_verification_country_coverage",
+    "BankVerificationCoverage": "components.bank_verification_coverage",
+    "BankVerificationCoverageAvailability": "components.bank_verification_coverage_availability",
+    "BankVerificationCoverageBank": "components.bank_verification_coverage_bank",
+    "BankVerificationCoverageCountriesValue": "components.bank_verification_coverage",
+    "BankVerificationCoverageCountriesValueBanksBySegment": "components.bank_verification_coverage",
+    "BankVerificationCoverageOpen": "components.bank_verification_coverage_open",
+    "BankVerificationOneTimeAvailability": "components.bank_verification_one_time_availability",
+    "BankVerificationOngoingAvailability": "components.bank_verification_ongoing_availability",
     "BankVerificationPricing": "components.bank_verification_pricing",
     "BankVerificationPricingCountry": "components.bank_verification_pricing_country",
     "BankVerificationPricingMethods": "components.bank_verification_pricing_methods",
@@ -4103,6 +4150,7 @@ _MODULES: dict[str, str] = {
     "BankVerificationResultFinancialData": "components.bank_verification_result",
     "BankVerificationResultOwnership": "components.bank_verification_result",
     "BankVerificationResultRoute": "components.bank_verification_result",
+    "BankVerificationWorkflowsAvailability": "components.bank_verification_workflows_availability",
     "BillingRetrieveBalanceResponse": "billing.retrieve_balance_response",
     "BillingTopUpCharge": "components.billing_top_up_charge",
     "BillingTopUpParams": "billing.top_up_params",
@@ -5539,6 +5587,8 @@ __all__ = [
     "BankSignInPricingAddOns",
     "BankSignInPricingOneTimeData",
     "BankSignInPricingOngoing",
+    "BankSimulateConnectionParams",
+    "BankSimulateLinkParams",
     "BankStatementUploadPricing",
     "BankSyncBudget",
     "BankSyncCompleted",
@@ -5553,6 +5603,15 @@ __all__ = [
     "BankTransactionExchange",
     "BankTransactionPage",
     "BankTransactionRemittance",
+    "BankVerificationCountryCoverage",
+    "BankVerificationCoverage",
+    "BankVerificationCoverageAvailability",
+    "BankVerificationCoverageBank",
+    "BankVerificationCoverageCountriesValue",
+    "BankVerificationCoverageCountriesValueBanksBySegment",
+    "BankVerificationCoverageOpen",
+    "BankVerificationOneTimeAvailability",
+    "BankVerificationOngoingAvailability",
     "BankVerificationPricing",
     "BankVerificationPricingCountry",
     "BankVerificationPricingMethods",
@@ -5564,6 +5623,7 @@ __all__ = [
     "BankVerificationResultFinancialData",
     "BankVerificationResultOwnership",
     "BankVerificationResultRoute",
+    "BankVerificationWorkflowsAvailability",
     "BillingRetrieveBalanceResponse",
     "BillingTopUpCharge",
     "BillingTopUpParams",

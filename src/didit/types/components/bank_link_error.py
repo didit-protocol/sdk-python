@@ -28,7 +28,7 @@ class BankLinkError(BaseModel):
         ]
         | str
     )
-    """Why the link failed. A failed link is not an HTTP error: the link reads with `status: failed` and this object. A renew link whose connection changed meanwhile reads `renewal_not_needed` or `renewal_window_expired`."""
+    """Why the link failed. A failed link is not an HTTP error: the link reads with `status: failed` and this object. `bank_cancelled` ends a link only on the fifth cancel at the bank: until then a person who backs out at the bank returns to the list of banks with a notice and the link stays `opened`. A bank that cannot be reached (`bank_unavailable`) also returns the person to the list of banks and leaves the link `opened`. A link ended by the simulate operation fails at once. A renew link whose connection changed meanwhile reads `renewal_not_needed` or `renewal_window_expired`."""
 
     message: str
     """Plain-language explanation for a developer."""

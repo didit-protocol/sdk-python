@@ -74,7 +74,7 @@ class Phone(SyncAPIResource):
 
         **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.
 
-        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable.
+        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.
 
         **Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.
 
@@ -335,7 +335,7 @@ class AsyncPhone(AsyncAPIResource):
 
         **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.
 
-        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable.
+        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.
 
         **Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.
 

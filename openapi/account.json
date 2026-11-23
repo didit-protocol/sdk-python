@@ -22,7 +22,7 @@
     },
     {
       "name": "Setup",
-      "description": "Set up Didit Authentication by API: the sign-in methods, the application settings, branding, bot protection, verified sign-in, the sign-up emails, the hosted domain and the native apps. These routes live on `https://apx.didit.me/auth/v2/organizations/{organization_id}/applications/{application_id}/authentication/`, not on the application's issuer, and they take a credential an owner approved: a management grant, or a named API key with the `authentication` scope. The console session of an owner or admin with `write:authentication` still works. End-user data, organizations, roles, imports and agent sessions stay console-only."
+      "description": "Set up Didit Authentication by API: the sign-in methods, the application settings, branding, bot protection, verified sign-in, the sign-up emails, the hosted domain and the native apps. These routes live on `https://apx.didit.me/auth/v2/organizations/{organization_id}/applications/{application_id}/authentication/`, not on the application's issuer, and they take a credential an owner approved: a management grant, or an API key of the application: a full-access key (no scopes, the primary secret included) or a key with the `authentication` scope. The console session of an owner or admin with `write:authentication` still works. End-user data, organizations, roles, imports and agent sessions stay console-only."
     }
   ],
   "paths": {
@@ -2243,7 +2243,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -2562,7 +2562,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -2756,7 +2756,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3006,7 +3006,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3120,7 +3120,7 @@
           "Setup"
         ],
         "summary": "Update the application settings",
-        "description": "Changes the settings in the body. `agent_humans_only` needs a person: a named API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.",
+        "description": "Changes the settings in the body. `agent_humans_only` needs a person: an API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.",
         "operationId": "authentication_update_settings",
         "security": [
           {
@@ -3265,7 +3265,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3584,7 +3584,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3739,7 +3739,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3752,7 +3752,7 @@
           "Setup"
         ],
         "summary": "Preview a sign-in email",
-        "description": "Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{\"error\": \"email_not_sent_by_authentication\"}`.",
+        "description": "Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or an API key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{\"error\": \"email_not_sent_by_authentication\"}`.",
         "operationId": "authentication_get_email",
         "security": [
           {
@@ -3929,7 +3929,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -3942,7 +3942,7 @@
           "Setup"
         ],
         "summary": "Get bot protection",
-        "description": "Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and named keys receive the same aggregate counters.",
+        "description": "Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and API keys receive the same aggregate counters.",
         "operationId": "authentication_get_protection",
         "security": [
           {
@@ -4314,7 +4314,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -4654,7 +4654,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -5051,7 +5051,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -5147,7 +5147,7 @@
             "$ref": "#/components/responses/SetupNotFound"
           },
           "409": {
-            "description": "The domain is already in use (`domain_in_use`), changed during verification (`custom_domain_changed`), or needs to be removed and added again after a failed certificate (`custom_domain_failed`). With a management grant or a named key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
+            "description": "The domain is already in use (`domain_in_use`), changed during verification (`custom_domain_changed`), or needs to be removed and added again after a failed certificate (`custom_domain_failed`). With a management grant or an API key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5249,7 +5249,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -5332,7 +5332,7 @@
             "$ref": "#/components/responses/SetupNotFound"
           },
           "409": {
-            "description": "Verify the custom domain before activating it. With a management grant or a named key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
+            "description": "Verify the custom domain before activating it. With a management grant or an API key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5421,7 +5421,7 @@
           "name": "application_id",
           "in": "path",
           "required": true,
-          "description": "UUID of the application: live or sandbox. A named key configures its own application only.",
+          "description": "UUID of the application: live or sandbox. An API key configures its own application only.",
           "schema": {
             "type": "string",
             "format": "uuid",
@@ -5679,7 +5679,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key",
-        "description": "A **named** application API key whose scopes give `authentication` the level the request needs: `read` to read the setup, `write` to read and change it. It configures its own application only, within its IP allowlist and expiry. The application's primary secret, an unscoped key and a token from `POST /programmatic/login` are refused with 403."
+        "description": "An API key of the application, sent as `x-api-key`. A full-access key (no scopes, which includes the application's primary secret) covers every resource, Authentication included. A scoped key needs `authentication` at the level the request needs: `read` to read the setup, `write` to read and change it. It configures its own application only, within its IP allowlist and expiry. A scoped key without `authentication` and a token from `POST /programmatic/login` are refused with 403."
       },
       "ManagementGrant": {
         "type": "http",
@@ -7980,7 +7980,7 @@
       "SetupSettingsUpdate": {
         "title": "Application settings update",
         "type": "object",
-        "description": "Every field is optional. Changing the application’s `agent_humans_only` setting requires an owner or admin. Enabling it also requires an enrolled passkey. A named key receives 403 `owner_or_admin_required`.",
+        "description": "Every field is optional. Changing the application’s `agent_humans_only` setting requires an owner or admin. Enabling it also requires an enrolled passkey. An API key receives 403 `owner_or_admin_required`.",
         "properties": {
           "sign_in_ui": {
             "type": "string",
@@ -8343,7 +8343,7 @@
         }
       },
       "SetupConflict": {
-        "description": "The application already holds a custom domain that is claimed, verified or active. Remove it before claiming another. With a management grant or a named key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
+        "description": "The application already holds a custom domain that is claimed, verified or active. Remove it before claiming another. With a management grant or an API key, `{\"detail\": \"product_disabled\"}` means Authentication is turned off for the application; a person turns it on in the console.",
         "content": {
           "application/json": {
             "schema": {
@@ -8367,7 +8367,7 @@
         }
       },
       "SetupNotAuthenticated": {
-        "description": "The request carried no credential. Send a management grant as `Authorization: Bearer <access_token>`, or a named key as `x-api-key`.",
+        "description": "The request carried no credential. Send a management grant as `Authorization: Bearer <access_token>`, or an API key as `x-api-key`.",
         "headers": {
           "WWW-Authenticate": {
             "description": "`Bearer`.",
@@ -8404,7 +8404,7 @@
         }
       },
       "SetupPermissionDenied": {
-        "description": "The credential cannot set up this application: a grant without `didit:management`, a grant approved for another organization, a key without the `authentication` scope, a read-only key on a write route, a key of another application, the application's primary secret, a `/programmatic/login` token, a key outside its IP allowlist or past its expiry, or a person whose role in the organization is not allowed. The body is `{\"detail\": \"<message>\"}`; a named key's own limit answers with its reason, such as `ip_not_allowed`. A console session that changes the setup while Authentication is turned off gets `authentication_product_disabled`; a management grant or a named key gets `409 product_disabled` instead.",
+        "description": "The credential cannot set up this application: a grant without `didit:management`, a grant approved for another organization, a scoped key without `authentication`, a read-only key on a write route, a key of another application, a `/programmatic/login` token, a key outside its IP allowlist or past its expiry, or a person whose role in the organization is not allowed. The body is `{\"detail\": \"<message>\"}`; an API key's own limit answers with its reason, such as `ip_not_allowed`. A console session that changes the setup while Authentication is turned off gets `authentication_product_disabled`; a management grant or an API key gets `409 product_disabled` instead.",
         "content": {
           "application/json": {
             "schema": {
@@ -8434,7 +8434,7 @@
         }
       },
       "SetupProductDisabled": {
-        "description": "Authentication is turned off for this application, so a management grant or a named API key cannot change its setup (`{\"detail\": \"product_disabled\"}`). Nothing is written. Reads still answer, and the root `GET` shows `enabled: false`. No setup call turns the product on: a person turns Authentication on for the application in the console.",
+        "description": "Authentication is turned off for this application, so a management grant or an API key cannot change its setup (`{\"detail\": \"product_disabled\"}`). Nothing is written. Reads still answer, and the root `GET` shows `enabled: false`. No setup call turns the product on: a person turns Authentication on for the application in the console.",
         "content": {
           "application/json": {
             "schema": {

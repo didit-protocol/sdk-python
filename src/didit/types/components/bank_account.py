@@ -16,7 +16,7 @@ class BankAccount(BaseModel):
     """One account inside a connection."""
 
     id: str
-    """Account id. Belongs to the connection and never changes while it exists, renewals included."""
+    """Account id. Belongs to the connection and never changes while it exists, renewals included; a new connection of the same bank account has a new id (use `account_ref` to recognise the account)."""
 
     connection_id: str
 
@@ -39,10 +39,10 @@ class BankAccount(BaseModel):
     """Holders the bank shares. Ownership counts only `holder` and `joint_holder`."""
 
     identifiers: BankAccountIdentifiers
-    """Full identifiers, returned to server-side callers with the bank data permission."""
+    """Full identifiers, returned to server-side callers with access to Bank data."""
 
     account_ref: str | None
-    """Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know."""
+    """Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know. It is the same for one bank account in every connection of the application, while `id` and the transaction ids are new in each connection."""
 
     account_ref_previous: str | None
     """The previous `account_ref`, only for a verified alias such as a bank migration."""

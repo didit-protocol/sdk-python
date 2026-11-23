@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+from didit.types.components.bank_verification_country_coverage import (
+    BankVerificationCountryCoverage,
+)
+from didit.types.components.bank_verification_coverage import BankVerificationCoverage
 from didit.types.components.bank_verification_pricing import BankVerificationPricing
 from didit.types.components.public_price_book import PublicPriceBook
 from tests.harness import Expect, check_operation
@@ -64,6 +68,113 @@ def test_pricing_bank_verification() -> None:
         lambda c: c.pricing.bank_verification(),
         lambda r: isinstance(r, BankVerificationPricing),
         lambda r: isinstance(r, BankVerificationPricing),
+    )
+
+
+def test_pricing_bank_verification_country_coverage() -> None:
+    """``GET /v3/organization/bank-verification-coverage/{country}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/bank-verification-coverage/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="none",
+            status=200,
+            response_json={
+                "country": "ESP",
+                "name": "Spain",
+                "updated_at": "2026-11-23T08:00:00Z",
+                "open": {
+                    "bank_verification_in_workflows": True,
+                    "bank_data_api_one_time": False,
+                    "bank_data_api_ongoing": False,
+                    "account_check": False,
+                },
+                "data_read": ["accounts", "balances", "transactions"],
+                "balances_note": "Balances are read for every account a bank shares. The balance types a bank states are listed per bank only when Didit has observed them.",
+                "banks": [
+                    {
+                        "id": "es-bbva",
+                        "name": "BBVA",
+                        "country": "ESP",
+                        "segments": ["personal", "business"],
+                        "access": ["one_time"],
+                        "history_days_max": 60,
+                        "pending_transactions": True,
+                        "status": "operational",
+                    },
+                    {
+                        "id": "es-caixabank",
+                        "name": "CaixaBank",
+                        "country": "ESP",
+                        "segments": ["personal", "business"],
+                        "access": ["one_time"],
+                        "history_days_max": 60,
+                        "pending_transactions": False,
+                        "status": "operational",
+                    },
+                    {
+                        "id": "es-santander",
+                        "name": "Santander",
+                        "country": "ESP",
+                        "segments": ["personal", "business"],
+                        "access": ["one_time"],
+                        "history_days_max": 60,
+                        "pending_transactions": True,
+                        "status": "operational",
+                    },
+                ],
+            },
+        ),
+        lambda c: c.pricing.bank_verification_country_coverage(
+            "00000000-0000-4000-8000-000000000001"
+        ),
+        lambda c: c.pricing.bank_verification_country_coverage(
+            "00000000-0000-4000-8000-000000000001"
+        ),
+        lambda r: isinstance(r, BankVerificationCountryCoverage),
+        lambda r: isinstance(r, BankVerificationCountryCoverage),
+    )
+
+
+def test_pricing_bank_verification_coverage() -> None:
+    """``GET /v3/organization/bank-verification-coverage/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/bank-verification-coverage/",
+            api="verification",
+            auth="none",
+            status=200,
+            response_json={
+                "updated_at": "2026-11-23T08:00:00Z",
+                "open": {
+                    "bank_verification_in_workflows": {"live": True, "countries": ["ESP"]},
+                    "bank_data_api_one_time": {"live_applications": False, "countries": []},
+                    "bank_data_api_ongoing": {"live_applications": False, "countries": []},
+                },
+                "data_read": ["accounts", "balances", "transactions"],
+                "balances_note": "Balances are read for every account a bank shares. The balance types a bank states are listed per bank only when Didit has observed them.",
+                "countries": {
+                    "ESP": {
+                        "name": "Spain",
+                        "banks": 92,
+                        "banks_by_segment": {"personal": 84, "business": 87},
+                        "open": {
+                            "bank_verification_in_workflows": True,
+                            "bank_data_api_one_time": False,
+                            "bank_data_api_ongoing": False,
+                            "account_check": False,
+                        },
+                        "banks_url": "/v3/organization/bank-verification-coverage/ESP/",
+                    }
+                },
+            },
+        ),
+        lambda c: c.pricing.bank_verification_coverage(),
+        lambda c: c.pricing.bank_verification_coverage(),
+        lambda r: isinstance(r, BankVerificationCoverage),
+        lambda r: isinstance(r, BankVerificationCoverage),
     )
 
 
