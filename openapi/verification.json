@@ -100294,7 +100294,7 @@
     "/v3/bank/connections/": {
       "get": {
         "summary": "List bank connections",
-        "description": "Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nIn this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.",
+        "description": "Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.\n\nConnections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nIn this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.",
         "operationId": "listBankConnections",
         "tags": [
           "Bank Data"
@@ -100327,7 +100327,7 @@
                 "failed"
               ]
             },
-            "description": "Only connections in this status."
+            "description": "Only connections in this status, one value. Without this filter the list leaves out `deleted` connections; `status=deleted` returns only them. A deleted connection carries no bank data."
           },
           {
             "name": "access",
@@ -146730,9 +146730,10 @@
                   "long_history",
                   "pending",
                   "sparse_fields",
-                  "no_ongoing"
+                  "no_ongoing",
+                  "requires_email"
                 ],
-                "description": "The Test Bank customer: `personal_basic` (one current account, 60 movements), `business_multi` (three accounts held by a company), `long_history` (one account with 400 days and 1,400 movements; a read returns the last 365 days, so set `history_days` to 365), `pending` (includes pending transactions), `sparse_fields` (no value date, no counterparty IBAN, no bank reference) or `no_ongoing` (a bank that only allows one-time access: use `allow_one_time_fallback`)."
+                "description": "The Test Bank customer: `personal_basic` (one current account, 60 movements), `business_multi` (three accounts held by a company), `long_history` (one account with 400 days and 1,400 movements; a read returns the last 365 days, so set `history_days` to 365), `pending` (includes pending transactions), `sparse_fields` (no value date, no counterparty IBAN, no bank reference) or `no_ongoing` (a bank that only allows one-time access: use `allow_one_time_fallback`). `requires_email`: the Test Bank behaves as a bank that needs the person's email, so the link asks for an email address and a code before the bank. In sandbox no email is sent and the code is always `123456`; ignored for live applications."
               },
               "switches": {
                 "type": "array",
@@ -147360,7 +147361,7 @@
               "deleted",
               "failed"
             ],
-            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you, or ended because the read of a one-time connection is complete. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. `failed`: the first sync never succeeded."
+            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you, or ended because the read of a one-time connection is complete. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. The list returns these only for `status=deleted`; reading one by id always returns it. `failed`: the first sync never succeeded."
           },
           "status_reason": {
             "type": "string",
@@ -147483,7 +147484,7 @@
       },
       "BankConnectionList": {
         "type": "object",
-        "description": "A page of connections.",
+        "description": "A page of connections. Deleted connections are not in it unless the request asked for `status=deleted`.",
         "properties": {
           "items": {
             "type": "array",

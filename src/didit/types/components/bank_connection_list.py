@@ -8,7 +8,7 @@ __all__ = ["BankConnectionList"]
 
 
 class BankConnectionList(BaseModel):
-    """A page of connections."""
+    """A page of connections. Deleted connections are not in it unless the request asked for `status=deleted`."""
 
     items: list[BankConnection]
 
