@@ -13,6 +13,24 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ActivityCreatedEvent",
+    "BankConnectionConsentExpiringEvent",
+    "BankConnectionCreatedEvent",
+    "BankConnectionDeletedEvent",
+    "BankConnectionHistoryCompleteEvent",
+    "BankConnectionRenewalRequiredEvent",
+    "BankConnectionRenewedEvent",
+    "BankConnectionRevokedEvent",
+    "BankConnectionUpdatedEvent",
+    "BankDataUpdatedAccount",
+    "BankDataUpdatedEvent",
+    "BankLinkCancelledEvent",
+    "BankLinkCompletedEvent",
+    "BankLinkEventData",
+    "BankLinkExpiredEvent",
+    "BankLinkFailedEvent",
+    "BankSyncCompletedEvent",
+    "BankSyncFailedEvent",
+    "BankSyncRecoveredEvent",
     "BusinessDataUpdatedEvent",
     "BusinessStatusUpdatedEvent",
     "KybRegistrySearchResolvedEvent",
@@ -199,6 +217,242 @@ class KybRegistrySearchResolvedEvent(WebhookEventBase):
     webhook_type: Literal["kyb.registry_search.resolved"] = "kyb.registry_search.resolved"  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
+class BankLinkEventData(BaseModel):
+    """Ids and statuses of a Bank Link, in ``data`` of the ``bank.link.*`` events. No personal data."""
+
+    link_id: str | None = None
+    status: Literal["completed", "cancelled", "expired", "failed"] | str | None = None
+    connection_id: str | None = None
+    """The connection the link created or renewed."""
+    check_id: str | None = None
+    """The ownership result, when one was asked for."""
+    error_code: (
+        Literal[
+            "duplicate_conflict",
+            "renewal_login_mismatch",
+            "reduced_grant",
+            "corporate_approval_not_supported",
+            "ongoing_access_not_available",
+            "bank_unavailable",
+            "bank_cancelled",
+            "consent_declined",
+            "read_limit",
+            "renewal_not_needed",
+            "renewal_window_expired",
+            "first_sync_failed",
+        ]
+        | str
+        | None
+    ) = None
+    """Why the link failed, with ``bank.link.failed``; ``None`` otherwise."""
+
+
+class _BankLinkEvent(WebhookEventBase):
+    data: BankLinkEventData | None = None
+    """The link's ids and statuses (the ``bank.link.*`` events carry them under ``data``)."""
+
+
+class BankLinkCompletedEvent(_BankLinkEvent):
+    """``bank.link.completed``: the person connected a bank or renewed a connection; ``data.connection_id`` is set."""
+
+    webhook_type: Literal["bank.link.completed"] = "bank.link.completed"  # pyright: ignore[reportIncompatibleVariableOverride]
+
+
+class BankLinkCancelledEvent(_BankLinkEvent):
+    """``bank.link.cancelled``: a Bank Link was cancelled, by the person or through the API."""
+
+    webhook_type: Literal["bank.link.cancelled"] = "bank.link.cancelled"  # pyright: ignore[reportIncompatibleVariableOverride]
+
+
+class BankLinkExpiredEvent(_BankLinkEvent):
+    """``bank.link.expired``: a Bank Link expired before it was completed."""
+
+    webhook_type: Literal["bank.link.expired"] = "bank.link.expired"  # pyright: ignore[reportIncompatibleVariableOverride]
+
+
+class BankLinkFailedEvent(_BankLinkEvent):
+    """``bank.link.failed``: a Bank Link failed; ``data.error_code`` says why. Nothing was published or charged."""
+
+    webhook_type: Literal["bank.link.failed"] = "bank.link.failed"  # pyright: ignore[reportIncompatibleVariableOverride]
+
+
+# The connection, data and sync events carry their fields next to the envelope
+# fields (no ``data`` object). Date-times are the ISO 8601 strings as sent.
+
+BankConnectionStatus = Literal[
+    "pending", "active", "renewal_required", "paused", "revoked", "deleted", "failed"
+]
+BankSyncTrigger = Literal["initial", "scheduled", "requested"]
+
+
+class BankConnectionCreatedEvent(WebhookEventBase):
+    """``bank.connection.created``: the first sync finished and the accounts are readable."""
+
+    webhook_type: Literal["bank.connection.created"] = "bank.connection.created"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    initial_status: Literal["succeeded", "partial"] | str | None = None
+    """How the first sync ended."""
+
+
+class BankConnectionUpdatedEvent(WebhookEventBase):
+    """``bank.connection.updated``: a revocation started; ``bank.connection.revoked`` follows."""
+
+    webhook_type: Literal["bank.connection.updated"] = "bank.connection.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: BankConnectionStatus | str | None = None
+    revocation_status: Literal["pending"] | str | None = None
+    """``pending``: the bank has not confirmed the revocation yet."""
+
+
+class BankConnectionConsentExpiringEvent(WebhookEventBase):
+    """``bank.connection.consent_expiring``: the consent ends in 14, 7 or 1 days."""
+
+    webhook_type: Literal["bank.connection.consent_expiring"] = "bank.connection.consent_expiring"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    days_left: int | None = None
+    """Days left before the consent ends: 14, 7 or 1."""
+    consent_expires_at: str | None = None
+    renew_by: str | None = None
+    """The consent's end: renew before it for no gap."""
+
+
+class BankConnectionRenewalRequiredEvent(WebhookEventBase):
+    """``bank.connection.renewal_required``: the consent ended or the bank asks the person to sign in again."""
+
+    webhook_type: Literal["bank.connection.renewal_required"] = "bank.connection.renewal_required"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: Literal["renewal_required"] | str | None = None
+    reason: Literal["consent_expired", "bank_requires_sign_in"] | str | None = None
+    renew_by: str | None = None
+    renewable_until: str | None = None
+    """The last moment the same connection can be revived; after it the person connects again."""
+
+
+class BankConnectionRenewedEvent(WebhookEventBase):
+    """``bank.connection.renewed``: a renew link completed; the connection and account ids are unchanged."""
+
+    webhook_type: Literal["bank.connection.renewed"] = "bank.connection.renewed"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: BankConnectionStatus | str | None = None
+    consent_version: int | None = None
+    """The consent version the renewal created."""
+    link_id: str | None = None
+    """The renew link that completed, when there is one."""
+    consent_expires_at: str | None = None
+
+
+class BankConnectionRevokedEvent(WebhookEventBase):
+    """``bank.connection.revoked``: access ended and the bank confirmed it."""
+
+    webhook_type: Literal["bank.connection.revoked"] = "bank.connection.revoked"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: Literal["revoked"] | str | None = None
+    ended_by: Literal["end_user", "bank", "customer", "unknown"] | str | None = None
+    """Who ended access."""
+    status_reason: (
+        Literal[
+            "revoked_by_end_user",
+            "revoked_by_bank",
+            "revoked_by_customer",
+            "consent_expired",
+            "consent_lapsed",
+            "bank_requires_sign_in",
+            "insufficient_balance",
+            "paused_by_customer",
+            "first_sync_failed",
+            "collection_complete",
+        ]
+        | str
+        | None
+    ) = None
+    ended_at: str | None = None
+    retain_until: str | None = None
+    """How long the stored data stays readable, set by the retention setting of your application."""
+
+
+class BankConnectionDeletedEvent(WebhookEventBase):
+    """``bank.connection.deleted``: the connection's data was deleted."""
+
+    webhook_type: Literal["bank.connection.deleted"] = "bank.connection.deleted"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: Literal["deleted"] | str | None = None
+    erasure_status: Literal["erased"] | str | None = None
+    """``erased``: the deletion finished."""
+    reason: (
+        Literal[
+            "deleted_by_customer",
+            "consent_lapsed",
+            "retention_elapsed",
+            "application_deleted",
+        ]
+        | str
+        | None
+    ) = None
+    """Why the connection was deleted."""
+    erased_at: str | None = None
+
+
+class BankConnectionHistoryCompleteEvent(WebhookEventBase):
+    """``bank.connection.history_complete``: the history backfill ended."""
+
+    webhook_type: Literal["bank.connection.history_complete"] = "bank.connection.history_complete"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    status: Literal["complete", "partial"] | str | None = None
+    """``partial`` when the bank could not deliver every range."""
+
+
+class BankDataUpdatedAccount(BaseModel):
+    """Transactions changed in one account, in ``bank.data.updated``."""
+
+    account_id: str | None = None
+    added: int | None = None
+    modified: int | None = None
+    removed: int | None = None
+
+
+class BankDataUpdatedEvent(WebhookEventBase):
+    """``bank.data.updated``: a sync stored changes. A signal only: read them with ``sync_transactions``."""
+
+    webhook_type: Literal["bank.data.updated"] = "bank.data.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    sync_id: str | None = None
+    trigger: BankSyncTrigger | str | None = None
+    accounts: list[BankDataUpdatedAccount] | None = None
+    """The accounts whose transactions changed, with counts."""
+    balances_changed: bool | None = None
+
+
+class BankSyncCompletedEvent(WebhookEventBase):
+    """``bank.sync.completed``: a sync finished (off by default)."""
+
+    webhook_type: Literal["bank.sync.completed"] = "bank.sync.completed"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    sync_id: str | None = None
+    trigger: BankSyncTrigger | str | None = None
+    outcome: Literal["succeeded", "partial", "failed"] | str | None = None
+    changed: bool | None = None
+    """Whether the sync stored changes."""
+
+
+class BankSyncFailedEvent(WebhookEventBase):
+    """``bank.sync.failed``: syncs have been failing for 24 hours; they are retried."""
+
+    webhook_type: Literal["bank.sync.failed"] = "bank.sync.failed"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    sync_id: str | None = None
+    """The latest failed sync."""
+    error_code: str | None = None
+    failing_since: str | None = None
+
+
+class BankSyncRecoveredEvent(WebhookEventBase):
+    """``bank.sync.recovered``: syncs work again after ``bank.sync.failed``."""
+
+    webhook_type: Literal["bank.sync.recovered"] = "bank.sync.recovered"  # pyright: ignore[reportIncompatibleVariableOverride]
+    connection_id: str | None = None
+    sync_id: str | None = None
+
+
 class UnknownEvent(WebhookEventBase):
     """An event type this version of the SDK does not know. ``payload`` holds
     the whole body."""
@@ -219,6 +473,22 @@ WebhookEvent = Union[
     TravelRuleStatusUpdatedEvent,
     WorkflowComplianceChangedEvent,
     KybRegistrySearchResolvedEvent,
+    BankLinkCompletedEvent,
+    BankLinkCancelledEvent,
+    BankLinkExpiredEvent,
+    BankLinkFailedEvent,
+    BankConnectionCreatedEvent,
+    BankConnectionUpdatedEvent,
+    BankConnectionConsentExpiringEvent,
+    BankConnectionRenewalRequiredEvent,
+    BankConnectionRenewedEvent,
+    BankConnectionRevokedEvent,
+    BankConnectionDeletedEvent,
+    BankConnectionHistoryCompleteEvent,
+    BankDataUpdatedEvent,
+    BankSyncCompletedEvent,
+    BankSyncFailedEvent,
+    BankSyncRecoveredEvent,
     UnknownEvent,
 ]
 """Every webhook event; narrow it with ``isinstance`` or ``match``."""
@@ -236,6 +506,22 @@ _BY_TYPE: dict[str, type[WebhookEventBase]] = {
     "travel_rule.status.updated": TravelRuleStatusUpdatedEvent,
     "workflow.compliance_changed": WorkflowComplianceChangedEvent,
     "kyb.registry_search.resolved": KybRegistrySearchResolvedEvent,
+    "bank.link.completed": BankLinkCompletedEvent,
+    "bank.link.cancelled": BankLinkCancelledEvent,
+    "bank.link.expired": BankLinkExpiredEvent,
+    "bank.link.failed": BankLinkFailedEvent,
+    "bank.connection.created": BankConnectionCreatedEvent,
+    "bank.connection.updated": BankConnectionUpdatedEvent,
+    "bank.connection.consent_expiring": BankConnectionConsentExpiringEvent,
+    "bank.connection.renewal_required": BankConnectionRenewalRequiredEvent,
+    "bank.connection.renewed": BankConnectionRenewedEvent,
+    "bank.connection.revoked": BankConnectionRevokedEvent,
+    "bank.connection.deleted": BankConnectionDeletedEvent,
+    "bank.connection.history_complete": BankConnectionHistoryCompleteEvent,
+    "bank.data.updated": BankDataUpdatedEvent,
+    "bank.sync.completed": BankSyncCompletedEvent,
+    "bank.sync.failed": BankSyncFailedEvent,
+    "bank.sync.recovered": BankSyncRecoveredEvent,
 }
 
 
