@@ -186,6 +186,8 @@ def test_wallet_screening_screen() -> None:
                         "description": "7.33293% indirect outgoing exposure to DeFi / Yield Aggregator (Example DeFi 2)",
                     },
                 ],
+                "fallback_from_provider": None,
+                "fallback_reason": None,
                 "raw_response": {"...": "provider-specific details"},
                 "report_signature": "<hmac-sha256 over the result, scoped to your application>",
             },

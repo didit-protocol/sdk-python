@@ -16,6 +16,10 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit.types.components.bank_verification_country_coverage import (
+    BankVerificationCountryCoverage,
+)
+from didit.types.components.bank_verification_coverage import BankVerificationCoverage
 from didit.types.components.bank_verification_pricing import BankVerificationPricing
 from didit.types.components.public_price_book import PublicPriceBook
 
@@ -32,7 +36,7 @@ __all__ = [
 class Pricing(SyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``, ``price_book``.
+    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``price_book``.
     """
 
     @cached_property
@@ -125,11 +129,82 @@ class Pricing(SyncAPIResource):
             ),
         )
 
+    def bank_verification_coverage(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankVerificationCoverage:
+        """List the countries with bank coverage (public, unauthenticated).
+
+        Lists the countries where Didit covers banks, how many, and what is open today for each product. Public: no auth header. Cached publicly and revalidated with an `ETag`. What is open is read on every request from the switches the API uses, so a product that is not open today reads `false` even when its banks are listed. It carries no prices (see the bank verification pricing feed) and never names a supplier.
+
+        ``GET /v3/organization/bank-verification-coverage/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankVerificationCoverage",
+            self._client.request(
+                "get",
+                "/v3/organization/bank-verification-coverage/",
+                cast_to=BankVerificationCoverage,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def bank_verification_country_coverage(
+        self,
+        country: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankVerificationCountryCoverage:
+        """List the banks of one country (public, unauthenticated).
+
+        Lists the banks Didit covers in one country: id, name, segments, access modes, history days, pending transactions and whether the bank is operational. Public: no auth header. One cached document per country.
+
+        ``GET /v3/organization/bank-verification-coverage/{country}/``
+
+        Args:
+          country: ISO 3166-1 alpha-3 code, for example `ESP`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankVerificationCountryCoverage",
+            self._client.request(
+                "get",
+                "/v3/organization/bank-verification-coverage/{country}/",
+                cast_to=BankVerificationCountryCoverage,
+                path_params={"country": country},
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncPricing(AsyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``, ``price_book``.
+    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``price_book``.
     """
 
     @cached_property
@@ -222,12 +297,89 @@ class AsyncPricing(AsyncAPIResource):
             ),
         )
 
+    async def bank_verification_coverage(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankVerificationCoverage:
+        """List the countries with bank coverage (public, unauthenticated).
+
+        Lists the countries where Didit covers banks, how many, and what is open today for each product. Public: no auth header. Cached publicly and revalidated with an `ETag`. What is open is read on every request from the switches the API uses, so a product that is not open today reads `false` even when its banks are listed. It carries no prices (see the bank verification pricing feed) and never names a supplier.
+
+        ``GET /v3/organization/bank-verification-coverage/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankVerificationCoverage",
+            await self._client.request(
+                "get",
+                "/v3/organization/bank-verification-coverage/",
+                cast_to=BankVerificationCoverage,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def bank_verification_country_coverage(
+        self,
+        country: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> BankVerificationCountryCoverage:
+        """List the banks of one country (public, unauthenticated).
+
+        Lists the banks Didit covers in one country: id, name, segments, access modes, history days, pending transactions and whether the bank is operational. Public: no auth header. One cached document per country.
+
+        ``GET /v3/organization/bank-verification-coverage/{country}/``
+
+        Args:
+          country: ISO 3166-1 alpha-3 code, for example `ESP`.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "BankVerificationCountryCoverage",
+            await self._client.request(
+                "get",
+                "/v3/organization/bank-verification-coverage/{country}/",
+                cast_to=BankVerificationCountryCoverage,
+                path_params={"country": country},
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class PricingWithRawResponse:
     def __init__(self, resource: Pricing) -> None:
         self._resource = resource
         self.bank_verification = to_raw_response_wrapper(resource.bank_verification)
         self.price_book = to_raw_response_wrapper(resource.price_book)
+        self.bank_verification_coverage = to_raw_response_wrapper(
+            resource.bank_verification_coverage
+        )
+        self.bank_verification_country_coverage = to_raw_response_wrapper(
+            resource.bank_verification_country_coverage
+        )
 
 
 class AsyncPricingWithRawResponse:
@@ -235,6 +387,12 @@ class AsyncPricingWithRawResponse:
         self._resource = resource
         self.bank_verification = async_to_raw_response_wrapper(resource.bank_verification)
         self.price_book = async_to_raw_response_wrapper(resource.price_book)
+        self.bank_verification_coverage = async_to_raw_response_wrapper(
+            resource.bank_verification_coverage
+        )
+        self.bank_verification_country_coverage = async_to_raw_response_wrapper(
+            resource.bank_verification_country_coverage
+        )
 
 
 class PricingWithStreamingResponse:
@@ -242,6 +400,12 @@ class PricingWithStreamingResponse:
         self._resource = resource
         self.bank_verification = to_streamed_response_wrapper(resource.bank_verification)
         self.price_book = to_streamed_response_wrapper(resource.price_book)
+        self.bank_verification_coverage = to_streamed_response_wrapper(
+            resource.bank_verification_coverage
+        )
+        self.bank_verification_country_coverage = to_streamed_response_wrapper(
+            resource.bank_verification_country_coverage
+        )
 
 
 class AsyncPricingWithStreamingResponse:
@@ -249,3 +413,9 @@ class AsyncPricingWithStreamingResponse:
         self._resource = resource
         self.bank_verification = async_to_streamed_response_wrapper(resource.bank_verification)
         self.price_book = async_to_streamed_response_wrapper(resource.price_book)
+        self.bank_verification_coverage = async_to_streamed_response_wrapper(
+            resource.bank_verification_coverage
+        )
+        self.bank_verification_country_coverage = async_to_streamed_response_wrapper(
+            resource.bank_verification_country_coverage
+        )

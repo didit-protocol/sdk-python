@@ -79,7 +79,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -130,7 +130,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           redirect_uris
           allowed_origins
           post_logout_redirect_uri
@@ -199,7 +199,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           name: The method: `password`, `code`, `magic`, `phone`, `passkey`, `google`, `microsoft`, `apple`, `github`, `sso` or `wallet`.
           enabled
           credentials: Your own OAuth app's credentials. The secret is write-only: no response returns it.
@@ -254,7 +254,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -297,7 +297,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           test_skipped
           import_skipped
           sign_in_ui
@@ -345,7 +345,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -392,13 +392,13 @@ class AuthenticationSetup(SyncAPIResource):
     ) -> SetupSettings:
         """Update the application settings.
 
-        Changes the settings in the body. `agent_humans_only` needs a person: a named API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.
+        Changes the settings in the body. `agent_humans_only` needs a person: an API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.
 
         ``PATCH /organizations/{organization_id}/applications/{application_id}/authentication/settings/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           sign_in_ui
           agent_humans_only
           agents_enabled
@@ -463,7 +463,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           language: Language of the default texts and the previews: an unsupported code falls back to `en`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -508,7 +508,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           texts
           terms_url
           privacy_url
@@ -553,7 +553,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           language: Language of the subjects and previews: an unsupported code falls back to `en`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -593,13 +593,13 @@ class AuthenticationSetup(SyncAPIResource):
     ) -> SetupEmail:
         """Preview a sign-in email.
 
-        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
+        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or an API key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/emails/{key}/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           key: The email: `code`, `magic`, `reset`, `device`, `invite`, `org`, `agent` or `agentoff`.
           organization: For `org` only: the organization the invitation is for, so the preview shows it as it will be sent. At most 200 characters, the longest organization name an application holds. Without it, a sample organization (a console session sees the application's first customer organization).
           role: For `org` only: the role the invitation grants.
@@ -642,13 +642,13 @@ class AuthenticationSetup(SyncAPIResource):
     ) -> SetupProtection:
         """Get bot protection.
 
-        Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and named keys receive the same aggregate counters.
+        Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and API keys receive the same aggregate counters.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/protection/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -692,7 +692,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           enabled
           breached_password_check
           policies: A mode per policy: `bots`, `stuffing`, `brute`, `disposable`, `vpn` and `travel`.
@@ -740,7 +740,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -784,7 +784,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           signup_level
           rules
           claims
@@ -834,7 +834,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -875,7 +875,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           domain: The domain to serve the hosted pages on. It must be a host under a zone: a CNAME cannot sit at an apex.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -917,7 +917,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -957,7 +957,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -997,7 +997,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1037,7 +1037,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1079,7 +1079,7 @@ class AuthenticationSetup(SyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           ios_app_ids
           android_apps
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
@@ -1139,7 +1139,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1190,7 +1190,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           redirect_uris
           allowed_origins
           post_logout_redirect_uri
@@ -1259,7 +1259,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           name: The method: `password`, `code`, `magic`, `phone`, `passkey`, `google`, `microsoft`, `apple`, `github`, `sso` or `wallet`.
           enabled
           credentials: Your own OAuth app's credentials. The secret is write-only: no response returns it.
@@ -1314,7 +1314,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1357,7 +1357,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           test_skipped
           import_skipped
           sign_in_ui
@@ -1405,7 +1405,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1452,13 +1452,13 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
     ) -> SetupSettings:
         """Update the application settings.
 
-        Changes the settings in the body. `agent_humans_only` needs a person: a named API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.
+        Changes the settings in the body. `agent_humans_only` needs a person: an API key answers 403 `owner_or_admin_required`, and turning it on needs an owner or admin with an enrolled passkey.
 
         ``PATCH /organizations/{organization_id}/applications/{application_id}/authentication/settings/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           sign_in_ui
           agent_humans_only
           agents_enabled
@@ -1523,7 +1523,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           language: Language of the default texts and the previews: an unsupported code falls back to `en`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1568,7 +1568,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           texts
           terms_url
           privacy_url
@@ -1613,7 +1613,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           language: Language of the subjects and previews: an unsupported code falls back to `en`.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1653,13 +1653,13 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
     ) -> SetupEmail:
         """Preview a sign-in email.
 
-        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or named key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
+        Returns one email as it renders, with sample codes and links. An invitation preview uses a sample organization for a grant or an API key, or the `organization` and `role` you pass. `agentoff` is the email a person receives when your team ends an agent's access with a notification; `agent` names the agent. A console session can see a customer organization's name. The address of a console member is left out for a grant or a key, which have no mailbox. An email Authentication does not send answers `{"error": "email_not_sent_by_authentication"}`.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/emails/{key}/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           key: The email: `code`, `magic`, `reset`, `device`, `invite`, `org`, `agent` or `agentoff`.
           organization: For `org` only: the organization the invitation is for, so the preview shows it as it will be sent. At most 200 characters, the longest organization name an application holds. Without it, a sample organization (a console session sees the application's first customer organization).
           role: For `org` only: the role the invitation grants.
@@ -1702,13 +1702,13 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
     ) -> SetupProtection:
         """Get bot protection.
 
-        Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and named keys receive the same aggregate counters.
+        Returns whether protection is on, each policy's mode and the last 14 days of detections. Console sessions, grants and API keys receive the same aggregate counters.
 
         ``GET /organizations/{organization_id}/applications/{application_id}/authentication/protection/``
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1752,7 +1752,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           enabled
           breached_password_check
           policies: A mode per policy: `bots`, `stuffing`, `brute`, `disposable`, `vpn` and `travel`.
@@ -1800,7 +1800,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1844,7 +1844,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           signup_level
           rules
           claims
@@ -1894,7 +1894,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -1935,7 +1935,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           domain: The domain to serve the hosted pages on. It must be a host under a zone: a CNAME cannot sit at an apex.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1977,7 +1977,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2017,7 +2017,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2057,7 +2057,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2097,7 +2097,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
           extra_body: Top-level JSON fields to add to this request's body.
@@ -2139,7 +2139,7 @@ class AsyncAuthenticationSetup(AsyncAPIResource):
 
         Args:
           organization_id: UUID of the organization that owns the application.
-          application_id: UUID of the application: live or sandbox. A named key configures its own application only.
+          application_id: UUID of the application: live or sandbox. An API key configures its own application only.
           ios_app_ids
           android_apps
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.

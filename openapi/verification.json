@@ -13,7 +13,7 @@
   "tags": [
     {
       "name": "Bank Data",
-      "description": "Bank Link, connections, accounts, balances, transactions, institutions and coverage. Bank data is available for sandbox applications. A live application's calls answer `404` until live access is announced. Nothing is charged in sandbox. A call made with an API key needs a key that carries the Bank data permission (`bank-data`): read for reads, write for operations that change something. The account check is the exception: it needs write access to sessions, or full access, and not the Bank data permission. Bank data is not part of full access: a full-access key is refused, and the call answers `403 bank_data_access_denied` until you create a key that carries the permission. Raw bank data (accounts, balances, transactions and the change feed) also refuses a request that carries no API key.\n\nEvery refusal under `/v3/bank/` except the account check's has the same JSON body (`code`, `message`, `request_id`, `field`, `next_action`, `retry_after`). A path that is not an operation, an id that is not a UUID or an unknown sub-resource answers `404 not_found` for every method, and any unexpected error answers `500 internal_error` with a `request_id`. Where Bank data is not available, every operation answers the platform's standard `404`, exactly as an unknown route does."
+      "description": "Bank Link, connections, accounts, balances, transactions, institutions and coverage. Bank data is available for sandbox applications. A live application's calls answer `404` until live access is announced. Nothing is charged in sandbox. A call made with an API key needs a key that can reach Bank data: a full-access key can, and a scoped key needs `bank-data` in its scopes (read for reads, write for operations that change something). A scoped key without it is refused, and the call answers `403 bank_data_access_denied`. The account check is the exception: it needs write access to sessions, or full access, and not the Bank data scope. Raw bank data (accounts, balances, transactions and the change feed) also refuses a request that carries no API key.\n\nEvery refusal under `/v3/bank/` except the account check's has the same JSON body (`code`, `message`, `request_id`, `field`, `next_action`, `retry_after`). A path that is not an operation, an id that is not a UUID or an unknown sub-resource answers `404 not_found` for every method, and any unexpected error answers `500 internal_error` with a `request_id`. Where Bank data is not available, every operation answers the platform's standard `404`, exactly as an unknown route does."
     }
   ],
   "paths": {
@@ -550,7 +550,7 @@
     "/v3/phone/risk/": {
       "post": {
         "summary": "Risk-score a phone number",
-        "description": "Resolve a phone number and return carrier, line-type, porting, disposable-number, cross-session match, and normalized risk-intelligence signals without sending an OTP. The endpoint creates an API session and returns its id as `request_id`.\n\n**Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.\n\n**Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.\n\n**Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable.\n\n**Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.",
+        "description": "Resolve a phone number and return carrier, line-type, porting, disposable-number, cross-session match, and normalized risk-intelligence signals without sending an OTP. The endpoint creates an API session and returns its id as `request_id`.\n\n**Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.\n\n**Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.\n\n**Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.\n\n**Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.",
         "operationId": "post_v3phone_risk",
         "x-didit-sdk": {
           "resource": "phone",
@@ -778,7 +778,25 @@
             "$ref": "#/components/responses/PhoneRiskValidationError"
           },
           "403": {
-            "$ref": "#/components/responses/RiskPermissionDenied"
+            "description": "The API key is missing or invalid, or the credit that may pay a Phone lookup cannot cover it: paid credit, plus what this month's free credit has left of its $1 Phone allowance (shared with phone verification and the other Phone lookups, and covering the `enable_social` add-on). It is returned before the lookup starts, so nothing is charged. This API never returns `401`.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Missing or invalid API key": {
+                    "summary": "No `x-api-key` header, or the key is invalid or revoked",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Not enough credits": {
+                    "summary": "The credit available to Phone (paid credit plus what is left of the $1 monthly Phone allowance) cannot cover the lookup and its add-on",
+                    "value": {
+                      "error": "You don't have enough credits to perform this request."
+                    }
+                  }
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedWrite"
@@ -16689,7 +16707,7 @@
             }
           },
           "403": {
-            "description": "Permission denied. Returned when the `x-api-key` header is missing (`{\"detail\": ...}`); a wrong, revoked or expired key returns `401`. Also returned before any send when the organization has never topped up (anti-abuse gate) or when its balance cannot cover the destination's send price (`{\"error\": ...}`).",
+            "description": "Permission denied. Returned when the `x-api-key` header is missing (`{\"detail\": ...}`); a wrong, revoked or expired key returns `401`. Also returned before any send when the organization has never topped up (anti-abuse gate) or when the credit that may pay it cannot cover the destination's send price: paid credit, plus what this month's free credit has left of its Phone allowance (`{\"error\": ...}`).",
             "content": {
               "application/json": {
                 "examples": {
@@ -16706,9 +16724,9 @@
                     }
                   },
                   "Not enough credits": {
-                    "summary": "Organization balance cannot cover the send price",
+                    "summary": "Neither the balance nor what this month's free credit has left of its Phone allowance covers the send price",
                     "value": {
-                      "error": "You don't have enough credits to perform this request."
+                      "error": "You don't have enough credits to perform this request. Please top up at https://business.didit.me"
                     }
                   }
                 }
@@ -17317,7 +17335,7 @@
             }
           },
           "403": {
-            "description": "Permission denied. Returned when the `x-api-key` header is missing; a wrong, revoked or expired key returns `401`. Checks are free, so there is no credit check here.",
+            "description": "Permission denied. Returned when the `x-api-key` header is missing; a wrong, revoked or expired key returns `401`. The check itself is free; a check that asks for Phone enrichment add-ons is refused (`{\"error\": ...}`) when the account's credit cannot cover them.",
             "content": {
               "application/json": {
                 "examples": {
@@ -17325,6 +17343,12 @@
                     "summary": "No `x-api-key` header, or the key is invalid/revoked",
                     "value": {
                       "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Not enough credits": {
+                    "summary": "The account's credit cannot cover the Phone enrichment add-ons the check asks for",
+                    "value": {
+                      "error": "You don't have enough credits to perform this request. Please top up at https://business.didit.me"
                     }
                   }
                 }
@@ -27195,6 +27219,8 @@
                       "description": "7.33293% indirect outgoing exposure to DeFi / Yield Aggregator (Example DeFi 2)"
                     }
                   ],
+                  "fallback_from_provider": null,
+                  "fallback_reason": null,
                   "raw_response": {
                     "...": "provider-specific details"
                   },
@@ -99712,7 +99738,7 @@
     "/v3/bank/links/": {
       "post": {
         "summary": "Create a bank link",
-        "description": "Creates a Bank Link: one run of the flow in which a person connects a bank, or renews a connection. Send the person to `url`. The `client_token` is for Didit's embedded Bank Link, which is not released yet: open the `url` today. A completed link yields a connection.\n\nThe smallest request is `{}` plus what you want. Defaults: `mode` connect, `access` one_time, `data` accounts only, `history_days` 90, `ownership.compare` none, `segment` any, `duplicates` reuse, `allow_one_time_fallback` false, and for ongoing access a consent as long as the bank allows.\n\nThe response carries the quote: the price is pinned to the link and charged as quoted. The API key never reaches a browser or an app: only the `url` does.\n\nConfirm the outcome yourself with `get_link` or the `bank.link.completed` webhook; never trust a link id sent by the browser. History: send `history_from` or `history_days`, not both. Where the bank allows, ongoing access keeps working until the consent ends; the real date is on each connection.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Creates a Bank Link: one run of the flow in which a person connects a bank, or renews a connection. Send the person to `url`. The `client_token` is for Didit's embedded Bank Link, which is not released yet: open the `url` today. A completed link yields a connection.\n\nThe smallest request is `{}` plus what you want. Defaults: `mode` connect, `access` one_time, `data` accounts only, `history_days` 90, `ownership.compare` none, `segment` any, `duplicates` reuse, `allow_one_time_fallback` false, and for ongoing access a consent as long as the bank allows.\n\nThe response carries the quote: the price is pinned to the link and charged as quoted. The API key never reaches a browser or an app: only the `url` does.\n\nConfirm the outcome yourself with `get_link` or the `bank.link.completed` webhook; never trust a link id sent by the browser. History: send `history_from` or `history_days`, not both. Where the bank allows, ongoing access keeps working until the consent ends; the real date is on each connection.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "createBankLink",
         "tags": [
           "Bank Data"
@@ -99818,7 +99844,7 @@
             }
           },
           "400": {
-            "description": "The request was refused before any screen. `field` names what to correct: `invalid_request` for a value outside its range or a combination that is not allowed, `country_not_available` for a country the product does not serve or where no bank is offered, and the more specific codes shown here.",
+            "description": "The request was refused before any screen. `field` names what to correct: `invalid_request` for a value outside its range or a combination that is not allowed, `country_not_available` for a country the product does not serve or where no bank is offered, and the more specific codes shown here. A `language` outside the supported list answers `invalid_request` with `field: language`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -99901,6 +99927,17 @@
                       "next_action": "create_link",
                       "retry_after": null
                     }
+                  },
+                  "Language not supported": {
+                    "summary": "Language not supported",
+                    "value": {
+                      "code": "invalid_request",
+                      "message": "Invalid language. Supported languages are: en, ar, bn, bg, bs, ca, cs, da, de, el, es, et, fa, fi, fr, he, hi, hr, hu, hy, id, it, ja, ka, kk, ko, ky, lt, lv, cnr, mk, mn, ms, nl, no, pl, pt-BR, pt, ro, ru, sk, sl, so, sq, sr, sv, th, tr, uk, uz, vi, zh-CN, zh-TW, zh.",
+                      "request_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+                      "field": "language",
+                      "next_action": null,
+                      "retry_after": null
+                    }
                   }
                 }
               }
@@ -99933,7 +99970,7 @@
             }
           },
           "403": {
-            "description": "Refused: your contract has no rate for this country, or the key lacks the Bank data permission.",
+            "description": "Refused: your contract has no rate for this country, or a scoped key does not name Bank data in its scopes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -100043,7 +100080,7 @@
     "/v3/bank/links/{id}/": {
       "get": {
         "summary": "Get a bank link",
-        "description": "Returns the status of a link and, once it is `completed`, its `connection_id` and `check_id`. This is the authoritative answer: call it from your server after the browser reports success, or on the `bank.link.completed` webhook.\n\nA link that fails is not an HTTP error: it reads `200` with `status: failed` and an `error` object, for example `duplicate_conflict` with `conflicts_with`. `url` and `client_token` are returned only when the link is created.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Returns the status of a link and, once it is `completed`, its `connection_id` and `check_id`. This is the authoritative answer: call it from your server after the browser reports success, or on the `bank.link.completed` webhook.\n\nA link that fails is not an HTTP error: it reads `200` with `status: failed` and an `error` object, for example `duplicate_conflict` with `conflicts_with`. `url` and `client_token` are returned only when the link is created.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "getBankLink",
         "tags": [
           "Bank Data"
@@ -100402,10 +100439,259 @@
         ]
       }
     },
+    "/v3/bank/links/{id}/simulate/": {
+      "post": {
+        "summary": "Simulate a bank link (sandbox)",
+        "description": "Finishes a link of your sandbox application in one call, as if the person had gone through the Didit Test Bank: you choose the Test Bank customer (`persona`) and how the link ends (`outcome`). The link goes through the same completion code as a real bank sign-in, so the connection, its accounts, the first sync and the `bank.*` webhooks happen exactly as they would for a real person. Answers the link, so read `status` and `connection_id`.\n\n`outcome` is `completed` (the default: the person agrees and the connection is created), `cancelled` (the person leaves, the link ends `cancelled`), `failed` (the link ends `failed`; `error_code` picks the reason, `bank_unavailable` by default), `duplicate_conflict` (the person already has a connection with the same bank), `reduced_grant` (the person shares less than you asked for) or `renewal_login_mismatch` (a renewal with another bank login; on a connect link it ends as the failure it is). `error_code` is only accepted with `outcome: failed`.\n\nA link that allows the one-time fallback and meets a bank that cannot keep access open accepts the reduced access and finishes in the same call. A link that is no longer open (completed, cancelled, expired or failed) is returned unchanged, so the call is safe to repeat.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.",
+        "operationId": "simulateBankLink",
+        "tags": [
+          "Bank Data"
+        ],
+        "x-didit-sdk": {
+          "resource": "bank",
+          "method": "simulate_link",
+          "auth": "api_key",
+          "server": true
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The link id."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankLinkSimulateRequest"
+              },
+              "examples": {
+                "Completed": {
+                  "summary": "The default: a personal customer agrees",
+                  "value": {
+                    "persona": "personal_basic",
+                    "outcome": "completed"
+                  }
+                },
+                "Failed": {
+                  "summary": "The bank cannot be reached",
+                  "value": {
+                    "persona": "personal_basic",
+                    "outcome": "failed",
+                    "error_code": "bank_unavailable"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The link after the simulated end.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankLink"
+                },
+                "examples": {
+                  "Completed": {
+                    "summary": "A completed link",
+                    "value": {
+                      "id": "0b9c4f1e-6a2d-4e8b-9f31-7c5d2e1a8b40",
+                      "mode": "connect",
+                      "access": "ongoing",
+                      "status": "completed",
+                      "url": null,
+                      "client_token": null,
+                      "expires_at": "2026-11-21T13:00:00Z",
+                      "connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                      "check_id": null,
+                      "reused": false,
+                      "error": null,
+                      "quote": {
+                        "id": "7a3e9c52-1d84-4b06-8f2a-c5e0b9d17a43",
+                        "lines": [
+                          {
+                            "meter": "bank_data_connection_month",
+                            "unit": "connection_month",
+                            "price_usd": "0.9000"
+                          }
+                        ],
+                        "fallback_lines": null,
+                        "total_usd": "0.9000",
+                        "valid_until": "2026-11-21T13:00:00Z",
+                        "scopes": [
+                          "accounts",
+                          "balances",
+                          "transactions"
+                        ]
+                      },
+                      "vendor_data": "client-7731"
+                    }
+                  },
+                  "Failed": {
+                    "summary": "A failed link",
+                    "value": {
+                      "id": "0b9c4f1e-6a2d-4e8b-9f31-7c5d2e1a8b40",
+                      "mode": "connect",
+                      "access": "ongoing",
+                      "status": "failed",
+                      "url": null,
+                      "client_token": null,
+                      "expires_at": "2026-11-21T13:00:00Z",
+                      "connection_id": null,
+                      "check_id": null,
+                      "reused": false,
+                      "error": {
+                        "code": "bank_unavailable",
+                        "message": "The bank could not be reached."
+                      },
+                      "quote": {
+                        "id": "7a3e9c52-1d84-4b06-8f2a-c5e0b9d17a43",
+                        "lines": [
+                          {
+                            "meter": "bank_data_connection_month",
+                            "unit": "connection_month",
+                            "price_usd": "0.9000"
+                          }
+                        ],
+                        "fallback_lines": null,
+                        "total_usd": "0.9000",
+                        "valid_until": "2026-11-21T13:00:00Z",
+                        "scopes": [
+                          "accounts",
+                          "balances",
+                          "transactions"
+                        ]
+                      },
+                      "vendor_data": "client-7731"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid: an unknown `persona`, `outcome` or `error_code`, or an `error_code` sent without `outcome: failed`. `field` names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDataError"
+                },
+                "examples": {
+                  "Invalid request": {
+                    "summary": "Invalid request",
+                    "value": {
+                      "code": "invalid_request",
+                      "message": "The request is not valid.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": "error_code",
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/BankDataAccessDenied"
+          },
+          "404": {
+            "description": "The link does not exist in this application and environment, or the application is not a sandbox application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDataError"
+                },
+                "examples": {
+                  "Not found": {
+                    "summary": "Not found",
+                    "value": {
+                      "code": "not_found",
+                      "message": "The resource does not exist.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The `Idempotency-Key` was used with another request (`idempotency_key_reused`), or the first request with it is still running (`idempotency_key_in_progress`, with `Retry-After`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankIdempotencyConflictError"
+                },
+                "examples": {
+                  "Key reused": {
+                    "summary": "The key was used with another body",
+                    "value": {
+                      "detail": "This Idempotency-Key was already used with a different request.",
+                      "code": "idempotency_key_reused"
+                    }
+                  },
+                  "Key in progress": {
+                    "summary": "The first request is still running",
+                    "value": {
+                      "detail": "A request with this Idempotency-Key is still in progress.",
+                      "code": "idempotency_key_in_progress"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before asking again (with `idempotency_key_in_progress`).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          },
+          "500": {
+            "$ref": "#/components/responses/BankDataInternalError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/bank/links/0b9c4f1e-6a2d-4e8b-9f31-7c5d2e1a8b40/simulate/' \\\n  -H 'x-api-key: YOUR_SANDBOX_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"persona\": \"personal_basic\",\n    \"outcome\": \"completed\"\n  }'"
+          }
+        ]
+      }
+    },
     "/v3/bank/connections/": {
       "get": {
         "summary": "List bank connections",
-        "description": "Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.\n\nConnections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nIn this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.",
+        "description": "Lists the connections of your application, newest first, with cursor pagination. All filters apply inside your application and environment.\n\nConnections that were deleted are left out of the list by default. To list them, ask with `status=deleted`, which returns only them. The `status` filter takes one value, so a list of statuses answers `400 invalid_request` with `field` `status`. A deleted connection is a record that the deletion happened: it carries no bank data, and reading it by id returns the same minimal record (`id`, `status`, `status_reason`, `created_at` and `erasure`).\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nIn this list `sync.budgets` shows only the budgets that exist already; `GET /v3/bank/connections/{id}/` opens today's budgets.",
         "operationId": "listBankConnections",
         "tags": [
           "Bank Data"
@@ -100758,7 +101044,7 @@
     "/v3/bank/connections/{id}/": {
       "get": {
         "summary": "Get a bank connection",
-        "description": "Returns the connection with its consent, sync state and a summary of each account. Read the data itself with the accounts, balances and transactions operations. A connection that was deleted reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and no accounts, balances, transactions, consent or sync data.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Returns the connection with its consent, sync state and a summary of each account. Read the data itself with the accounts, balances and transactions operations. A connection that was deleted reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` status, and no accounts, balances, transactions, consent or sync data.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "getBankConnection",
         "tags": [
           "Bank Data"
@@ -101102,7 +101388,7 @@
       },
       "delete": {
         "summary": "Delete a bank connection",
-        "description": "Deletes the connection's bank data and stops access at the bank. Deletion is immediate and irreversible: when the call returns, the connection's accounts, balances, transactions, sync history, consent records and ownership results are deleted, and its data operations (refresh, sync runs, accounts, balances, transactions and the change feed) answer `409 connection_not_active`.\n\nA deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` record (`requested_at`, `erased_at` and `status`, the confirmation of the deletion: `pending` while it is being confirmed, including the end of access at the bank, `erased` once confirmed, `failed` if the confirmation has not arrived yet and is repeated automatically, with nothing needed from you). It holds no accounts, balances, transactions, consent or sync data. `bank.connection.deleted` confirms the deletion.\n\nNot affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call is safe. To stop access without deleting, use `revoke_connection`.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Deletes the connection's bank data and stops access at the bank. Deletion is immediate and irreversible: when the call returns, the connection's accounts, balances, transactions, sync history, consent records and ownership results are deleted, and its data operations (refresh, sync runs, accounts, balances, transactions and the change feed) answer `409 connection_not_active`.\n\nA deleted connection reads as a minimal record: its id, `status: deleted`, the reason, its dates and its `erasure` record (`requested_at`, `erased_at` and `status`, the confirmation of the deletion: `pending` while it is being confirmed, including the end of access at the bank, `erased` once confirmed, `failed` if the confirmation has not arrived yet and is repeated automatically, with nothing needed from you). It holds no accounts, balances, transactions, consent or sync data. `bank.connection.deleted` confirms the deletion.\n\nNot affected: your other connections, the charges already made (they are not refunded), and any data you already downloaded, which is your own copy. Repeating the call is safe. To stop access without deleting, use `revoke_connection`.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "deleteBankConnection",
         "tags": [
           "Bank Data"
@@ -101240,7 +101526,7 @@
     "/v3/bank/connections/{id}/refresh/": {
       "post": {
         "summary": "Refresh a bank connection",
-        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.",
+        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.",
         "operationId": "refreshBankConnection",
         "tags": [
           "Bank Data"
@@ -101548,7 +101834,7 @@
     "/v3/bank/connections/{id}/sync-runs/": {
       "get": {
         "summary": "List sync runs",
-        "description": "Lists what each sync of a connection did, newest first, per account and resource.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Lists what each sync of a connection did, newest first, per account and resource.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "listBankSyncRuns",
         "tags": [
           "Bank Data"
@@ -101796,7 +102082,7 @@
     "/v3/bank/connections/{id}/sync-runs/{sync_id}/": {
       "get": {
         "summary": "Get a sync run",
-        "description": "Returns one sync run with its results per account and resource.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Returns one sync run with its results per account and resource.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "getBankSyncRun",
         "tags": [
           "Bank Data"
@@ -101994,7 +102280,7 @@
     "/v3/bank/connections/{id}/renew/": {
       "post": {
         "summary": "Renew a bank connection",
-        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nA one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nA one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "renewBankConnection",
         "tags": [
           "Bank Data"
@@ -102088,7 +102374,7 @@
             }
           },
           "400": {
-            "description": "The request was refused.",
+            "description": "The request was refused. A `language` outside the supported list answers `invalid_request` with `field: language`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -102113,6 +102399,17 @@
                       "message": "The request is not valid.",
                       "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
                       "field": "expires_in",
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  },
+                  "Language not supported": {
+                    "summary": "Language not supported",
+                    "value": {
+                      "code": "invalid_request",
+                      "message": "Invalid language. Supported languages are: en, ar, bn, bg, bs, ca, cs, da, de, el, es, et, fa, fi, fr, he, hi, hr, hu, hy, id, it, ja, ka, kk, ko, ky, lt, lv, cnr, mk, mn, ms, nl, no, pl, pt-BR, pt, ro, ru, sk, sl, so, sq, sr, sv, th, tr, uk, uz, vi, zh-CN, zh-TW, zh.",
+                      "request_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+                      "field": "language",
                       "next_action": null,
                       "retry_after": null
                     }
@@ -102148,7 +102445,7 @@
             }
           },
           "403": {
-            "description": "Refused: the key lacks the Bank data permission (`bank_data_access_denied`), or your contract has no rate for the connection's country (`contract_rate_missing`).",
+            "description": "Refused: a scoped key does not name Bank data in its scopes (`bank_data_access_denied`), or your contract has no rate for the connection's country (`contract_rate_missing`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -102314,7 +102611,7 @@
     "/v3/bank/connections/{id}/revoke/": {
       "post": {
         "summary": "Revoke a bank connection",
-        "description": "Stops access to the bank. Bank fetches stop the moment you ask, even while the bank's confirmation is pending: the consent reads `revocation_pending`, then `revoked` once the bank confirms access is terminated, or `revocation_failed` while the call is retried automatically. `consent.ended_by` is `customer`. Until the bank confirms, `status` keeps its value and `status_reason` is `null`; once `status` is `revoked`, `status_reason` is `revoked_by_customer`.\n\nRevoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRevoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.",
+        "description": "Stops access to the bank. Bank fetches stop the moment you ask, even while the bank's confirmation is pending: the consent reads `revocation_pending`, then `revoked` once the bank confirms access is terminated, or `revocation_failed` while the call is retried automatically. `consent.ended_by` is `customer`. Until the bank confirms, `status` keeps its value and `status_reason` is `null`; once `status` is `revoked`, `status_reason` is `revoked_by_customer`.\n\nRevoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nRevoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.",
         "operationId": "revokeBankConnection",
         "tags": [
           "Bank Data"
@@ -102549,10 +102846,392 @@
         ]
       }
     },
+    "/v3/bank/connections/{id}/simulate/": {
+      "post": {
+        "summary": "Simulate a bank connection event (sandbox)",
+        "description": "Moves a sandbox connection through time without waiting: new transactions, a pending row that posts, a consent that is about to end or has ended, a revocation, a failing sync, a duplicate webhook or a used-up refresh allowance. It uses the real sync engine and the real webhooks, so `bank.*` deliveries, the change feed and `sync` behave as they do for a real bank. Answers the connection as `get_connection` would.\n\n`action` is required and is one of:\n\n- `new_transactions`: the bank adds `count` booked transactions (1 to 500, default 3). A sync follows.\n- `pending_posted`: one day passes at the bank: pending rows leave the change feed as `removed` and their booked rows arrive as `added`. It needs a test customer with pending transactions (`pending`); with `personal_basic` nothing changes. A sync follows.\n- `booking_correction`: the next sync returns booked rows again with a corrected booking, so they arrive as `modified`. A sync follows.\n- `midnight_booking`: a row is booked across midnight, to test day boundaries. A sync follows.\n- `consent_expiring`: the consent now ends in `days` days and the expiry notice is sent (`bank.connection.consent_expiring`). `days` accepts only the notification thresholds, 14, 7 or 1 (default 7); any other value answers `400 invalid_request` with `field` `days`.\n- `consent_expired`: the consent has ended now and the connection becomes `renewal_required`.\n- `revoked_by_user` and `revoked_by_bank`: the bank tells Didit the consent ended, as if the person or the bank had revoked it. The connection reads `revoked` with `status_reason` `revoked_by_end_user` or `revoked_by_bank`, and `consent.ended_by` is `end_user` or `bank`.\n- `sync_failed`: the bank fails every read until `sync_recovered`; the connection has been failing for 24 hours, so `bank.sync.failed` is sent. A sync follows.\n- `sync_recovered`: the bank answers again. A sync follows.\n- `webhook_twice`: the last `bank.*` webhook of this connection is delivered again with the same `event_id` and a fresh signature, to test your deduplication. It answers `400 invalid_request` if the connection has no delivery yet.\n- `budget_used`: today's refresh allowance is used up on the bank's own day, so the next `refresh_connection` answers `429 refresh_limit_reached` with `Retry-After`, and `sync.live_syncs_left_today` and the `sync.budgets` `remaining` read 0.\n- `budget_reset`: today's refresh allowance is restored: `sync.live_syncs_left_today` and the `remaining` of `sync.budgets` read what they read on a new connection.\n\n`days` is only accepted with `consent_expiring` and `count` only with `new_transactions`: sent with another action, each answers `400 invalid_request` with `field` naming it.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`. Sandbox only: a live application, or a link or connection that belongs to the live environment, answers `404 not_found`, exactly as an unknown route does.",
+        "operationId": "simulateBankConnection",
+        "tags": [
+          "Bank Data"
+        ],
+        "x-didit-sdk": {
+          "resource": "bank",
+          "method": "simulate_connection",
+          "auth": "api_key",
+          "server": true
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The connection id."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankConnectionSimulateRequest"
+              },
+              "examples": {
+                "New transactions": {
+                  "summary": "Five new booked transactions",
+                  "value": {
+                    "action": "new_transactions",
+                    "count": 5
+                  }
+                },
+                "Consent expiring": {
+                  "summary": "The consent ends in 7 days",
+                  "value": {
+                    "action": "consent_expiring",
+                    "days": 7
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The connection after the simulated event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankConnection"
+                },
+                "examples": {
+                  "Active": {
+                    "summary": "The connection",
+                    "value": {
+                      "id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                      "environment": "sandbox",
+                      "access": "ongoing",
+                      "status": "active",
+                      "status_reason": null,
+                      "institution": {
+                        "id": "es-banco-norte",
+                        "name": "Banco Norte",
+                        "country": "ESP",
+                        "logo_url": "https://static.example.com/banks/es-banco-norte.png"
+                      },
+                      "segment": "business",
+                      "data": [
+                        "accounts",
+                        "balances",
+                        "transactions"
+                      ],
+                      "consent": {
+                        "status": "granted",
+                        "version": 1,
+                        "granted_at": "2026-11-21T12:04:11Z",
+                        "expires_at": "2027-05-20T12:04:11Z",
+                        "days_granted": 180,
+                        "renewed_count": 0,
+                        "scopes_requested": [
+                          "accounts",
+                          "balances",
+                          "transactions"
+                        ],
+                        "scopes_granted": [
+                          "accounts",
+                          "balances",
+                          "transactions"
+                        ],
+                        "accounts_granted": [
+                          "a71f0c2e-5d38-4b96-a1c4-3e9f8d2b7a10",
+                          "c3d84e19-2a7b-4f60-b5e1-9a0c6d3f8e72"
+                        ],
+                        "renewal_action": "bank_auth",
+                        "renew_by": "2027-05-20T12:04:11Z",
+                        "reconfirm_by": null,
+                        "renewable_until": null,
+                        "retain_until": null,
+                        "ended_at": null,
+                        "ended_by": null
+                      },
+                      "sync": {
+                        "status": "ok",
+                        "initial_status": "succeeded",
+                        "initial_complete": true,
+                        "history_complete": true,
+                        "last_synced_at": "2026-11-21T12:04:40Z",
+                        "next_sync_at": "2026-11-22T06:00:00Z",
+                        "budgets": [
+                          {
+                            "scope": "connection",
+                            "resource": "all",
+                            "limit": 4,
+                            "remaining": 3,
+                            "resets_at": "2026-11-22T00:00:00Z"
+                          }
+                        ],
+                        "last_error": null,
+                        "frequency_per_day": 1,
+                        "live_syncs_left_today": 3
+                      },
+                      "accounts": [
+                        {
+                          "id": "a71f0c2e-5d38-4b96-a1c4-3e9f8d2b7a10",
+                          "name": "Cuenta negocio",
+                          "type": "current",
+                          "usage": "business",
+                          "currency": "EUR",
+                          "iban_last4": "1332",
+                          "status": "open"
+                        },
+                        {
+                          "id": "c3d84e19-2a7b-4f60-b5e1-9a0c6d3f8e72",
+                          "name": "Cuenta de ahorro",
+                          "type": "savings",
+                          "usage": "business",
+                          "currency": "EUR",
+                          "iban_last4": "7708",
+                          "status": "open"
+                        }
+                      ],
+                      "ownership": {
+                        "compare": "none",
+                        "match": null,
+                        "check_id": null,
+                        "result": null
+                      },
+                      "end_user": {
+                        "reference": "client-7731"
+                      },
+                      "manage_url": null,
+                      "billing": {
+                        "unit": "connection_month",
+                        "price_usd": "0.9000",
+                        "billed_through": "2026-11-30"
+                      },
+                      "possible_duplicate_of": null,
+                      "erasure": null,
+                      "vendor_data": "client-7731",
+                      "created_at": "2026-11-21T12:03:02Z",
+                      "updated_at": "2026-11-21T12:04:40Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid: `action` is missing or unknown, `days` is not 14, 7 or 1, `count` is out of range, `days` or `count` is sent with an action that does not read it, or `webhook_twice` has no delivery to repeat. `field` names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDataError"
+                },
+                "examples": {
+                  "Invalid request": {
+                    "summary": "Invalid request",
+                    "value": {
+                      "code": "invalid_request",
+                      "message": "The request is not valid.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": "action",
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/BankDataAccessDenied"
+          },
+          "404": {
+            "description": "The connection does not exist in this application and environment, was deleted, or the application is not a sandbox application.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDataError"
+                },
+                "examples": {
+                  "Not found": {
+                    "summary": "Not found",
+                    "value": {
+                      "code": "not_found",
+                      "message": "The resource does not exist.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The action cannot run on this connection: `connection_not_active` (revoked, paused, failed or deleted, when the action asks for a sync) or `one_time_connection` (a one-time read has ended: create a new link). The `Idempotency-Key` was used with another request (`idempotency_key_reused`), or the first request with it is still running (`idempotency_key_in_progress`, with `Retry-After`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BankDataError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BankIdempotencyConflictError"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Not active": {
+                    "summary": "Not active",
+                    "value": {
+                      "code": "connection_not_active",
+                      "message": "This connection is not active.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "create_link",
+                      "retry_after": null
+                    }
+                  },
+                  "One-time connection": {
+                    "summary": "One-time connection",
+                    "value": {
+                      "code": "one_time_connection",
+                      "message": "This connection was a one-time read and its access has ended. Create a new link to read this bank again.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "create_link",
+                      "retry_after": null
+                    }
+                  },
+                  "Key reused": {
+                    "summary": "The key was used with another body",
+                    "value": {
+                      "detail": "This Idempotency-Key was already used with a different request.",
+                      "code": "idempotency_key_reused"
+                    }
+                  },
+                  "Key in progress": {
+                    "summary": "The first request is still running",
+                    "value": {
+                      "detail": "A request with this Idempotency-Key is still in progress.",
+                      "code": "idempotency_key_in_progress"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before asking again (with `idempotency_key_in_progress`).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Either an action that asks for a sync found the day's budget of reads without the person present used up (`refresh_limit_reached`, with `Retry-After` and a `sync` object; `budget_reset` restores it in sandbox), or the shared write limit of 300 requests per minute per API key was exceeded (honor `Retry-After`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BankRefreshLimitError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RateLimitBudgetError"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Refresh limit reached": {
+                    "summary": "Refresh limit reached",
+                    "value": {
+                      "code": "refresh_limit_reached",
+                      "message": "The bank's limit on fetches without the person present is used up for today.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "retry_later",
+                      "retry_after": 3600,
+                      "sync": {
+                        "live_syncs_left_today": 0,
+                        "budgets": [
+                          {
+                            "scope": "connection",
+                            "resource": "all",
+                            "limit": 4,
+                            "remaining": 0,
+                            "resets_at": "2026-11-22T00:00:00Z"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "Write rate limit": {
+                    "summary": "The shared write limit",
+                    "value": {
+                      "detail": "Write request rate limit exceeded. You can make up to 300 requests per minute.",
+                      "reference": "RL-00000000000040008000000000000001",
+                      "limit": 300,
+                      "remaining": 0,
+                      "reset": 1794358860,
+                      "window_seconds": 60
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/BudgetRetryAfter"
+              },
+              "X-RateLimit-Scope": {
+                "$ref": "#/components/headers/BudgetXRateLimitScope"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/BudgetXRateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/BudgetXRateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/BudgetXRateLimitReset"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/BankDataInternalError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/bank/connections/5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35/simulate/' \\\n  -H 'x-api-key: YOUR_SANDBOX_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"action\": \"new_transactions\",\n    \"count\": 5\n  }'"
+          }
+        ]
+      }
+    },
     "/v3/bank/connections/{id}/accounts/": {
       "get": {
         "summary": "List accounts of a connection",
-        "description": "Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
+        "description": "Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
         "operationId": "listBankAccounts",
         "tags": [
           "Bank Data"
@@ -102818,7 +103497,7 @@
     "/v3/bank/accounts/{account_id}/": {
       "get": {
         "summary": "Get an account",
-        "description": "Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
+        "description": "Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
         "operationId": "getBankAccount",
         "tags": [
           "Bank Data"
@@ -103024,7 +103703,7 @@
     "/v3/bank/accounts/{account_id}/balances/": {
       "get": {
         "summary": "Get account balances",
-        "description": "Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
+        "description": "Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
         "operationId": "getBankAccountBalances",
         "tags": [
           "Bank Data"
@@ -103198,7 +103877,7 @@
     "/v3/bank/accounts/{account_id}/transactions/": {
       "get": {
         "summary": "List account transactions",
-        "description": "Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: for a booked transaction its booking date, else its value date, else the date it was first seen; for a pending one its transaction date, else the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.\n\nThe first page pins which transactions are included and each is served in its current state: a transaction removed while you page drops out of later pages and is reported by the change feed (`sync_transactions`). `page_token` continues one read and lives one hour; an expired token answers `410 page_expired`, so restart the read from its original query. To keep a copy up to date, use the change feed instead of re-reading ranges.\n\nResponse headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
+        "description": "Date-range read of an account's transactions, sorted by `effective_date` descending, then `id` descending, in pages of up to 500. `date_from` and `date_to` are calendar dates, inclusive, in the bank's own time zone with nothing converted. They apply to `effective_date`: for a booked transaction its booking date, else its value date, else the date it was first seen; for a pending one its transaction date, else the date it was first seen. By default `date_from` is the start of the stored history and `date_to` has no upper bound, and booked and pending are both returned.\n\nThe first page pins which transactions are included and each is served in its current state: a transaction removed while you page drops out of later pages and is reported by the change feed (`sync_transactions`). `page_token` continues one read and lives one hour; an expired token answers `410 page_expired`, so restart the read from its original query. To keep a copy up to date, use the change feed instead of re-reading ranges.\n\nResponse headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
         "operationId": "listBankTransactions",
         "tags": [
           "Bank Data"
@@ -103606,7 +104285,7 @@
     "/v3/bank/connections/{id}/transactions/sync/": {
       "get": {
         "summary": "Sync transactions (change feed)",
-        "description": "Returns what changed in a connection's transactions since a `cursor`: `added`, `modified` and `removed` (with a `reason`), across all its accounts. An empty cursor returns every current transaction as `added` and sets `reset: true`: replace your copy with it instead of adding to it.\n\nThe first read is a true snapshot. A first read (no cursor, or the read after `reset`) returns every transaction the connection had when the read started, each exactly once as `added`, in its current state, even if a sync runs while you page. Changes made while you were paging arrive in the next read from `next_cursor`: a transaction you already received comes again as `modified`, and a new one as `added`. Apply `modified` as an upsert by `id`, and ignore a `removed` id you do not have. All pages of one read reflect the same point in time. Keep paging with `page_token` while `has_more` is `true`, and store `next_cursor` only after a response with `has_more: false`. If paging fails midway, restart from the cursor you had stored.\n\nThe change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
+        "description": "Returns what changed in a connection's transactions since a `cursor`: `added`, `modified` and `removed` (with a `reason`), across all its accounts. An empty cursor returns every current transaction as `added` and sets `reset: true`: replace your copy with it instead of adding to it.\n\nThe first read is a true snapshot. A first read (no cursor, or the read after `reset`) returns every transaction the connection had when the read started, each exactly once as `added`, in its current state, even if a sync runs while you page. Changes made while you were paging arrive in the next read from `next_cursor`: a transaction you already received comes again as `modified`, and a new one as `added`. Apply `modified` as an upsert by `id`, and ignore a `removed` id you do not have. All pages of one read reflect the same point in time. Keep paging with `page_token` while `has_more` is `true`, and store `next_cursor` only after a response with `has_more: false`. If paging fails midway, restart from the cursor you had stored.\n\nThe change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.",
         "operationId": "syncBankTransactions",
         "tags": [
           "Bank Data"
@@ -104019,7 +104698,7 @@
     "/v3/bank/institutions/": {
       "get": {
         "summary": "List institutions",
-        "description": "Lists the banks per country with their capabilities: segments, access modes, the longest consent and deepest history the bank offers, whether it reports pending transactions, which transaction fields it is known to send, and how the person signs in. Values come from observed data, refreshed daily; a value never observed is `null`. The same data feeds the bank picker, so use it to know what to expect before you create a link. `access` lists `ongoing` only where ongoing access is available.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nThe list is sorted by name, then id.\n\nIn a sandbox application the list holds the Didit Test Bank, one per country Bank Link serves, and no live bank.",
+        "description": "Lists the banks per country with their capabilities: segments, access modes, the longest consent and deepest history the bank offers, whether it reports pending transactions, which transaction fields it is known to send, and how the person signs in. Values come from observed data, refreshed daily; a value never observed is `null`. The same data feeds the bank picker, so use it to know what to expect before you create a link. `access` lists `ongoing` only where ongoing access is available.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nThe list is sorted by name, then id.\n\nIn a sandbox application the list holds the Didit Test Bank, one per country Bank Link serves, and no live bank.",
         "operationId": "listBankInstitutions",
         "tags": [
           "Bank Data"
@@ -104271,7 +104950,7 @@
     "/v3/bank/institutions/{id}/": {
       "get": {
         "summary": "Get an institution",
-        "description": "Returns one bank with its capabilities. The id is Didit's slug, as listed by `list_institutions`.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Returns one bank with its capabilities. The id is Didit's slug, as listed by `list_institutions`.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "getBankInstitution",
         "tags": [
           "Bank Data"
@@ -104438,7 +105117,7 @@
     "/v3/bank/coverage/": {
       "get": {
         "summary": "Get bank data coverage",
-        "description": "Returns one entry per country: whether bank sign-in and the account check are available, and whether ongoing access is available, with how many banks offer it, the longest consent and deepest history any of them allows, and whether business accounts are supported. Ongoing access is counted only where a bank is switched on for it. Use it to decide which countries to offer; use `list_institutions` for a single bank.\n\nNeeds an API key with the Bank data permission (`bank-data`): read for this operation. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Returns one entry per country: whether bank sign-in and the account check are available, and whether ongoing access is available, with how many banks offer it, the longest consent and deepest history any of them allows, and whether business accounts are supported. Ongoing access is counted only where a bank is switched on for it. Use it to decide which countries to offer; use `list_institutions` for a single bank.\n\nNeeds an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "getBankCoverage",
         "tags": [
           "Bank Data"
@@ -105810,7 +106489,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Set how many days a message keeps its text and recipient, from 2 to 365 (default 30). Shortening the retention erases, within the hour, the text and recipient of every message already past the new one (irreversible); the messages themselves, with their status, channel, country, segments, price and timestamps, stay. Lengthening it applies to the messages not erased yet.\n\nA scoped API key needs write access to application settings.",
+        "description": "Set how many days a message keeps its text and recipient, from 2 to 365 (default 30). Shortening the retention erases, within the hour, the text and recipient of every message already past the new one (irreversible); the messages themselves, with their status, channel, country, segments, price and timestamps, stay. Lengthening it applies to the messages whose text and recipient are still held.\n\nA scoped API key needs write access to application settings.",
         "requestBody": {
           "required": true,
           "content": {
@@ -105885,6 +106564,279 @@
           },
           "403": {
             "description": "A scoped API key without write access to application settings."
+          }
+        }
+      }
+    },
+    "/v3/organization/bank-verification-coverage/": {
+      "get": {
+        "summary": "List the countries with bank coverage (public, unauthenticated)",
+        "description": "Lists the countries where Didit covers banks, how many, and what is open today for each product. Public: no auth header. Cached publicly and revalidated with an `ETag`. What is open is read on every request from the switches the API uses, so a product that is not open today reads `false` even when its banks are listed. It carries no prices (see the bank verification pricing feed) and never names a supplier.",
+        "operationId": "get_v3_bank_verification_coverage",
+        "tags": [
+          "Pricing"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "The `ETag` of the coverage feed you already hold: the response is `304 Not Modified`, with no body, when nothing changed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -fsS https://verification.didit.me/v3/organization/bank-verification-coverage/"
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "pricing",
+          "method": "bank_verification_coverage",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "Lists the countries where Didit covers banks, how many, and what is open today for each product.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Weak validator; send it back in If-None-Match."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankVerificationCoverage"
+                },
+                "examples": {
+                  "Spain": {
+                    "value": {
+                      "updated_at": "2026-11-23T08:00:00Z",
+                      "open": {
+                        "bank_verification_in_workflows": {
+                          "live": true,
+                          "countries": [
+                            "ESP"
+                          ]
+                        },
+                        "bank_data_api_one_time": {
+                          "live_applications": false,
+                          "countries": []
+                        },
+                        "bank_data_api_ongoing": {
+                          "live_applications": false,
+                          "countries": []
+                        }
+                      },
+                      "data_read": [
+                        "accounts",
+                        "balances",
+                        "transactions"
+                      ],
+                      "balances_note": "Balances are read for every account a bank shares. The balance types a bank states are listed per bank only when Didit has observed them.",
+                      "countries": {
+                        "ESP": {
+                          "name": "Spain",
+                          "banks": 92,
+                          "banks_by_segment": {
+                            "personal": 84,
+                            "business": 87
+                          },
+                          "open": {
+                            "bank_verification_in_workflows": true,
+                            "bank_data_api_one_time": false,
+                            "bank_data_api_ongoing": false,
+                            "account_check": false
+                          },
+                          "banks_url": "/v3/organization/bank-verification-coverage/ESP/"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified: the `ETag` you sent in `If-None-Match` still matches. No body."
+          }
+        }
+      }
+    },
+    "/v3/organization/bank-verification-coverage/{country}/": {
+      "get": {
+        "summary": "List the banks of one country (public, unauthenticated)",
+        "description": "Lists the banks Didit covers in one country: id, name, segments, access modes, history days, pending transactions and whether the bank is operational. Public: no auth header. One cached document per country.",
+        "operationId": "get_v3_bank_verification_country_coverage",
+        "tags": [
+          "Pricing"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "country",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3
+            },
+            "description": "ISO 3166-1 alpha-3 code, for example `ESP`."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "The `ETag` of the country feed you already hold: the response is `304 Not Modified`, with no body, when nothing changed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -fsS https://verification.didit.me/v3/organization/bank-verification-coverage/ESP/"
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "pricing",
+          "method": "bank_verification_country_coverage",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "Lists the banks Didit covers in one country: id, name, segments, access modes, history days, pending transactions and whether the bank is operational.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Weak validator; send it back in If-None-Match."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankVerificationCountryCoverage"
+                },
+                "examples": {
+                  "Spain": {
+                    "value": {
+                      "country": "ESP",
+                      "name": "Spain",
+                      "updated_at": "2026-11-23T08:00:00Z",
+                      "open": {
+                        "bank_verification_in_workflows": true,
+                        "bank_data_api_one_time": false,
+                        "bank_data_api_ongoing": false,
+                        "account_check": false
+                      },
+                      "data_read": [
+                        "accounts",
+                        "balances",
+                        "transactions"
+                      ],
+                      "balances_note": "Balances are read for every account a bank shares. The balance types a bank states are listed per bank only when Didit has observed them.",
+                      "banks": [
+                        {
+                          "id": "es-bbva",
+                          "name": "BBVA",
+                          "country": "ESP",
+                          "segments": [
+                            "personal",
+                            "business"
+                          ],
+                          "access": [
+                            "one_time"
+                          ],
+                          "history_days_max": 60,
+                          "pending_transactions": true,
+                          "status": "operational"
+                        },
+                        {
+                          "id": "es-caixabank",
+                          "name": "CaixaBank",
+                          "country": "ESP",
+                          "segments": [
+                            "personal",
+                            "business"
+                          ],
+                          "access": [
+                            "one_time"
+                          ],
+                          "history_days_max": 60,
+                          "pending_transactions": false,
+                          "status": "operational"
+                        },
+                        {
+                          "id": "es-santander",
+                          "name": "Santander",
+                          "country": "ESP",
+                          "segments": [
+                            "personal",
+                            "business"
+                          ],
+                          "access": [
+                            "one_time"
+                          ],
+                          "history_days_max": 60,
+                          "pending_transactions": true,
+                          "status": "operational"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No banks are listed for this country code, for example a code that is not an ISO 3166-1 alpha-3 code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "No banks are listed for this country."
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified: the `ETag` you sent in `If-None-Match` still matches. No body."
           }
         }
       }
@@ -146559,7 +147511,7 @@
               "renewal_window_expired",
               "first_sync_failed"
             ],
-            "description": "Why the link failed. A failed link is not an HTTP error: the link reads with `status: failed` and this object. A renew link whose connection changed meanwhile reads `renewal_not_needed` or `renewal_window_expired`."
+            "description": "Why the link failed. A failed link is not an HTTP error: the link reads with `status: failed` and this object. `bank_cancelled` ends a link only on the fifth cancel at the bank: until then a person who backs out at the bank returns to the list of banks with a notice and the link stays `opened`. A bank that cannot be reached (`bank_unavailable`) also returns the person to the list of banks and leaves the link `opened`. A link ended by the simulate operation fails at once. A renew link whose connection changed meanwhile reads `renewal_not_needed` or `renewal_window_expired`."
           },
           "message": {
             "type": "string",
@@ -146789,7 +147741,7 @@
           },
           "language": {
             "type": "string",
-            "description": "Optional language code such as `es` or `pt-BR`. Otherwise the browser language.",
+            "description": "Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.",
             "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$",
             "maxLength": 16
           },
@@ -147649,7 +148601,8 @@
           "language": {
             "type": "string",
             "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$",
-            "maxLength": 16
+            "maxLength": 16,
+            "description": "Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English."
           },
           "expires_in": {
             "type": "integer",
@@ -147712,7 +148665,7 @@
       },
       "BankAccountIdentifiers": {
         "type": "object",
-        "description": "Full identifiers, returned to server-side callers with the bank data permission.",
+        "description": "Full identifiers, returned to server-side callers with access to Bank data.",
         "properties": {
           "iban": {
             "type": "string",
@@ -147878,7 +148831,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Account id. Belongs to the connection and never changes while it exists, renewals included.",
+            "description": "Account id. Belongs to the connection and never changes while it exists, renewals included; a new connection of the same bank account has a new id (use `account_ref` to recognise the account).",
             "format": "uuid"
           },
           "connection_id": {
@@ -147935,7 +148888,7 @@
           },
           "account_ref": {
             "type": "string",
-            "description": "Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know.",
+            "description": "Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know. It is the same for one bank account in every connection of the application, while `id` and the transaction ids are new in each connection.",
             "nullable": true
           },
           "account_ref_previous": {
@@ -148141,7 +149094,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Didit's id, opaque and stored at first sight. The same movement keeps its id across reads, syncs and renewals. `identity_quality` says how strong that guarantee is.",
+            "description": "Didit's id, opaque and stored at first sight, per connection. The same movement keeps its id across reads, syncs and renewals within one connection; a new connection of the same bank account has new transaction ids. To recognise a transaction across connections, use the account's `account_ref` with `bank_reference` (when `identity_quality` is `bank_reference`), or match on content as a probable match. `identity_quality` says how strong the guarantee is within the connection.",
             "format": "uuid"
           },
           "account_id": {
@@ -148222,7 +149175,7 @@
           },
           "bank_reference": {
             "type": "string",
-            "description": "The bank's immutable entry reference where it provides one. `null` otherwise, never invented.",
+            "description": "The bank's immutable entry reference where it provides one. `null` otherwise, never invented. It is the same in every connection, so with the account's `account_ref` it is the reliable key across connections when `identity_quality` is `bank_reference`.",
             "nullable": true
           },
           "identity_quality": {
@@ -148232,7 +149185,7 @@
               "route_id",
               "derived"
             ],
-            "description": "How `id` was matched. `bank_reference` and `route_id` are stable. `derived` is matched by content: it is stable while the bank keeps reporting the entry unchanged, and a correction by the bank can then appear as one `removed` and one `added`."
+            "description": "How `id` was matched within the connection. `bank_reference` and `route_id` are stable. `derived` is matched by content: it is stable while the bank keeps reporting the entry unchanged, and a correction by the bank can then appear as one `removed` and one `added`. Across connections only a `bank_reference` is a reliable key."
           },
           "end_to_end_id": {
             "type": "string",
@@ -149294,7 +150247,7 @@
         ]
       },
       "BankLinkFailedEvent": {
-        "description": "A Bank Link failed. `data.error_code` says why, for example `duplicate_conflict`. Nothing was published or charged. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
+        "description": "A Bank Link failed: it is over. `data.error_code` says why, for example `duplicate_conflict`. A cancel at the bank sends this event with `bank_cancelled` only on the fifth cancel; before that the person returns to the list of banks and the link stays open. A bank that cannot be reached (`bank_unavailable`) also leaves the link open and sends no event. Nothing was published or charged. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -150832,6 +151785,422 @@
           "connection_id",
           "status"
         ]
+      },
+      "BankLinkSimulateRequest": {
+        "type": "object",
+        "description": "How a sandbox link ends. Every field is optional: an empty body completes the link for the `personal_basic` Test Bank customer.",
+        "properties": {
+          "persona": {
+            "type": "string",
+            "enum": [
+              "personal_basic",
+              "business_multi",
+              "long_history",
+              "pending",
+              "sparse_fields",
+              "no_ongoing"
+            ],
+            "default": "personal_basic",
+            "description": "The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open)."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "cancelled",
+              "failed",
+              "duplicate_conflict",
+              "reduced_grant",
+              "renewal_login_mismatch"
+            ],
+            "default": "completed",
+            "description": "How the link ends."
+          },
+          "error_code": {
+            "type": "string",
+            "enum": [
+              "duplicate_conflict",
+              "renewal_login_mismatch",
+              "reduced_grant",
+              "corporate_approval_not_supported",
+              "ongoing_access_not_available",
+              "bank_unavailable",
+              "bank_cancelled",
+              "consent_declined",
+              "read_limit"
+            ],
+            "description": "The failure the link records. Only accepted with `outcome: failed`, where it defaults to `bank_unavailable`."
+          }
+        }
+      },
+      "BankConnectionSimulateRequest": {
+        "type": "object",
+        "description": "The event to move on a sandbox connection.",
+        "required": [
+          "action"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "new_transactions",
+              "pending_posted",
+              "booking_correction",
+              "consent_expiring",
+              "consent_expired",
+              "revoked_by_user",
+              "revoked_by_bank",
+              "sync_failed",
+              "sync_recovered",
+              "webhook_twice",
+              "midnight_booking",
+              "budget_used",
+              "budget_reset"
+            ],
+            "description": "What happens. The operation description explains each value."
+          },
+          "days": {
+            "type": "integer",
+            "enum": [
+              14,
+              7,
+              1
+            ],
+            "default": 7,
+            "description": "Only for `consent_expiring`: days until the consent ends. Only the notification thresholds are accepted: 14, 7 or 1. Any other value, or `days` with another action, answers `400 invalid_request` with `field` `days`."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 3,
+            "description": "Only for `new_transactions`: how many booked transactions the bank adds. With another action it answers `400 invalid_request` with `field` `count`."
+          }
+        }
+      },
+      "BankIdempotencyConflictError": {
+        "type": "object",
+        "description": "The refusal of the shared idempotency layer: the same `Idempotency-Key` was used with another request, or while the first request is still running (with `Retry-After`).",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Plain-language explanation."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "idempotency_key_reused",
+              "idempotency_key_in_progress"
+            ],
+            "description": "`idempotency_key_reused`: the key was used with another endpoint, query or body. `idempotency_key_in_progress`: the first request with this key is still running."
+          }
+        },
+        "required": [
+          "detail",
+          "code"
+        ]
+      },
+      "BankVerificationCountryCoverage": {
+        "type": "object",
+        "required": [
+          "country",
+          "name",
+          "updated_at",
+          "open",
+          "data_read",
+          "balances_note",
+          "banks"
+        ],
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "open": {
+            "$ref": "#/components/schemas/BankVerificationCoverageOpen"
+          },
+          "data_read": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "balances_note": {
+            "type": "string"
+          },
+          "banks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankVerificationCoverageBank"
+            },
+            "description": "Alphabetical, a fixed order that says nothing about size."
+          }
+        }
+      },
+      "BankVerificationCoverage": {
+        "type": "object",
+        "description": "Where Didit covers bank data and what is open today. No prices: see the bank verification pricing feed.",
+        "required": [
+          "updated_at",
+          "open",
+          "data_read",
+          "balances_note",
+          "countries"
+        ],
+        "properties": {
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the catalogue was last refreshed."
+          },
+          "open": {
+            "$ref": "#/components/schemas/BankVerificationCoverageAvailability"
+          },
+          "data_read": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accounts",
+                "balances",
+                "transactions"
+              ]
+            },
+            "description": "What a read of any covered bank returns."
+          },
+          "balances_note": {
+            "type": "string"
+          },
+          "countries": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "name",
+                "banks",
+                "banks_by_segment",
+                "open",
+                "banks_url"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "banks": {
+                  "type": "integer"
+                },
+                "banks_by_segment": {
+                  "type": "object",
+                  "properties": {
+                    "personal": {
+                      "type": "integer"
+                    },
+                    "business": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "open": {
+                  "$ref": "#/components/schemas/BankVerificationCoverageOpen"
+                },
+                "banks_url": {
+                  "type": "string",
+                  "description": "Path of the banks of this country, under `/v3/organization/bank-verification-coverage/`."
+                }
+              }
+            },
+            "description": "Countries keyed by ISO 3166-1 alpha-3 code."
+          }
+        }
+      },
+      "BankVerificationCoverageBank": {
+        "type": "object",
+        "description": "One bank. Only what the catalogue has: a field nobody observed is left out. The id is a permanent public identifier.",
+        "required": [
+          "id",
+          "name",
+          "country",
+          "segments",
+          "access",
+          "history_days_max",
+          "pending_transactions",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Permanent public identifier and URL slug, for example `es-santander`. Never changes once published."
+          },
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-3."
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "personal",
+                "business"
+              ]
+            }
+          },
+          "access": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "one_time",
+                "ongoing"
+              ]
+            },
+            "description": "Access modes a link can use at this bank today, as far as the bank and its readiness go: `one_time`, plus `ongoing` only once Didit has marked the bank's route ready for ongoing access. The same value the authenticated institutions endpoint publishes."
+          },
+          "history_days_max": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Days of transaction history a read can obtain. The same number the authenticated institutions endpoint publishes, so a cap applied there applies here."
+          },
+          "pending_transactions": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "operational",
+              "degraded",
+              "down"
+            ],
+            "description": "Whether the bank can be reached today: `operational`, `degraded` or `down`."
+          },
+          "consent_days_max": {
+            "type": "integer",
+            "description": "Longest consent in days. Present only when `ongoing` is in `access`."
+          },
+          "balance_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Present only when the balance types were observed."
+          },
+          "logo_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Present only for a logo Didit hosts."
+          }
+        }
+      },
+      "BankVerificationCoverageOpen": {
+        "type": "object",
+        "required": [
+          "bank_verification_in_workflows",
+          "bank_data_api_one_time",
+          "bank_data_api_ongoing",
+          "account_check"
+        ],
+        "properties": {
+          "bank_verification_in_workflows": {
+            "type": "boolean"
+          },
+          "bank_data_api_one_time": {
+            "type": "boolean"
+          },
+          "bank_data_api_ongoing": {
+            "type": "boolean"
+          },
+          "account_check": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BankVerificationWorkflowsAvailability": {
+        "type": "object",
+        "required": [
+          "live",
+          "countries"
+        ],
+        "properties": {
+          "live": {
+            "type": "boolean"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Bank Verification inside verification workflows."
+      },
+      "BankVerificationOneTimeAvailability": {
+        "type": "object",
+        "required": [
+          "live_applications",
+          "countries"
+        ],
+        "properties": {
+          "live_applications": {
+            "type": "boolean"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The Bank data API with one-time access, for live applications."
+      },
+      "BankVerificationOngoingAvailability": {
+        "type": "object",
+        "required": [
+          "live_applications",
+          "countries"
+        ],
+        "properties": {
+          "live_applications": {
+            "type": "boolean"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The Bank data API with ongoing access, for live applications."
+      },
+      "BankVerificationCoverageAvailability": {
+        "type": "object",
+        "required": [
+          "bank_verification_in_workflows",
+          "bank_data_api_one_time",
+          "bank_data_api_ongoing"
+        ],
+        "properties": {
+          "bank_verification_in_workflows": {
+            "$ref": "#/components/schemas/BankVerificationWorkflowsAvailability"
+          },
+          "bank_data_api_one_time": {
+            "$ref": "#/components/schemas/BankVerificationOneTimeAvailability"
+          },
+          "bank_data_api_ongoing": {
+            "$ref": "#/components/schemas/BankVerificationOngoingAvailability"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -151198,7 +152567,7 @@
         }
       },
       "BankDataAccessDenied": {
-        "description": "The API key does not carry the Bank data permission (`bank-data`), or, for raw bank data in a live application, the application setting \"Bank data in the API\" is off. Bank data is not part of full access: a full-access key, a key restricted to other resources and a request authenticated without an API key (client credentials, on raw data) are all refused with this body, so create a key and grant it explicitly. The refusal comes before any lookup, so it says nothing about whether an object exists.",
+        "description": "A scoped API key does not name Bank data (`bank-data`) in its scopes, or, for raw bank data in a live application, the application setting \"Bank data in the API\" is off. A request authenticated without an API key (client credentials, on raw data) is refused with this body too. A full-access key is not refused for its scopes. The refusal comes before any lookup, so it says nothing about whether an object exists.",
         "content": {
           "application/json": {
             "schema": {
@@ -151887,7 +153256,7 @@
     "bank.link.failed": {
       "post": {
         "summary": "Bank link failed",
-        "description": "A Bank Link failed. `data.error_code` says why, for example `duplicate_conflict`. Nothing was published or charged. Sent for live and sandbox applications.",
+        "description": "A Bank Link failed: it is over. `data.error_code` says why, for example `duplicate_conflict`. A cancel at the bank sends this event with `bank_cancelled` only on the fifth cancel; before that the person returns to the list of banks and the link stays open. A bank that cannot be reached (`bank_unavailable`) also leaves the link open and sends no event. Nothing was published or charged. Sent for live and sandbox applications.",
         "tags": [
           "Webhook"
         ],
