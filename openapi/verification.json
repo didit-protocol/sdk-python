@@ -99707,7 +99707,7 @@
             }
           },
           "400": {
-            "description": "The request was refused before any screen. `field` names what to correct: `invalid_request` for a value outside its range or a combination that is not allowed, and the more specific codes shown here.",
+            "description": "The request was refused before any screen. `field` names what to correct: `invalid_request` for a value outside its range or a combination that is not allowed, `country_not_available` for a country the product does not serve or where no bank is offered, and the more specific codes shown here.",
             "content": {
               "application/json": {
                 "schema": {
@@ -99777,6 +99777,17 @@
                       "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
                       "field": "expires_in",
                       "next_action": null,
+                      "retry_after": null
+                    }
+                  },
+                  "Country not available": {
+                    "summary": "Country not available",
+                    "value": {
+                      "code": "country_not_available",
+                      "message": "Bank data is not available in this country.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": "country",
+                      "next_action": "create_link",
                       "retry_after": null
                     }
                   }
@@ -101118,7 +101129,7 @@
     "/v3/bank/connections/{id}/refresh/": {
       "post": {
         "summary": "Refresh a bank connection",
-        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`.",
+        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.",
         "operationId": "refreshBankConnection",
         "tags": [
           "Bank Data"
@@ -101270,7 +101281,7 @@
             }
           },
           "409": {
-            "description": "The connection cannot be refreshed: `connection_not_active` (revoked, paused, failed or deleted) or `consent_expired` (renew it first).",
+            "description": "The connection cannot be refreshed: `connection_not_active` (revoked, paused, failed or deleted), `consent_expired` (renew it first) or `one_time_connection` (a one-time read has ended: create a new link).",
             "content": {
               "application/json": {
                 "schema": {
@@ -101296,6 +101307,17 @@
                       "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
                       "field": null,
                       "next_action": "renew_connection",
+                      "retry_after": null
+                    }
+                  },
+                  "One-time connection": {
+                    "summary": "One-time connection",
+                    "value": {
+                      "code": "one_time_connection",
+                      "message": "This connection was a one-time read and its access has ended. Create a new link to read this bank again.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "create_link",
                       "retry_after": null
                     }
                   }
@@ -101861,7 +101883,7 @@
     "/v3/bank/connections/{id}/renew/": {
       "post": {
         "summary": "Renew a bank connection",
-        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nA one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
         "operationId": "renewBankConnection",
         "tags": [
           "Bank Data"
@@ -102072,7 +102094,7 @@
             }
           },
           "409": {
-            "description": "The connection cannot be renewed now: `renewal_not_needed`, `renewal_window_expired`, or `connection_not_active` (for example it is still `pending`).",
+            "description": "The connection cannot be renewed now: `renewal_not_needed`, `renewal_window_expired`, `connection_not_active` (for example it is still `pending`) or `one_time_connection` (a one-time read has ended: create a new link).",
             "content": {
               "application/json": {
                 "schema": {
@@ -102106,6 +102128,17 @@
                     "value": {
                       "code": "connection_not_active",
                       "message": "This connection is not active.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "create_link",
+                      "retry_after": null
+                    }
+                  },
+                  "One-time connection": {
+                    "summary": "One-time connection",
+                    "value": {
+                      "code": "one_time_connection",
+                      "message": "This connection was a one-time read and its access has ended. Create a new link to read this bank again.",
                       "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
                       "field": null,
                       "next_action": "create_link",
@@ -102170,7 +102203,7 @@
     "/v3/bank/connections/{id}/revoke/": {
       "post": {
         "summary": "Revoke a bank connection",
-        "description": "Stops access to the bank. Bank fetches stop the moment you ask, even while the bank's confirmation is pending: the consent reads `revocation_pending`, then `revoked` once the bank confirms access is terminated, or `revocation_failed` while the call is retried automatically. `consent.ended_by` is `customer`.\n\nRevoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRevoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.",
+        "description": "Stops access to the bank. Bank fetches stop the moment you ask, even while the bank's confirmation is pending: the consent reads `revocation_pending`, then `revoked` once the bank confirms access is terminated, or `revocation_failed` while the call is retried automatically. `consent.ended_by` is `customer`. Until the bank confirms, `status` keeps its value and `status_reason` is `null`; once `status` is `revoked`, `status_reason` is `revoked_by_customer`.\n\nRevoking does not delete anything: stored accounts, balances and transactions stay readable until `consent.retain_until`, the retention setting of your application, and nothing is charged. To delete them now, call `delete_connection`. Repeating the call returns the current state.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.\n\nRevoking a connection that was deleted answers `200` with the deleted connection, so repeating the call is safe.",
         "operationId": "revokeBankConnection",
         "tags": [
           "Bank Data"
@@ -104023,7 +104056,7 @@
             }
           },
           "400": {
-            "description": "A parameter is invalid, or `country` is not a country Bank Link serves. `field` names it.",
+            "description": "A parameter is invalid, or `country` is a country Bank data does not serve or where no bank is offered (`country_not_available`). `field` names it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -104048,6 +104081,17 @@
                       "message": "The request is not valid.",
                       "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
                       "field": "limit",
+                      "next_action": null,
+                      "retry_after": null
+                    }
+                  },
+                  "Country not available": {
+                    "summary": "Country not available",
+                    "value": {
+                      "code": "country_not_available",
+                      "message": "Bank data is not available in this country.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": "country",
                       "next_action": null,
                       "retry_after": null
                     }
@@ -146177,6 +146221,7 @@
             "type": "string",
             "enum": [
               "ongoing_access_not_available",
+              "country_not_available",
               "segment_not_available",
               "window_not_available",
               "history_window_ambiguous",
@@ -146184,6 +146229,7 @@
               "link_origin_not_allowed",
               "bank_data_access_denied",
               "connection_not_active",
+              "one_time_connection",
               "consent_expired",
               "renewal_not_needed",
               "renewal_window_expired",
@@ -146548,12 +146594,12 @@
               "one_time",
               "ongoing"
             ],
-            "description": "`one_time` (default) reads the data once. `ongoing` keeps access open until the consent ends or someone stops it. With `institution_id` set, a bank that cannot keep access open answers `400 ongoing_access_not_available` before any screen. Without it, the bank picker lists only banks that can.",
+            "description": "`one_time` (default) reads the data once: when the read completes the connection ends itself and reads `status: revoked` with `status_reason: collection_complete`, and its data stays readable until `consent.retain_until`. `ongoing` keeps access open until the consent ends or someone stops it. With `institution_id` set, a bank that cannot keep access open answers `400 ongoing_access_not_available` before any screen. Without it, the bank picker lists only banks that can.",
             "default": "one_time"
           },
           "country": {
             "type": "string",
-            "description": "Optional. Without it the person picks among the countries your application enabled. It has to be a country Bank Link serves; any other, `ZZZ` included, answers `400 invalid_request` with `field: country`. An empty request body stays valid.",
+            "description": "Optional. Without it the person picks among the countries your application enabled. It has to be a country Bank Link serves; a malformed value answers `400 invalid_request`, and a country the product does not serve, or where no bank is offered, answers `400 country_not_available`, both with `field: country`. An empty request body stays valid.",
             "pattern": "^[A-Z]{3}$"
           },
           "institution_id": {
@@ -147313,7 +147359,7 @@
               "deleted",
               "failed"
             ],
-            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. `failed`: the first sync never succeeded."
+            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you, or ended because the read of a one-time connection is complete. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. `failed`: the first sync never succeeded."
           },
           "status_reason": {
             "type": "string",
@@ -147333,7 +147379,7 @@
               "application_deleted",
               null
             ],
-            "description": "Why the connection is in this status. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`.",
+            "description": "Why the connection is in this status. `collection_complete`: a one-time connection whose read is complete, so its access has ended. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`.",
             "nullable": true
           },
           "institution": {
