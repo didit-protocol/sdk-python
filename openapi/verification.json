@@ -101861,7 +101861,7 @@
     "/v3/bank/connections/{id}/renew/": {
       "post": {
         "summary": "Renew a bank connection",
-        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nOpening the returned link on the hosted page is not available yet: the page that lets the person renew is still to be built.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
+        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with the Bank data permission (`bank-data`): write for this operation, which changes something. A key with full access does not include it: grant it explicitly when you create the key, or the call answers `403 bank_data_access_denied`.",
         "operationId": "renewBankConnection",
         "tags": [
           "Bank Data"
@@ -102072,7 +102072,7 @@
             }
           },
           "409": {
-            "description": "The connection cannot be renewed now.",
+            "description": "The connection cannot be renewed now: `renewal_not_needed`, `renewal_window_expired`, or `connection_not_active` (for example it is still `pending`).",
             "content": {
               "application/json": {
                 "schema": {
