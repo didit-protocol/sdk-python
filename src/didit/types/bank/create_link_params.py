@@ -53,10 +53,10 @@ class BankCreateLinkParams(TypedDict, total=False):
     """The connection to renew. Only with `mode: renew`."""
 
     access: Literal["one_time", "ongoing"] | str
-    """`one_time` (default) reads the data once. `ongoing` keeps access open until the consent ends or someone stops it. With `institution_id` set, a bank that cannot keep access open answers `400 ongoing_access_not_available` before any screen. Without it, the bank picker lists only banks that can."""
+    """`one_time` (default) reads the data once: when the read completes the connection ends itself and reads `status: revoked` with `status_reason: collection_complete`, and its data stays readable until `consent.retain_until`. `ongoing` keeps access open until the consent ends or someone stops it. With `institution_id` set, a bank that cannot keep access open answers `400 ongoing_access_not_available` before any screen. Without it, the bank picker lists only banks that can."""
 
     country: str
-    """Optional. Without it the person picks among the countries your application enabled. It has to be a country Bank Link serves; any other, `ZZZ` included, answers `400 invalid_request` with `field: country`. An empty request body stays valid."""
+    """Optional. Without it the person picks among the countries your application enabled. It has to be a country Bank Link serves; a malformed value answers `400 invalid_request`, and a country the product does not serve, or where no bank is offered, answers `400 country_not_available`, both with `field: country`. An empty request body stays valid."""
 
     institution_id: str
     """Optional bank to preselect, from `list_institutions`. Skips the picker."""
