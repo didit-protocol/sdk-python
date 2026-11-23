@@ -147129,10 +147129,11 @@
               "end_user",
               "bank",
               "customer",
+              "system",
               "unknown",
               null
             ],
-            "description": "Who ended access, set from evidence. `unknown` when neither the bank nor the sync says.",
+            "description": "Who ended access, set from evidence. `system` when Didit ended it by design: a one-time connection once its read is complete. `unknown` when neither the bank nor the sync says.",
             "nullable": true
           }
         },
@@ -148846,9 +148847,10 @@
               "end_user",
               "bank",
               "customer",
+              "system",
               "unknown"
             ],
-            "description": "Who ended access."
+            "description": "Who ended access. `system` when Didit ended it by design: a one-time connection once its read is complete."
           },
           "status_reason": {
             "type": "string",
@@ -149342,7 +149344,7 @@
         ]
       },
       "BankConnectionRevokedEvent": {
-        "description": "Access ended and the bank confirmed it. `ended_by` says who ended it: the person, the bank or you. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
+        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended a one-time connection once its read was complete. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -152006,7 +152008,7 @@
     "bank.connection.revoked": {
       "post": {
         "summary": "Bank connection revoked",
-        "description": "Access ended and the bank confirmed it. `ended_by` says who ended it: the person, the bank or you. Sent for live and sandbox applications.",
+        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended a one-time connection once its read was complete. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications.",
         "tags": [
           "Webhook"
         ],
