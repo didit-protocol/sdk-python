@@ -97,7 +97,7 @@ class CasesLinks(SyncAPIResource):
     ) -> CaseLink:
         """Add case link.
 
-        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
+        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case, and with 404 if the case, or the session, business session or transaction, is not found in this application (unknown, deleted or owned by another application). Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/``
 
@@ -241,7 +241,7 @@ class AsyncCasesLinks(AsyncAPIResource):
     ) -> CaseLink:
         """Add case link.
 
-        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
+        Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case, and with 404 if the case, or the session, business session or transaction, is not found in this application (unknown, deleted or owned by another application). Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.
 
         ``POST /v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/links/``
 
