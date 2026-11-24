@@ -17,6 +17,8 @@ from didit._response import (
 )
 from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from didit.types.components.webhook_config import WebhookConfig
+from didit.types.components.webhook_create_response import WebhookCreateResponse
+from didit.types.components.webhook_event import WebhookEvent
 from didit.webhooks._mixin import WebhooksMixin
 
 if TYPE_CHECKING:
@@ -42,7 +44,7 @@ __all__ = [
 class Webhooks(WebhooksMixin, SyncAPIResource):
     """The ``webhooks`` resource of the Didit API.
 
-    Methods: ``retrieve_config``, ``update_config``.
+    Methods: ``create``, ``retrieve_config``, ``update_config``.
 
     Nested resources: ``destinations``.
     """
@@ -168,11 +170,63 @@ class Webhooks(WebhooksMixin, SyncAPIResource):
             ),
         )
 
+    def create(
+        self,
+        *,
+        url: str,
+        events: Sequence[WebhookEvent | Literal["*"] | str],
+        description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookCreateResponse:
+        """Add a webhook endpoint.
+
+        Create a webhook endpoint: an HTTPS endpoint that receives the events in `events`. Send the event types to deliver, or `["*"]` for every event Didit lists: `*` is expanded when the endpoint is created and the answer lists the event names it now carries. An event Didit does not know answers `400 invalid_events`.
+
+        The endpoint it creates is the destination the Business Console lists and `GET /v3/webhook/destinations/` returns: `webhook_id` is that destination's `destination_uuid`, `secret` is the same signing secret as `secret_shared_key`, and `events` is its stored `subscribed_events`, changed later through `PATCH /v3/webhook/destinations/{destination_uuid}/`. `description` names it in the console; left out, it takes the host of `url`. The `(application, url)` pair must be unique among the application's destinations.
+
+        Didit delivers events only to the HTTPS endpoint in `url`.
+
+        **Errors.** `400 invalid_url`: `url` is not an HTTPS URL, or the application already has an endpoint at it. `400 invalid_events`: an event in `events` is not one Didit lists.
+
+        A scoped API key needs `webhooks: write`.
+
+        ``POST /v3/webhooks/``
+
+        Args:
+          url: HTTPS endpoint that receives `POST` requests, one per event. Must be unique among the application's destinations. Use a stable, hardened endpoint: Didit retries failed deliveries on a backoff schedule.
+          events: Event types to deliver, or `["*"]` for every event Didit lists. `*` is expanded when the endpoint is created, and the answer lists every event it covers. A value Didit does not know answers `400 invalid_events`.
+          description: Its name in the console, so you can tell endpoints apart. Left out, it takes the host of `url`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookCreateResponse",
+            self._client.request(
+                "post",
+                "/v3/webhooks/",
+                cast_to=WebhookCreateResponse,
+                auth="api_key",
+                body={"url": url, "events": events, "description": description},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
     """The ``webhooks`` resource of the Didit API.
 
-    Methods: ``retrieve_config``, ``update_config``.
+    Methods: ``create``, ``retrieve_config``, ``update_config``.
 
     Nested resources: ``destinations``.
     """
@@ -298,12 +352,65 @@ class AsyncWebhooks(WebhooksMixin, AsyncAPIResource):
             ),
         )
 
+    async def create(
+        self,
+        *,
+        url: str,
+        events: Sequence[WebhookEvent | Literal["*"] | str],
+        description: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> WebhookCreateResponse:
+        """Add a webhook endpoint.
+
+        Create a webhook endpoint: an HTTPS endpoint that receives the events in `events`. Send the event types to deliver, or `["*"]` for every event Didit lists: `*` is expanded when the endpoint is created and the answer lists the event names it now carries. An event Didit does not know answers `400 invalid_events`.
+
+        The endpoint it creates is the destination the Business Console lists and `GET /v3/webhook/destinations/` returns: `webhook_id` is that destination's `destination_uuid`, `secret` is the same signing secret as `secret_shared_key`, and `events` is its stored `subscribed_events`, changed later through `PATCH /v3/webhook/destinations/{destination_uuid}/`. `description` names it in the console; left out, it takes the host of `url`. The `(application, url)` pair must be unique among the application's destinations.
+
+        Didit delivers events only to the HTTPS endpoint in `url`.
+
+        **Errors.** `400 invalid_url`: `url` is not an HTTPS URL, or the application already has an endpoint at it. `400 invalid_events`: an event in `events` is not one Didit lists.
+
+        A scoped API key needs `webhooks: write`.
+
+        ``POST /v3/webhooks/``
+
+        Args:
+          url: HTTPS endpoint that receives `POST` requests, one per event. Must be unique among the application's destinations. Use a stable, hardened endpoint: Didit retries failed deliveries on a backoff schedule.
+          events: Event types to deliver, or `["*"]` for every event Didit lists. `*` is expanded when the endpoint is created, and the answer lists every event it covers. A value Didit does not know answers `400 invalid_events`.
+          description: Its name in the console, so you can tell endpoints apart. Left out, it takes the host of `url`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "WebhookCreateResponse",
+            await self._client.request(
+                "post",
+                "/v3/webhooks/",
+                cast_to=WebhookCreateResponse,
+                auth="api_key",
+                body={"url": url, "events": events, "description": description},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class WebhooksWithRawResponse:
     def __init__(self, resource: Webhooks) -> None:
         self._resource = resource
         self.retrieve_config = to_raw_response_wrapper(resource.retrieve_config)
         self.update_config = to_raw_response_wrapper(resource.update_config)
+        self.create = to_raw_response_wrapper(resource.create)
 
     @cached_property
     def destinations(self) -> WebhooksDestinationsWithRawResponse:
@@ -317,6 +424,7 @@ class AsyncWebhooksWithRawResponse:
         self._resource = resource
         self.retrieve_config = async_to_raw_response_wrapper(resource.retrieve_config)
         self.update_config = async_to_raw_response_wrapper(resource.update_config)
+        self.create = async_to_raw_response_wrapper(resource.create)
 
     @cached_property
     def destinations(self) -> AsyncWebhooksDestinationsWithRawResponse:
@@ -330,6 +438,7 @@ class WebhooksWithStreamingResponse:
         self._resource = resource
         self.retrieve_config = to_streamed_response_wrapper(resource.retrieve_config)
         self.update_config = to_streamed_response_wrapper(resource.update_config)
+        self.create = to_streamed_response_wrapper(resource.create)
 
     @cached_property
     def destinations(self) -> WebhooksDestinationsWithStreamingResponse:
@@ -343,6 +452,7 @@ class AsyncWebhooksWithStreamingResponse:
         self._resource = resource
         self.retrieve_config = async_to_streamed_response_wrapper(resource.retrieve_config)
         self.update_config = async_to_streamed_response_wrapper(resource.update_config)
+        self.create = async_to_streamed_response_wrapper(resource.create)
 
     @cached_property
     def destinations(self) -> AsyncWebhooksDestinationsWithStreamingResponse:

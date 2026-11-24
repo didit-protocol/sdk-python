@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
+from didit.types.components.phone_balance_response import PhoneBalanceResponse
 from didit.types.components.phone_countries_update_response import PhoneCountriesUpdateResponse
 from didit.types.components.phone_factor import PhoneFactor
 from didit.types.components.phone_factor_enrollment import PhoneFactorEnrollment
@@ -22,6 +23,7 @@ from didit.types.components.phone_network_registration_test_number import (
 from didit.types.components.phone_rate_limit import PhoneRateLimit
 from didit.types.components.phone_risk_bulk_job import PhoneRiskBulkJob
 from didit.types.components.phone_risk_response import PhoneRiskResponse
+from didit.types.components.phone_sandbox_number_response import PhoneSandboxNumberResponse
 from didit.types.components.phone_sdk_key import PhoneSdkKey
 from didit.types.components.phone_sdk_key_rotated import PhoneSdkKeyRotated
 from didit.types.components.phone_sdk_keys_page import PhoneSdkKeysPage
@@ -30,6 +32,8 @@ from didit.types.components.phone_settings_update_response import PhoneSettingsU
 from didit.types.components.phone_silent_coverage import PhoneSilentCoverage
 from didit.types.components.phone_silent_eligibility import PhoneSilentEligibility
 from didit.types.components.phone_silent_registration import PhoneSilentRegistration
+from didit.types.components.phone_stats_response import PhoneStatsResponse
+from didit.types.components.phone_validate_response import PhoneValidateResponse
 from didit.types.components.phone_verification_approve_response import (
     PhoneVerificationApproveResponse,
 )
@@ -41,6 +45,7 @@ from didit.types.components.phone_verification_detail import PhoneVerificationDe
 from didit.types.components.phone_verification_next_response import PhoneVerificationNextResponse
 from didit.types.components.phone_verification_retry_response import PhoneVerificationRetryResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
+from didit.types.components.phone_voice_list_response import PhoneVoiceListResponse
 from didit.types.phone.fraud.evaluate_response import PhoneFraudEvaluateResponse
 from didit.types.phone.fraud.events.create_batch_response import PhoneFraudEventsCreateBatchResponse
 from didit.types.phone.fraud.update_response import PhoneFraudUpdateResponse
@@ -295,6 +300,51 @@ def test_phone_send_code() -> None:
         ),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
+    )
+
+
+def test_phone_validate() -> None:
+    """``POST /v3/phone/validate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/validate/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "0600000012", "country": "ES"},
+            status=200,
+            response_json={
+                "valid": True,
+                "format": {"e164": "+34600000012", "national": "600 00 00 12"},
+                "country": "ES",
+                "charged": False,
+            },
+        ),
+        lambda c: c.phone.validate(phone_number="0600000012", country="ES"),
+        lambda c: c.phone.validate(phone_number="0600000012", country="ES"),
+        lambda r: isinstance(r, PhoneValidateResponse),
+        lambda r: isinstance(r, PhoneValidateResponse),
+    )
+
+
+def test_phone_balance_retrieve() -> None:
+    """``GET /v3/phone/balance/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/balance/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "balance": "1240.50",
+                "auto_top_up": {"enabled": True, "amount": "50.00", "below": "20.00"},
+            },
+        ),
+        lambda c: c.phone.balance.retrieve(),
+        lambda c: c.phone.balance.retrieve(),
+        lambda r: isinstance(r, PhoneBalanceResponse),
+        lambda r: isinstance(r, PhoneBalanceResponse),
     )
 
 
@@ -1572,6 +1622,32 @@ def test_phone_rate_limits_buckets_delete() -> None:
     )
 
 
+def test_phone_sandbox_numbers_create() -> None:
+    """``POST /v3/phone/sandbox/numbers/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/sandbox/numbers/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "+34600000099", "outcome": "silent_match", "code": "000000"},
+            status=201,
+            response_json={
+                "number_id": "87c2ad92-1279-4f14-bdc4-33f74b945aef",
+                "outcome": "silent_match",
+            },
+        ),
+        lambda c: c.phone.sandbox_numbers.create(
+            phone_number="+34600000099", outcome="silent_match", code="000000"
+        ),
+        lambda c: c.phone.sandbox_numbers.create(
+            phone_number="+34600000099", outcome="silent_match", code="000000"
+        ),
+        lambda r: isinstance(r, PhoneSandboxNumberResponse),
+        lambda r: isinstance(r, PhoneSandboxNumberResponse),
+    )
+
+
 def test_phone_sdk_keys_create() -> None:
     """``POST /v3/phone/sdk-keys/``"""
     check_operation(
@@ -1877,6 +1953,57 @@ def test_phone_silent_registrations_retrieve() -> None:
     )
 
 
+def test_phone_stats_retrieve() -> None:
+    """``GET /v3/phone/stats/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/stats/",
+            api="verification",
+            auth="api_key",
+            query={
+                "product": ["verification"],
+                "group_by": ["network"],
+                "from": ["2026-10-22"],
+                "to": ["2026-11-20"],
+            },
+            status=200,
+            response_json={
+                "rows": [
+                    {
+                        "key": "Mobile network A",
+                        "conversion_rate": 0.94,
+                        "silent_success_rate": 0.3572,
+                        "code_free_share": 0.38,
+                        "delivery_seconds": {"p50": 2.1, "p90": 6.4, "p99": 12.8},
+                        "read_rate": 0,
+                        "reply_rate": 0,
+                        "spend": "412.20",
+                    },
+                    {
+                        "key": "Mobile network B",
+                        "conversion_rate": 0.88,
+                        "silent_success_rate": 0.2728,
+                        "code_free_share": 0.31,
+                        "delivery_seconds": {"p50": 3.4, "p90": 8.1, "p99": 15.2},
+                        "read_rate": 0,
+                        "reply_rate": 0,
+                        "spend": "298.40",
+                    },
+                ]
+            },
+        ),
+        lambda c: c.phone.stats.retrieve(
+            product="verification", group_by="network", from_="2026-10-22", to="2026-11-20"
+        ),
+        lambda c: c.phone.stats.retrieve(
+            product="verification", group_by="network", from_="2026-10-22", to="2026-11-20"
+        ),
+        lambda r: isinstance(r, PhoneStatsResponse),
+        lambda r: isinstance(r, PhoneStatsResponse),
+    )
+
+
 def test_phone_verifications_approve() -> None:
     """``POST /v3/phone/verifications/{verification_id}/approve/``"""
     check_operation(
@@ -2115,4 +2242,33 @@ def test_phone_verifications_retry() -> None:
         ),
         lambda r: isinstance(r, PhoneVerificationRetryResponse),
         lambda r: isinstance(r, PhoneVerificationRetryResponse),
+    )
+
+
+def test_phone_voices_list() -> None:
+    """``GET /v3/phone/voices/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/voices/",
+            api="verification",
+            auth="api_key",
+            query={"locale": ["es-ES"]},
+            status=200,
+            response_json={
+                "voices": [
+                    {
+                        "voice_id": "es-es-female",
+                        "locale": "es-ES",
+                        "gender": "female",
+                        "sample_url": None,
+                        "default": True,
+                    }
+                ]
+            },
+        ),
+        lambda c: c.phone.voices.list(locale="es-ES"),
+        lambda c: c.phone.voices.list(locale="es-ES"),
+        lambda r: isinstance(r, PhoneVoiceListResponse),
+        lambda r: isinstance(r, PhoneVoiceListResponse),
     )

@@ -18,6 +18,7 @@ from didit._response import (
 from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
 from didit.types.components.phone_risk_bulk_job import PhoneRiskBulkJob
 from didit.types.components.phone_risk_response import PhoneRiskResponse
+from didit.types.components.phone_validate_response import PhoneValidateResponse
 from didit.types.components.phone_verification_check_response import PhoneVerificationCheckResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
 from didit.types.components.risk_signals import RiskSignals
@@ -27,6 +28,14 @@ from didit.types.phone.send_code_params import (
 )
 
 if TYPE_CHECKING:
+    from didit.resources.phone.balance import (
+        AsyncPhoneBalance,
+        AsyncPhoneBalanceWithRawResponse,
+        AsyncPhoneBalanceWithStreamingResponse,
+        PhoneBalance,
+        PhoneBalanceWithRawResponse,
+        PhoneBalanceWithStreamingResponse,
+    )
     from didit.resources.phone.countries import (
         AsyncPhoneCountries,
         AsyncPhoneCountriesWithRawResponse,
@@ -99,6 +108,14 @@ if TYPE_CHECKING:
         PhoneRateLimitsWithRawResponse,
         PhoneRateLimitsWithStreamingResponse,
     )
+    from didit.resources.phone.sandbox_numbers import (
+        AsyncPhoneSandboxNumbers,
+        AsyncPhoneSandboxNumbersWithRawResponse,
+        AsyncPhoneSandboxNumbersWithStreamingResponse,
+        PhoneSandboxNumbers,
+        PhoneSandboxNumbersWithRawResponse,
+        PhoneSandboxNumbersWithStreamingResponse,
+    )
     from didit.resources.phone.sdk_keys import (
         AsyncPhoneSdkKeys,
         AsyncPhoneSdkKeysWithRawResponse,
@@ -123,6 +140,14 @@ if TYPE_CHECKING:
         PhoneSilentWithRawResponse,
         PhoneSilentWithStreamingResponse,
     )
+    from didit.resources.phone.stats import (
+        AsyncPhoneStats,
+        AsyncPhoneStatsWithRawResponse,
+        AsyncPhoneStatsWithStreamingResponse,
+        PhoneStats,
+        PhoneStatsWithRawResponse,
+        PhoneStatsWithStreamingResponse,
+    )
     from didit.resources.phone.verifications import (
         AsyncPhoneVerifications,
         AsyncPhoneVerificationsWithRawResponse,
@@ -130,6 +155,14 @@ if TYPE_CHECKING:
         PhoneVerifications,
         PhoneVerificationsWithRawResponse,
         PhoneVerificationsWithStreamingResponse,
+    )
+    from didit.resources.phone.voices import (
+        AsyncPhoneVoices,
+        AsyncPhoneVoicesWithRawResponse,
+        AsyncPhoneVoicesWithStreamingResponse,
+        PhoneVoices,
+        PhoneVoicesWithRawResponse,
+        PhoneVoicesWithStreamingResponse,
     )
 
 __all__ = [
@@ -145,10 +178,16 @@ __all__ = [
 class Phone(SyncAPIResource):
     """The ``phone`` resource of the Didit API.
 
-    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
+    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``, ``validate``.
 
-    Nested resources: ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sdk_keys``, ``settings``, ``silent``, ``verifications``.
+    Nested resources: ``balance``, ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sandbox_numbers``, ``sdk_keys``, ``settings``, ``silent``, ``stats``, ``verifications``, ``voices``.
     """
+
+    @cached_property
+    def balance(self) -> PhoneBalance:
+        from didit.resources.phone.balance import PhoneBalance
+
+        return PhoneBalance(self._client)
 
     @cached_property
     def countries(self) -> PhoneCountries:
@@ -205,6 +244,12 @@ class Phone(SyncAPIResource):
         return PhoneRateLimits(self._client)
 
     @cached_property
+    def sandbox_numbers(self) -> PhoneSandboxNumbers:
+        from didit.resources.phone.sandbox_numbers import PhoneSandboxNumbers
+
+        return PhoneSandboxNumbers(self._client)
+
+    @cached_property
     def sdk_keys(self) -> PhoneSdkKeys:
         from didit.resources.phone.sdk_keys import PhoneSdkKeys
 
@@ -223,10 +268,22 @@ class Phone(SyncAPIResource):
         return PhoneSilent(self._client)
 
     @cached_property
+    def stats(self) -> PhoneStats:
+        from didit.resources.phone.stats import PhoneStats
+
+        return PhoneStats(self._client)
+
+    @cached_property
     def verifications(self) -> PhoneVerifications:
         from didit.resources.phone.verifications import PhoneVerifications
 
         return PhoneVerifications(self._client)
+
+    @cached_property
+    def voices(self) -> PhoneVoices:
+        from didit.resources.phone.voices import PhoneVoices
+
+        return PhoneVoices(self._client)
 
     @cached_property
     def with_raw_response(self) -> PhoneWithRawResponse:
@@ -343,13 +400,13 @@ class Phone(SyncAPIResource):
 
         **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.
 
-        **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.
+        **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`. A sandbox test number registered as `blocked` is the exception: its send answers `Blocked` and its check answers `Declined`.
 
         **Billing.** The price depends on the destination country and the channel that actually delivers the message - see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).
 
         **Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.
 
-        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
+        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. A number you registered with `POST /v3/phone/sandbox/numbers/` plays the outcome it was registered with: `blocked` answers `Blocked`, every other outcome answers `Success`, and the outcomes that end the verification at send time (`not_delivered`, `silent_match`, `silent_mismatch`) settle it. For any other number, check with `123456`, or with the `code` your send set.
 
         **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
@@ -448,7 +505,7 @@ class Phone(SyncAPIResource):
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
-        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
+        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. A number you registered with `POST /v3/phone/sandbox/numbers/` answers by its outcome: with `verified` or `silent_fallback` it accepts the fixed code it was registered with (any well-formed code when it has none), a wrong code answers `Failed` and the last attempt `Declined`; `silent_match` answers `Approved`; `not_delivered`, `blocked` and `silent_mismatch` answer `Declined`; `expired` answers `Expired or Not Found`. For any other number, the code is `123456`, or the `code` your send set; any other code answers `Failed`, and the last attempt `Declined`.
 
         **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
@@ -655,14 +712,68 @@ class Phone(SyncAPIResource):
             ),
         )
 
+    def validate(
+        self,
+        *,
+        phone_number: str,
+        country: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneValidateResponse:
+        """Validate and format a phone number.
+
+        Check that a number can exist and return it formatted, without looking anything up: `valid`, `format.e164`, `format.national` and `country`. Send the number in international format, or a national number with `country`.
+
+        If the number parses but is invalid for its numbering plan, the response is `200` with `valid: false` and both formats. Validation and formatting are free: `charged` is always `false`.
+
+        **Errors.** `400 invalid_phone_number`: not a number at all.
+
+        A scoped API key needs `phone: write`.
+
+        ``POST /v3/phone/validate/``
+
+        Args:
+          phone_number: The number in international format, or a national number with `country`.
+          country: The ISO 3166-1 alpha-2 code of a national number.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneValidateResponse",
+            self._client.request(
+                "post",
+                "/v3/phone/validate/",
+                cast_to=PhoneValidateResponse,
+                auth="api_key",
+                body={"phone_number": phone_number, "country": country},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class AsyncPhone(AsyncAPIResource):
     """The ``phone`` resource of the Didit API.
 
-    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
+    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``, ``validate``.
 
-    Nested resources: ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sdk_keys``, ``settings``, ``silent``, ``verifications``.
+    Nested resources: ``balance``, ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sandbox_numbers``, ``sdk_keys``, ``settings``, ``silent``, ``stats``, ``verifications``, ``voices``.
     """
+
+    @cached_property
+    def balance(self) -> AsyncPhoneBalance:
+        from didit.resources.phone.balance import AsyncPhoneBalance
+
+        return AsyncPhoneBalance(self._client)
 
     @cached_property
     def countries(self) -> AsyncPhoneCountries:
@@ -719,6 +830,12 @@ class AsyncPhone(AsyncAPIResource):
         return AsyncPhoneRateLimits(self._client)
 
     @cached_property
+    def sandbox_numbers(self) -> AsyncPhoneSandboxNumbers:
+        from didit.resources.phone.sandbox_numbers import AsyncPhoneSandboxNumbers
+
+        return AsyncPhoneSandboxNumbers(self._client)
+
+    @cached_property
     def sdk_keys(self) -> AsyncPhoneSdkKeys:
         from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeys
 
@@ -737,10 +854,22 @@ class AsyncPhone(AsyncAPIResource):
         return AsyncPhoneSilent(self._client)
 
     @cached_property
+    def stats(self) -> AsyncPhoneStats:
+        from didit.resources.phone.stats import AsyncPhoneStats
+
+        return AsyncPhoneStats(self._client)
+
+    @cached_property
     def verifications(self) -> AsyncPhoneVerifications:
         from didit.resources.phone.verifications import AsyncPhoneVerifications
 
         return AsyncPhoneVerifications(self._client)
+
+    @cached_property
+    def voices(self) -> AsyncPhoneVoices:
+        from didit.resources.phone.voices import AsyncPhoneVoices
+
+        return AsyncPhoneVoices(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncPhoneWithRawResponse:
@@ -857,13 +986,13 @@ class AsyncPhone(AsyncAPIResource):
 
         **Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.
 
-        **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.
+        **Send statuses.** `Success` - OTP sent for a new verification; `Retry` - OTP re-sent for the pending verification; `Blocked` - the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`. A sandbox test number registered as `blocked` is the exception: its send answers `Blocked` and its check answers `Declined`.
 
         **Billing.** The price depends on the destination country and the channel that actually delivers the message - see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).
 
         **Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.
 
-        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
+        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. A number you registered with `POST /v3/phone/sandbox/numbers/` plays the outcome it was registered with: `blocked` answers `Blocked`, every other outcome answers `Success`, and the outcomes that end the verification at send time (`not_delivered`, `silent_match`, `silent_mismatch`) settle it. For any other number, check with `123456`, or with the `code` your send set.
 
         **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
@@ -962,7 +1091,7 @@ class AsyncPhone(AsyncAPIResource):
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
-        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
+        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. A number you registered with `POST /v3/phone/sandbox/numbers/` answers by its outcome: with `verified` or `silent_fallback` it accepts the fixed code it was registered with (any well-formed code when it has none), a wrong code answers `Failed` and the last attempt `Declined`; `silent_match` answers `Approved`; `not_delivered`, `blocked` and `silent_mismatch` answer `Declined`; `expired` answers `Expired or Not Found`. For any other number, the code is `123456`, or the `code` your send set; any other code answers `Failed`, and the last attempt `Declined`.
 
         **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
@@ -1169,6 +1298,54 @@ class AsyncPhone(AsyncAPIResource):
             ),
         )
 
+    async def validate(
+        self,
+        *,
+        phone_number: str,
+        country: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneValidateResponse:
+        """Validate and format a phone number.
+
+        Check that a number can exist and return it formatted, without looking anything up: `valid`, `format.e164`, `format.national` and `country`. Send the number in international format, or a national number with `country`.
+
+        If the number parses but is invalid for its numbering plan, the response is `200` with `valid: false` and both formats. Validation and formatting are free: `charged` is always `false`.
+
+        **Errors.** `400 invalid_phone_number`: not a number at all.
+
+        A scoped API key needs `phone: write`.
+
+        ``POST /v3/phone/validate/``
+
+        Args:
+          phone_number: The number in international format, or a national number with `country`.
+          country: The ISO 3166-1 alpha-2 code of a national number.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneValidateResponse",
+            await self._client.request(
+                "post",
+                "/v3/phone/validate/",
+                cast_to=PhoneValidateResponse,
+                auth="api_key",
+                body={"phone_number": phone_number, "country": country},
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
 
 class PhoneWithRawResponse:
     def __init__(self, resource: Phone) -> None:
@@ -1181,6 +1358,13 @@ class PhoneWithRawResponse:
         self.download_risk_bulk_results = to_raw_response_wrapper(
             resource.download_risk_bulk_results
         )
+        self.validate = to_raw_response_wrapper(resource.validate)
+
+    @cached_property
+    def balance(self) -> PhoneBalanceWithRawResponse:
+        from didit.resources.phone.balance import PhoneBalanceWithRawResponse
+
+        return PhoneBalanceWithRawResponse(self._resource.balance)
 
     @cached_property
     def countries(self) -> PhoneCountriesWithRawResponse:
@@ -1237,6 +1421,12 @@ class PhoneWithRawResponse:
         return PhoneRateLimitsWithRawResponse(self._resource.rate_limits)
 
     @cached_property
+    def sandbox_numbers(self) -> PhoneSandboxNumbersWithRawResponse:
+        from didit.resources.phone.sandbox_numbers import PhoneSandboxNumbersWithRawResponse
+
+        return PhoneSandboxNumbersWithRawResponse(self._resource.sandbox_numbers)
+
+    @cached_property
     def sdk_keys(self) -> PhoneSdkKeysWithRawResponse:
         from didit.resources.phone.sdk_keys import PhoneSdkKeysWithRawResponse
 
@@ -1255,10 +1445,22 @@ class PhoneWithRawResponse:
         return PhoneSilentWithRawResponse(self._resource.silent)
 
     @cached_property
+    def stats(self) -> PhoneStatsWithRawResponse:
+        from didit.resources.phone.stats import PhoneStatsWithRawResponse
+
+        return PhoneStatsWithRawResponse(self._resource.stats)
+
+    @cached_property
     def verifications(self) -> PhoneVerificationsWithRawResponse:
         from didit.resources.phone.verifications import PhoneVerificationsWithRawResponse
 
         return PhoneVerificationsWithRawResponse(self._resource.verifications)
+
+    @cached_property
+    def voices(self) -> PhoneVoicesWithRawResponse:
+        from didit.resources.phone.voices import PhoneVoicesWithRawResponse
+
+        return PhoneVoicesWithRawResponse(self._resource.voices)
 
 
 class AsyncPhoneWithRawResponse:
@@ -1272,6 +1474,13 @@ class AsyncPhoneWithRawResponse:
         self.download_risk_bulk_results = async_to_raw_response_wrapper(
             resource.download_risk_bulk_results
         )
+        self.validate = async_to_raw_response_wrapper(resource.validate)
+
+    @cached_property
+    def balance(self) -> AsyncPhoneBalanceWithRawResponse:
+        from didit.resources.phone.balance import AsyncPhoneBalanceWithRawResponse
+
+        return AsyncPhoneBalanceWithRawResponse(self._resource.balance)
 
     @cached_property
     def countries(self) -> AsyncPhoneCountriesWithRawResponse:
@@ -1330,6 +1539,12 @@ class AsyncPhoneWithRawResponse:
         return AsyncPhoneRateLimitsWithRawResponse(self._resource.rate_limits)
 
     @cached_property
+    def sandbox_numbers(self) -> AsyncPhoneSandboxNumbersWithRawResponse:
+        from didit.resources.phone.sandbox_numbers import AsyncPhoneSandboxNumbersWithRawResponse
+
+        return AsyncPhoneSandboxNumbersWithRawResponse(self._resource.sandbox_numbers)
+
+    @cached_property
     def sdk_keys(self) -> AsyncPhoneSdkKeysWithRawResponse:
         from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeysWithRawResponse
 
@@ -1348,10 +1563,22 @@ class AsyncPhoneWithRawResponse:
         return AsyncPhoneSilentWithRawResponse(self._resource.silent)
 
     @cached_property
+    def stats(self) -> AsyncPhoneStatsWithRawResponse:
+        from didit.resources.phone.stats import AsyncPhoneStatsWithRawResponse
+
+        return AsyncPhoneStatsWithRawResponse(self._resource.stats)
+
+    @cached_property
     def verifications(self) -> AsyncPhoneVerificationsWithRawResponse:
         from didit.resources.phone.verifications import AsyncPhoneVerificationsWithRawResponse
 
         return AsyncPhoneVerificationsWithRawResponse(self._resource.verifications)
+
+    @cached_property
+    def voices(self) -> AsyncPhoneVoicesWithRawResponse:
+        from didit.resources.phone.voices import AsyncPhoneVoicesWithRawResponse
+
+        return AsyncPhoneVoicesWithRawResponse(self._resource.voices)
 
 
 class PhoneWithStreamingResponse:
@@ -1365,6 +1592,13 @@ class PhoneWithStreamingResponse:
         self.download_risk_bulk_results = to_streamed_response_wrapper(
             resource.download_risk_bulk_results
         )
+        self.validate = to_streamed_response_wrapper(resource.validate)
+
+    @cached_property
+    def balance(self) -> PhoneBalanceWithStreamingResponse:
+        from didit.resources.phone.balance import PhoneBalanceWithStreamingResponse
+
+        return PhoneBalanceWithStreamingResponse(self._resource.balance)
 
     @cached_property
     def countries(self) -> PhoneCountriesWithStreamingResponse:
@@ -1423,6 +1657,12 @@ class PhoneWithStreamingResponse:
         return PhoneRateLimitsWithStreamingResponse(self._resource.rate_limits)
 
     @cached_property
+    def sandbox_numbers(self) -> PhoneSandboxNumbersWithStreamingResponse:
+        from didit.resources.phone.sandbox_numbers import PhoneSandboxNumbersWithStreamingResponse
+
+        return PhoneSandboxNumbersWithStreamingResponse(self._resource.sandbox_numbers)
+
+    @cached_property
     def sdk_keys(self) -> PhoneSdkKeysWithStreamingResponse:
         from didit.resources.phone.sdk_keys import PhoneSdkKeysWithStreamingResponse
 
@@ -1441,10 +1681,22 @@ class PhoneWithStreamingResponse:
         return PhoneSilentWithStreamingResponse(self._resource.silent)
 
     @cached_property
+    def stats(self) -> PhoneStatsWithStreamingResponse:
+        from didit.resources.phone.stats import PhoneStatsWithStreamingResponse
+
+        return PhoneStatsWithStreamingResponse(self._resource.stats)
+
+    @cached_property
     def verifications(self) -> PhoneVerificationsWithStreamingResponse:
         from didit.resources.phone.verifications import PhoneVerificationsWithStreamingResponse
 
         return PhoneVerificationsWithStreamingResponse(self._resource.verifications)
+
+    @cached_property
+    def voices(self) -> PhoneVoicesWithStreamingResponse:
+        from didit.resources.phone.voices import PhoneVoicesWithStreamingResponse
+
+        return PhoneVoicesWithStreamingResponse(self._resource.voices)
 
 
 class AsyncPhoneWithStreamingResponse:
@@ -1458,6 +1710,13 @@ class AsyncPhoneWithStreamingResponse:
         self.download_risk_bulk_results = async_to_streamed_response_wrapper(
             resource.download_risk_bulk_results
         )
+        self.validate = async_to_streamed_response_wrapper(resource.validate)
+
+    @cached_property
+    def balance(self) -> AsyncPhoneBalanceWithStreamingResponse:
+        from didit.resources.phone.balance import AsyncPhoneBalanceWithStreamingResponse
+
+        return AsyncPhoneBalanceWithStreamingResponse(self._resource.balance)
 
     @cached_property
     def countries(self) -> AsyncPhoneCountriesWithStreamingResponse:
@@ -1516,6 +1775,14 @@ class AsyncPhoneWithStreamingResponse:
         return AsyncPhoneRateLimitsWithStreamingResponse(self._resource.rate_limits)
 
     @cached_property
+    def sandbox_numbers(self) -> AsyncPhoneSandboxNumbersWithStreamingResponse:
+        from didit.resources.phone.sandbox_numbers import (
+            AsyncPhoneSandboxNumbersWithStreamingResponse,
+        )
+
+        return AsyncPhoneSandboxNumbersWithStreamingResponse(self._resource.sandbox_numbers)
+
+    @cached_property
     def sdk_keys(self) -> AsyncPhoneSdkKeysWithStreamingResponse:
         from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeysWithStreamingResponse
 
@@ -1534,7 +1801,19 @@ class AsyncPhoneWithStreamingResponse:
         return AsyncPhoneSilentWithStreamingResponse(self._resource.silent)
 
     @cached_property
+    def stats(self) -> AsyncPhoneStatsWithStreamingResponse:
+        from didit.resources.phone.stats import AsyncPhoneStatsWithStreamingResponse
+
+        return AsyncPhoneStatsWithStreamingResponse(self._resource.stats)
+
+    @cached_property
     def verifications(self) -> AsyncPhoneVerificationsWithStreamingResponse:
         from didit.resources.phone.verifications import AsyncPhoneVerificationsWithStreamingResponse
 
         return AsyncPhoneVerificationsWithStreamingResponse(self._resource.verifications)
+
+    @cached_property
+    def voices(self) -> AsyncPhoneVoicesWithStreamingResponse:
+        from didit.resources.phone.voices import AsyncPhoneVoicesWithStreamingResponse
+
+        return AsyncPhoneVoicesWithStreamingResponse(self._resource.voices)

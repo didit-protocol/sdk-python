@@ -57,6 +57,14 @@ if TYPE_CHECKING:
         MessagesConversationsWithRawResponse,
         MessagesConversationsWithStreamingResponse,
     )
+    from didit.resources.messages.feedback import (
+        AsyncMessagesFeedback,
+        AsyncMessagesFeedbackWithRawResponse,
+        AsyncMessagesFeedbackWithStreamingResponse,
+        MessagesFeedback,
+        MessagesFeedbackWithRawResponse,
+        MessagesFeedbackWithStreamingResponse,
+    )
     from didit.resources.messages.rules import (
         AsyncMessagesRules,
         AsyncMessagesRulesWithRawResponse,
@@ -89,7 +97,7 @@ class Messages(SyncAPIResource):
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
 
-    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``rules``, ``templates``.
+    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``feedback``, ``rules``, ``templates``.
     """
 
     @cached_property
@@ -115,6 +123,12 @@ class Messages(SyncAPIResource):
         from didit.resources.messages.conversations import MessagesConversations
 
         return MessagesConversations(self._client)
+
+    @cached_property
+    def feedback(self) -> MessagesFeedback:
+        from didit.resources.messages.feedback import MessagesFeedback
+
+        return MessagesFeedback(self._client)
 
     @cached_property
     def rules(self) -> MessagesRules:
@@ -494,7 +508,7 @@ class AsyncMessages(AsyncAPIResource):
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
 
-    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``rules``, ``templates``.
+    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``feedback``, ``rules``, ``templates``.
     """
 
     @cached_property
@@ -520,6 +534,12 @@ class AsyncMessages(AsyncAPIResource):
         from didit.resources.messages.conversations import AsyncMessagesConversations
 
         return AsyncMessagesConversations(self._client)
+
+    @cached_property
+    def feedback(self) -> AsyncMessagesFeedback:
+        from didit.resources.messages.feedback import AsyncMessagesFeedback
+
+        return AsyncMessagesFeedback(self._client)
 
     @cached_property
     def rules(self) -> AsyncMessagesRules:
@@ -931,6 +951,12 @@ class MessagesWithRawResponse:
         return MessagesConversationsWithRawResponse(self._resource.conversations)
 
     @cached_property
+    def feedback(self) -> MessagesFeedbackWithRawResponse:
+        from didit.resources.messages.feedback import MessagesFeedbackWithRawResponse
+
+        return MessagesFeedbackWithRawResponse(self._resource.feedback)
+
+    @cached_property
     def rules(self) -> MessagesRulesWithRawResponse:
         from didit.resources.messages.rules import MessagesRulesWithRawResponse
 
@@ -980,6 +1006,12 @@ class AsyncMessagesWithRawResponse:
         from didit.resources.messages.conversations import AsyncMessagesConversationsWithRawResponse
 
         return AsyncMessagesConversationsWithRawResponse(self._resource.conversations)
+
+    @cached_property
+    def feedback(self) -> AsyncMessagesFeedbackWithRawResponse:
+        from didit.resources.messages.feedback import AsyncMessagesFeedbackWithRawResponse
+
+        return AsyncMessagesFeedbackWithRawResponse(self._resource.feedback)
 
     @cached_property
     def rules(self) -> AsyncMessagesRulesWithRawResponse:
@@ -1035,6 +1067,12 @@ class MessagesWithStreamingResponse:
         return MessagesConversationsWithStreamingResponse(self._resource.conversations)
 
     @cached_property
+    def feedback(self) -> MessagesFeedbackWithStreamingResponse:
+        from didit.resources.messages.feedback import MessagesFeedbackWithStreamingResponse
+
+        return MessagesFeedbackWithStreamingResponse(self._resource.feedback)
+
+    @cached_property
     def rules(self) -> MessagesRulesWithStreamingResponse:
         from didit.resources.messages.rules import MessagesRulesWithStreamingResponse
 
@@ -1088,6 +1126,12 @@ class AsyncMessagesWithStreamingResponse:
         )
 
         return AsyncMessagesConversationsWithStreamingResponse(self._resource.conversations)
+
+    @cached_property
+    def feedback(self) -> AsyncMessagesFeedbackWithStreamingResponse:
+        from didit.resources.messages.feedback import AsyncMessagesFeedbackWithStreamingResponse
+
+        return AsyncMessagesFeedbackWithStreamingResponse(self._resource.feedback)
 
     @cached_property
     def rules(self) -> AsyncMessagesRulesWithStreamingResponse:

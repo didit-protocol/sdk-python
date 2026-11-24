@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
 from didit.types.components.webhook_config import WebhookConfig
+from didit.types.components.webhook_create_response import WebhookCreateResponse
 from didit.types.components.webhook_destination_activity import WebhookDestinationActivity
 from didit.types.components.webhook_destination_delivery import WebhookDestinationDelivery
 from didit.types.components.webhook_destination_delivery_detail import (
@@ -18,6 +19,41 @@ from didit.types.webhooks.destinations.retrieve_analytics_response import (
 from didit.types.webhooks.destinations.retrieve_response import WebhooksDestinationsRetrieveResponse
 from didit.types.webhooks.destinations.update_response import WebhooksDestinationsUpdateResponse
 from tests.harness import Expect, check_operation
+
+
+def test_webhooks_create() -> None:
+    """``POST /v3/webhooks/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/webhooks/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "url": "https://api.demo-app.example/didit/webhooks",
+                "events": ["status.updated", "message.status.updated"],
+                "description": "Phone events",
+            },
+            status=201,
+            response_json={
+                "webhook_id": "8f14e45f-ceea-467f-a8d4-6f2b1c9b0d11",
+                "secret": "sample-secret",
+                "events": ["status.updated", "message.status.updated"],
+            },
+        ),
+        lambda c: c.webhooks.create(
+            url="https://api.demo-app.example/didit/webhooks",
+            events=["status.updated", "message.status.updated"],
+            description="Phone events",
+        ),
+        lambda c: c.webhooks.create(
+            url="https://api.demo-app.example/didit/webhooks",
+            events=["status.updated", "message.status.updated"],
+            description="Phone events",
+        ),
+        lambda r: isinstance(r, WebhookCreateResponse),
+        lambda r: isinstance(r, WebhookCreateResponse),
+    )
 
 
 def test_webhooks_retrieve_config() -> None:

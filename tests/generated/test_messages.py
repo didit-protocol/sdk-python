@@ -10,6 +10,7 @@ from didit.types.components.message_consent import MessageConsent
 from didit.types.components.message_consent_channels import MessageConsentChannels
 from didit.types.components.message_conversation import MessageConversation
 from didit.types.components.message_conversation_webhook import MessageConversationWebhook
+from didit.types.components.message_feedback_response import MessageFeedbackResponse
 from didit.types.components.message_prices import MessagePrices
 from didit.types.components.message_template import MessageTemplate
 from didit.types.components.messages_settings import MessagesSettings
@@ -773,6 +774,37 @@ def test_messages_conversations_webhooks_delete() -> None:
         ),
         lambda r: r is None,
         lambda r: r is None,
+    )
+
+
+def test_messages_feedback_create() -> None:
+    """``POST /v3/messages/{message_id}/feedback/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/messages/3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44/feedback/",
+            api="verification",
+            auth="api_key",
+            json_body={"outcome": "converted", "occurred_at": "2026-11-21T10:04:00Z"},
+            status=202,
+            response_json={
+                "message_id": "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44",
+                "outcome": "converted",
+                "conversion_seconds": 240,
+            },
+        ),
+        lambda c: c.messages.feedback.create(
+            "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44",
+            outcome="converted",
+            occurred_at="2026-11-21T10:04:00Z",
+        ),
+        lambda c: c.messages.feedback.create(
+            "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44",
+            outcome="converted",
+            occurred_at="2026-11-21T10:04:00Z",
+        ),
+        lambda r: isinstance(r, MessageFeedbackResponse),
+        lambda r: isinstance(r, MessageFeedbackResponse),
     )
 
 
