@@ -911,7 +911,7 @@ class Bank(SyncAPIResource):
 
         Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/accounts/``
 
@@ -953,7 +953,7 @@ class Bank(SyncAPIResource):
 
         Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/``
 
@@ -992,7 +992,7 @@ class Bank(SyncAPIResource):
 
         Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/balances/``
 
@@ -1040,7 +1040,7 @@ class Bank(SyncAPIResource):
 
         Response headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/transactions/``
 
@@ -1098,7 +1098,7 @@ class Bank(SyncAPIResource):
 
         The change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/transactions/sync/``
 
@@ -2125,7 +2125,7 @@ class AsyncBank(AsyncAPIResource):
 
         Lists every account of the connection, oldest first, with full identifiers and holders. A read never bills.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/accounts/``
 
@@ -2167,7 +2167,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns one account with full identifiers, holders, sync state and `history_coverage`, which says what the bank delivered of the history you asked for. `sync.last_synced_at` is when the data was fetched from the bank, not when you read it.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/``
 
@@ -2206,7 +2206,7 @@ class AsyncBank(AsyncAPIResource):
 
         Returns the typed balances of an account with their reference dates. Balances are replaced at each sync.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/balances/``
 
@@ -2254,7 +2254,7 @@ class AsyncBank(AsyncAPIResource):
 
         Response headers: `X-Bank-Last-Synced-At` and `Cache-Control: no-store`.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/accounts/{account_id}/transactions/``
 
@@ -2312,7 +2312,7 @@ class AsyncBank(AsyncAPIResource):
 
         The change log is replayable for 90 days. An older cursor answers `410 cursor_expired` with `bootstrap: true`: start again from an empty cursor. Stored history is never aged out while the connection exists. A booked pending transaction appears in `added` and the pending one in `removed` with `reason: pending_booked`. Webhook `bank.data.updated` tells you when to call.
 
-        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A sandbox application reads its Test Bank data with the key alone. A request without an API key (client credentials) is refused on raw data with the same `403`.
+        Needs an API key with read access to Bank data: a full-access key has it, and a scoped key needs `bank-data` read in its scopes. Otherwise the call answers `403 bank_data_access_denied`. A request without an API key (client credentials) is refused on raw data with the same `403`.
 
         ``GET /v3/bank/connections/{id}/transactions/sync/``
 

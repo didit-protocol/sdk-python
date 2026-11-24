@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Literal, Mapping, cast
+from typing import TYPE_CHECKING, Literal, Mapping, Sequence, cast
 
 import httpx
 
@@ -15,7 +15,8 @@ from didit._response import (
     to_raw_response_wrapper,
     to_streamed_response_wrapper,
 )
-from didit._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
+from didit.types.components.phone_risk_bulk_job import PhoneRiskBulkJob
 from didit.types.components.phone_risk_response import PhoneRiskResponse
 from didit.types.components.phone_verification_check_response import PhoneVerificationCheckResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
@@ -24,6 +25,72 @@ from didit.types.phone.send_code_params import (
     PhoneSendCodeParamsOptions,
     PhoneSendCodeParamsSignals,
 )
+
+if TYPE_CHECKING:
+    from didit.resources.phone.factors import (
+        AsyncPhoneFactors,
+        AsyncPhoneFactorsWithRawResponse,
+        AsyncPhoneFactorsWithStreamingResponse,
+        PhoneFactors,
+        PhoneFactorsWithRawResponse,
+        PhoneFactorsWithStreamingResponse,
+    )
+    from didit.resources.phone.fraud import (
+        AsyncPhoneFraud,
+        AsyncPhoneFraudWithRawResponse,
+        AsyncPhoneFraudWithStreamingResponse,
+        PhoneFraud,
+        PhoneFraudWithRawResponse,
+        PhoneFraudWithStreamingResponse,
+    )
+    from didit.resources.phone.line_type_overrides import (
+        AsyncPhoneLineTypeOverrides,
+        AsyncPhoneLineTypeOverridesWithRawResponse,
+        AsyncPhoneLineTypeOverridesWithStreamingResponse,
+        PhoneLineTypeOverrides,
+        PhoneLineTypeOverridesWithRawResponse,
+        PhoneLineTypeOverridesWithStreamingResponse,
+    )
+    from didit.resources.phone.lists import (
+        AsyncPhoneLists,
+        AsyncPhoneListsWithRawResponse,
+        AsyncPhoneListsWithStreamingResponse,
+        PhoneLists,
+        PhoneListsWithRawResponse,
+        PhoneListsWithStreamingResponse,
+    )
+    from didit.resources.phone.network import (
+        AsyncPhoneNetwork,
+        AsyncPhoneNetworkWithRawResponse,
+        AsyncPhoneNetworkWithStreamingResponse,
+        PhoneNetwork,
+        PhoneNetworkWithRawResponse,
+        PhoneNetworkWithStreamingResponse,
+    )
+    from didit.resources.phone.rate_limits import (
+        AsyncPhoneRateLimits,
+        AsyncPhoneRateLimitsWithRawResponse,
+        AsyncPhoneRateLimitsWithStreamingResponse,
+        PhoneRateLimits,
+        PhoneRateLimitsWithRawResponse,
+        PhoneRateLimitsWithStreamingResponse,
+    )
+    from didit.resources.phone.sdk_keys import (
+        AsyncPhoneSdkKeys,
+        AsyncPhoneSdkKeysWithRawResponse,
+        AsyncPhoneSdkKeysWithStreamingResponse,
+        PhoneSdkKeys,
+        PhoneSdkKeysWithRawResponse,
+        PhoneSdkKeysWithStreamingResponse,
+    )
+    from didit.resources.phone.silent import (
+        AsyncPhoneSilent,
+        AsyncPhoneSilentWithRawResponse,
+        AsyncPhoneSilentWithStreamingResponse,
+        PhoneSilent,
+        PhoneSilentWithRawResponse,
+        PhoneSilentWithStreamingResponse,
+    )
 
 __all__ = [
     "Phone",
@@ -38,8 +105,58 @@ __all__ = [
 class Phone(SyncAPIResource):
     """The ``phone`` resource of the Didit API.
 
-    Methods: ``assess_risk``, ``check_code``, ``send_code``.
+    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
+
+    Nested resources: ``factors``, ``fraud``, ``line_type_overrides``, ``lists``, ``network``, ``rate_limits``, ``sdk_keys``, ``silent``.
     """
+
+    @cached_property
+    def factors(self) -> PhoneFactors:
+        from didit.resources.phone.factors import PhoneFactors
+
+        return PhoneFactors(self._client)
+
+    @cached_property
+    def fraud(self) -> PhoneFraud:
+        from didit.resources.phone.fraud import PhoneFraud
+
+        return PhoneFraud(self._client)
+
+    @cached_property
+    def line_type_overrides(self) -> PhoneLineTypeOverrides:
+        from didit.resources.phone.line_type_overrides import PhoneLineTypeOverrides
+
+        return PhoneLineTypeOverrides(self._client)
+
+    @cached_property
+    def lists(self) -> PhoneLists:
+        from didit.resources.phone.lists import PhoneLists
+
+        return PhoneLists(self._client)
+
+    @cached_property
+    def network(self) -> PhoneNetwork:
+        from didit.resources.phone.network import PhoneNetwork
+
+        return PhoneNetwork(self._client)
+
+    @cached_property
+    def rate_limits(self) -> PhoneRateLimits:
+        from didit.resources.phone.rate_limits import PhoneRateLimits
+
+        return PhoneRateLimits(self._client)
+
+    @cached_property
+    def sdk_keys(self) -> PhoneSdkKeys:
+        from didit.resources.phone.sdk_keys import PhoneSdkKeys
+
+        return PhoneSdkKeys(self._client)
+
+    @cached_property
+    def silent(self) -> PhoneSilent:
+        from didit.resources.phone.silent import PhoneSilent
+
+        return PhoneSilent(self._client)
 
     @cached_property
     def with_raw_response(self) -> PhoneWithRawResponse:
@@ -215,6 +332,8 @@ class Phone(SyncAPIResource):
         phone_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
         | NotGiven = NOT_GIVEN,
+        factor_id: str | NotGiven = NOT_GIVEN,
+        verification_id: str | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -245,6 +364,8 @@ class Phone(SyncAPIResource):
 
         **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
 
+        **TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.
+
         ``POST /v3/phone/check/``
 
         Args:
@@ -260,6 +381,8 @@ class Phone(SyncAPIResource):
           low_phone_trust_action: Action when the phone intelligence trust index is at or below the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
+          factor_id: Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`.
+          verification_id: Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -286,8 +409,153 @@ class Phone(SyncAPIResource):
                     "low_phone_trust_action": low_phone_trust_action,
                     "enable_social": enable_social,
                     "phone_no_social_presence_action": phone_no_social_presence_action,
+                    "factor_id": factor_id,
+                    "verification_id": verification_id,
                 },
                 headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def assess_risk_bulk(
+        self,
+        *,
+        file: FileTypes,
+        fields: Sequence[
+            Literal[
+                "format",
+                "line_type",
+                "network",
+                "reachability",
+                "sim_swap",
+                "sms_pumping_risk",
+                "prefill",
+                "scam_signal",
+                "identity_match",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        callback_url: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneRiskBulkJob:
+        """Start a bulk lookup.
+
+        Look up a CSV of numbers as one job: one number per line, up to 100,000 numbers, with `fields` naming the signals to return for each number. The call answers `202` with the job (`status` `queued`, `processed` 0, `results_url` `null`). Read it with `GET /v3/phone/risk/bulk/{job_id}/`; when it is done, download the CSV from `results_url`. `callback_url`, a public HTTPS URL, receives `{job_id, status, total, results_url}` when the job finishes (described by `PhoneRiskBulkCallback`).
+
+        Billing follows Phone Risk API pricing for each number in the file; a number that is not valid is not charged.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``POST /v3/phone/risk/bulk/``
+
+        Args:
+          file: A CSV of numbers, one number per line, up to 100,000.
+          fields: The signals to return, one CSV column each, in this order; all of them when you send none. `format`, `line_type` and `network` are answered. `reachability`, `sim_swap`, `sms_pumping_risk`, `prefill`, `scam_signal` and `identity_match` are accepted and their columns come back empty: a file that asks for those alone looks up nothing and is not charged for lookups.
+          callback_url: A public HTTPS URL Didit posts to when the job is done: `{job_id, status, total, results_url}`, with `results_url` the same relative path as on the job. Any other URL answers `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneRiskBulkJob",
+            self._client.request(
+                "post",
+                "/v3/phone/risk/bulk/",
+                cast_to=PhoneRiskBulkJob,
+                auth="api_key",
+                body={"file": file, "fields": fields, "callback_url": callback_url},
+                multipart=True,
+                file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def retrieve_risk_bulk(
+        self,
+        job_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneRiskBulkJob:
+        """Get a bulk lookup job.
+
+        Read a bulk risk job of your application: its `status`, how many numbers it has `processed` of its `total`, and the `results_url` of the CSV once a result file exists. An unknown job, or one of another application, answers `404`.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``GET /v3/phone/risk/bulk/{job_id}/``
+
+        Args:
+          job_id: The job, as returned when it was started.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneRiskBulkJob",
+            self._client.request(
+                "get",
+                "/v3/phone/risk/bulk/{job_id}/",
+                cast_to=PhoneRiskBulkJob,
+                path_params={"job_id": job_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def download_risk_bulk_results(
+        self,
+        job_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download bulk lookup results.
+
+        Download the CSV of a bulk risk job: the column `phone_number` plus one column per requested signal, one row per number in the order of the uploaded file. A failed job still has the rows it answered. While no result file exists the answer is `409 results_not_ready`.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``GET /v3/phone/risk/bulk/{job_id}/results/``
+
+        Args:
+          job_id: The job, as returned when it was started.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            self._client.request(
+                "get",
+                "/v3/phone/risk/bulk/{job_id}/results/",
+                cast_to=bytes,
+                path_params={"job_id": job_id},
+                auth="api_key",
+                accept="text/csv, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -299,8 +567,58 @@ class Phone(SyncAPIResource):
 class AsyncPhone(AsyncAPIResource):
     """The ``phone`` resource of the Didit API.
 
-    Methods: ``assess_risk``, ``check_code``, ``send_code``.
+    Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
+
+    Nested resources: ``factors``, ``fraud``, ``line_type_overrides``, ``lists``, ``network``, ``rate_limits``, ``sdk_keys``, ``silent``.
     """
+
+    @cached_property
+    def factors(self) -> AsyncPhoneFactors:
+        from didit.resources.phone.factors import AsyncPhoneFactors
+
+        return AsyncPhoneFactors(self._client)
+
+    @cached_property
+    def fraud(self) -> AsyncPhoneFraud:
+        from didit.resources.phone.fraud import AsyncPhoneFraud
+
+        return AsyncPhoneFraud(self._client)
+
+    @cached_property
+    def line_type_overrides(self) -> AsyncPhoneLineTypeOverrides:
+        from didit.resources.phone.line_type_overrides import AsyncPhoneLineTypeOverrides
+
+        return AsyncPhoneLineTypeOverrides(self._client)
+
+    @cached_property
+    def lists(self) -> AsyncPhoneLists:
+        from didit.resources.phone.lists import AsyncPhoneLists
+
+        return AsyncPhoneLists(self._client)
+
+    @cached_property
+    def network(self) -> AsyncPhoneNetwork:
+        from didit.resources.phone.network import AsyncPhoneNetwork
+
+        return AsyncPhoneNetwork(self._client)
+
+    @cached_property
+    def rate_limits(self) -> AsyncPhoneRateLimits:
+        from didit.resources.phone.rate_limits import AsyncPhoneRateLimits
+
+        return AsyncPhoneRateLimits(self._client)
+
+    @cached_property
+    def sdk_keys(self) -> AsyncPhoneSdkKeys:
+        from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeys
+
+        return AsyncPhoneSdkKeys(self._client)
+
+    @cached_property
+    def silent(self) -> AsyncPhoneSilent:
+        from didit.resources.phone.silent import AsyncPhoneSilent
+
+        return AsyncPhoneSilent(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncPhoneWithRawResponse:
@@ -476,6 +794,8 @@ class AsyncPhone(AsyncAPIResource):
         phone_no_social_presence_action: Literal["NO_ACTION", "DECLINE"]
         | str
         | NotGiven = NOT_GIVEN,
+        factor_id: str | NotGiven = NOT_GIVEN,
+        verification_id: str | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -506,6 +826,8 @@ class AsyncPhone(AsyncAPIResource):
 
         **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
 
+        **TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.
+
         ``POST /v3/phone/check/``
 
         Args:
@@ -521,6 +843,8 @@ class AsyncPhone(AsyncAPIResource):
           low_phone_trust_action: Action when the phone intelligence trust index is at or below the threshold. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the signal without declining. Only takes effect when `enable_enrichment` is `true`.
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
+          factor_id: Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`.
+          verification_id: Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -547,8 +871,153 @@ class AsyncPhone(AsyncAPIResource):
                     "low_phone_trust_action": low_phone_trust_action,
                     "enable_social": enable_social,
                     "phone_no_social_presence_action": phone_no_social_presence_action,
+                    "factor_id": factor_id,
+                    "verification_id": verification_id,
                 },
                 headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def assess_risk_bulk(
+        self,
+        *,
+        file: FileTypes,
+        fields: Sequence[
+            Literal[
+                "format",
+                "line_type",
+                "network",
+                "reachability",
+                "sim_swap",
+                "sms_pumping_risk",
+                "prefill",
+                "scam_signal",
+                "identity_match",
+            ]
+            | str
+        ]
+        | NotGiven = NOT_GIVEN,
+        callback_url: str | NotGiven = NOT_GIVEN,
+        idempotency_key: str | NotGiven = NOT_GIVEN,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneRiskBulkJob:
+        """Start a bulk lookup.
+
+        Look up a CSV of numbers as one job: one number per line, up to 100,000 numbers, with `fields` naming the signals to return for each number. The call answers `202` with the job (`status` `queued`, `processed` 0, `results_url` `null`). Read it with `GET /v3/phone/risk/bulk/{job_id}/`; when it is done, download the CSV from `results_url`. `callback_url`, a public HTTPS URL, receives `{job_id, status, total, results_url}` when the job finishes (described by `PhoneRiskBulkCallback`).
+
+        Billing follows Phone Risk API pricing for each number in the file; a number that is not valid is not charged.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``POST /v3/phone/risk/bulk/``
+
+        Args:
+          file: A CSV of numbers, one number per line, up to 100,000.
+          fields: The signals to return, one CSV column each, in this order; all of them when you send none. `format`, `line_type` and `network` are answered. `reachability`, `sim_swap`, `sms_pumping_risk`, `prefill`, `scam_signal` and `identity_match` are accepted and their columns come back empty: a file that asks for those alone looks up nothing and is not charged for lookups.
+          callback_url: A public HTTPS URL Didit posts to when the job is done: `{job_id, status, total, results_url}`, with `results_url` the same relative path as on the job. Any other URL answers `400`.
+          idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneRiskBulkJob",
+            await self._client.request(
+                "post",
+                "/v3/phone/risk/bulk/",
+                cast_to=PhoneRiskBulkJob,
+                auth="api_key",
+                body={"file": file, "fields": fields, "callback_url": callback_url},
+                multipart=True,
+                file_fields=("file",),
+                headers={"Idempotency-Key": idempotency_key},
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def retrieve_risk_bulk(
+        self,
+        job_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> PhoneRiskBulkJob:
+        """Get a bulk lookup job.
+
+        Read a bulk risk job of your application: its `status`, how many numbers it has `processed` of its `total`, and the `results_url` of the CSV once a result file exists. An unknown job, or one of another application, answers `404`.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``GET /v3/phone/risk/bulk/{job_id}/``
+
+        Args:
+          job_id: The job, as returned when it was started.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "PhoneRiskBulkJob",
+            await self._client.request(
+                "get",
+                "/v3/phone/risk/bulk/{job_id}/",
+                cast_to=PhoneRiskBulkJob,
+                path_params={"job_id": job_id},
+                auth="api_key",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def download_risk_bulk_results(
+        self,
+        job_id: str,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> bytes:
+        """Download bulk lookup results.
+
+        Download the CSV of a bulk risk job: the column `phone_number` plus one column per requested signal, one row per number in the order of the uploaded file. A failed job still has the rows it answered. While no result file exists the answer is `409 results_not_ready`.
+
+        **Authentication.** Send your application's API key in `x-api-key`.
+
+        ``GET /v3/phone/risk/bulk/{job_id}/results/``
+
+        Args:
+          job_id: The job, as returned when it was started.
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "bytes",
+            await self._client.request(
+                "get",
+                "/v3/phone/risk/bulk/{job_id}/results/",
+                cast_to=bytes,
+                path_params={"job_id": job_id},
+                auth="api_key",
+                accept="text/csv, application/json",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
                 extra_body=extra_body,
@@ -563,6 +1032,59 @@ class PhoneWithRawResponse:
         self.assess_risk = to_raw_response_wrapper(resource.assess_risk)
         self.send_code = to_raw_response_wrapper(resource.send_code)
         self.check_code = to_raw_response_wrapper(resource.check_code)
+        self.assess_risk_bulk = to_raw_response_wrapper(resource.assess_risk_bulk)
+        self.retrieve_risk_bulk = to_raw_response_wrapper(resource.retrieve_risk_bulk)
+        self.download_risk_bulk_results = to_raw_response_wrapper(
+            resource.download_risk_bulk_results
+        )
+
+    @cached_property
+    def factors(self) -> PhoneFactorsWithRawResponse:
+        from didit.resources.phone.factors import PhoneFactorsWithRawResponse
+
+        return PhoneFactorsWithRawResponse(self._resource.factors)
+
+    @cached_property
+    def fraud(self) -> PhoneFraudWithRawResponse:
+        from didit.resources.phone.fraud import PhoneFraudWithRawResponse
+
+        return PhoneFraudWithRawResponse(self._resource.fraud)
+
+    @cached_property
+    def line_type_overrides(self) -> PhoneLineTypeOverridesWithRawResponse:
+        from didit.resources.phone.line_type_overrides import PhoneLineTypeOverridesWithRawResponse
+
+        return PhoneLineTypeOverridesWithRawResponse(self._resource.line_type_overrides)
+
+    @cached_property
+    def lists(self) -> PhoneListsWithRawResponse:
+        from didit.resources.phone.lists import PhoneListsWithRawResponse
+
+        return PhoneListsWithRawResponse(self._resource.lists)
+
+    @cached_property
+    def network(self) -> PhoneNetworkWithRawResponse:
+        from didit.resources.phone.network import PhoneNetworkWithRawResponse
+
+        return PhoneNetworkWithRawResponse(self._resource.network)
+
+    @cached_property
+    def rate_limits(self) -> PhoneRateLimitsWithRawResponse:
+        from didit.resources.phone.rate_limits import PhoneRateLimitsWithRawResponse
+
+        return PhoneRateLimitsWithRawResponse(self._resource.rate_limits)
+
+    @cached_property
+    def sdk_keys(self) -> PhoneSdkKeysWithRawResponse:
+        from didit.resources.phone.sdk_keys import PhoneSdkKeysWithRawResponse
+
+        return PhoneSdkKeysWithRawResponse(self._resource.sdk_keys)
+
+    @cached_property
+    def silent(self) -> PhoneSilentWithRawResponse:
+        from didit.resources.phone.silent import PhoneSilentWithRawResponse
+
+        return PhoneSilentWithRawResponse(self._resource.silent)
 
 
 class AsyncPhoneWithRawResponse:
@@ -571,6 +1093,61 @@ class AsyncPhoneWithRawResponse:
         self.assess_risk = async_to_raw_response_wrapper(resource.assess_risk)
         self.send_code = async_to_raw_response_wrapper(resource.send_code)
         self.check_code = async_to_raw_response_wrapper(resource.check_code)
+        self.assess_risk_bulk = async_to_raw_response_wrapper(resource.assess_risk_bulk)
+        self.retrieve_risk_bulk = async_to_raw_response_wrapper(resource.retrieve_risk_bulk)
+        self.download_risk_bulk_results = async_to_raw_response_wrapper(
+            resource.download_risk_bulk_results
+        )
+
+    @cached_property
+    def factors(self) -> AsyncPhoneFactorsWithRawResponse:
+        from didit.resources.phone.factors import AsyncPhoneFactorsWithRawResponse
+
+        return AsyncPhoneFactorsWithRawResponse(self._resource.factors)
+
+    @cached_property
+    def fraud(self) -> AsyncPhoneFraudWithRawResponse:
+        from didit.resources.phone.fraud import AsyncPhoneFraudWithRawResponse
+
+        return AsyncPhoneFraudWithRawResponse(self._resource.fraud)
+
+    @cached_property
+    def line_type_overrides(self) -> AsyncPhoneLineTypeOverridesWithRawResponse:
+        from didit.resources.phone.line_type_overrides import (
+            AsyncPhoneLineTypeOverridesWithRawResponse,
+        )
+
+        return AsyncPhoneLineTypeOverridesWithRawResponse(self._resource.line_type_overrides)
+
+    @cached_property
+    def lists(self) -> AsyncPhoneListsWithRawResponse:
+        from didit.resources.phone.lists import AsyncPhoneListsWithRawResponse
+
+        return AsyncPhoneListsWithRawResponse(self._resource.lists)
+
+    @cached_property
+    def network(self) -> AsyncPhoneNetworkWithRawResponse:
+        from didit.resources.phone.network import AsyncPhoneNetworkWithRawResponse
+
+        return AsyncPhoneNetworkWithRawResponse(self._resource.network)
+
+    @cached_property
+    def rate_limits(self) -> AsyncPhoneRateLimitsWithRawResponse:
+        from didit.resources.phone.rate_limits import AsyncPhoneRateLimitsWithRawResponse
+
+        return AsyncPhoneRateLimitsWithRawResponse(self._resource.rate_limits)
+
+    @cached_property
+    def sdk_keys(self) -> AsyncPhoneSdkKeysWithRawResponse:
+        from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeysWithRawResponse
+
+        return AsyncPhoneSdkKeysWithRawResponse(self._resource.sdk_keys)
+
+    @cached_property
+    def silent(self) -> AsyncPhoneSilentWithRawResponse:
+        from didit.resources.phone.silent import AsyncPhoneSilentWithRawResponse
+
+        return AsyncPhoneSilentWithRawResponse(self._resource.silent)
 
 
 class PhoneWithStreamingResponse:
@@ -579,6 +1156,61 @@ class PhoneWithStreamingResponse:
         self.assess_risk = to_streamed_response_wrapper(resource.assess_risk)
         self.send_code = to_streamed_response_wrapper(resource.send_code)
         self.check_code = to_streamed_response_wrapper(resource.check_code)
+        self.assess_risk_bulk = to_streamed_response_wrapper(resource.assess_risk_bulk)
+        self.retrieve_risk_bulk = to_streamed_response_wrapper(resource.retrieve_risk_bulk)
+        self.download_risk_bulk_results = to_streamed_response_wrapper(
+            resource.download_risk_bulk_results
+        )
+
+    @cached_property
+    def factors(self) -> PhoneFactorsWithStreamingResponse:
+        from didit.resources.phone.factors import PhoneFactorsWithStreamingResponse
+
+        return PhoneFactorsWithStreamingResponse(self._resource.factors)
+
+    @cached_property
+    def fraud(self) -> PhoneFraudWithStreamingResponse:
+        from didit.resources.phone.fraud import PhoneFraudWithStreamingResponse
+
+        return PhoneFraudWithStreamingResponse(self._resource.fraud)
+
+    @cached_property
+    def line_type_overrides(self) -> PhoneLineTypeOverridesWithStreamingResponse:
+        from didit.resources.phone.line_type_overrides import (
+            PhoneLineTypeOverridesWithStreamingResponse,
+        )
+
+        return PhoneLineTypeOverridesWithStreamingResponse(self._resource.line_type_overrides)
+
+    @cached_property
+    def lists(self) -> PhoneListsWithStreamingResponse:
+        from didit.resources.phone.lists import PhoneListsWithStreamingResponse
+
+        return PhoneListsWithStreamingResponse(self._resource.lists)
+
+    @cached_property
+    def network(self) -> PhoneNetworkWithStreamingResponse:
+        from didit.resources.phone.network import PhoneNetworkWithStreamingResponse
+
+        return PhoneNetworkWithStreamingResponse(self._resource.network)
+
+    @cached_property
+    def rate_limits(self) -> PhoneRateLimitsWithStreamingResponse:
+        from didit.resources.phone.rate_limits import PhoneRateLimitsWithStreamingResponse
+
+        return PhoneRateLimitsWithStreamingResponse(self._resource.rate_limits)
+
+    @cached_property
+    def sdk_keys(self) -> PhoneSdkKeysWithStreamingResponse:
+        from didit.resources.phone.sdk_keys import PhoneSdkKeysWithStreamingResponse
+
+        return PhoneSdkKeysWithStreamingResponse(self._resource.sdk_keys)
+
+    @cached_property
+    def silent(self) -> PhoneSilentWithStreamingResponse:
+        from didit.resources.phone.silent import PhoneSilentWithStreamingResponse
+
+        return PhoneSilentWithStreamingResponse(self._resource.silent)
 
 
 class AsyncPhoneWithStreamingResponse:
@@ -587,3 +1219,58 @@ class AsyncPhoneWithStreamingResponse:
         self.assess_risk = async_to_streamed_response_wrapper(resource.assess_risk)
         self.send_code = async_to_streamed_response_wrapper(resource.send_code)
         self.check_code = async_to_streamed_response_wrapper(resource.check_code)
+        self.assess_risk_bulk = async_to_streamed_response_wrapper(resource.assess_risk_bulk)
+        self.retrieve_risk_bulk = async_to_streamed_response_wrapper(resource.retrieve_risk_bulk)
+        self.download_risk_bulk_results = async_to_streamed_response_wrapper(
+            resource.download_risk_bulk_results
+        )
+
+    @cached_property
+    def factors(self) -> AsyncPhoneFactorsWithStreamingResponse:
+        from didit.resources.phone.factors import AsyncPhoneFactorsWithStreamingResponse
+
+        return AsyncPhoneFactorsWithStreamingResponse(self._resource.factors)
+
+    @cached_property
+    def fraud(self) -> AsyncPhoneFraudWithStreamingResponse:
+        from didit.resources.phone.fraud import AsyncPhoneFraudWithStreamingResponse
+
+        return AsyncPhoneFraudWithStreamingResponse(self._resource.fraud)
+
+    @cached_property
+    def line_type_overrides(self) -> AsyncPhoneLineTypeOverridesWithStreamingResponse:
+        from didit.resources.phone.line_type_overrides import (
+            AsyncPhoneLineTypeOverridesWithStreamingResponse,
+        )
+
+        return AsyncPhoneLineTypeOverridesWithStreamingResponse(self._resource.line_type_overrides)
+
+    @cached_property
+    def lists(self) -> AsyncPhoneListsWithStreamingResponse:
+        from didit.resources.phone.lists import AsyncPhoneListsWithStreamingResponse
+
+        return AsyncPhoneListsWithStreamingResponse(self._resource.lists)
+
+    @cached_property
+    def network(self) -> AsyncPhoneNetworkWithStreamingResponse:
+        from didit.resources.phone.network import AsyncPhoneNetworkWithStreamingResponse
+
+        return AsyncPhoneNetworkWithStreamingResponse(self._resource.network)
+
+    @cached_property
+    def rate_limits(self) -> AsyncPhoneRateLimitsWithStreamingResponse:
+        from didit.resources.phone.rate_limits import AsyncPhoneRateLimitsWithStreamingResponse
+
+        return AsyncPhoneRateLimitsWithStreamingResponse(self._resource.rate_limits)
+
+    @cached_property
+    def sdk_keys(self) -> AsyncPhoneSdkKeysWithStreamingResponse:
+        from didit.resources.phone.sdk_keys import AsyncPhoneSdkKeysWithStreamingResponse
+
+        return AsyncPhoneSdkKeysWithStreamingResponse(self._resource.sdk_keys)
+
+    @cached_property
+    def silent(self) -> AsyncPhoneSilentWithStreamingResponse:
+        from didit.resources.phone.silent import AsyncPhoneSilentWithStreamingResponse
+
+        return AsyncPhoneSilentWithStreamingResponse(self._resource.silent)
