@@ -1382,6 +1382,9 @@ if TYPE_CHECKING:
         MessageConversationWebhook as MessageConversationWebhook,
     )
     from didit.types.components.message_error import MessageError as MessageError
+    from didit.types.components.message_feedback_response import (
+        MessageFeedbackResponse as MessageFeedbackResponse,
+    )
     from didit.types.components.message_list import MessageList as MessageList
     from didit.types.components.message_price import MessagePrice as MessagePrice
     from didit.types.components.message_prices import MessagePrices as MessagePrices
@@ -1611,6 +1614,10 @@ if TYPE_CHECKING:
     from didit.types.components.paginated_organization_list import (
         PaginatedOrganizationList as PaginatedOrganizationList,
     )
+    from didit.types.components.phone_auto_top_up import PhoneAutoTopUp as PhoneAutoTopUp
+    from didit.types.components.phone_balance_response import (
+        PhoneBalanceResponse as PhoneBalanceResponse,
+    )
     from didit.types.components.phone_channel import PhoneChannel as PhoneChannel
     from didit.types.components.phone_countries_update_response import (
         PhoneCountriesUpdateResponse as PhoneCountriesUpdateResponse,
@@ -1619,6 +1626,9 @@ if TYPE_CHECKING:
         PhoneCountryClosedChannel as PhoneCountryClosedChannel,
     )
     from didit.types.components.phone_country_update import PhoneCountryUpdate as PhoneCountryUpdate
+    from didit.types.components.phone_delivery_seconds import (
+        PhoneDeliverySeconds as PhoneDeliverySeconds,
+    )
     from didit.types.components.phone_factor import PhoneFactor as PhoneFactor
     from didit.types.components.phone_factor_enrollment import (
         PhoneFactorEnrollment as PhoneFactorEnrollment,
@@ -1677,6 +1687,7 @@ if TYPE_CHECKING:
     from didit.types.components.phone_network_registrations_page import (
         PhoneNetworkRegistrationsPage as PhoneNetworkRegistrationsPage,
     )
+    from didit.types.components.phone_number_format import PhoneNumberFormat as PhoneNumberFormat
     from didit.types.components.phone_rate_limit import PhoneRateLimit as PhoneRateLimit
     from didit.types.components.phone_rate_limit_bucket import (
         PhoneRateLimitBucket as PhoneRateLimitBucket,
@@ -1688,6 +1699,9 @@ if TYPE_CHECKING:
     )
     from didit.types.components.phone_risk_response import (
         PhoneRiskResponsePhoneCarrier as PhoneRiskResponsePhoneCarrier,
+    )
+    from didit.types.components.phone_sandbox_number_response import (
+        PhoneSandboxNumberResponse as PhoneSandboxNumberResponse,
     )
     from didit.types.components.phone_sdk_key import PhoneSdkKey as PhoneSdkKey
     from didit.types.components.phone_sdk_key_rotated import (
@@ -1728,6 +1742,11 @@ if TYPE_CHECKING:
     )
     from didit.types.components.phone_social_footprint import (
         PhoneSocialFootprint as PhoneSocialFootprint,
+    )
+    from didit.types.components.phone_stats_response import PhoneStatsResponse as PhoneStatsResponse
+    from didit.types.components.phone_stats_row import PhoneStatsRow as PhoneStatsRow
+    from didit.types.components.phone_validate_response import (
+        PhoneValidateResponse as PhoneValidateResponse,
     )
     from didit.types.components.phone_verification_approve_response import (
         PhoneVerificationApproveResponse as PhoneVerificationApproveResponse,
@@ -1776,6 +1795,10 @@ if TYPE_CHECKING:
     )
     from didit.types.components.phone_verification_send_response import (
         PhoneVerificationSendResponseFraud as PhoneVerificationSendResponseFraud,
+    )
+    from didit.types.components.phone_voice import PhoneVoice as PhoneVoice
+    from didit.types.components.phone_voice_list_response import (
+        PhoneVoiceListResponse as PhoneVoiceListResponse,
     )
     from didit.types.components.public_price_book import PublicPriceBook as PublicPriceBook
     from didit.types.components.public_price_book_line import (
@@ -2983,6 +3006,9 @@ if TYPE_CHECKING:
     from didit.types.components.webhook_config_destination import (
         WebhookConfigDestination as WebhookConfigDestination,
     )
+    from didit.types.components.webhook_create_response import (
+        WebhookCreateResponse as WebhookCreateResponse,
+    )
     from didit.types.components.webhook_destination_activity import (
         WebhookDestinationActivity as WebhookDestinationActivity,
     )
@@ -3377,6 +3403,9 @@ if TYPE_CHECKING:
     from didit.types.messages.conversations.webhooks.create_params import (
         MessagesConversationsWebhooksCreateParams as MessagesConversationsWebhooksCreateParams,
     )
+    from didit.types.messages.feedback.create_params import (
+        MessagesFeedbackCreateParams as MessagesFeedbackCreateParams,
+    )
     from didit.types.messages.rules.create_params import (
         MessagesRulesCreateParams as MessagesRulesCreateParams,
     )
@@ -3600,6 +3629,9 @@ if TYPE_CHECKING:
     from didit.types.phone.rate_limits.update_params import (
         PhoneRateLimitsUpdateParamsBuckets as PhoneRateLimitsUpdateParamsBuckets,
     )
+    from didit.types.phone.sandbox_numbers.create_params import (
+        PhoneSandboxNumbersCreateParams as PhoneSandboxNumbersCreateParams,
+    )
     from didit.types.phone.sdk_keys.create_params import (
         PhoneSdkKeysCreateParams as PhoneSdkKeysCreateParams,
     )
@@ -3634,6 +3666,7 @@ if TYPE_CHECKING:
     from didit.types.phone.silent.registrations.create_params import (
         PhoneSilentRegistrationsCreateParams as PhoneSilentRegistrationsCreateParams,
     )
+    from didit.types.phone.validate_params import PhoneValidateParams as PhoneValidateParams
     from didit.types.phone.verifications.approve_params import (
         PhoneVerificationsApproveParams as PhoneVerificationsApproveParams,
     )
@@ -4244,6 +4277,7 @@ if TYPE_CHECKING:
     from didit.types.wallet_screening.screen_pdf_params import (
         WalletScreeningScreenPdfParamsSourceOfFunds as WalletScreeningScreenPdfParamsSourceOfFunds,
     )
+    from didit.types.webhooks.create_params import WebhooksCreateParams as WebhooksCreateParams
     from didit.types.webhooks.destinations.create_params import (
         WebhooksDestinationsCreateParams as WebhooksDestinationsCreateParams,
     )
@@ -4955,6 +4989,7 @@ _MODULES: dict[str, str] = {
     "MessageConversationList": "components.message_conversation_list",
     "MessageConversationWebhook": "components.message_conversation_webhook",
     "MessageError": "components.message_error",
+    "MessageFeedbackResponse": "components.message_feedback_response",
     "MessageList": "components.message_list",
     "MessagePrice": "components.message_price",
     "MessagePrices": "components.message_prices",
@@ -4970,6 +5005,7 @@ _MODULES: dict[str, str] = {
     "MessagesConsentUpdateParams": "messages.consent.update_params",
     "MessagesConversationsUpdateParams": "messages.conversations.update_params",
     "MessagesConversationsWebhooksCreateParams": "messages.conversations.webhooks.create_params",
+    "MessagesFeedbackCreateParams": "messages.feedback.create_params",
     "MessagesRulesCreateParams": "messages.rules.create_params",
     "MessagesRulesCreateParamsMatch": "messages.rules.create_params",
     "MessagesRulesCreateParamsMatchVariant1": "messages.rules.create_params",
@@ -5099,12 +5135,15 @@ _MODULES: dict[str, str] = {
     "PassiveLivenessCheckResponseLivenessWarnings": "passive_liveness.check_response",
     "PhoneAssessRiskBulkParams": "phone.assess_risk_bulk_params",
     "PhoneAssessRiskParams": "phone.assess_risk_params",
+    "PhoneAutoTopUp": "components.phone_auto_top_up",
+    "PhoneBalanceResponse": "components.phone_balance_response",
     "PhoneChannel": "components.phone_channel",
     "PhoneCheckCodeParams": "phone.check_code_params",
     "PhoneCountriesUpdateParams": "phone.countries.update_params",
     "PhoneCountriesUpdateResponse": "components.phone_countries_update_response",
     "PhoneCountryClosedChannel": "components.phone_country_closed_channel",
     "PhoneCountryUpdate": "components.phone_country_update",
+    "PhoneDeliverySeconds": "components.phone_delivery_seconds",
     "PhoneFactor": "components.phone_factor",
     "PhoneFactorEnrollment": "components.phone_factor_enrollment",
     "PhoneFactorEnrollmentTotp": "components.phone_factor_enrollment",
@@ -5159,6 +5198,7 @@ _MODULES: dict[str, str] = {
     "PhoneNetworkRegistrationsCreateParams": "phone.network.registrations.create_params",
     "PhoneNetworkRegistrationsPage": "components.phone_network_registrations_page",
     "PhoneNetworkRegistrationsTestNumbersCreateParams": "phone.network.registrations.test_numbers.create_params",
+    "PhoneNumberFormat": "components.phone_number_format",
     "PhoneRateLimit": "components.phone_rate_limit",
     "PhoneRateLimitBucket": "components.phone_rate_limit_bucket",
     "PhoneRateLimitsCreateParams": "phone.rate_limits.create_params",
@@ -5170,6 +5210,8 @@ _MODULES: dict[str, str] = {
     "PhoneRiskResponse": "components.phone_risk_response",
     "PhoneRiskResponsePhone": "components.phone_risk_response",
     "PhoneRiskResponsePhoneCarrier": "components.phone_risk_response",
+    "PhoneSandboxNumberResponse": "components.phone_sandbox_number_response",
+    "PhoneSandboxNumbersCreateParams": "phone.sandbox_numbers.create_params",
     "PhoneSdkKey": "components.phone_sdk_key",
     "PhoneSdkKeyRotated": "components.phone_sdk_key_rotated",
     "PhoneSdkKeySummary": "components.phone_sdk_key_summary",
@@ -5198,6 +5240,10 @@ _MODULES: dict[str, str] = {
     "PhoneSilentRegistration": "components.phone_silent_registration",
     "PhoneSilentRegistrationsCreateParams": "phone.silent.registrations.create_params",
     "PhoneSocialFootprint": "components.phone_social_footprint",
+    "PhoneStatsResponse": "components.phone_stats_response",
+    "PhoneStatsRow": "components.phone_stats_row",
+    "PhoneValidateParams": "phone.validate_params",
+    "PhoneValidateResponse": "components.phone_validate_response",
     "PhoneVerificationApproveResponse": "components.phone_verification_approve_response",
     "PhoneVerificationAttempt": "components.phone_verification_attempt",
     "PhoneVerificationCancelResponse": "components.phone_verification_cancel_response",
@@ -5217,6 +5263,8 @@ _MODULES: dict[str, str] = {
     "PhoneVerificationsApproveParams": "phone.verifications.approve_params",
     "PhoneVerificationsNextParams": "phone.verifications.next_params",
     "PhoneVerificationsRetryParams": "phone.verifications.retry_params",
+    "PhoneVoice": "components.phone_voice",
+    "PhoneVoiceListResponse": "components.phone_voice_list_response",
     "ProofOfAddressVerifyParams": "proof_of_address.verify_params",
     "ProofOfAddressVerifyResponse": "proof_of_address.verify_response",
     "ProofOfAddressVerifyResponsePoa": "proof_of_address.verify_response",
@@ -5866,6 +5914,7 @@ _MODULES: dict[str, str] = {
     "WebhookConfig": "components.webhook_config",
     "WebhookConfigAvailableEvents": "components.webhook_config",
     "WebhookConfigDestination": "components.webhook_config_destination",
+    "WebhookCreateResponse": "components.webhook_create_response",
     "WebhookDestinationActivity": "components.webhook_destination_activity",
     "WebhookDestinationActivityList": "components.webhook_destination_activity_list",
     "WebhookDestinationDelivery": "components.webhook_destination_delivery",
@@ -5873,6 +5922,7 @@ _MODULES: dict[str, str] = {
     "WebhookEvent": "components.webhook_event",
     "WebhookSubscribedEvents": "components.webhook_subscribed_events",
     "WebhookSubscribedEventsParam": "components.webhook_subscribed_events",
+    "WebhooksCreateParams": "webhooks.create_params",
     "WebhooksDestinationsCreateParams": "webhooks.destinations.create_params",
     "WebhooksDestinationsCreateResponse": "webhooks.destinations.create_response",
     "WebhooksDestinationsCreateResponseSummary": "webhooks.destinations.create_response",
@@ -6559,6 +6609,7 @@ __all__ = [
     "MessageConversationList",
     "MessageConversationWebhook",
     "MessageError",
+    "MessageFeedbackResponse",
     "MessageList",
     "MessagePrice",
     "MessagePrices",
@@ -6574,6 +6625,7 @@ __all__ = [
     "MessagesConsentUpdateParams",
     "MessagesConversationsUpdateParams",
     "MessagesConversationsWebhooksCreateParams",
+    "MessagesFeedbackCreateParams",
     "MessagesRulesCreateParams",
     "MessagesRulesCreateParamsMatch",
     "MessagesRulesCreateParamsMatchVariant1",
@@ -6703,12 +6755,15 @@ __all__ = [
     "PassiveLivenessCheckResponseLivenessWarnings",
     "PhoneAssessRiskBulkParams",
     "PhoneAssessRiskParams",
+    "PhoneAutoTopUp",
+    "PhoneBalanceResponse",
     "PhoneChannel",
     "PhoneCheckCodeParams",
     "PhoneCountriesUpdateParams",
     "PhoneCountriesUpdateResponse",
     "PhoneCountryClosedChannel",
     "PhoneCountryUpdate",
+    "PhoneDeliverySeconds",
     "PhoneFactor",
     "PhoneFactorEnrollment",
     "PhoneFactorEnrollmentTotp",
@@ -6763,6 +6818,7 @@ __all__ = [
     "PhoneNetworkRegistrationsCreateParams",
     "PhoneNetworkRegistrationsPage",
     "PhoneNetworkRegistrationsTestNumbersCreateParams",
+    "PhoneNumberFormat",
     "PhoneRateLimit",
     "PhoneRateLimitBucket",
     "PhoneRateLimitsCreateParams",
@@ -6774,6 +6830,8 @@ __all__ = [
     "PhoneRiskResponse",
     "PhoneRiskResponsePhone",
     "PhoneRiskResponsePhoneCarrier",
+    "PhoneSandboxNumberResponse",
+    "PhoneSandboxNumbersCreateParams",
     "PhoneSdkKey",
     "PhoneSdkKeyRotated",
     "PhoneSdkKeySummary",
@@ -6802,6 +6860,10 @@ __all__ = [
     "PhoneSilentRegistration",
     "PhoneSilentRegistrationsCreateParams",
     "PhoneSocialFootprint",
+    "PhoneStatsResponse",
+    "PhoneStatsRow",
+    "PhoneValidateParams",
+    "PhoneValidateResponse",
     "PhoneVerificationApproveResponse",
     "PhoneVerificationAttempt",
     "PhoneVerificationCancelResponse",
@@ -6821,6 +6883,8 @@ __all__ = [
     "PhoneVerificationsApproveParams",
     "PhoneVerificationsNextParams",
     "PhoneVerificationsRetryParams",
+    "PhoneVoice",
+    "PhoneVoiceListResponse",
     "ProofOfAddressVerifyParams",
     "ProofOfAddressVerifyResponse",
     "ProofOfAddressVerifyResponsePoa",
@@ -7470,6 +7534,7 @@ __all__ = [
     "WebhookConfig",
     "WebhookConfigAvailableEvents",
     "WebhookConfigDestination",
+    "WebhookCreateResponse",
     "WebhookDestinationActivity",
     "WebhookDestinationActivityList",
     "WebhookDestinationDelivery",
@@ -7477,6 +7542,7 @@ __all__ = [
     "WebhookEvent",
     "WebhookSubscribedEvents",
     "WebhookSubscribedEventsParam",
+    "WebhooksCreateParams",
     "WebhooksDestinationsCreateParams",
     "WebhooksDestinationsCreateResponse",
     "WebhooksDestinationsCreateResponseSummary",

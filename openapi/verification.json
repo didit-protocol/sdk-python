@@ -16397,7 +16397,7 @@
     "/v3/phone/send/": {
       "post": {
         "summary": "Send Phone Code",
-        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Send the same E.164 `phone_number` and the code to check the latest pending verification of that number in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. The verification window defaults to **5 minutes**. Calling send again for the same number while a verification is pending follows `on_conflict`: by default (`replace`) it starts a fresh verification with a new `request_id`; `retry` re-sends a code for the same verification (`status: \"Retry\"`, same `request_id` and `verification_id`), at most twice (three sends total, the first included, shared with `POST /v3/phone/verifications/{verification_id}/retry/`); `reuse` returns the pending verification without sending; `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code. A same-window retry keeps the expiry from the first send.\n\n**Conflict, challenge and code options.** `on_conflict` picks what happens while a code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window, up to two retries (three sends total, the first included), and `reject` answers `409 verification_in_progress`. `force_challenge` restricts the send to `fraud.channels_allowed` and records the challenge as yours, not as fraud. `trusted_user` needs a `fraud_override` signed for this number with your application's webhook signing secret; an unsigned or wrongly signed one returns `403 invalid_fraud_override`. `code` sets your own 4 to 10 letter-and-digit code and `code_length` the length of a Didit-made numeric code; `code` wins over `code_length`, and `code_length` wins over `options.code_size`.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Fixed lines.** A fixed line takes no SMS. When `options.preferred_channel` is `sms` and the number is a fixed line (not a mobile, VoIP, toll-free or premium-rate number) in a destination where Didit delivers codes by voice, a new send places a call that reads the code aloud instead of sending an SMS, and the send is priced and checked against your balance as a voice code (one minute of call at the carrier's voice rate for the country plus the Didit fee; see [Phone Verification Pricing](/getting-started/phone-verification-pricing)). The call goes through the same abuse protections as other voice codes, so Didit may not place it: for a number an earlier call found unallocated, or for a destination where your recent landline calls rarely reach a line. The code then goes out the way it would have without the conversion. Nothing is converted for a send that repeats or reuses the pending code, when your routing settings do not allow voice, or in a sandbox application. The response `channel` is `voice` when the call is placed.\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
+        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Send the same E.164 `phone_number` and the code to check the latest pending verification of that number in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. The verification window defaults to **5 minutes**. Calling send again for the same number while a verification is pending follows `on_conflict`: by default (`replace`) it starts a fresh verification with a new `request_id`; `retry` re-sends a code for the same verification (`status: \"Retry\"`, same `request_id` and `verification_id`), at most twice (three sends total, the first included, shared with `POST /v3/phone/verifications/{verification_id}/retry/`); `reuse` returns the pending verification without sending; `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code. A same-window retry keeps the expiry from the first send.\n\n**Conflict, challenge and code options.** `on_conflict` picks what happens while a code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window, up to two retries (three sends total, the first included), and `reject` answers `409 verification_in_progress`. `force_challenge` restricts the send to `fraud.channels_allowed` and records the challenge as yours, not as fraud. `trusted_user` needs a `fraud_override` signed for this number with your application's webhook signing secret; an unsigned or wrongly signed one returns `403 invalid_fraud_override`. `code` sets your own 4 to 10 letter-and-digit code and `code_length` the length of a Didit-made numeric code; `code` wins over `code_length`, and `code_length` wins over `options.code_size`.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Fixed lines.** A fixed line takes no SMS. When `options.preferred_channel` is `sms` and the number is a fixed line (not a mobile, VoIP, toll-free or premium-rate number) in a destination where Didit delivers codes by voice, a new send places a call that reads the code aloud instead of sending an SMS, and the send is priced and checked against your balance as a voice code (one minute of call at the carrier's voice rate for the country plus the Didit fee; see [Phone Verification Pricing](/getting-started/phone-verification-pricing)). The call goes through the same abuse protections as other voice codes, so Didit may not place it: for a number an earlier call found unallocated, or for a destination where your recent landline calls rarely reach a line. The code then goes out the way it would have without the conversion. Nothing is converted for a send that repeats or reuses the pending code, when your routing settings do not allow voice, or in a sandbox application. The response `channel` is `voice` when the call is placed.\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`. A sandbox test number registered as `blocked` is the exception: its send answers `Blocked` and its check answers `Declined`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. A number you registered with `POST /v3/phone/sandbox/numbers/` plays the outcome it was registered with: `blocked` answers `Blocked`, every other outcome answers `Success`, and the outcomes that end the verification at send time (`not_delivered`, `silent_match`, `silent_mismatch`) settle it. For any other number, check with `123456`, or with the `code` your send set.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
         "operationId": "post_v3phone_send",
         "x-didit-sdk": {
           "resource": "phone",
@@ -17040,7 +17040,7 @@
     "/v3/phone/check/": {
       "post": {
         "summary": "Check Phone Code",
-        "description": "Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.\n\n**How the check finds the verification.** Send the code and the E.164 `phone_number`: the number selects its latest pending verification in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. A finalized or expired verification, or no matching verification, returns `200` with `status: \"Expired or Not Found\"`.\n\n**Attempt budget for delivered codes.** Your application's `verification.max_attempts` setting (3 to 10) sets how many wrong codes a verification takes, and it defaults to 5 on v3. With that default, the first four wrong codes return `Failed` with the attempts remaining and `phone: null`, and the fifth returns `Declined` with the full phone report and a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning. A verification started in a hosted flow uses the workflow's own limit instead.\n\n**Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.\n\n**Risk actions.** `duplicated_phone_number_action`, `disposable_number_action`, and `voip_number_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `phone.warnings` without affecting the status.\n\n**Billing.** Checks are free — delivery is billed on the send side (see [Phone Verification Pricing](/getting-started/phone-verification-pricing)).\n\n**Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.\n\n**Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.\n\n**TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.",
+        "description": "Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.\n\n**How the check finds the verification.** Send the code and the E.164 `phone_number`: the number selects its latest pending verification in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. A finalized or expired verification, or no matching verification, returns `200` with `status: \"Expired or Not Found\"`.\n\n**Attempt budget for delivered codes.** Your application's `verification.max_attempts` setting (3 to 10) sets how many wrong codes a verification takes, and it defaults to 5 on v3. With that default, the first four wrong codes return `Failed` with the attempts remaining and `phone: null`, and the fifth returns `Declined` with the full phone report and a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning. A verification started in a hosted flow uses the workflow's own limit instead.\n\n**Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.\n\n**Risk actions.** `duplicated_phone_number_action`, `disposable_number_action`, and `voip_number_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `phone.warnings` without affecting the status.\n\n**Billing.** Checks are free — delivery is billed on the send side (see [Phone Verification Pricing](/getting-started/phone-verification-pricing)).\n\n**Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.\n\n**Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. A number you registered with `POST /v3/phone/sandbox/numbers/` answers by its outcome: with `verified` or `silent_fallback` it accepts the fixed code it was registered with (any well-formed code when it has none), a wrong code answers `Failed` and the last attempt `Declined`; `silent_match` answers `Approved`; `not_delivered`, `blocked` and `silent_mismatch` answer `Declined`; `expired` answers `Expired or Not Found`. For any other number, the code is `123456`, or the `code` your send set; any other code answers `Failed`, and the last attempt `Declined`.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.\n\n**TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.",
         "operationId": "post_v3phone_check",
         "x-didit-sdk": {
           "resource": "phone",
@@ -115502,6 +115502,748 @@
           }
         }
       }
+    },
+    "/v3/webhooks/": {
+      "post": {
+        "summary": "Add a webhook endpoint",
+        "description": "Create a webhook endpoint: an HTTPS endpoint that receives the events in `events`. Send the event types to deliver, or `[\"*\"]` for every event Didit lists: `*` is expanded when the endpoint is created and the answer lists the event names it now carries. An event Didit does not know answers `400 invalid_events`.\n\nThe endpoint it creates is the destination the Business Console lists and `GET /v3/webhook/destinations/` returns: `webhook_id` is that destination's `destination_uuid`, `secret` is the same signing secret as `secret_shared_key`, and `events` is its stored `subscribed_events`, changed later through `PATCH /v3/webhook/destinations/{destination_uuid}/`. `description` names it in the console; left out, it takes the host of `url`. The `(application, url)` pair must be unique among the application's destinations.\n\nDidit delivers events only to the HTTPS endpoint in `url`.\n\n**Errors.** `400 invalid_url`: `url` is not an HTTPS URL, or the application already has an endpoint at it. `400 invalid_events`: an event in `events` is not one Didit lists.\n\nA scoped API key needs `webhooks: write`.",
+        "operationId": "create_webhook",
+        "x-didit-sdk": {
+          "resource": "webhooks",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Webhook"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/webhooks/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n      \"url\": \"https://api.demo-app.example/didit/webhooks\",\n      \"events\": [\n        \"status.updated\",\n        \"message.status.updated\"\n      ],\n      \"description\": \"Phone events\"\n    }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCreateRequest"
+              },
+              "examples": {
+                "Phone events": {
+                  "summary": "An endpoint that receives session status changes and message status updates",
+                  "value": {
+                    "url": "https://api.demo-app.example/didit/webhooks",
+                    "events": [
+                      "status.updated",
+                      "message.status.updated"
+                    ],
+                    "description": "Phone events"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The signing secret is returned in `secret`. Store it securely. To retrieve it later, use the returned `webhook_id` as `destination_uuid` in `GET /v3/webhook/destinations/{destination_uuid}/`. That GET returns the signing secret in `secret_shared_key` for authorized callers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreateResponse"
+                },
+                "examples": {
+                  "Created": {
+                    "summary": "The endpoint's id, its signing secret and the events it receives",
+                    "value": {
+                      "webhook_id": "8f14e45f-ceea-467f-a8d4-6f2b1c9b0d11",
+                      "secret": "tno2NTeRC1ZK3sBOYlBJDyEzBVENl3pQ1AcZyAW0xnQ",
+                      "events": [
+                        "status.updated",
+                        "message.status.updated"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`400 invalid_url`: `url` is not an HTTPS URL, or the application already has an endpoint at that URL. `400 invalid_events`: `events` names an event Didit does not know."
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, the key is scoped and does not carry write access to `webhooks`, or the request came from outside the key's allowed IP addresses."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/sandbox/numbers/": {
+      "post": {
+        "summary": "Add your own test number, its code and outcome",
+        "description": "Define a test number in the sandbox: what it answers when a code is sent to it, and what it accepts. `outcome` plays the result: `verified`, `not_delivered`, `blocked`, `expired`, `silent_match`, `silent_mismatch` or `silent_fallback`. To set a fixed code for `/v3/phone/check/`, send `code` as a string of 4 to 8 digits. An invalid format returns `400` at registration.\n\nA test number behaves this way in the sandbox only and is never billed. Set `real_device` to `true` to identify your own handset.\n\n**Errors.** `403 sandbox_only`: the key belongs to a Live application, where a test number could approve a real one for free. `409 number_exists`: this number already has a test outcome.\n\nA scoped API key needs `phone: write`.",
+        "operationId": "create_phone_sandbox_number",
+        "x-didit-sdk": {
+          "resource": "phone.sandbox_numbers",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Standalone APIs"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/sandbox/numbers/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n      \"phone_number\": \"+34600000099\",\n      \"outcome\": \"silent_match\",\n      \"code\": \"000000\"\n    }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneSandboxNumberRequest"
+              },
+              "examples": {
+                "Silent match": {
+                  "summary": "A number whose silent check always matches",
+                  "value": {
+                    "phone_number": "+34600000099",
+                    "outcome": "silent_match",
+                    "code": "000000"
+                  }
+                },
+                "Own handset": {
+                  "summary": "Register your own handset as a test number",
+                  "value": {
+                    "phone_number": "+34600000123",
+                    "outcome": "silent_match",
+                    "real_device": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The test number is registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneSandboxNumberResponse"
+                },
+                "examples": {
+                  "Created": {
+                    "summary": "A number that plays a matching silent check",
+                    "value": {
+                      "number_id": "87c2ad92-1279-4f14-bdc4-33f74b945aef",
+                      "outcome": "silent_match"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A required field is missing or a value is invalid. A supplied test code must contain 4 to 8 digits."
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key has custom access: this operation needs the `phone` resource, which no custom key can carry, so only a key with full access reaches it, or the request came from outside the key's allowed IP addresses. `403 sandbox_only`: the application is Live, so it cannot register test numbers."
+          },
+          "409": {
+            "description": "`409 number_exists`: this test number exists. A registered test number keeps its outcome, so register a different test number to play another outcome."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/stats/": {
+      "get": {
+        "summary": "Conversion, delivery time and spend, grouped",
+        "description": "Read conversion, delivery times and spend in USD for the requested product and date range. Each entry in `rows` identifies its group in `key`. Choose a grouping supported by that product in `group_by`.\n\nFor `verification`, read and reply rates are always `0`. For `messages`, silent success and code-free share are always `0`. For `lookups`, only spend applies, so all rates and delivery percentiles are `0`. A rate or percentile a group has no events for is `0`, never `null`.\n\n**Errors.** `400 invalid_product`: not a product this endpoint groups. `400 invalid_group`: not a grouping this product supports. `400 stats_window_too_wide`: the range is longer than a year. `400` naming `to`: `to` is a date no window can end on, such as `9999-12-31`, the last date there is; the body is `{\"to\": [\"to must be a date a window can end on, before 9999-12-31.\"]}`.\n\nA scoped API key needs `phone: read`.",
+        "operationId": "retrieve_phone_stats",
+        "x-didit-sdk": {
+          "resource": "phone.stats",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Standalone APIs"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/stats/?product=verification&group_by=network&from=2026-10-22&to=2026-11-20' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "verification",
+                "messages",
+                "lookups"
+              ]
+            },
+            "description": "The product to report on.",
+            "example": "verification"
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "country",
+                "channel",
+                "network",
+                "line_type",
+                "day"
+              ]
+            },
+            "description": "For `verification`, use `country`, `channel`, `network`, `line_type` or `day`. For `messages`, use `country`, `channel` or `day`. For `lookups`, use `country`, `network`, `line_type` or `day`. Defaults to `day`.",
+            "example": "network"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "The first day, as YYYY-MM-DD.",
+            "example": "2026-10-22"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "The last day, as YYYY-MM-DD, before `9999-12-31`.",
+            "example": "2026-11-20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One entry per group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneStatsResponse"
+                },
+                "examples": {
+                  "Grouped by network": {
+                    "summary": "Two networks over a month",
+                    "value": {
+                      "rows": [
+                        {
+                          "key": "Mobile network A",
+                          "conversion_rate": 0.94,
+                          "silent_success_rate": 0.3572,
+                          "code_free_share": 0.38,
+                          "delivery_seconds": {
+                            "p50": 2.1,
+                            "p90": 6.4,
+                            "p99": 12.8
+                          },
+                          "read_rate": 0,
+                          "reply_rate": 0,
+                          "spend": "412.20"
+                        },
+                        {
+                          "key": "Mobile network B",
+                          "conversion_rate": 0.88,
+                          "silent_success_rate": 0.2728,
+                          "code_free_share": 0.31,
+                          "delivery_seconds": {
+                            "p50": 3.4,
+                            "p90": 8.1,
+                            "p99": 15.2
+                          },
+                          "read_rate": 0,
+                          "reply_rate": 0,
+                          "spend": "298.40"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`400 invalid_product`: not a product this endpoint groups. `400 invalid_group`: not a grouping this product supports. `400 stats_window_too_wide`: the range is longer than a year. `400` naming `to`: `to` is a date no window can end on, such as `9999-12-31`, the last date there is; the body is `{\"to\": [\"to must be a date a window can end on, before 9999-12-31.\"]}`."
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key has custom access: this operation needs the `phone` resource, which no custom key can carry, so only a key with full access reaches it, or the request came from outside the key's allowed IP addresses."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/phone/balance/": {
+      "get": {
+        "summary": "Read the balance and auto top-up",
+        "description": "The account's Phone balance in USD, and the auto top-up that keeps it funded: whether it is on, the amount added each time, and the balance that triggers it. See [Phone pricing](/getting-started/phone-verification-pricing) for what a code or a lookup costs.\n\nA scoped API key needs `phone: read`.",
+        "operationId": "retrieve_phone_balance",
+        "x-didit-sdk": {
+          "resource": "phone.balance",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Standalone APIs"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/balance/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The balance and the auto top-up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneBalanceResponse"
+                },
+                "examples": {
+                  "Funded": {
+                    "summary": "A balance with auto top-up on",
+                    "value": {
+                      "balance": "1240.50",
+                      "auto_top_up": {
+                        "enabled": true,
+                        "amount": "50.00",
+                        "below": "20.00"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key has custom access: this operation needs the `phone` resource, which no custom key can carry, so only a key with full access reaches it, or the request came from outside the key's allowed IP addresses."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/phone/validate/": {
+      "post": {
+        "summary": "Validate and format a phone number",
+        "description": "Check that a number can exist and return it formatted, without looking anything up: `valid`, `format.e164`, `format.national` and `country`. Send the number in international format, or a national number with `country`.\n\nIf the number parses but is invalid for its numbering plan, the response is `200` with `valid: false` and both formats. Validation and formatting are free: `charged` is always `false`.\n\n**Errors.** `400 invalid_phone_number`: not a number at all.\n\nA scoped API key needs `phone: write`.",
+        "operationId": "validate_phone_number",
+        "x-didit-sdk": {
+          "resource": "phone",
+          "method": "validate",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Standalone APIs"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/validate/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n      \"phone_number\": \"0600000012\",\n      \"country\": \"ES\"\n    }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneValidateRequest"
+              },
+              "examples": {
+                "National number": {
+                  "summary": "A Spanish number written nationally",
+                  "value": {
+                    "phone_number": "0600000012",
+                    "country": "ES"
+                  }
+                },
+                "International number": {
+                  "summary": "Already in E.164",
+                  "value": {
+                    "phone_number": "+34600000012"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The number, validated and formatted. Nothing is charged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneValidateResponse"
+                },
+                "examples": {
+                  "Spanish number": {
+                    "summary": "A valid number in both formats",
+                    "value": {
+                      "valid": true,
+                      "format": {
+                        "e164": "+34600000012",
+                        "national": "600 00 00 12"
+                      },
+                      "country": "ES",
+                      "charged": false
+                    }
+                  },
+                  "International freephone number": {
+                    "summary": "A non-geographic number",
+                    "value": {
+                      "valid": true,
+                      "format": {
+                        "e164": "+80012345678",
+                        "national": "1234 5678"
+                      },
+                      "country": null,
+                      "charged": false
+                    }
+                  },
+                  "Number too short": {
+                    "summary": "A Spanish number that parses but is too short",
+                    "value": {
+                      "valid": false,
+                      "format": {
+                        "e164": "+3460000",
+                        "national": "60000"
+                      },
+                      "country": "ES",
+                      "charged": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`400 invalid_phone_number`: not a number at all, so there is nothing to format."
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key has custom access: this operation needs the `phone` resource, which no custom key can carry, so only a key with full access reaches it, or the request came from outside the key's allowed IP addresses."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/voices/": {
+      "get": {
+        "summary": "List the voices that read codes aloud, per language",
+        "description": "List the voices that read verification codes aloud. Each locale has one default voice. Every voice includes `sample_url`, which is currently `null` because no recordings are published. No operation takes a `voice_id` yet.\n\nA scoped API key needs `phone: read`.",
+        "operationId": "list_phone_voices",
+        "x-didit-sdk": {
+          "resource": "phone.voices",
+          "method": "list",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Standalone APIs"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/voices/?locale=es-ES' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by a canonical BCP 47 tag such as `es-ES` or `pt-BR`. A language alone returns every matching locale. For example, `pt` returns both `pt-BR` and `pt-PT`.",
+            "example": "es-ES"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The voices that read codes aloud.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVoiceListResponse"
+                },
+                "examples": {
+                  "One Spanish voice": {
+                    "summary": "One Spanish voice",
+                    "value": {
+                      "voices": [
+                        {
+                          "voice_id": "es-es-female",
+                          "locale": "es-ES",
+                          "gender": "female",
+                          "sample_url": null,
+                          "default": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key has custom access: this operation needs the `phone` resource, which no custom key can carry, so only a key with full access reaches it, or the request came from outside the key's allowed IP addresses."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/messages/{message_id}/feedback/": {
+      "post": {
+        "summary": "Report what the recipient did after a message",
+        "description": "Record what the recipient did after a message: `converted` or `not_converted`, and when. Analytics groups outcomes by channel and template. It measures time to the action from delivery, or from send time when there is no delivery receipt. One outcome per message: a second one answers `409 feedback_exists`.\n\nAn `occurred_at` more than five minutes in the future returns `400` with an error on that field. If the application has no message with this ID, the API returns `404` with a `detail` message.\n\nA scoped API key needs `messages: write`.",
+        "operationId": "create_message_feedback",
+        "x-didit-sdk": {
+          "resource": "messages.feedback",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/messages/3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44/feedback/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n      \"outcome\": \"converted\",\n      \"occurred_at\": \"2026-11-21T10:04:00Z\"\n    }'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The message's id, or the id of any of its attempts.",
+            "example": "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageFeedbackRequest"
+              },
+              "examples": {
+                "Converted": {
+                  "summary": "The recipient acted four minutes after delivery",
+                  "value": {
+                    "outcome": "converted",
+                    "occurred_at": "2026-11-21T10:04:00Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The outcome is recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageFeedbackResponse"
+                },
+                "examples": {
+                  "Recorded": {
+                    "summary": "A conversion, four minutes after delivery",
+                    "value": {
+                      "message_id": "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44",
+                      "outcome": "converted",
+                      "conversion_seconds": 240
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A feedback field failed validation. An `occurred_at` more than five minutes ahead of the service clock returns an error on `occurred_at`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "occurred_at": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "occurred_at": [
+                    "occurred_at cannot be in the future."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The supplied API key is wrong, revoked or expired."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, the key is scoped and does not carry write access to `messages`, or the request came from outside the key's allowed IP addresses."
+          },
+          "404": {
+            "description": "The application has no message with this ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "A message explaining that the message could not be found."
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Not found."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`409 feedback_exists`: this message already has an outcome."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -164905,6 +165647,453 @@
           },
           "detail": {
             "type": "string"
+          }
+        }
+      },
+      "PhoneNumberFormat": {
+        "type": "object",
+        "required": [
+          "e164",
+          "national"
+        ],
+        "description": "The number in international and national form.",
+        "properties": {
+          "e164": {
+            "type": "string",
+            "description": "International format.",
+            "example": "+34600000012"
+          },
+          "national": {
+            "type": "string",
+            "description": "National format.",
+            "example": "600 00 00 12"
+          }
+        }
+      },
+      "WebhookCreateResponse": {
+        "type": "object",
+        "required": [
+          "webhook_id",
+          "secret",
+          "events"
+        ],
+        "properties": {
+          "webhook_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The endpoint's id. It is the destination's `destination_uuid`: `GET /v3/webhook/destinations/{destination_uuid}/` reads the endpoint back, and `PATCH` and `DELETE` on that path change it."
+          },
+          "secret": {
+            "type": "string",
+            "description": "Use this HMAC signing secret to verify `X-Signature-V2` on deliveries. Authorized callers can retrieve it as `secret_shared_key` with `GET /v3/webhook/destinations/{destination_uuid}/`."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEvent"
+            },
+            "description": "The events the endpoint now receives, with `*` already expanded to every event it covered when the endpoint was created."
+          }
+        }
+      },
+      "WebhookCreateRequest": {
+        "type": "object",
+        "required": [
+          "url",
+          "events"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2000,
+            "description": "HTTPS endpoint that receives `POST` requests, one per event. Must be unique among the application's destinations. Use a stable, hardened endpoint: Didit retries failed deliveries on a backoff schedule."
+          },
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WebhookEvent"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "*"
+                  ]
+                }
+              ]
+            },
+            "description": "Event types to deliver, or `[\"*\"]` for every event Didit lists. `*` is expanded when the endpoint is created, and the answer lists every event it covers. A value Didit does not know answers `400 invalid_events`."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Its name in the console, so you can tell endpoints apart. Left out, it takes the host of `url`."
+          }
+        }
+      },
+      "PhoneSandboxNumberRequest": {
+        "type": "object",
+        "required": [
+          "phone_number",
+          "outcome"
+        ],
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "A fictional number, or your own handset with `real_device`.",
+            "example": "+34600000099"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "not_delivered",
+              "blocked",
+              "expired",
+              "silent_match",
+              "silent_mismatch",
+              "silent_fallback"
+            ],
+            "description": "What the number answers in the sandbox: a correct code, no delivery, a blocked number, an expired code, a silent check that matches, one that does not, or one that falls back to a code.",
+            "example": "silent_match"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 8,
+            "pattern": "^[0-9]{4,8}$",
+            "description": "Fixed code accepted by `/v3/phone/check/` for this test number. Send 4 to 8 digits as a string to preserve leading zeros.",
+            "example": "000000"
+          },
+          "real_device": {
+            "type": "boolean",
+            "description": "Set to `true` to mark the test number as your own handset.",
+            "example": false
+          }
+        }
+      },
+      "PhoneSandboxNumberResponse": {
+        "type": "object",
+        "required": [
+          "number_id",
+          "outcome"
+        ],
+        "properties": {
+          "number_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The UUID of the registered sandbox number.",
+            "example": "87c2ad92-1279-4f14-bdc4-33f74b945aef"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "What it plays.",
+            "example": "silent_match"
+          }
+        }
+      },
+      "PhoneStatsRow": {
+        "type": "object",
+        "required": [
+          "key",
+          "conversion_rate",
+          "silent_success_rate",
+          "code_free_share",
+          "delivery_seconds",
+          "read_rate",
+          "reply_rate",
+          "spend"
+        ],
+        "description": "One group of the filtered figures.",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The group: a country, channel, network, line type or day.",
+            "example": "Mobile network A"
+          },
+          "conversion_rate": {
+            "type": "number",
+            "description": "Approved verifications per verification started, or converted messages per delivered message. Zero for lookups.",
+            "example": 0.94
+          },
+          "silent_success_rate": {
+            "type": "number",
+            "description": "Verifications approved without a code per verification started. Zero for messages and lookups.",
+            "example": 0.3572
+          },
+          "code_free_share": {
+            "type": "number",
+            "description": "Share of approved verifications that needed no code. Zero for messages and lookups.",
+            "example": 0.38
+          },
+          "delivery_seconds": {
+            "$ref": "#/components/schemas/PhoneDeliverySeconds"
+          },
+          "read_rate": {
+            "type": "number",
+            "description": "Read messages per delivered message. Zero for verifications and lookups.",
+            "example": 0
+          },
+          "reply_rate": {
+            "type": "number",
+            "description": "Inbound replies per delivered message in the same group and date range. Zero for verifications and lookups.",
+            "example": 0
+          },
+          "spend": {
+            "type": "string",
+            "description": "Spend in USD.",
+            "example": "412.20"
+          }
+        }
+      },
+      "PhoneDeliverySeconds": {
+        "type": "object",
+        "required": [
+          "p50",
+          "p90",
+          "p99"
+        ],
+        "description": "Time from send to delivery, in seconds.",
+        "properties": {
+          "p50": {
+            "type": "number",
+            "description": "Median.",
+            "example": 2.1
+          },
+          "p90": {
+            "type": "number",
+            "description": "90th percentile.",
+            "example": 6.4
+          },
+          "p99": {
+            "type": "number",
+            "description": "99th percentile.",
+            "example": 12.8
+          }
+        }
+      },
+      "PhoneStatsResponse": {
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneStatsRow"
+            },
+            "description": "One entry per group, in the requested grouping."
+          }
+        }
+      },
+      "PhoneAutoTopUp": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "amount",
+          "below"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "On or off.",
+            "example": true
+          },
+          "amount": {
+            "type": "string",
+            "description": "Added each time, in USD.",
+            "example": "50.00"
+          },
+          "below": {
+            "type": "string",
+            "description": "When the balance falls below, in USD.",
+            "example": "20.00"
+          }
+        }
+      },
+      "PhoneBalanceResponse": {
+        "type": "object",
+        "required": [
+          "balance",
+          "auto_top_up"
+        ],
+        "properties": {
+          "balance": {
+            "type": "string",
+            "description": "The balance in USD.",
+            "example": "1240.50"
+          },
+          "auto_top_up": {
+            "$ref": "#/components/schemas/PhoneAutoTopUp"
+          }
+        }
+      },
+      "PhoneValidateRequest": {
+        "type": "object",
+        "required": [
+          "phone_number"
+        ],
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "The number in international format, or a national number with `country`.",
+            "example": "0600000012"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "description": "The ISO 3166-1 alpha-2 code of a national number.",
+            "example": "ES"
+          }
+        }
+      },
+      "PhoneValidateResponse": {
+        "type": "object",
+        "required": [
+          "valid",
+          "format",
+          "country",
+          "charged"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the number can exist.",
+            "example": true
+          },
+          "format": {
+            "$ref": "#/components/schemas/PhoneNumberFormat"
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "description": "The number's ISO 3166-1 alpha-2 country code, or `null` when no single country can be identified, as with an international freephone number.",
+            "example": "ES"
+          },
+          "charged": {
+            "type": "boolean",
+            "description": "Always `false`: validation and formatting are free.",
+            "example": false
+          }
+        }
+      },
+      "MessageFeedbackRequest": {
+        "type": "object",
+        "required": [
+          "outcome"
+        ],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "converted",
+              "not_converted"
+            ],
+            "description": "What the recipient did after the message.",
+            "example": "converted"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the recipient acted. The timestamp can be up to five minutes ahead of the service clock. Omit it to use the time of the request.",
+            "example": "2026-11-21T10:04:00Z"
+          }
+        }
+      },
+      "MessageFeedbackResponse": {
+        "type": "object",
+        "required": [
+          "message_id",
+          "outcome",
+          "conversion_seconds"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The message.",
+            "example": "3f6c9a52-8d1e-4b7a-9c20-5e1f7a3b8d44"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "converted",
+              "not_converted"
+            ],
+            "description": "As sent.",
+            "example": "converted"
+          },
+          "conversion_seconds": {
+            "type": "integer",
+            "description": "Whole seconds from delivery to the action. If there is no delivery receipt, the interval starts at send time. An earlier action returns `0`. A message with neither timestamp, such as a scheduled message awaiting send, returns `null`.",
+            "example": 240,
+            "nullable": true
+          }
+        }
+      },
+      "PhoneVoice": {
+        "type": "object",
+        "required": [
+          "voice_id",
+          "locale",
+          "gender",
+          "sample_url",
+          "default"
+        ],
+        "properties": {
+          "voice_id": {
+            "type": "string",
+            "description": "Identifies the voice in this list.",
+            "example": "es-es-female"
+          },
+          "locale": {
+            "type": "string",
+            "description": "Its language, as a BCP 47 tag.",
+            "example": "es-ES"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "female",
+              "male",
+              "neutral"
+            ],
+            "description": "Its voice.",
+            "example": "female"
+          },
+          "sample_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of a sample recording. This field is currently `null` for every voice because no recordings are published.",
+            "example": null,
+            "nullable": true
+          },
+          "default": {
+            "type": "boolean",
+            "description": "Whether this is the default voice for its locale. Each supported locale has one voice.",
+            "example": true
+          }
+        }
+      },
+      "PhoneVoiceListResponse": {
+        "type": "object",
+        "required": [
+          "voices"
+        ],
+        "properties": {
+          "voices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneVoice"
+            },
+            "description": "The available voices, one per locale."
           }
         }
       }
