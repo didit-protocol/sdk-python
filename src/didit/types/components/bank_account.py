@@ -42,7 +42,7 @@ class BankAccount(BaseModel):
     """Full identifiers, returned to server-side callers with access to Bank data."""
 
     account_ref: str | None
-    """Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know. It is the same for one bank account in every connection of the application, while `id` and the transaction ids are new in each connection."""
+    """Identifies the same bank account across connections of one application and environment: a keyed hash of the bank's own identifiers. `null` when the bank gives no reliable identifier. Use it to recognise a bank account you already know. Several accounts of one connection can share an `account_ref` (one IBAN held in several currencies, or a linked card account under the same IBAN): key an account by its `id`; `account_ref` tells you which bank account (IBAN) it belongs to. It is the same for one bank account in every connection of the application, while `id` and the transaction ids are new in each connection."""
 
     account_ref_previous: str | None
     """The previous `account_ref`, only for a verified alias such as a bank migration."""
