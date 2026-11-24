@@ -47526,6 +47526,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -47755,7 +47758,14 @@
             "description": "Duplicate review is enabled and an existing case was found without a separate-incident reason. No case was created."
           },
           "403": {
-            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable."
+            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -47880,6 +47890,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -48091,7 +48104,7 @@
             }
           },
           "403": {
-            "description": "The API key belongs to another application, or it is a key with restricted access: Cases endpoints need a full-access key. A console member token needs `write:cases`.",
+            "description": "The API key belongs to another application, or it is a key with restricted access: Cases endpoints need a full-access key. A console member token needs `write:cases`. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
             "content": {
               "application/json": {
                 "examples": {
@@ -48107,6 +48120,9 @@
                       "detail": "You do not have permission to perform this action."
                     }
                   }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
                 }
               }
             }
@@ -48233,16 +48249,11 @@
             "description": "Case deleted."
           },
           "403": {
-            "description": "The key cannot delete cases. It requires a full-access key with `write:cases`.",
+            "description": "The key cannot delete cases. It requires a full-access key with `write:cases`. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "detail": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CasesForbiddenError"
                 }
               }
             }
@@ -48416,6 +48427,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -48641,6 +48655,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -48753,6 +48770,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -48865,6 +48885,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -48977,6 +49000,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -49111,6 +49137,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -49245,20 +49274,11 @@
             }
           },
           "403": {
-            "description": "The caller cannot approve this resolution. An API key or MCP token acting as the application always gets this 403, with code `human_approver_required`, because four eyes needs a different signed-in person. A person gets it when they submitted the resolution, when the case has no recorded maker, or when the resolution names a different checker.",
+            "description": "The caller cannot approve this resolution. An API key or MCP token acting as the application always gets this 403, with code `human_approver_required`, because four eyes needs a different signed-in person. A person gets it when they submitted the resolution, when the case has no recorded maker, or when the resolution names a different checker. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "detail": {
-                      "type": "string"
-                    },
-                    "code": {
-                      "type": "string",
-                      "description": "`human_approver_required` when an API key or MCP token tried to approve; other refusals carry only `detail`."
-                    }
-                  }
+                  "$ref": "#/components/schemas/CaseApprovalForbiddenError"
                 },
                 "examples": {
                   "An API key or MCP token": {
@@ -49436,16 +49456,11 @@
             }
           },
           "403": {
-            "description": "The caller cannot reject this resolution: they submitted it, the case has no recorded maker, or the resolution names a different checker. An API key always gets this 403 when a checker is named.",
+            "description": "The caller cannot reject this resolution: they submitted it, the case has no recorded maker, or the resolution names a different checker. An API key always gets this 403 when a checker is named. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "detail": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CasesForbiddenError"
                 },
                 "examples": {
                   "Caller submitted the resolution": {
@@ -49560,6 +49575,9 @@
           },
           "409": {
             "description": "The reference belongs to a different action payload."
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -49713,6 +49731,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -49800,7 +49821,14 @@
             "description": ""
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "The case or note is unavailable for this caller."
@@ -49938,7 +49966,14 @@
             "description": ""
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "The case or note is unavailable for this caller."
@@ -50080,7 +50115,14 @@
             "description": ""
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "The case or note is unavailable for this caller."
@@ -50188,7 +50230,14 @@
             "description": "The note is permanently deleted. Replies remain, without the deleted parent excerpt. Attachments are deleted unless another note still uses them."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "The case or note is unavailable for this caller."
@@ -50388,6 +50437,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -50526,6 +50578,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -50638,6 +50693,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -50794,7 +50852,14 @@
             }
           },
           "403": {
-            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable."
+            "description": "Missing case or network permissions, or Networks access or investigation entitlement is unavailable. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -50911,6 +50976,9 @@
         "responses": {
           "204": {
             "description": "Link removed."
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -51062,6 +51130,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -51174,6 +51245,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -51318,6 +51392,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -51430,6 +51507,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -51899,6 +51979,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52054,6 +52137,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52199,6 +52285,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52337,6 +52426,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52569,6 +52661,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CaseBlueprintsForbidden"
           }
         },
         "security": [
@@ -52678,6 +52773,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52882,6 +52980,9 @@
           },
           "400": {
             "description": "Invalid blueprint fields, unsupported applies_to value, invalid stage definition, inactive or other-application stage team, or invalid blueprint reference."
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -52985,6 +53086,9 @@
         "responses": {
           "204": {
             "description": "Blueprint deleted."
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -53114,6 +53218,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -53251,6 +53358,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CaseBlueprintsForbidden"
           }
         },
         "security": [
@@ -54057,6 +54167,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -54322,6 +54435,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -54743,6 +54859,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -54755,7 +54874,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/": {
       "get": {
         "summary": "Get report",
-        "description": "Retrieve a regulatory report.",
+        "description": "Retrieve a regulatory report. A report filed on a case answers 403 `plan_upgrade_required` when the plan or the release does not include Cases, like the case's own routes; a standalone report is not refused.",
         "operationId": "get_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -54852,6 +54971,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -54862,7 +54984,7 @@
       },
       "patch": {
         "summary": "Update report",
-        "description": "Edit a draft or validated report's fields. Finalized reports cannot be edited (409).",
+        "description": "Edit a draft or validated report's fields. Finalized reports cannot be edited (409). A report filed on a case answers 403 `plan_upgrade_required` when the plan or the release does not include Cases, like the case's own routes; a standalone report is not refused.",
         "operationId": "update_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -55086,6 +55208,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -55326,7 +55451,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/validate/": {
       "post": {
         "summary": "Validate report",
-        "description": "Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. For jurisdiction AE, once those pass, the report's goAML XML is also checked against the UAE FIU's goAML XML schema and each problem is returned as a field and a message; finalize refuses a report that fails. FFR and PNMR reports need no attached transaction: they require the case to have a subject, otherwise validation_errors contains an error with field `subject`. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors).",
+        "description": "Check the report against the obligatory goAML header fields (reporting entity ID, submission code, local currency, action taken, submission date), plus at least one attached transaction and a 2-letter jurisdiction, without generating any files. For jurisdiction AE, once those pass, the report's goAML XML is also checked against the UAE FIU's goAML XML schema and each problem is returned as a field and a message; finalize refuses a report that fails. FFR and PNMR reports need no attached transaction: they require the case to have a subject, otherwise validation_errors contains an error with field `subject`. Also stores the result on the report: validation_errors and validated_at are updated, and a non-finalized report's status moves to VALIDATED (no errors) or back to DRAFT (errors). A report filed on a case answers 403 `plan_upgrade_required` when the plan or the release does not include Cases, like the case's own routes; a standalone report is not refused.",
         "operationId": "validate_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -55454,6 +55579,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -55466,7 +55594,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/finalize/": {
       "post": {
         "summary": "Finalize report",
-        "description": "Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed. FFR and PNMR reports do not move alerts.",
+        "description": "Re-validate, then render the goAML XML and PDF and upload both to S3. On SAR/STR/TFR reports, this also moves the case's transaction alerts from Pending SAR to SAR filed. FFR and PNMR reports do not move alerts. A report filed on a case answers 403 `plan_upgrade_required` when the plan or the release does not include Cases, like the case's own routes; a standalone report is not refused.",
         "operationId": "finalize_regulatory_report",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -55610,6 +55738,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -55622,7 +55753,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/regulatory-reports/{report_uuid}/download-url/": {
       "get": {
         "summary": "Get report download URL",
-        "description": "Mint a presigned URL for a finalized report's goAML XML or PDF.",
+        "description": "Mint a presigned URL for a finalized report's goAML XML or PDF. A report filed on a case answers 403 `plan_upgrade_required` when the plan or the release does not include Cases, like the case's own routes; a standalone report is not refused.",
         "operationId": "get_regulatory_report_download_url",
         "x-didit-sdk": {
           "resource": "regulatory_reports",
@@ -55763,6 +55894,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -68532,7 +68666,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -68632,7 +68773,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -68886,7 +69034,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -69001,7 +69156,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid inputs, unsupported purpose, unavailable verified contact or an existing immutable response."
@@ -69320,7 +69482,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid inputs, unsupported purpose, unavailable verified contact or an existing immutable response."
@@ -69430,7 +69599,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -69544,7 +69720,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -69672,7 +69855,14 @@
             "description": ""
           },
           "403": {
-            "description": "Case access is required."
+            "description": "Case access is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -70287,7 +70477,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "Record not found in this application."
@@ -70399,7 +70596,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "Record not found in this application."
@@ -70794,7 +70998,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -70894,7 +71105,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -71039,7 +71257,14 @@
             "description": ""
           },
           "403": {
-            "description": "Case access is required."
+            "description": "Case access is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "409": {
             "description": "The published version or draft revision has changed. Reload before retrying."
@@ -71169,7 +71394,14 @@
             "description": "Published version or saved draft revision changed. Reload before retrying."
           },
           "403": {
-            "description": "Required case permission is missing."
+            "description": "Required case permission is missing. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -71296,7 +71528,14 @@
             "description": "The request or case is unavailable for this caller."
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid inputs, unsupported purpose, unavailable verified contact or an existing immutable response."
@@ -71412,6 +71651,9 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -71649,6 +71891,9 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -71750,7 +71995,14 @@
             "description": ""
           },
           "403": {
-            "description": "Required case permission is missing."
+            "description": "Required case permission is missing. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -71882,7 +72134,14 @@
             "description": "Published version or saved draft revision changed. Reload before retrying."
           },
           "403": {
-            "description": "Required case permission is missing."
+            "description": "Required case permission is missing. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -71980,7 +72239,14 @@
             "description": "Published version or saved draft revision changed. Reload before retrying."
           },
           "403": {
-            "description": "Required case permission is missing."
+            "description": "Required case permission is missing. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -72098,7 +72364,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "Record not found in this application."
@@ -72210,7 +72483,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "Record not found in this application."
@@ -72769,7 +73049,14 @@
             "description": ""
           },
           "403": {
-            "description": "Case access is required."
+            "description": "Case access is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -72898,7 +73185,14 @@
             "description": ""
           },
           "403": {
-            "description": "Case access is required."
+            "description": "Case access is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "409": {
             "description": "The published version or draft revision has changed. Reload before retrying."
@@ -72996,7 +73290,14 @@
             "description": "No response body"
           },
           "403": {
-            "description": "Case access is required."
+            "description": "Case access is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "409": {
             "description": "The published version or draft revision has changed. Reload before retrying."
@@ -73127,6 +73428,9 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/CasesForbidden"
           }
         },
         "security": [
@@ -73229,7 +73533,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`); writing a routing rule also needs `case_routing` (Scale), and a lower plan answers with `feature` `case_routing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -73359,7 +73670,14 @@
             "description": "Invalid input."
           },
           "403": {
-            "description": "Insufficient permission."
+            "description": "Insufficient permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "503": {
             "description": "Reviewer access could not be verified. Retry later."
@@ -73490,7 +73808,14 @@
             "description": ""
           },
           "403": {
-            "description": "Required case permission is missing."
+            "description": "Required case permission is missing. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -91304,7 +91629,14 @@
             }
           },
           "403": {
-            "description": "The caller lacks the required cases permission."
+            "description": "The caller lacks the required cases permission. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "The request or case is unavailable for this caller."
@@ -102038,7 +102370,14 @@
             "description": "Authentication is required."
           },
           "403": {
-            "description": "write:cases permission is required."
+            "description": "write:cases permission is required. A plan that does not include Cases, or an organization Didit has not released it for yet, answers 403 `plan_upgrade_required` for the same operation (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found."
@@ -104541,7 +104880,14 @@
             "description": "Missing, invalid or expired credentials."
           },
           "403": {
-            "description": "Missing read/write permissions or selective retry attempted by someone other than the original requester, including a caller without a user identity."
+            "description": "Missing read/write permissions or selective retry attempted by someone other than the original requester, including a caller without a user identity. Running a case export again answers 403 `plan_upgrade_required` when the plan or the release does not include Cases (`PlanUpgradeRequiredError`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasesForbiddenError"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedWrite"
@@ -108973,7 +109319,7 @@
             }
           },
           "409": {
-            "description": "The connection has no readable data: it was deleted, or its retention ended (`connection_not_active`).",
+            "description": "The connection has no readable data: it was deleted, its retention ended, or its first sync failed (`connection_not_active`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -110139,7 +110485,7 @@
             }
           },
           "409": {
-            "description": "The connection has no readable data: it was deleted, or its retention ended (`connection_not_active`).",
+            "description": "The connection has no readable data: it was deleted, its retention ended, or its first sync failed (`connection_not_active`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -166146,6 +166492,209 @@
             "description": "The available voices, one per locale."
           }
         }
+      },
+      "PermissionDeniedError": {
+        "type": "object",
+        "description": "The permission refusal: the credential lacks the privilege, or acts for another application.",
+        "required": [
+          "detail"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanUpgradeRequiredError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "plan_upgrade_required"
+            ]
+          },
+          "feature": {
+            "type": "string",
+            "enum": [
+              "case_management",
+              "case_routing"
+            ],
+            "description": "`case_management` for Cases, `case_routing` for saving, discarding or publishing a routing rule (Scale)."
+          },
+          "product": {
+            "type": "string",
+            "enum": [
+              "identity",
+              "transactions"
+            ]
+          },
+          "required_plan": {
+            "type": "string",
+            "description": "The lowest plan that includes the feature. When `detail` names the pending release, no plan opens it: Didit staff release Cases per organization."
+          },
+          "current_plan": {
+            "type": "string"
+          },
+          "upgrade_url": {
+            "type": "string",
+            "description": "The console's Plans page for this organization, naming the product and the plan."
+          },
+          "teaser": {
+            "type": "object",
+            "nullable": true,
+            "description": "What a refused screen may still show of the data it would open. Always null on Cases."
+          }
+        },
+        "required": [
+          "detail",
+          "code"
+        ],
+        "description": "The 403 `plan_upgrade_required` body every plan gate answers with: the plan or the pending release does not include the feature."
+      },
+      "PlanLimitExceededError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "plan_limit_exceeded"
+            ]
+          },
+          "limit": {
+            "type": "object",
+            "properties": {
+              "product": {
+                "type": "string"
+              },
+              "current_plan": {
+                "type": "string"
+              },
+              "required_plan": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "string",
+                "enum": [
+                  "case_blueprints"
+                ]
+              },
+              "max_blueprints": {
+                "type": "integer",
+                "description": "How many the plan includes."
+              },
+              "blueprints": {
+                "type": "integer",
+                "description": "How many the application has, next to the ones this request would add."
+              }
+            }
+          },
+          "feature": {
+            "type": "string",
+            "enum": [
+              "case_blueprints"
+            ]
+          },
+          "product": {
+            "type": "string",
+            "enum": [
+              "identity",
+              "transactions"
+            ]
+          },
+          "required_plan": {
+            "type": "string"
+          },
+          "current_plan": {
+            "type": "string"
+          },
+          "upgrade_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail",
+          "code",
+          "limit"
+        ],
+        "description": "The 403 `plan_limit_exceeded` body: the request would go past a limit the plan includes. It carries `plan_upgrade_required`'s fields too, and `limit` names the cap the request met."
+      },
+      "PlanRefusalError": {
+        "description": "A plan refusal: `code` tells the plan that lacks the feature (`plan_upgrade_required`) from a limit the plan includes (`plan_limit_exceeded`).",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PlanUpgradeRequiredError"
+          },
+          {
+            "$ref": "#/components/schemas/PlanLimitExceededError"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "code",
+          "mapping": {
+            "plan_upgrade_required": "#/components/schemas/PlanUpgradeRequiredError",
+            "plan_limit_exceeded": "#/components/schemas/PlanLimitExceededError"
+          }
+        }
+      },
+      "CasesForbiddenError": {
+        "description": "A Cases 403: the permission refusal, or `plan_upgrade_required`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PermissionDeniedError"
+          },
+          {
+            "$ref": "#/components/schemas/PlanUpgradeRequiredError"
+          }
+        ]
+      },
+      "CaseApprovalRefusedError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "human_approver_required"
+            ],
+            "description": "`human_approver_required` when an API key or MCP token tried to approve; other refusals carry only `detail`."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "detail"
+        ]
+      },
+      "CaseApprovalForbiddenError": {
+        "description": "The 403 of an approval: the approval refusal, or `plan_upgrade_required`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CaseApprovalRefusedError"
+          },
+          {
+            "$ref": "#/components/schemas/PlanUpgradeRequiredError"
+          }
+        ]
+      },
+      "CaseBlueprintsForbiddenError": {
+        "description": "The 403 of a blueprint write: the permission refusal, `plan_upgrade_required`, or `plan_limit_exceeded` for a blueprint beyond the plan's cap.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PermissionDeniedError"
+          },
+          {
+            "$ref": "#/components/schemas/PlanRefusalError"
+          }
+        ]
       }
     },
     "securitySchemes": {
@@ -166556,6 +167105,113 @@
                   "field": null,
                   "next_action": "contact_support",
                   "retry_after": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "CasesForbidden": {
+        "description": "The credential cannot use this operation, or the organization's plan does not include Cases, or Didit has not released Cases for this organization yet. `feature`, `product`, `required_plan`, `current_plan` and `upgrade_url` are what an upsell renders; `detail` says whether a plan or the pending release is what is missing, because a released feature still follows the plan and an unreleased one is refused on every plan.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CasesForbiddenError"
+            },
+            "examples": {
+              "Missing privilege": {
+                "summary": "Missing privilege",
+                "value": {
+                  "detail": "You do not have permission to perform this action."
+                }
+              },
+              "Plan does not include Cases": {
+                "summary": "A Free organization",
+                "value": {
+                  "detail": "This is available on the Growth plan.",
+                  "code": "plan_upgrade_required",
+                  "feature": "case_management",
+                  "product": "identity",
+                  "required_plan": "growth",
+                  "current_plan": "free",
+                  "upgrade_url": "https://business.didit.me/console/6f1b0c2e-1a44-4c3f-9d33-8f0f4a0a1f3e/settings/billing/plans?product=identity&plan=growth",
+                  "teaser": null
+                }
+              },
+              "Cases not released for the organization": {
+                "summary": "Released per organization, so no upgrade opens it",
+                "value": {
+                  "detail": "Case management is not available for this organization yet.",
+                  "code": "plan_upgrade_required",
+                  "feature": "case_management",
+                  "product": "identity",
+                  "required_plan": "growth",
+                  "current_plan": "scale",
+                  "upgrade_url": "https://business.didit.me/console/6f1b0c2e-1a44-4c3f-9d33-8f0f4a0a1f3e/settings/billing/plans?product=identity&plan=growth",
+                  "teaser": null
+                }
+              },
+              "Routing rules are Scale's": {
+                "summary": "A Growth organization saving a routing rule",
+                "value": {
+                  "detail": "Case routing is available on the Scale plan.",
+                  "code": "plan_upgrade_required",
+                  "feature": "case_routing",
+                  "product": "identity",
+                  "required_plan": "scale",
+                  "current_plan": "growth",
+                  "upgrade_url": "https://business.didit.me/console/6f1b0c2e-1a44-4c3f-9d33-8f0f4a0a1f3e/settings/billing/plans?product=identity&plan=scale",
+                  "teaser": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "CaseBlueprintsForbidden": {
+        "description": "The credential cannot write blueprints, or the plan or the release does not include Cases, or the request would create more blueprints than the plan includes (none on Free, one on Growth, any number from Scale). `code` tells the plan refusal from the limit.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CaseBlueprintsForbiddenError"
+            },
+            "examples": {
+              "Missing privilege": {
+                "summary": "Missing privilege",
+                "value": {
+                  "detail": "You do not have permission to perform this action."
+                }
+              },
+              "Plan or release does not include Cases": {
+                "summary": "A Free organization",
+                "value": {
+                  "detail": "This is available on the Growth plan.",
+                  "code": "plan_upgrade_required",
+                  "feature": "case_management",
+                  "product": "identity",
+                  "required_plan": "growth",
+                  "current_plan": "free",
+                  "upgrade_url": "https://business.didit.me/console/6f1b0c2e-1a44-4c3f-9d33-8f0f4a0a1f3e/settings/billing/plans?product=identity&plan=growth",
+                  "teaser": null
+                }
+              },
+              "Second blueprint on Growth": {
+                "value": {
+                  "detail": "Growth includes 1 case blueprint. Upgrade to Scale to create more.",
+                  "code": "plan_limit_exceeded",
+                  "limit": {
+                    "product": "identity",
+                    "current_plan": "growth",
+                    "required_plan": "scale",
+                    "limit": "case_blueprints",
+                    "max_blueprints": 1,
+                    "blueprints": 1
+                  },
+                  "feature": "case_blueprints",
+                  "product": "identity",
+                  "required_plan": "scale",
+                  "current_plan": "growth",
+                  "upgrade_url": "https://business.didit.me/console/6f1b0c2e-1a44-4c3f-9d33-8f0f4a0a1f3e/settings/billing/plans?product=identity&plan=scale"
                 }
               }
             }
