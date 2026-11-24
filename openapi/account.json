@@ -29,7 +29,7 @@
     "/programmatic/register/": {
       "post": {
         "summary": "Register Account",
-        "description": "Step 1 of programmatic onboarding. Creates a pending account and emails a 6-char code (10 min TTL). The address is checked before any account is created: one that cannot receive the code returns 400 `email_undeliverable`. Rate limits: 5/IP/hour, plus a shared hourly budget per network (/24 for IPv4, /64 for IPv6).",
+        "description": "Step 1 of programmatic onboarding. Creates a pending account and emails a 6-char code (10 min TTL). The address is checked before any account is created: one that cannot receive the code returns 400 `email_undeliverable`. Rate limits: 5/IP/hour, plus a shared hourly budget per network (/24 for IPv4, /64 for IPv6).\n\nRegister with the mailbox address without a `+tag`. If normalization removes a tag (for example, `you+test@yourdomain.com` becomes `you@yourdomain.com`), registration returns 400 with an `email` field error naming that address, before looking up an account. The response is the same whether the account exists or not. No account is created or changed and no code is sent. Only explicitly configured staging test mailboxes keep their tags; production does not allow this exception.",
         "operationId": "programmatic_register",
         "x-didit-sdk": {
           "resource": "account",
@@ -104,7 +104,7 @@
             }
           },
           "400": {
-            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level errors and `{\"detail\": \"...\"}` for business-rule errors (e.g. duplicate email). Password-strength rules currently respond with a bare array `[\"...\"]`, one rule at a time -- known server-side inconsistency; treat it as `{\"password\": [\"...\"]}` until fixed. When the address cannot receive the code (disposable, reserved or test domain, no mail server, a likely typo, or a previously bounced address), the body is `EmailUndeliverableError` with `code: \"email_undeliverable\"`; no account is created or changed.",
+            "description": "Validation error. The intended envelope is `{\"field\": [\"...\"]}` for field-level errors and `{\"detail\": \"...\"}` for business-rule errors (e.g. duplicate email). Password-strength rules currently respond with a bare array `[\"...\"]`, one rule at a time -- known server-side inconsistency; treat it as `{\"password\": [\"...\"]}` until fixed. When the address cannot receive the code (disposable, reserved or test domain, no mail server, a likely typo, or a previously bounced address), the body is `EmailUndeliverableError` with `code: \"email_undeliverable\"`; no account is created or changed. A tagged address whose tag would be removed returns a field-level `email` error; use the mailbox address named in the message.",
             "content": {
               "application/json": {
                 "schema": {
@@ -190,6 +190,14 @@
                       "code": "email_undeliverable",
                       "reason": "possible_typo",
                       "suggestion": "gmail.com"
+                    }
+                  },
+                  "PlusTagNotSupported": {
+                    "summary": "Tagged registration address (you+test@yourdomain.com)",
+                    "value": {
+                      "email": [
+                        "Didit accounts are one per mailbox, so a +tag is not part of the address: mail goes to you@yourdomain.com. Sign in with that address, or register it if you have not finished signing up."
+                      ]
                     }
                   }
                 }
@@ -2075,7 +2083,7 @@
         "tags": [
           "Programmatic Auth"
         ],
-        "description": "Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.\n\nRate limits: a per-email cooldown of 60 seconds between resends (HTTP 429 with `Retry-After`), and the same 5-per-IP-per-hour and per-network hourly budgets as registration.",
+        "description": "Resend the 6-character verification code for an unverified programmatic account. Requires the account's email and password so only the owner can trigger a new code (no console Basic Auth). A fresh code replaces the previous one and is valid for 10 minutes.\n\nRate limits: a per-email cooldown of 60 seconds between resends (HTTP 429 with `Retry-After`), and the same 5-per-IP-per-hour and per-network hourly budgets as registration.\n\nThe password is required on every resend request. Omitting it returns HTTP 400 with {\"password\": [\"This field is required.\"]}; no code is sent.",
         "requestBody": {
           "required": true,
           "content": {
@@ -2138,7 +2146,7 @@
             }
           },
           "400": {
-            "description": "Invalid email/password, or the email is already verified.",
+            "description": "Missing required email or password, invalid email/password, or the email is already verified.",
             "content": {
               "application/json": {
                 "examples": {
@@ -2150,6 +2158,14 @@
                   "Already verified": {
                     "value": {
                       "detail": "This email address is already verified."
+                    }
+                  },
+                  "MissingPassword": {
+                    "summary": "Password omitted",
+                    "value": {
+                      "password": [
+                        "This field is required."
+                      ]
                     }
                   }
                 }
@@ -5699,7 +5715,7 @@
           "email": {
             "type": "string",
             "format": "email",
-            "description": "Any valid email address (personal, work, alias). Used as the unique account identifier.",
+            "description": "A real, deliverable mailbox address without a +tag, used as the unique account identifier. Registration rejects tags that normalization would remove, with a 400 email field error naming the canonical address. Only explicitly configured staging test mailboxes retain tags.",
             "example": "you@yourdomain.com"
           },
           "password": {

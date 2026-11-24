@@ -47536,7 +47536,7 @@
       },
       "post": {
         "summary": "Create case",
-        "description": "Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed. An explicit subject is required whenever links includes a network.",
+        "description": "Create a case anchored to exactly one subject (a user or a business), directly or by deriving the subject from an attached session/transaction link. Source is always `MANUAL` for API-created cases. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed. An explicit subject is required whenever links includes a network. Every linked session, business session and transaction must belong to this application and not be deleted, whether or not review_duplicates is set; otherwise the request answers 404 and no case is created.",
         "operationId": "create_case",
         "x-didit-sdk": {
           "resource": "cases",
@@ -47732,6 +47732,21 @@
               "application/json": {
                 "schema": {
                   "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A linked session, business session or transaction was not found in this application (unknown, deleted or owned by another application). The answer is the same in all three cases. No case was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -49108,7 +49123,7 @@
     "/v3/organization/{organization_id}/application/{application_id}/cases/{case_uuid}/approve/": {
       "post": {
         "summary": "Approve staged resolution (4-eyes)",
-        "description": "Apply a resolution staged by resolve on a four-eyes blueprint. The caller must be a different officer than the one who submitted it, otherwise 403. When the resolution names a checker (the case's `checker`), only that member can approve it: any other caller, including an API key, gets 403.",
+        "description": "Apply a resolution staged by resolve on a four-eyes blueprint. Only a different signed-in person can approve: the officer who submitted the resolution gets 403, and an API key or MCP token acting as the application always gets 403 with code `human_approver_required`, leaving the case unchanged. When the resolution names a checker (the case's `checker`), only that member can approve it. A successful approval records the approver's email and name on the case's APPROVAL_GRANTED event.\n\n**Authentication:** a signed-in console member's access token (`Authorization: Bearer ...`) carrying the `write:cases` permission. The application's own credential — an API key in `x-api-key` or an MCP token — may stage a resolution with resolve but can never approve one: every such call returns 403 `human_approver_required`, so an approval always names the person who gave it. The SDK samples below build an application client, so they receive that 403; the console-user cURL sample shows the call that succeeds.",
         "operationId": "approve_case_resolution",
         "x-didit-sdk": {
           "resource": "cases",
@@ -49159,7 +49174,12 @@
         "x-codeSamples": [
           {
             "lang": "curl",
-            "label": "curl",
+            "label": "curl (console user)",
+            "source": "curl -X POST 'https://verification.didit.me/v3/organization/11111111-2222-3333-4444-555555555555/application/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/cases/c1a5e000-0000-4000-8000-000000000001/approve/' \\\n  -H 'Authorization: Bearer YOUR_CONSOLE_USER_TOKEN'"
+          },
+          {
+            "lang": "curl",
+            "label": "curl (API key)",
             "source": "curl -X POST 'https://verification.didit.me/v3/organization/11111111-2222-3333-4444-555555555555/application/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/cases/c1a5e000-0000-4000-8000-000000000001/approve/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
           },
           {
@@ -49225,7 +49245,7 @@
             }
           },
           "403": {
-            "description": "The caller cannot approve this resolution: they submitted it, the case has no recorded maker, or the resolution names a different checker. An API key always gets this 403 when a checker is named.",
+            "description": "The caller cannot approve this resolution. An API key or MCP token acting as the application always gets this 403, with code `human_approver_required`, because four eyes needs a different signed-in person. A person gets it when they submitted the resolution, when the case has no recorded maker, or when the resolution names a different checker.",
             "content": {
               "application/json": {
                 "schema": {
@@ -49233,10 +49253,20 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "`human_approver_required` when an API key or MCP token tried to approve; other refusals carry only `detail`."
                     }
                   }
                 },
                 "examples": {
+                  "An API key or MCP token": {
+                    "value": {
+                      "detail": "Only a different signed-in person can approve a case resolution. API keys and MCP tokens cannot.",
+                      "code": "human_approver_required"
+                    }
+                  },
                   "Caller submitted the resolution": {
                     "value": {
                       "detail": "The officer who submitted the resolution cannot approve it."
@@ -49258,6 +49288,9 @@
           }
         },
         "security": [
+          {
+            "ConsoleUserAuth": []
+          },
           {
             "ApiKeyAuth": []
           }
@@ -50615,7 +50648,7 @@
       },
       "post": {
         "summary": "Add case link",
-        "description": "Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case. Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.",
+        "description": "Attach a session, business session, transaction, or network to the case. Rejected with 400 if the entity belongs to a different subject than the case, and with 404 if the case, or the session, business session or transaction, is not found in this application (unknown, deleted or owned by another application). Network links require write:cases plus read:networks, Networks access and investigation access for the network scope. The network must be visible and contain the case subject. Manually adding links to network-generated cases is not allowed.",
         "operationId": "create_case_link",
         "x-didit-sdk": {
           "resource": "cases.links",
@@ -50732,6 +50765,21 @@
           },
           "400": {
             "description": "Entity belongs to a different profile than the case subject. Network links require a selected member subject and a visible network.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The case, or the linked session, business session or transaction, was not found in this application (unknown, deleted or owned by another application). The answer is the same in all three cases. No link was created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -166129,6 +166177,11 @@
         "in": "header",
         "name": "X-Case-Request-Token",
         "description": "Request-specific credential from the secure link. Grants access only to this request."
+      },
+      "ConsoleUserAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A signed-in console member's access token, sent as `Authorization: Bearer <token>`. The token must carry the `write:cases` permission. An application API key or MCP token cannot approve a case resolution."
       }
     },
     "responses": {
