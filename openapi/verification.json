@@ -16389,7 +16389,7 @@
     "/v3/phone/send/": {
       "post": {
         "summary": "Send Phone Code",
-        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Verification state is keyed by your application plus the E.164 `phone_number` — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same number and the code the user received before the window closes. Calling send again for the same number while a verification is pending re-sends a code for that same verification (`status: \"Retry\"`, same `request_id`). At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no message is sent and nothing is persisted. Use code `123456` on the sandbox check.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
+        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Verification state is keyed by your application plus the E.164 `phone_number` — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same number and the code the user received before the window closes. Calling send again for the same number while a verification is pending re-sends a code for that same verification (`status: \"Retry\"`, same `request_id`). At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Fixed lines.** A fixed line takes no SMS. When `options.preferred_channel` is `sms` and the number is a fixed line (not a mobile, VoIP, toll-free or premium-rate number) in a destination where Didit delivers codes by voice, a new send places a call that reads the code aloud instead of sending an SMS, and the send is priced and checked against your balance as a voice code (one minute of call at the carrier's voice rate for the country plus the Didit fee; see [Phone Verification Pricing](/getting-started/phone-verification-pricing)). The call goes through the same abuse protections as other voice codes, so Didit may not place it: for a number an earlier call found unallocated, or for a destination where your recent landline calls rarely reach a line. The code then goes out the way it would have without the conversion. Nothing is converted for a send that repeats or reuses the pending code, when your routing settings do not allow voice, or in a sandbox application. The response `channel` is `voice` when the call is placed.\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no message is sent and nothing is persisted. Use code `123456` on the sandbox check.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
         "operationId": "post_v3phone_send",
         "x-didit-sdk": {
           "resource": "phone",
@@ -16485,7 +16485,7 @@
                           "zalo"
                         ],
                         "default": "whatsapp",
-                        "description": "Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS — the send still reports `Success`."
+                        "description": "Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS — the send still reports `Success`. A new `sms` send to a fixed line is read out in a call instead only under the conditions in **Fixed lines** in the operation description: it never applies to a send that repeats or reuses the pending code, to a destination without voice delivery, when your routing settings do not allow voice, or in a sandbox application."
                       },
                       "use_white_label_customization": {
                         "type": "boolean",
@@ -16624,6 +16624,7 @@
                     "value": {
                       "request_id": "e39cb057-92fc-4b59-b84e-02fec29a0f24",
                       "status": "Success",
+                      "channel": null,
                       "reason": null,
                       "vendor_data": "user-1234",
                       "metadata": null
@@ -16634,6 +16635,7 @@
                     "value": {
                       "request_id": "e39cb057-92fc-4b59-b84e-02fec29a0f24",
                       "status": "Retry",
+                      "channel": null,
                       "reason": null,
                       "vendor_data": "user-1234",
                       "metadata": null
@@ -16644,7 +16646,19 @@
                     "value": {
                       "request_id": "0d8af1f4-0c43-46d7-b75c-6e4e22c0a7b3",
                       "status": "Blocked",
+                      "channel": "sms",
                       "reason": "repeated_attempts",
+                      "vendor_data": "user-1234",
+                      "metadata": null
+                    }
+                  },
+                  "Fixed line read out in a call": {
+                    "summary": "An SMS requested for a fixed line is read out in a call",
+                    "value": {
+                      "request_id": "5d1b3c70-8e24-4a6f-9b1d-3c7e0a2f4b68",
+                      "status": "Success",
+                      "channel": "voice",
+                      "reason": null,
                       "vendor_data": "user-1234",
                       "metadata": null
                     }
@@ -113852,6 +113866,12 @@
               "Blocked"
             ],
             "description": "`Success` — OTP sent to a new verification. `Retry` — OTP re-sent for the pending verification created by a previous send. `Blocked` — the anti-fraud layer refused to send; the verification is immediately finalized as `Declined` and nothing is billed."
+          },
+          "channel": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel the code went out on, `voice` when a call reads it, or `null` when the delivery channel is not confirmed, for example when the carrier delivers the message without saying which channel carried it. A `Blocked` send returns the channel you asked for. A send that reuses the pending code returns the channel that code went out on.",
+            "example": "voice"
           },
           "reason": {
             "type": "string",

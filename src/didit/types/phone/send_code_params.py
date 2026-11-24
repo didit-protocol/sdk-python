@@ -18,7 +18,7 @@ class PhoneSendCodeParamsOptions(TypedDict, total=False):
     """BCP-47 locale used to localize the verification message (e.g., `en-US`, `fr`, `es`). Invalid formats return `400`."""
 
     preferred_channel: Literal["whatsapp", "sms", "telegram", "voice", "rcs", "viber", "zalo"] | str
-    """Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS - the send still reports `Success`."""
+    """Preferred delivery channel. If the channel is unavailable for the destination country or number, the message automatically falls back to SMS - the send still reports `Success`. A new `sms` send to a fixed line is read out in a call instead only under the conditions in **Fixed lines** in the operation description: it never applies to a send that repeats or reuses the pending code, to a destination without voice delivery, when your routing settings do not allow voice, or in a sandbox application."""
 
     use_white_label_customization: bool
     """When `true`, the send is white-labelled: if your application has no SMS sender name, the SMS names your white-label public name instead ("123456 is your verification code for Acme Bank"). Your SMS sender name, when set, is used with or without this flag. Applies to SMS messages, including an SMS fallback from another channel; WhatsApp codes are sent with a fixed message and are not branded. Defaults to `false`."""

@@ -15,6 +15,9 @@ class PhoneVerificationSendResponse(BaseModel):
     status: Literal["Success", "Retry", "Blocked"] | str | None = None
     """`Success` - OTP sent to a new verification. `Retry` - OTP re-sent for the pending verification created by a previous send. `Blocked` - the anti-fraud layer refused to send; the verification is immediately finalized as `Declined` and nothing is billed."""
 
+    channel: str | None = None
+    """The channel the code went out on, `voice` when a call reads it, or `null` when the delivery channel is not confirmed, for example when the carrier delivers the message without saying which channel carried it. A `Blocked` send returns the channel you asked for. A send that reuses the pending code returns the channel that code went out on."""
+
     reason: str | None = None
     """Why a send was `Blocked` (e.g., `repeated_attempts`, `suspicious`, `spam`). `null` on `Success` and `Retry`."""
 
