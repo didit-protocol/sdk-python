@@ -19,10 +19,11 @@ class BankSimulateLinkParams(TypedDict, total=False):
             "pending",
             "sparse_fields",
             "no_ongoing",
+            "multi_currency",
         ]
         | str
     )
-    """The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open)."""
+    """The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day), `no_ongoing` (a bank that cannot keep access open) or `multi_currency` (an EUR and a USD account on one IBAN; the connection keeps both, with one `account_ref` and a different `id` and `currency` each)."""
 
     outcome: (
         Literal[

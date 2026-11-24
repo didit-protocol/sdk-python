@@ -338,6 +338,7 @@ class Bank(SyncAPIResource):
             "pending",
             "sparse_fields",
             "no_ongoing",
+            "multi_currency",
         ]
         | str
         | NotGiven = NOT_GIVEN,
@@ -384,7 +385,7 @@ class Bank(SyncAPIResource):
 
         Args:
           id: The link id.
-          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open).
+          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day), `no_ongoing` (a bank that cannot keep access open) or `multi_currency` (an EUR and a USD account on one IBAN; the connection keeps both, with one `account_ref` and a different `id` and `currency` each).
           outcome: How the link ends.
           error_code: The failure the link records. Only accepted with `outcome: failed`, where it defaults to `bank_unavailable`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
@@ -1552,6 +1553,7 @@ class AsyncBank(AsyncAPIResource):
             "pending",
             "sparse_fields",
             "no_ongoing",
+            "multi_currency",
         ]
         | str
         | NotGiven = NOT_GIVEN,
@@ -1598,7 +1600,7 @@ class AsyncBank(AsyncAPIResource):
 
         Args:
           id: The link id.
-          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day) or `no_ongoing` (a bank that cannot keep access open).
+          persona: The Test Bank customer who signs in: `personal_basic` (one current account), `business_multi` (several business accounts), `long_history` (a long transaction history), `pending` (pending rows), `sparse_fields` (transactions with fields missing, one automatic sync a day), `no_ongoing` (a bank that cannot keep access open) or `multi_currency` (an EUR and a USD account on one IBAN; the connection keeps both, with one `account_ref` and a different `id` and `currency` each).
           outcome: How the link ends.
           error_code: The failure the link records. Only accepted with `outcome: failed`, where it defaults to `bank_unavailable`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.

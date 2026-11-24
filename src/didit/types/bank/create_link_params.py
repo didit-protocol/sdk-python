@@ -23,11 +23,12 @@ class BankCreateLinkParamsSandbox(TypedDict, total=False):
             "pending",
             "sparse_fields",
             "no_ongoing",
+            "multi_currency",
             "requires_email",
         ]
         | str
     )
-    """The Test Bank customer: `personal_basic` (one current account, 60 movements), `business_multi` (three accounts held by a company), `long_history` (one account with 400 days and 1,400 movements; a read returns the last 365 days, so set `history_days` to 365), `pending` (includes pending transactions), `sparse_fields` (no value date, no counterparty IBAN, no bank reference) or `no_ongoing` (a bank that only allows one-time access: use `allow_one_time_fallback`). `requires_email`: the Test Bank behaves as a bank that needs the person's email, so the link asks for an email address and a code before the bank. In sandbox no email is sent and the code is always `123456`; ignored for live applications."""
+    """The Test Bank customer: `personal_basic` (one current account, 60 movements), `business_multi` (three accounts held by a company), `long_history` (one account with 400 days and 1,400 movements; a read returns the last 365 days, so set `history_days` to 365), `pending` (includes pending transactions), `sparse_fields` (no value date, no counterparty IBAN, no bank reference), `no_ongoing` (a bank that only allows one-time access: use `allow_one_time_fallback`) or `multi_currency` (one multi-currency account that the bank lists as an EUR and a USD account on the same IBAN; a link that selects both stores both, and they share one `account_ref` and differ by `id` and `currency`). `requires_email`: the Test Bank behaves as a bank that needs the person's email, so the link asks for an email address and a code before the bank. In sandbox no email is sent and the code is always `123456`; ignored for live applications."""
 
     switches: Sequence[
         Literal[
