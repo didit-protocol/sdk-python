@@ -261,6 +261,7 @@ def test_phone_send_code() -> None:
             response_json={
                 "request_id": "e39cb057-92fc-4b59-b84e-02fec29a0f24",
                 "status": "Success",
+                "channel": None,
                 "reason": None,
                 "vendor_data": "user-1234",
                 "metadata": None,
