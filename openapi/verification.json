@@ -16389,7 +16389,7 @@
     "/v3/phone/send/": {
       "post": {
         "summary": "Send Phone Code",
-        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Verification state is keyed by your application plus the E.164 `phone_number` — the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same number and the code the user received before the window closes. Calling send again for the same number while a verification is pending re-sends a code for that same verification (`status: \"Retry\"`, same `request_id`). At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Fixed lines.** A fixed line takes no SMS. When `options.preferred_channel` is `sms` and the number is a fixed line (not a mobile, VoIP, toll-free or premium-rate number) in a destination where Didit delivers codes by voice, a new send places a call that reads the code aloud instead of sending an SMS, and the send is priced and checked against your balance as a voice code (one minute of call at the carrier's voice rate for the country plus the Didit fee; see [Phone Verification Pricing](/getting-started/phone-verification-pricing)). The call goes through the same abuse protections as other voice codes, so Didit may not place it: for a number an earlier call found unallocated, or for a destination where your recent landline calls rarely reach a line. The code then goes out the way it would have without the conversion. Nothing is converted for a send that repeats or reuses the pending code, when your routing settings do not allow voice, or in a sandbox application. The response `channel` is `voice` when the call is placed.\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no message is sent and nothing is persisted. Use code `123456` on the sandbox check.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
+        "description": "Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).\n\n**How send and check pair up.** Send the same E.164 `phone_number` and the code to check the latest pending verification of that number in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. The verification window defaults to **5 minutes**. Calling send again for the same number while a verification is pending follows `on_conflict`: by default (`replace`) it starts a fresh verification with a new `request_id`; `retry` re-sends a code for the same verification (`status: \"Retry\"`, same `request_id` and `verification_id`), at most twice (three sends total, the first included, shared with `POST /v3/phone/verifications/{verification_id}/retry/`); `reuse` returns the pending verification without sending; `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code. A same-window retry keeps the expiry from the first send.\n\n**Conflict, challenge and code options.** `on_conflict` picks what happens while a code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window, up to two retries (three sends total, the first included), and `reject` answers `409 verification_in_progress`. `force_challenge` restricts the send to `fraud.channels_allowed` and records the challenge as yours, not as fraud. `trusted_user` needs a `fraud_override` signed for this number with your application's webhook signing secret; an unsigned or wrongly signed one returns `403 invalid_fraud_override`. `code` sets your own 4 to 10 letter-and-digit code and `code_length` the length of a Didit-made numeric code; `code` wins over `code_length`, and `code_length` wins over `options.code_size`.\n\n**Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS — the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).\n\n**Fixed lines.** A fixed line takes no SMS. When `options.preferred_channel` is `sms` and the number is a fixed line (not a mobile, VoIP, toll-free or premium-rate number) in a destination where Didit delivers codes by voice, a new send places a call that reads the code aloud instead of sending an SMS, and the send is priced and checked against your balance as a voice code (one minute of call at the carrier's voice rate for the country plus the Didit fee; see [Phone Verification Pricing](/getting-started/phone-verification-pricing)). The call goes through the same abuse protections as other voice codes, so Didit may not place it: for a number an earlier call found unallocated, or for a destination where your recent landline calls rarely reach a line. The code then goes out the way it would have without the conversion. Nothing is converted for a send that repeats or reuses the pending code, when your routing settings do not allow voice, or in a sandbox application. The response `channel` is `voice` when the call is placed.\n\n**Branding.** SMS codes carry your application's SMS sender name, set in the Business Console, at no extra cost. Pass `options.sms_sender_name` to sign one code with another name, or `options.use_white_label_customization: true` to fall back to your white-label public name when no sender name is set. WhatsApp codes use a fixed message; connect your own WhatsApp Business number in the Business Console to send them from your business name and number, billed at the Didit fee only.\n\n**Send statuses.** `Success` — OTP sent for a new verification; `Retry` — OTP re-sent for the pending verification; `Blocked` — the anti-fraud layer refused to send (see `reason`, e.g. `repeated_attempts`, `suspicious`, `spam`). A `Blocked` send immediately finalizes the verification as `Declined` with a high-risk warning, so a follow-up check returns `Expired or Not Found`.\n\n**Billing.** The price depends on the destination country and the channel that actually delivers the message — see [Phone Verification Pricing](/getting-started/phone-verification-pricing). Only `Blocked` sends are guaranteed free: any other unbilled send attempt is charged at verification finalization or expiration, even if delivery was never confirmed or the delivery provider reported the message undeliverable. Checks are always free. As an anti-abuse measure, phone verification is disabled until your organization has a paid plan or makes its first top-up (`403`).\n\n**Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.\n\n**Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.",
         "operationId": "post_v3phone_send",
         "x-didit-sdk": {
           "resource": "phone",
@@ -16562,6 +16562,47 @@
                     "type": "object",
                     "nullable": true,
                     "description": "Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Supply 4 to 10 letters and digits, such as K7P2QX. Letters match in either case. Your code takes precedence over `code_length` and `options.code_size`. Choose a channel that supports caller-supplied codes, such as WhatsApp. If the allowed channels cannot carry your code, the send returns `400 custom_code_unavailable`.",
+                    "minLength": 4,
+                    "maxLength": 10,
+                    "pattern": "^[A-Za-z0-9]{4,10}$",
+                    "example": "K7P2QX"
+                  },
+                  "code_length": {
+                    "type": "integer",
+                    "description": "4 to 10 digits, for this request. Wins over `options.code_size` when both are sent; ignored when `code` is sent.",
+                    "minimum": 4,
+                    "maximum": 10
+                  },
+                  "on_conflict": {
+                    "type": "string",
+                    "description": "A code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window (up to two retries, three sends total), `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code.",
+                    "enum": [
+                      "replace",
+                      "reuse",
+                      "retry",
+                      "reject"
+                    ],
+                    "default": "replace"
+                  },
+                  "trusted_user": {
+                    "type": "boolean",
+                    "description": "Your server vouches for this user: this one request goes past your fraud rules (velocity limits, risk score, network blocks, policies). Needs a `fraud_override` signed for it; a block list still stops the number.",
+                    "default": false,
+                    "example": false
+                  },
+                  "force_challenge": {
+                    "type": "boolean",
+                    "description": "Your server asks for a challenge on this request: Didit uses only fraud-resistant channels (`fraud.channels_allowed`) and records it as challenged by you; it is not reported or scored as fraud.",
+                    "default": false,
+                    "example": false
+                  },
+                  "fraud_override": {
+                    "type": "string",
+                    "description": "A token signed for this phone number and expiry, in the form `v1.<expires_at>.<signature>`. `<expires_at>` is the Unix time in seconds, at most 5 minutes ahead. `<signature>` is the base64url encoding, without padding, of the HMAC-SHA256 of the UTF-8 string `v1\\n<phone_number>\\n<expires_at>` (the number in E.164 format, with a newline between each value), keyed with your application's webhook signing secret. It lets the request past a temporary network block, or with `trusted_user` past your fraud rules. An unsigned token, a past expiry, a wrong signature or one signed for another number is refused with `403 invalid_fraud_override`."
                   }
                 },
                 "required": [
@@ -16627,7 +16668,8 @@
                       "channel": null,
                       "reason": null,
                       "vendor_data": "user-1234",
-                      "metadata": null
+                      "metadata": null,
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"
                     }
                   },
                   "Retry": {
@@ -16638,7 +16680,8 @@
                       "channel": null,
                       "reason": null,
                       "vendor_data": "user-1234",
-                      "metadata": null
+                      "metadata": null,
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"
                     }
                   },
                   "Blocked": {
@@ -16649,7 +16692,8 @@
                       "channel": "sms",
                       "reason": "repeated_attempts",
                       "vendor_data": "user-1234",
-                      "metadata": null
+                      "metadata": null,
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"
                     }
                   },
                   "Fixed line read out in a call": {
@@ -16668,7 +16712,7 @@
             }
           },
           "400": {
-            "description": "Validation error. Malformed input returns DRF's field-error envelope (one array of messages per offending field, nested under `options` for option errors). A number that parses but is rejected at send time (unreachable, or an ineligible line type such as a short code) returns a `{\"detail\": ...}` envelope instead.",
+            "description": "Invalid fields return an array of messages per field. Errors for delivery options appear under `options`. If the number is unreachable or its line type cannot receive codes, `detail` explains why. An invalid caller-supplied code returns `invalid_code`. If the allowed channels cannot deliver that code, the response returns `custom_code_unavailable`. `phone_destination_unsupported`: Phone verification is not offered in the number's destination (the answer names it in `destination`); retrying cannot change that. A sandbox send answers the same refusals as a live one.",
             "content": {
               "application/json": {
                 "examples": {
@@ -16715,22 +16759,24 @@
                     "value": {
                       "detail": "Invalid phone line type provided."
                     }
+                  },
+                  "Unsupported destination": {
+                    "summary": "Phone verification is not offered in the destination",
+                    "value": {
+                      "code": "phone_destination_unsupported",
+                      "detail": "Phone verification is not available for numbers from Myanmar.",
+                      "destination": "Myanmar"
+                    }
                   }
                 }
               }
             }
           },
           "403": {
-            "description": "Permission denied. Returned when the `x-api-key` header is missing (`{\"detail\": ...}`); a wrong, revoked or expired key returns `401`. Also returned before any send when the organization has never topped up (anti-abuse gate) or when the credit that may pay it cannot cover the destination's send price: paid credit, plus what this month's free credit has left of its Phone allowance (`{\"error\": ...}`).",
+            "description": "Permission denied. Returned when the `x-api-key` header is missing (`{\"detail\": ...}`);  Also returned before any send when the organization has never topped up (anti-abuse gate) or when the credit that may pay it cannot cover the destination's send price: paid credit, plus what this month's free credit has left of its Phone allowance (`{\"error\": ...}`). `invalid_fraud_override`: `trusted_user` without a `fraud_override`, or one that is expired or signed for another number.",
             "content": {
               "application/json": {
                 "examples": {
-                  "Missing or invalid API key": {
-                    "summary": "No `x-api-key` header, or the key is invalid/revoked",
-                    "value": {
-                      "detail": "You do not have permission to perform this action."
-                    }
-                  },
                   "Top-up required": {
                     "summary": "Phone verification stays disabled until the organization has a paid plan or makes its first top-up",
                     "value": {
@@ -16742,13 +16788,19 @@
                     "value": {
                       "error": "You don't have enough credits to perform this request. Please top up at https://business.didit.me"
                     }
+                  },
+                  "Missing API key": {
+                    "summary": "The request has no x-api-key header",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
                   }
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit exceeded. POST/PATCH/DELETE endpoints share a budget of 300 write requests per minute per API key (transaction creates and event ingestion have a separate budget of 600). Additionally, an anti-abuse cap of 4 verification attempts per phone number per hour applies upstream. The response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, and `Retry-After` headers. Note: the `X-RateLimit-*`/`Retry-After` headers accompany only the 300/min write-limit 429; the per-number cap 429 carries no rate-limit headers. The reference, limit, remaining, reset and window_seconds fields apply only to middleware budget refusals, not to the endpoint-specific cap.",
+            "description": "Rate limit exceeded. POST/PATCH/DELETE endpoints share a budget of 300 write requests per minute per API key (transaction creates and event ingestion have a separate budget of 600). Additionally, an anti-abuse cap of 4 verification attempts per phone number per hour applies upstream. The response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, and `Retry-After` headers. Note: the `X-RateLimit-*`/`Retry-After` headers accompany only the 300/min write-limit 429; the per-number cap 429 carries no rate-limit headers. The reference, limit, remaining, reset and window_seconds fields apply only to middleware budget refusals, not to the endpoint-specific cap. With `on_conflict: \"retry\"`, a pending verification that already used its three sends returns `max_sends_reached`. The application's hourly resend limit for the number returns `velocity_limit` with `retry_after`, the seconds to wait, in the body.",
             "content": {
               "application/json": {
                 "examples": {
@@ -16768,6 +16820,21 @@
                       "reset": 1794358860,
                       "window_seconds": 60
                     }
+                  },
+                  "max_sends_reached": {
+                    "summary": "A retry of a verification that already used its three sends",
+                    "value": {
+                      "code": "max_sends_reached",
+                      "detail": "Three sends of the same code is the most in one window."
+                    }
+                  },
+                  "velocity_limit": {
+                    "summary": "The number reached the application's hourly resend limit",
+                    "value": {
+                      "code": "velocity_limit",
+                      "detail": "This number reached its resend limit for the hour.",
+                      "retry_after": 1260
+                    }
                   }
                 },
                 "schema": {
@@ -16777,6 +16844,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/PhoneAttemptLimitError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PhoneSendThrottleError"
                     }
                   ]
                 }
@@ -16849,6 +16919,102 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApiError"
+                },
+                "examples": {
+                  "Invalid key": {
+                    "value": {
+                      "detail": "Authentication credentials were not provided or are invalid."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "With `reject`, a pending verification returns `verification_in_progress`. A same-window retry can return `code_not_resendable` if Didit cannot repeat the last code, or `custom_code_not_resendable` if the pending code was yours and you omitted it from the request. `already_final`: a repeated or reused verification ended while the send was with the provider, so no code is usable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "detail"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "verification_in_progress",
+                        "already_final",
+                        "code_not_resendable",
+                        "custom_code_not_resendable"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "code": "verification_in_progress",
+                  "detail": "A code is still valid for this phone number."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`no_challenge_channel`: `force_challenge` is set and no allowed channel resists fraud for this number.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "detail"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "no_challenge_channel"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "code": "no_challenge_channel",
+                  "detail": "No allowed channel resists fraud for this phone number."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`phone_send_unavailable`: Didit could not tell whether another send of this number is under way. Nothing was sent and no verification started; retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApiError"
+                },
+                "examples": {
+                  "Unavailable": {
+                    "value": {
+                      "detail": "Phone verification is temporarily unavailable. Please try again shortly.",
+                      "code": "phone_send_unavailable"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16866,7 +17032,7 @@
     "/v3/phone/check/": {
       "post": {
         "summary": "Check Phone Code",
-        "description": "Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.\n\n**How the check finds the verification.** Matching is by your application plus the E.164 `phone_number` — `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, or older than 5 minutes) the endpoint returns `200` with `status: \"Expired or Not Found\"`.\n\n**Attempt budget.** Each verification allows **3 code attempts**. The first two wrong codes return `status: \"Failed\"` with the attempts remaining and `phone: null`; the third wrong code finalizes the verification as `Declined` with a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning and returns the full phone report.\n\n**Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.\n\n**Risk actions.** `duplicated_phone_number_action`, `disposable_number_action`, and `voip_number_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `phone.warnings` without affecting the status.\n\n**Billing.** Checks are free — delivery is billed on the send side (see [Phone Verification Pricing](/getting-started/phone-verification-pricing)).\n\n**Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.\n\n**Sandbox.** Sandbox API keys skip all processing: any well-formed code (4–8 digits, `123456` included) returns a static `Approved` payload with a simplified flat `phone` object (`status`, `phone_number`, `country_code`, `carrier_name`, `line_type`, `flags`); malformed input still returns `400`. Nothing is persisted.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{\"detail\": \"You do not have permission to perform this action.\"}`) — this API never returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.\n\n**TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.",
+        "description": "Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.\n\n**How the check finds the verification.** Send the code and the E.164 `phone_number`: the number selects its latest pending verification in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. A finalized or expired verification, or no matching verification, returns `200` with `status: \"Expired or Not Found\"`.\n\n**Attempt budget for delivered codes.** Your application's `verification.max_attempts` setting (3 to 10) sets how many wrong codes a verification takes, and it defaults to 5 on v3. With that default, the first four wrong codes return `Failed` with the attempts remaining and `phone: null`, and the fifth returns `Declined` with the full phone report and a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning. A verification started in a hosted flow uses the workflow's own limit instead.\n\n**Outcomes.** `Approved` — correct code and no declining risk. `Declined` — terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.\n\n**Risk actions.** `duplicated_phone_number_action`, `disposable_number_action`, and `voip_number_action` decide what happens when the corresponding risk is detected on a correct code: `DECLINE` flips the final status to `Declined`; `NO_ACTION` (default) records the risk in `phone.warnings` without affecting the status.\n\n**Billing.** Checks are free — delivery is billed on the send side (see [Phone Verification Pricing](/getting-started/phone-verification-pricing)).\n\n**Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.\n\n**Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.\n\n**Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.\n\n**Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.\n\n**TOTP factors and test numbers.** A request that names a `factor_id` checks that TOTP factor instead of a phone code: the service does not read `phone_number` then, but it stays a required field of the request, so typed SDK calls keep their shape. The answer is the same object with only `verification_id` (the factor), `status` (`verified` or `failed`) and `attempts`; the phone fields (`request_id`, `message`, `phone`, `vendor_data`, `metadata`, `created_at`) come back only from a phone code check. A factor that passes its first check becomes `verified`. A code is accepted once: a code already used for the factor fails. After 3 failed codes in the verification window the answer is `429` with `code: too_many_attempts`. A request that names the `verification_id` of a registration test number checks the code Didit sent to it and answers like a phone code check.",
         "operationId": "post_v3phone_check",
         "x-didit-sdk": {
           "resource": "phone",
@@ -16935,9 +17101,9 @@
                   "code": {
                     "type": "string",
                     "minLength": 4,
-                    "maxLength": 8,
-                    "pattern": "^[0-9]{4,8}$",
-                    "description": "The OTP the end user received. Must be 4–8 numeric digits — anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: \"Failed\"` and consumes one of the 3 attempts.",
+                    "maxLength": 10,
+                    "pattern": "^[A-Za-z0-9]{4,10}$",
+                    "description": "For a delivered code, enter 4 to 10 letters or digits. Letters match in either case. A wrong delivered code consumes one attempt and returns `Failed` while attempts remain or `Declined` on the last attempt.",
                     "example": "123456"
                   },
                   "duplicated_phone_number_action": {
@@ -17033,8 +17199,9 @@
                   "verification_id": {
                     "type": "string",
                     "maxLength": 64,
-                    "description": "Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`.",
-                    "example": "pv_ae4f1a368c7a4d259a493f6b0c2d7e55"
+                    "description": "Check this verification instead of the number's latest one: the `verification_id` a send returned, or the one `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned for a registration test number. Didit takes the number from that verification, so the request's `phone_number` is not used, but it stays a required field. An ID that is not one of your application's checkable verifications is ignored and the check uses the latest pending verification of `phone_number`.",
+                    "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                    "format": "uuid"
                   }
                 },
                 "required": [
@@ -17357,10 +17524,10 @@
               "application/json": {
                 "examples": {
                   "Invalid code format": {
-                    "summary": "`code` is not 4–8 numeric digits",
+                    "summary": "`code` is not 4 to 10 letters or digits",
                     "value": {
                       "code": [
-                        "Invalid code format. Enter 4 to 8 numeric digits."
+                        "Invalid code format. Enter 4 to 10 letters and digits."
                       ]
                     }
                   },
@@ -17402,7 +17569,7 @@
             }
           },
           "403": {
-            "description": "Permission denied. Returned when the `x-api-key` header is missing; a wrong, revoked or expired key returns `401`. The check itself is free; a check that asks for Phone enrichment add-ons is refused (`{\"error\": ...}`) when the account's credit cannot cover them.",
+            "description": "Permission denied. Returned when the `x-api-key` header is missing;  The check itself is free; a check that asks for Phone enrichment add-ons is refused (`{\"error\": ...}`) when the account's credit cannot cover them.",
             "content": {
               "application/json": {
                 "examples": {
@@ -17565,6 +17732,23 @@
                     },
                     "code": {
                       "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApiError"
+                },
+                "examples": {
+                  "Invalid key": {
+                    "value": {
+                      "detail": "Authentication credentials were not provided or are invalid."
                     }
                   }
                 }
@@ -110802,6 +110986,12 @@
                         "description": "SMS only. `true` ends the text with the opt-out line in its language (\"Reply STOP to opt out.\"). STOP and START replies are honoured either way."
                       }
                     }
+                  },
+                  "configuration_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "One of your messaging configurations (`POST /v3/messages/configurations/`): its channel order applies unless this request sets `channels` itself, its status callback URL is used for the message's status events, and its `append_opt_out_line` applies unless `options.append_opt_out_line` is sent. A configuration that sets a sender (`from`), an `inbound_url` or `opt_out` rules cannot be used in a send yet and answers `400` on `configuration_id`, as does an id that is not one of your application's configurations or a configuration that lists no channel Messages can send on.",
+                    "example": "d7e3d55d-4fc8-4bab-9710-123456789abc"
                   }
                 }
               },
@@ -113171,6 +113361,2139 @@
           }
         ]
       }
+    },
+    "/v3/phone/verifications/": {
+      "get": {
+        "summary": "List or export verifications",
+        "operationId": "getPhoneVerifications",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "list",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/verifications/?status=verified&limit=20' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Its status.",
+              "enum": [
+                "pending",
+                "verified",
+                "not_delivered",
+                "expired",
+                "blocked",
+                "cancelled"
+              ],
+              "example": "verified"
+            },
+            "description": "pending, verified, not_delivered, expired, blocked or cancelled."
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PhoneChannel"
+            },
+            "description": "Any channel."
+          },
+          {
+            "name": "phone_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "An E.164 number.",
+              "example": "+34600000012"
+            },
+            "description": "One number."
+          },
+          {
+            "name": "reference",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Your reference.",
+              "example": "signup-48221"
+            },
+            "description": "Your reference."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "A tag in key:value form.",
+              "example": "flow:signup"
+            },
+            "description": "key:value, one of your tags."
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The earliest creation time, ISO 8601.",
+              "format": "date-time"
+            },
+            "description": "ISO 8601 date and time."
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The latest creation time, ISO 8601.",
+              "format": "date-time"
+            },
+            "description": "ISO 8601 date and time."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows per page.",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20
+            },
+            "description": "20 by default, 100 at most."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows to skip.",
+              "minimum": 0
+            },
+            "description": "Where the page starts: 0 by default, or the `next` or `previous` value of another page."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The response format.",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            },
+            "description": "json, or csv to export every row of the filtered list."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of verifications, or the filtered list as CSV.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationList"
+                },
+                "example": {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                      "status": "verified",
+                      "phone_number": "+12025550136",
+                      "country": "US",
+                      "attempts": [
+                        {
+                          "channel": "whatsapp",
+                          "status": "delivered",
+                          "network": "Mobile network A",
+                          "route": "Route A",
+                          "error": null,
+                          "silent_result": null,
+                          "sent_at": "2026-11-21T10:00:01Z",
+                          "delivered_at": "2026-11-21T10:00:03Z",
+                          "read_at": null,
+                          "expired_at": null,
+                          "charged": true,
+                          "price": {
+                            "amount": "0.0300",
+                            "carrier": null,
+                            "fee": null,
+                            "final": true
+                          }
+                        }
+                      ],
+                      "reference": "signup-48221",
+                      "tags": {
+                        "flow": "signup"
+                      },
+                      "created_at": "2026-11-21T10:00:00Z",
+                      "verified_at": "2026-11-21T10:00:12Z"
+                    }
+                  ]
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "verification_id,status,phone_number,country,created_at,verified_at\nc9b18621-9f8f-4590-a3b4-f8ebea4baa7d,verified,+12025550136,US,2026-11-21T10:00:00Z,2026-11-21T10:00:12Z\n"
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_filter`: a filter value is not valid."
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/phone/verifications/{verification_id}/": {
+      "get": {
+        "summary": "One verification with every attempt",
+        "operationId": "getPhoneVerification",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Retrieve one verification and its delivery attempts in order. Each attempt includes the channel, status, network, route, delivery timestamps and price.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "format": "uuid"
+            },
+            "description": "The verification."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verification and its attempts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationDetail"
+                },
+                "example": {
+                  "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                  "status": "verified",
+                  "phone_number": "+12025550136",
+                  "country": "US",
+                  "attempts": [
+                    {
+                      "channel": "whatsapp",
+                      "status": "delivered",
+                      "network": "Mobile network A",
+                      "route": "Route A",
+                      "error": null,
+                      "silent_result": null,
+                      "sent_at": "2026-11-21T10:00:01Z",
+                      "delivered_at": "2026-11-21T10:00:03Z",
+                      "read_at": null,
+                      "expired_at": null,
+                      "charged": true,
+                      "price": {
+                        "amount": "0.0300",
+                        "carrier": null,
+                        "fee": null,
+                        "final": true
+                      }
+                    }
+                  ],
+                  "reference": "signup-48221",
+                  "tags": {
+                    "flow": "signup"
+                  },
+                  "created_at": "2026-11-21T10:00:00Z",
+                  "verified_at": "2026-11-21T10:00:12Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/phone/verifications/{verification_id}/cancel/": {
+      "post": {
+        "summary": "Cancel a verification",
+        "operationId": "postPhoneVerificationCancel",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "cancel",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Cancel a verification. The code stops working and unsent steps are not charged. If the code window elapsed but the verification has yet to be finalized, cancellation returns `200` with status `cancelled` even if the verification history shows `expired`. A verification already finalized as verified, blocked, cancelled or expired returns `409 already_final`. Only verifications your application started with `POST /v3/phone/send/` can be changed here: a Phone step of a hosted verification session is read-only and returns `404 not_found`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/cancel/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "format": "uuid"
+            },
+            "description": "The verification."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verification, cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationCancelResponse"
+                },
+                "example": {
+                  "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                  "status": "cancelled"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application, or a Phone step of a hosted verification session, which this endpoint cannot change."
+          },
+          "409": {
+            "description": "The verification was already finalized as verified, blocked, cancelled or expired (`already_final`). Elapsed time alone does not cause this error."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        }
+      }
+    },
+    "/v3/phone/verifications/{verification_id}/next/": {
+      "post": {
+        "summary": "Move to the next channel now",
+        "operationId": "postPhoneVerificationNext",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "next",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Move to the next channel now, without waiting for the current step's timeout, or jump to `channel`. A successful send keeps the same verification ID and expiry, but the new channel may deliver a different code than the earlier sends; only [a same-window retry](/standalone-apis/phone-verifications-retry) promises the same code. When every channel in the order was tried, the endpoint returns `409 no_next_channel`; a verification that already ended returns `409 already_final`. Only verifications your application started with `POST /v3/phone/send/` can be changed here: a Phone step of a hosted verification session is read-only and returns `404 not_found`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/next/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"channel\": \"sms\"\n  }'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "format": "uuid"
+            },
+            "description": "The verification."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneVerificationNextRequest"
+              },
+              "example": {
+                "channel": "sms"
+              }
+            }
+          },
+          "description": "The channel to jump to; left out, the next one in the order."
+        },
+        "responses": {
+          "200": {
+            "description": "Inspect `status`. A successful send returns `pending`. A blocked attempt ends the verification and returns `blocked` with a `reason`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationNextResponse"
+                },
+                "examples": {
+                  "Pending": {
+                    "value": {
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                      "channel": "sms",
+                      "status": "pending"
+                    }
+                  },
+                  "Blocked": {
+                    "value": {
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                      "status": "blocked",
+                      "channel": "sms",
+                      "reason": "suspicious"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The channel is unavailable or excluded by policy (`channel_not_allowed`), the number cannot receive a code (`invalid_phone_number`), or the channel cannot send the code (`custom_code_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneResendChannelError"
+                },
+                "example": {
+                  "code": "channel_not_allowed",
+                  "detail": "voice is not allowed for this verification."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application, or a Phone step of a hosted verification session, which this endpoint cannot change."
+          },
+          "409": {
+            "description": "An ended verification returns `already_final`. No channel left in the order, or an unrecognized `channel`, returns `no_next_channel`. A caller-supplied code returns `custom_code_not_resendable`, and a code Didit cannot repeat returns `code_not_resendable`. `verification_in_progress`: another send of this number holds its turn and this one could not get it in time; try again shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "detail"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "already_final",
+                        "no_next_channel",
+                        "custom_code_not_resendable",
+                        "code_not_resendable",
+                        "verification_in_progress"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "code": "no_next_channel",
+                  "detail": "Every channel in the order was tried."
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`expired`: the window has closed: start a new verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationExpiredError"
+                },
+                "example": {
+                  "code": "expired",
+                  "detail": "The window has closed: start a new verification."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The three-send limit returns `max_sends_reached`. The hourly resend limit returns `velocity_limit`. A temporary delivery throttle returns `PHONE_RATE_LIMITED`. Exceeding 300 write requests per minute per API key returns the shared write-limit response with a support reference and the budget reset time.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait when the shared API write limit is reached.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/RateLimitBudgetError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "detail"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "max_sends_reached",
+                            "velocity_limit",
+                            "PHONE_RATE_LIMITED"
+                          ]
+                        },
+                        "detail": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "max_sends_reached": {
+                    "value": {
+                      "code": "max_sends_reached",
+                      "detail": "Three sends of the same code is the most in one window."
+                    }
+                  },
+                  "Write limit": {
+                    "value": {
+                      "detail": "Write request rate limit exceeded. You can make up to 300 requests per minute.",
+                      "reference": "RL-00000000000040008000000000000001",
+                      "limit": 300,
+                      "remaining": 0,
+                      "reset": 1794358860,
+                      "window_seconds": 60
+                    }
+                  },
+                  "velocity_limit": {
+                    "value": {
+                      "code": "velocity_limit",
+                      "detail": "This number reached its resend limit for the hour."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`phone_send_unavailable`: Didit could not tell whether another send of this number is under way. Nothing was sent; retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApiError"
+                },
+                "examples": {
+                  "Unavailable": {
+                    "value": {
+                      "detail": "Phone verification is temporarily unavailable. Please try again shortly.",
+                      "code": "phone_send_unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/phone/verifications/{verification_id}/approve/": {
+      "post": {
+        "summary": "Mark a verification verified",
+        "operationId": "postPhoneVerificationApprove",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "approve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Mark a verification verified after your own code check. It counts in Verifications, Analytics and the events like any other verification, and `verified_by` is `api`. `reason` defaults to `own_code_check`. A verification that already ended returns `409 already_final`. Only verifications your application started with `POST /v3/phone/send/` can be changed here: a Phone step of a hosted verification session is read-only and returns `404 not_found`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/approve/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"reason\": \"own_code_check\"\n  }'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "format": "uuid"
+            },
+            "description": "The verification."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneVerificationApproveRequest"
+              },
+              "example": {
+                "reason": "own_code_check"
+              }
+            }
+          },
+          "description": "Why the verification is approved."
+        },
+        "responses": {
+          "200": {
+            "description": "The verification, verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationApproveResponse"
+                },
+                "example": {
+                  "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                  "status": "verified",
+                  "verified_by": "api",
+                  "verified_at": "2026-11-21T10:00:12Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_reason`: `reason` is not `own_code_check`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApproveReasonError"
+                },
+                "example": {
+                  "code": "invalid_reason",
+                  "detail": "reason is own_code_check."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application, or a Phone step of a hosted verification session, which this endpoint cannot change."
+          },
+          "409": {
+            "description": "`already_final`: the verification already ended (verified, blocked, cancelled or expired). `declined`: your blocklist or the fraud rules refused the number, so the verification ends declined instead of verified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "detail"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "already_final",
+                        "declined"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "already_final": {
+                    "value": {
+                      "code": "already_final",
+                      "detail": "The verification already ended."
+                    }
+                  },
+                  "declined": {
+                    "value": {
+                      "code": "declined",
+                      "detail": "The fraud rules declined this verification."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`expired`: the window closed before you approved it. Start a new verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationExpiredError"
+                },
+                "example": {
+                  "code": "expired",
+                  "detail": "The code expired."
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        }
+      }
+    },
+    "/v3/phone/verifications/{verification_id}/retry/": {
+      "post": {
+        "summary": "Send the code again in the same window",
+        "operationId": "postPhoneVerificationRetry",
+        "x-didit-sdk": {
+          "resource": "phone.verifications",
+          "method": "retry",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Resend the same code on its last delivery channel. The verification ID and expiry stay the same. Wait at least 30 seconds after the last send. A verification allows up to three sends, including the first. To change channels, use [the next-channel endpoint](/standalone-apis/phone-verifications-next). Only verifications your application started with `POST /v3/phone/send/` can be changed here: a Phone step of a hosted verification session is read-only and returns `404 not_found`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/retry/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "format": "uuid"
+            },
+            "description": "The verification."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneVerificationRetryRequest"
+              },
+              "example": {}
+            }
+          },
+          "description": "Omit the body to retry on the last delivery channel. If supplied, `channel` must match that channel."
+        },
+        "responses": {
+          "200": {
+            "description": "Inspect `status`. A successful send returns `pending`. A blocked attempt ends the verification and returns `blocked` with a `reason`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationRetryResponse"
+                },
+                "examples": {
+                  "Pending": {
+                    "value": {
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                      "status": "pending",
+                      "channel": "sms",
+                      "sends": 2,
+                      "sends_left": 1,
+                      "expires_at": "2026-11-21T10:05:00Z",
+                      "charged": true
+                    }
+                  },
+                  "Blocked": {
+                    "value": {
+                      "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                      "status": "blocked",
+                      "channel": "sms",
+                      "reason": "suspicious"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The channel is unavailable or excluded by policy (`channel_not_allowed`), the number cannot receive a code (`invalid_phone_number`), or the channel cannot send the code (`custom_code_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneResendChannelError"
+                },
+                "example": {
+                  "code": "channel_not_allowed",
+                  "detail": "voice is not allowed for this verification."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application, or a Phone step of a hosted verification session, which this endpoint cannot change."
+          },
+          "409": {
+            "description": "A different allowed channel or a code Didit cannot repeat returns `code_not_resendable`. A caller-supplied code returns `custom_code_not_resendable`. An ended verification returns `already_final`. An unrecognized channel returns `no_next_channel`. `verification_in_progress`: another send of this number holds its turn and this one could not get it in time; try again shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "detail"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "already_final",
+                        "code_not_resendable",
+                        "custom_code_not_resendable",
+                        "no_next_channel",
+                        "verification_in_progress"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "code": "already_final",
+                  "detail": "The verification already ended."
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`expired`: the window has closed: start a new verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationExpiredError"
+                },
+                "example": {
+                  "code": "expired",
+                  "detail": "The window has closed: start a new verification."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A retry within 30 seconds of the last send returns `retry_too_soon`. The three-send limit returns `max_sends_reached`. The hourly resend limit returns `velocity_limit`. A temporary delivery throttle returns `PHONE_RATE_LIMITED`. Exceeding 300 write requests per minute per API key returns the shared write-limit response with a support reference and the budget reset time.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait when the shared API write limit is reached.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/RateLimitBudgetError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "detail"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "retry_too_soon",
+                            "max_sends_reached",
+                            "velocity_limit",
+                            "PHONE_RATE_LIMITED"
+                          ]
+                        },
+                        "detail": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "retry_too_soon": {
+                    "value": {
+                      "code": "retry_too_soon",
+                      "detail": "Wait 30 seconds before sending the code again."
+                    }
+                  },
+                  "max_sends_reached": {
+                    "value": {
+                      "code": "max_sends_reached",
+                      "detail": "Three sends of the same code is the most in one window."
+                    }
+                  },
+                  "Write limit": {
+                    "value": {
+                      "detail": "Write request rate limit exceeded. You can make up to 300 requests per minute.",
+                      "reference": "RL-00000000000040008000000000000001",
+                      "limit": 300,
+                      "remaining": 0,
+                      "reset": 1794358860,
+                      "window_seconds": 60
+                    }
+                  },
+                  "velocity_limit": {
+                    "value": {
+                      "code": "velocity_limit",
+                      "detail": "This number reached its resend limit for the hour."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`phone_send_unavailable`: Didit could not tell whether another send of this number is under way. Nothing was sent; retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneApiError"
+                },
+                "examples": {
+                  "Unavailable": {
+                    "value": {
+                      "detail": "Phone verification is temporarily unavailable. Please try again shortly.",
+                      "code": "phone_send_unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/phone/feedback/": {
+      "post": {
+        "summary": "Report fraud, a conversion or an abuse event",
+        "operationId": "postPhoneFeedback",
+        "x-didit-sdk": {
+          "resource": "phone.feedback",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Report fraud, a legitimate user, a conversion or an abuse event. Give the `verification_id`, the `phone_number` or the `email` it concerns. An outcome that names a verification or a phone number counts toward that number's fraud rules from its next send; `confidence` decides how much it weighs. An outcome that names only an `email` is recorded, but does not change any score.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/feedback/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"verification_id\": \"c9b18621-9f8f-4590-a3b4-f8ebea4baa7d\",\n    \"outcome\": \"converted\",\n    \"confidence\": \"high\",\n    \"event\": \"chargeback\",\n    \"occurred_at\": \"2026-11-20T18:40:00Z\"\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneFeedbackRequest"
+              },
+              "example": {
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "outcome": "converted",
+                "confidence": "high",
+                "event": "chargeback",
+                "occurred_at": "2026-11-20T18:40:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The outcome, received.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneFeedbackResponse"
+                },
+                "example": {
+                  "received": true,
+                  "weight": 0.9
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The number cannot be parsed (`invalid_phone_number`), or no feedback target was supplied (`target_required`). Invalid request fields have an array of messages under each field name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PhoneApiError"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "Invalid phone number": {
+                    "value": {
+                      "code": "invalid_phone_number",
+                      "detail": "Not a valid number in E.164."
+                    }
+                  },
+                  "Missing target": {
+                    "value": {
+                      "code": "target_required",
+                      "detail": "Send a verification_id, phone_number or email."
+                    }
+                  },
+                  "Missing outcome": {
+                    "value": {
+                      "outcome": [
+                        "This field is required."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no verification with this id in your application."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/feedback/batch/": {
+      "post": {
+        "summary": "Report up to 1,000 outcomes at once",
+        "operationId": "postPhoneFeedbackBatch",
+        "x-didit-sdk": {
+          "resource": "phone.feedback",
+          "method": "create_batch",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Report up to 1,000 outcomes at once. The answer is `207 Multi-Status`: one result per item, in order, with `accepted` or `rejected` and why. Recorded items are counted in `accepted`. An item that names a verification or a phone number is used by that number's fraud rules from its next send; an `email`-only item changes no score.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/phone/feedback/batch/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"items\": [\n      {\n        \"verification_id\": \"c9b18621-9f8f-4590-a3b4-f8ebea4baa7d\",\n        \"outcome\": \"fraud\",\n        \"event\": \"chargeback\",\n        \"confidence\": \"high\",\n        \"occurred_at\": \"2026-11-20T18:40:00Z\"\n      }\n    ]\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneFeedbackBatchRequest"
+              },
+              "example": {
+                "items": [
+                  {
+                    "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                    "outcome": "fraud",
+                    "event": "chargeback",
+                    "confidence": "high",
+                    "occurred_at": "2026-11-20T18:40:00Z"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "207": {
+            "description": "One result per item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneFeedbackBatchResponse"
+                },
+                "example": {
+                  "accepted": 1,
+                  "results": [
+                    {
+                      "index": 0,
+                      "status": "accepted",
+                      "error": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`too_many_items`: more than 1,000 items. `empty_batch`: items is empty."
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/countries/": {
+      "patch": {
+        "summary": "Switch countries and routes in bulk",
+        "operationId": "patchPhoneCountries",
+        "x-didit-sdk": {
+          "resource": "phone.countries",
+          "method": "update",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Update channel settings for multiple countries, the SMS route (`Route A` or `Route B`) and the routing objective (`price`, `balanced` or `conversion`). The `sms`, `voice`, `whatsapp` and `silent` switches apply to delivery for the whole country. Didit checks each `closed_channels` entry on the initial send and every fallback hop. The entry blocks its channel when `signals.device_platform` matches a listed platform (`web`, `ios`, or `android`). Both `ipados` and `tvos` match `ios`. Omit `platforms` or pass `[]` to block the channel for every send. Listing all three platforms also blocks the channel for every send, including a send that omits `signals.device_platform`. A list of one or two platforms applies only when the send matches one of them. A restricted API key needs write access to `applications`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X PATCH 'https://verification.didit.me/v3/phone/countries/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"countries\": [\n      {\n        \"country\": \"TJ\",\n        \"sms\": false,\n        \"objective\": \"conversion\",\n        \"closed_channels\": [\n          {\n            \"channel\": \"sms\",\n            \"platforms\": [\n              \"web\"\n            ]\n          }\n        ]\n      }\n    ]\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneCountriesUpdateRequest"
+              },
+              "example": {
+                "countries": [
+                  {
+                    "country": "TJ",
+                    "sms": false,
+                    "objective": "conversion",
+                    "closed_channels": [
+                      {
+                        "channel": "sms",
+                        "platforms": [
+                          "web"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The country settings were saved. `updated` counts the country entries in the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCountriesUpdateResponse"
+                },
+                "example": {
+                  "updated": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An unknown country code returns `invalid_country`. An unsupported channel or platform in `closed_channels` returns `invalid_setting`."
+          },
+          "401": {
+            "description": "The API key is invalid, revoked or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Authentication credentials were not provided or are invalid."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks write access to `applications`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "This API key has no write access to application settings."
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/settings/": {
+      "get": {
+        "summary": "Retrieve the Phone settings",
+        "operationId": "getPhoneSettings",
+        "x-didit-sdk": {
+          "resource": "phone.settings",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Read your application's verification settings, message retention period and saved data region preference.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/settings/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneSettings"
+                },
+                "example": {
+                  "verification": {
+                    "code_length": 6,
+                    "valid_minutes": 5,
+                    "max_attempts": 5,
+                    "resend_limit": 5,
+                    "channel_order": [
+                      "silent",
+                      "whatsapp",
+                      "sms"
+                    ],
+                    "routing": "conversion",
+                    "voice": {
+                      "tts_voice": "es-ES-female-2"
+                    },
+                    "email": {
+                      "domain_id": "ed_01JCH8S3"
+                    }
+                  },
+                  "messages": {
+                    "retention_days": 30
+                  },
+                  "data_region": "eu"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `applications`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change the Phone settings",
+        "operationId": "patchPhoneSettings",
+        "x-didit-sdk": {
+          "resource": "phone.settings",
+          "method": "update",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Update verification options, the message retention period (`messages.retention_days`) and the data region preference (`data_region`). Send only what you want to change: each property you send under `verification` replaces its saved value, and `cancel_on_resend` is accepted here too. A value out of range answers `400 invalid_setting` (`code_length` 4 to 10, `valid_minutes` 1 to 15, `max_attempts` 3 to 10, `resend_limit` 1 to 10, `routing` `fixed` or `conversion`, `channel_order` a list of Phone channels, `messages.retention_days` 7, 30, 90 or 365). A restricted API key needs write access to `applications`.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X PATCH 'https://verification.didit.me/v3/phone/settings/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"verification\": {\n      \"code_length\": 6,\n      \"routing\": \"conversion\"\n    },\n    \"messages\": {\n      \"retention_days\": 30\n    }\n  }'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneSettingsUpdate"
+              },
+              "example": {
+                "verification": {
+                  "code_length": 6,
+                  "routing": "conversion"
+                },
+                "messages": {
+                  "retention_days": 30
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The settings, updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneSettingsUpdateResponse"
+                },
+                "example": {
+                  "updated_at": "2026-11-21T10:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_setting`: a value is out of range or not valid: `code_length` 4 to 10, `valid_minutes` 1 to 15, `max_attempts` 3 to 10, `resend_limit` 1 to 10, `routing` `fixed` or `conversion`, `channel_order` a list of Phone channels, `cancel_on_resend` true or false, `messages.retention_days` 7, 30, 90 or 365."
+          },
+          "401": {
+            "description": "The API key is invalid, revoked or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Authentication credentials were not provided or are invalid."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks write access to `applications`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "detail"
+                  ],
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "This API key has no write access to application settings."
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/phone/lookups/": {
+      "get": {
+        "summary": "Lookup history",
+        "operationId": "getPhoneLookups",
+        "x-didit-sdk": {
+          "resource": "phone.lookups",
+          "method": "list",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Phone"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "List your application's [Phone risk lookups](/standalone-apis/phone-risk), newest first. Each result includes the full phone number, lookup status and risk score when available. Filter by an exact number or creation time. Use `limit` and `offset` to page through the results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/phone/lookups/?limit=20' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "An E.164 number.",
+              "example": "+12025550136"
+            },
+            "description": "One number."
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The earliest lookup time, ISO 8601.",
+              "format": "date-time"
+            },
+            "description": "Include lookups created at or after this time."
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Include lookups created before this time."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows per page.",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20
+            },
+            "description": "20 by default, 100 at most."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows to skip.",
+              "minimum": 0
+            },
+            "description": "Where the page starts: 0 by default, or the `next` or `previous` value of another page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of matching phone lookups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneLookupList"
+                },
+                "example": {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "lookup_id": "123e4567-e89b-42d3-a456-426614174001",
+                      "phone_number": "+12025550136",
+                      "status": "Approved",
+                      "country": "US",
+                      "line_type": "mobile",
+                      "risk_score": 12.5,
+                      "created_at": "2026-11-21T12:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_filter`: a creation time is invalid."
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `sessions`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/messages/capabilities/": {
+      "get": {
+        "summary": "Channels a number can receive now",
+        "operationId": "getMessagesCapabilities",
+        "x-didit-sdk": {
+          "resource": "messages.capabilities",
+          "method": "retrieve",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Check which messaging channels are available for the E.164 phone number in `to`. The response reports a boolean for each channel.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/messages/capabilities/?to=%2B34600000012' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The recipient number in E.164 format.",
+              "example": "+34600000012"
+            },
+            "description": "An E.164 number."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What the number can receive now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCapabilities"
+                },
+                "example": {
+                  "channels": {
+                    "sms": true,
+                    "whatsapp": true,
+                    "telegram": false,
+                    "rcs": true,
+                    "viber": false,
+                    "mms": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_recipient`: not an E.164 number."
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `messages`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      }
+    },
+    "/v3/messages/configurations/": {
+      "get": {
+        "summary": "List your messaging configurations",
+        "operationId": "getMessagesConfigurations",
+        "x-didit-sdk": {
+          "resource": "messages.configurations",
+          "method": "list",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "List your messaging configurations. `limit` is 20 by default and 100 at most; `offset` starts another page.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X GET 'https://verification.didit.me/v3/messages/configurations/?limit=20' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows per page.",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20
+            },
+            "description": "20 by default, 100 at most."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Rows to skip.",
+              "minimum": 0
+            },
+            "description": "Where the page starts."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of configurations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagingConfigurationList"
+                },
+                "example": {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                      "name": "Order updates",
+                      "from": "",
+                      "channels": [
+                        "sms"
+                      ],
+                      "status_callback_url": "",
+                      "inbound_url": "",
+                      "opt_out": {},
+                      "append_opt_out_line": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry read access to `messages`: the answer is `{\"detail\": ...}`."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedRead"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a messaging configuration",
+        "operationId": "postMessagesConfiguration",
+        "x-didit-sdk": {
+          "resource": "messages.configurations",
+          "method": "create",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Save the channel order, status callback URL and SMS opt-out line for a workload. Pass the returned `configuration_id` to send a message with `POST /v3/messages/`. Leave `from`, `inbound_url` and `opt_out` empty for a configuration used to send messages.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X POST 'https://verification.didit.me/v3/messages/configurations/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n  \"name\": \"Order updates\",\n  \"channels\": [\n    \"sms\"\n  ],\n  \"append_opt_out_line\": true\n}'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessagingConfigurationCreateRequest"
+              },
+              "example": {
+                "name": "Order updates",
+                "channels": [
+                  "sms"
+                ],
+                "append_opt_out_line": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The configuration, created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagingConfiguration"
+                },
+                "example": {
+                  "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                  "name": "Order updates",
+                  "from": "",
+                  "channels": [
+                    "sms"
+                  ],
+                  "status_callback_url": "",
+                  "inbound_url": "",
+                  "opt_out": {},
+                  "append_opt_out_line": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid configuration fields. Check the messages for each field before submitting again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageValidationErrors"
+                },
+                "example": {
+                  "name": [
+                    "This field may not be blank."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `messages`: the answer is `{\"detail\": ...}`."
+          },
+          "409": {
+            "description": "`name_taken`: another configuration has this name."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      }
+    },
+    "/v3/messages/configurations/{configuration_id}/": {
+      "patch": {
+        "summary": "Change a messaging configuration",
+        "operationId": "patchMessagesConfiguration",
+        "x-didit-sdk": {
+          "resource": "messages.configurations",
+          "method": "update",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Change a messaging configuration. Only the fields you send change.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X PATCH 'https://verification.didit.me/v3/messages/configurations/d7e3d55d-4fc8-4bab-9710-123456789abc/' \\\n  -H 'x-api-key: YOUR_API_KEY' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"name\": \"Order updates\",\n    \"channels\": [\n      \"whatsapp\",\n      \"sms\"\n    ]\n  }'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "configuration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "d7e3d55d-4fc8-4bab-9710-123456789abc"
+            },
+            "description": "The configuration."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessagingConfigurationUpdateRequest"
+              },
+              "example": {
+                "name": "Order updates",
+                "channels": [
+                  "whatsapp",
+                  "sms"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The configuration, updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagingConfiguration"
+                },
+                "example": {
+                  "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                  "name": "Order updates",
+                  "from": "",
+                  "channels": [
+                    "whatsapp",
+                    "sms"
+                  ],
+                  "status_callback_url": "",
+                  "inbound_url": "",
+                  "opt_out": {},
+                  "append_opt_out_line": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid configuration fields. Check the messages for each field before submitting again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageValidationErrors"
+                },
+                "example": {
+                  "name": [
+                    "This field may not be blank."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `messages`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no configuration with this id in your application."
+          },
+          "409": {
+            "description": "`name_taken`: another configuration has this name."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove a messaging configuration",
+        "operationId": "deleteMessagesConfiguration",
+        "x-didit-sdk": {
+          "resource": "messages.configurations",
+          "method": "delete",
+          "auth": "api_key",
+          "server": true
+        },
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "description": "Permanently delete a messaging configuration by its UUID.",
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -X DELETE 'https://verification.didit.me/v3/messages/configurations/d7e3d55d-4fc8-4bab-9710-123456789abc/' \\\n  -H 'x-api-key: YOUR_API_KEY'"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "configuration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "d7e3d55d-4fc8-4bab-9710-123456789abc"
+            },
+            "description": "The configuration."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The configuration, removed."
+          },
+          "401": {
+            "description": "The key is wrong, revoked or expired: `{\"detail\": ...}`."
+          },
+          "403": {
+            "description": "The `x-api-key` header is missing, or the key is scoped and does not carry write access to `messages`: the answer is `{\"detail\": ...}`."
+          },
+          "404": {
+            "description": "`not_found`: no configuration with this id in your application."
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitedWrite"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -113887,6 +116210,62 @@
             "type": "object",
             "nullable": true,
             "description": "Echo of the `metadata` stored on the session (from the first send)."
+          },
+          "verification_id": {
+            "type": "string",
+            "description": "UUID of the phone verification. Pass this value to check the code, retrieve the record, cancel, change channels, approve or retry. A same-window retry keeps this UUID. Use `request_id` to retrieve the session decision.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "expires_in": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Seconds the code stays valid. A new send returns the full configured window; a same-window retry or a `reuse` of a pending verification returns the seconds left, because a retry keeps the expiry of the first send.",
+            "example": 300
+          },
+          "fraud": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "allow, or challenge: the verification continues on fraud-resistant channels only.",
+                "enum": [
+                  "allow",
+                  "challenge"
+                ],
+                "example": "allow"
+              },
+              "challenge_source": {
+                "type": "string",
+                "description": "caller (your force_challenge) or policy (a fraud rule), when challenged.",
+                "enum": [
+                  "caller",
+                  "policy"
+                ],
+                "nullable": true
+              },
+              "channels_allowed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PhoneChannel"
+                },
+                "description": "The channels it may use, when challenged.",
+                "example": [
+                  "silent",
+                  "whatsapp",
+                  "passkey"
+                ]
+              },
+              "exception": {
+                "type": "string",
+                "description": "trusted_user when this request went past your fraud rules as a trusted user; null otherwise.",
+                "enum": [
+                  "trusted_user"
+                ],
+                "nullable": true
+              }
+            },
+            "description": "The fraud decision for this send."
           }
         }
       },
@@ -113908,7 +116287,7 @@
               "verified",
               "failed"
             ],
-            "description": "`Approved` — correct code, no declining risk. `Declined` — terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — no pending verification for this number in the last 5 minutes. For a TOTP factor check (a request that names `factor_id`) the status is `verified` (the code matched) or `failed`."
+            "description": "`Approved` — correct code, no declining risk. `Declined` — terminal: a declining risk matched or the attempt budget (your `verification.max_attempts` setting, 5 by default) was exhausted. `Failed` — wrong code, attempts remaining. `Expired or Not Found` — no pending verification for this number in the last 5 minutes. For a TOTP factor check (a request that names `factor_id`) the status is `verified` (the code matched) or `failed`."
           },
           "message": {
             "type": "string",
@@ -160882,6 +163261,1644 @@
             }
           }
         ]
+      },
+      "PhoneChannel": {
+        "type": "string",
+        "description": "A verification channel.",
+        "enum": [
+          "silent",
+          "sms",
+          "whatsapp",
+          "telegram",
+          "voice",
+          "rcs",
+          "viber",
+          "zalo",
+          "email",
+          "push",
+          "totp",
+          "passkey"
+        ]
+      },
+      "PhoneVerificationList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Rows that match the filters.",
+            "example": 1
+          },
+          "next": {
+            "type": "string",
+            "description": "Offset of the next page of verifications, as a string such as `\"20\"`, or null on the last page. It is not a URL: send it as `offset` to read that page.",
+            "nullable": true,
+            "example": "20",
+            "pattern": "^[0-9]+$"
+          },
+          "previous": {
+            "type": "string",
+            "description": "Offset of the previous page of verifications, as a string such as `\"0\"`, or null on the first page. It is not a URL: send it as `offset` to read that page.",
+            "nullable": true,
+            "example": "0",
+            "pattern": "^[0-9]+$"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneVerificationDetail"
+            },
+            "description": "The verifications, newest first, each one as Retrieve returns it."
+          }
+        }
+      },
+      "PhoneVerificationPrice": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "What it cost, in USD.",
+            "example": "0.0300"
+          },
+          "carrier": {
+            "type": "string",
+            "description": "The carrier part, passed on at cost.",
+            "example": null,
+            "nullable": true
+          },
+          "fee": {
+            "type": "string",
+            "description": "Didit's fee.",
+            "example": null,
+            "nullable": true
+          },
+          "final": {
+            "type": "boolean",
+            "description": "false until the carrier reports delivery, then the reported price.",
+            "example": true
+          }
+        },
+        "description": "The price line of one attempt."
+      },
+      "PhoneVerificationAttempt": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "description": "The channel this attempt used.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ],
+            "example": "whatsapp"
+          },
+          "status": {
+            "type": "string",
+            "description": "Its status: sent, delivered, read, failed or expired.",
+            "enum": [
+              "sent",
+              "delivered",
+              "read",
+              "failed",
+              "expired"
+            ],
+            "example": "delivered"
+          },
+          "network": {
+            "type": "string",
+            "description": "The mobile network it went through.",
+            "nullable": true,
+            "example": "Mobile network A"
+          },
+          "route": {
+            "type": "string",
+            "description": "The route Didit picked.",
+            "nullable": true,
+            "example": "Route A"
+          },
+          "error": {
+            "type": "string",
+            "description": "The reason for a failed attempt, when available. Possible reasons include `undelivered`, `unreachable`, `unsupported_network`, `channel_closed`, `silent_mismatch` and `silent_retryable`. Other reasons can occur.",
+            "example": "undelivered",
+            "nullable": true
+          },
+          "silent_result": {
+            "type": "string",
+            "description": "match, mismatch or failed, for a silent attempt.",
+            "enum": [
+              "match",
+              "mismatch",
+              "failed",
+              null
+            ],
+            "nullable": true
+          },
+          "sent_at": {
+            "type": "string",
+            "description": "When it went out.",
+            "format": "date-time",
+            "example": "2026-11-21T10:00:01Z"
+          },
+          "delivered_at": {
+            "type": "string",
+            "description": "When the network reported delivery.",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-11-21T10:00:03Z"
+          },
+          "read_at": {
+            "type": "string",
+            "description": "When the channel reported that the recipient read the code.",
+            "nullable": true,
+            "format": "date-time",
+            "example": null
+          },
+          "expired_at": {
+            "type": "string",
+            "description": "When the code ran out before delivery.",
+            "nullable": true,
+            "format": "date-time",
+            "example": null
+          },
+          "charged": {
+            "type": "boolean",
+            "description": "True when the attempt has been billed or has a nonzero actual price. See `status` for the delivery outcome.",
+            "example": true
+          },
+          "price": {
+            "$ref": "#/components/schemas/PhoneVerificationPrice"
+          }
+        },
+        "description": "One channel tried for a verification."
+      },
+      "PhoneVerificationDetail": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Its status.",
+            "enum": [
+              "pending",
+              "verified",
+              "not_delivered",
+              "expired",
+              "blocked",
+              "cancelled"
+            ],
+            "example": "verified"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "The number.",
+            "nullable": true,
+            "example": "+34600000012"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO country code.",
+            "nullable": true,
+            "example": "ES"
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneVerificationAttempt"
+            },
+            "description": "One entry per send, in the order the sends went out. A same-window retry repeats the last channel, so one channel can appear more than once."
+          },
+          "reference": {
+            "type": "string",
+            "description": "Your reference.",
+            "nullable": true,
+            "example": "signup-48221"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "The verification's session metadata. Values can include nested JSON objects and arrays.",
+            "example": {
+              "flow": "signup"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it started.",
+            "format": "date-time",
+            "example": "2026-11-21T10:00:00Z"
+          },
+          "verified_at": {
+            "type": "string",
+            "description": "When it was verified.",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-11-21T10:00:12Z"
+          }
+        },
+        "description": "One verification with every attempt."
+      },
+      "PhoneVerificationCancelResponse": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "cancelled: the code stops working, unsent steps are not charged.",
+            "enum": [
+              "cancelled"
+            ],
+            "example": "cancelled"
+          }
+        }
+      },
+      "PhoneVerificationNextRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "description": "Jump to this channel instead of the next one.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ],
+            "example": "sms"
+          }
+        },
+        "description": "The channel to move to.",
+        "example": {
+          "channel": "sms"
+        }
+      },
+      "PhoneVerificationNextResponse": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "description": "The channel trying now.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ],
+            "example": "sms"
+          },
+          "status": {
+            "type": "string",
+            "description": "A successful send remains pending. A blocked send ends the verification.",
+            "enum": [
+              "pending",
+              "blocked"
+            ],
+            "example": "pending"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Returned on a blocked send. May be null when no reason is available.",
+            "example": "suspicious"
+          }
+        },
+        "required": [
+          "verification_id",
+          "status",
+          "channel"
+        ]
+      },
+      "PhoneVerificationApproveRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "own_code_check (default): your backend checked the code it sent with code.",
+            "enum": [
+              "own_code_check"
+            ],
+            "default": "own_code_check",
+            "example": "own_code_check"
+          }
+        },
+        "description": "Why the verification is approved.",
+        "example": {
+          "reason": "own_code_check"
+        }
+      },
+      "PhoneVerificationApproveResponse": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "verified: it counts in Verifications, Analytics and the events like any other.",
+            "enum": [
+              "verified"
+            ],
+            "example": "verified"
+          },
+          "verified_by": {
+            "type": "string",
+            "description": "api: your backend approved it.",
+            "enum": [
+              "api"
+            ],
+            "example": "api"
+          },
+          "verified_at": {
+            "type": "string",
+            "description": "When.",
+            "format": "date-time",
+            "example": "2026-11-21T10:00:12Z"
+          }
+        }
+      },
+      "PhoneVerificationRetryRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "description": "The last delivery channel. Requesting a different allowed channel returns `409 code_not_resendable`.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ]
+          }
+        },
+        "description": "Optional channel confirmation for a same-window retry.",
+        "example": {}
+      },
+      "PhoneVerificationRetryResponse": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The same verification.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "A successful send remains pending. A blocked send ends the verification.",
+            "enum": [
+              "pending",
+              "blocked"
+            ],
+            "example": "pending"
+          },
+          "channel": {
+            "type": "string",
+            "description": "The channel this send went by.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ],
+            "example": "sms"
+          },
+          "sends": {
+            "type": "integer",
+            "description": "Sends of this code so far, the first one included.",
+            "example": 2
+          },
+          "sends_left": {
+            "type": "integer",
+            "description": "Retries left in this window.",
+            "example": 1
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "Unchanged: a retry keeps the window and the code.",
+            "format": "date-time",
+            "example": "2026-11-21T10:05:00Z"
+          },
+          "charged": {
+            "type": "boolean",
+            "description": "True when the channel accepts the retry and returns a send ID. Delivery confirmation can arrive later. Check the verification's attempt history for the delivery status and price.",
+            "example": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Returned on a blocked send. May be null when no reason is available.",
+            "example": "suspicious"
+          }
+        },
+        "required": [
+          "verification_id",
+          "status",
+          "channel"
+        ],
+        "description": "A pending retry includes sends, sends_left, expires_at and charged. A blocked retry returns the reason instead."
+      },
+      "PhoneFeedbackRequest": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification, by the `verification_id` the send returned.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Or the number.",
+            "example": "+34600000012"
+          },
+          "email": {
+            "type": "string",
+            "description": "Or the email address it concerns.",
+            "example": "user@example.com"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "fraud, legitimate, converted, or abuse with event naming what happened.",
+            "enum": [
+              "fraud",
+              "legitimate",
+              "converted",
+              "abuse"
+            ],
+            "example": "converted"
+          },
+          "event": {
+            "type": "string",
+            "description": "Your own label, for example chargeback, account_banned or promo_abuse.",
+            "example": "chargeback"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "low, medium or high: how sure you are; high weighs most in the scoring.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "example": "high"
+          },
+          "occurred_at": {
+            "type": "string",
+            "description": "When it happened, ISO 8601.",
+            "format": "date-time",
+            "example": "2026-11-20T18:40:00Z"
+          },
+          "note": {
+            "type": "string",
+            "description": "Up to 500 characters.",
+            "maxLength": 500
+          }
+        },
+        "description": "One outcome to report. Send at least one of `verification_id`, `phone_number` or `email`: with none of them the answer is `target_required`.",
+        "required": [
+          "outcome"
+        ],
+        "example": {
+          "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+          "outcome": "converted",
+          "confidence": "high",
+          "event": "chargeback",
+          "occurred_at": "2026-11-20T18:40:00Z"
+        }
+      },
+      "PhoneFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "description": "`true` when the outcome was recorded. One that names a verification or a phone number is used by that number's fraud rules from its next send.",
+            "example": true
+          },
+          "weight": {
+            "type": "number",
+            "description": "How much it counts toward the number's future sends, from the confidence. An outcome that names only an `email` does not change any score.",
+            "example": 0.9
+          }
+        }
+      },
+      "PhoneFeedbackBatchItem": {
+        "type": "object",
+        "properties": {
+          "verification_id": {
+            "type": "string",
+            "description": "The verification, by the `verification_id` the send returned.",
+            "example": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            "format": "uuid"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Or the number.",
+            "example": "+34600000012"
+          },
+          "email": {
+            "type": "string",
+            "description": "Or the email address.",
+            "example": "user@example.com"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "fraud, legitimate, converted or abuse.",
+            "enum": [
+              "fraud",
+              "legitimate",
+              "converted",
+              "abuse"
+            ],
+            "example": "fraud"
+          },
+          "event": {
+            "type": "string",
+            "description": "Your own label, for abuse.",
+            "example": "chargeback"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "low, medium or high.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "example": "high"
+          },
+          "occurred_at": {
+            "type": "string",
+            "description": "When it happened, ISO 8601.",
+            "format": "date-time",
+            "example": "2026-11-20T18:40:00Z"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "description": "Send at least one of `verification_id`, `phone_number` or `email`: with none of them the answer is `target_required`."
+      },
+      "PhoneFeedbackBatchRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneFeedbackBatchItem"
+            },
+            "description": "Up to 1,000 outcomes.",
+            "minItems": 1,
+            "maxItems": 1000
+          }
+        },
+        "description": "Outcomes to report.",
+        "required": [
+          "items"
+        ],
+        "example": {
+          "items": [
+            {
+              "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+              "outcome": "fraud",
+              "event": "chargeback",
+              "confidence": "high"
+            }
+          ]
+        }
+      },
+      "PhoneFeedbackBatchResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "description": "Items recorded. Those that name a verification or a phone number are used by that number's fraud rules from its next send; an `email`-only item changes no score.",
+            "example": 1
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "description": "The item's place in items.",
+                  "example": 0
+                },
+                "status": {
+                  "type": "string",
+                  "description": "accepted or rejected.",
+                  "enum": [
+                    "accepted",
+                    "rejected"
+                  ],
+                  "example": "accepted"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Why it was rejected.",
+                  "nullable": true
+                }
+              }
+            },
+            "description": "One result per item, in the same order."
+          }
+        }
+      },
+      "PhoneCountryClosedChannel": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "description": "Channel to block for this country.",
+            "enum": [
+              "silent",
+              "sms",
+              "whatsapp",
+              "telegram",
+              "voice",
+              "rcs",
+              "viber",
+              "zalo",
+              "email",
+              "push",
+              "totp",
+              "passkey"
+            ],
+            "example": "sms"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Device platform.",
+              "enum": [
+                "web",
+                "ios",
+                "android"
+              ]
+            },
+            "description": "Didit checks each `closed_channels` entry on the initial send and every fallback hop. The entry blocks its channel when `signals.device_platform` matches a listed platform (`web`, `ios`, or `android`). Both `ipados` and `tvos` match `ios`. Omit `platforms` or pass `[]` to block the channel for every send. Listing all three platforms also blocks the channel for every send, including a send that omits `signals.device_platform`. A list of one or two platforms applies only when the send matches one of them.",
+            "example": [
+              "web"
+            ]
+          }
+        },
+        "required": [
+          "channel"
+        ]
+      },
+      "PhoneCountryUpdate": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "ISO country code.",
+            "example": "TJ"
+          },
+          "sms": {
+            "type": "boolean",
+            "description": "SMS on or off for the country.",
+            "example": false
+          },
+          "voice": {
+            "type": "boolean",
+            "description": "Voice on or off."
+          },
+          "whatsapp": {
+            "type": "boolean",
+            "description": "WhatsApp on or off."
+          },
+          "silent": {
+            "type": "boolean",
+            "description": "Silent verification on or off."
+          },
+          "route": {
+            "type": "string",
+            "description": "Route A or Route B for SMS.",
+            "enum": [
+              "Route A",
+              "Route B"
+            ]
+          },
+          "objective": {
+            "type": "string",
+            "description": "What routing optimises in the country: price, balanced (default) or conversion.",
+            "enum": [
+              "price",
+              "balanced",
+              "conversion"
+            ],
+            "example": "conversion"
+          },
+          "closed_channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneCountryClosedChannel"
+            },
+            "description": "Didit checks each `closed_channels` entry on the initial send and every fallback hop. The entry blocks its channel when `signals.device_platform` matches a listed platform (`web`, `ios`, or `android`). Both `ipados` and `tvos` match `ios`. Omit `platforms` or pass `[]` to block the channel for every send. Listing all three platforms also blocks the channel for every send, including a send that omits `signals.device_platform`. A list of one or two platforms applies only when the send matches one of them. Send an empty `closed_channels` list to remove the country's channel closures."
+          }
+        },
+        "required": [
+          "country"
+        ]
+      },
+      "PhoneCountriesUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "countries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneCountryUpdate"
+            },
+            "description": "The countries to change.",
+            "minItems": 1
+          }
+        },
+        "description": "Countries and routes to switch in bulk.",
+        "required": [
+          "countries"
+        ],
+        "example": {
+          "countries": [
+            {
+              "country": "TJ",
+              "sms": false,
+              "objective": "conversion",
+              "closed_channels": [
+                {
+                  "channel": "sms",
+                  "platforms": [
+                    "web"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "PhoneCountriesUpdateResponse": {
+        "type": "object",
+        "required": [
+          "updated"
+        ],
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "description": "How many country entries the request carried, whether or not an entry changed a saved value.",
+            "example": 1
+          }
+        },
+        "description": "How many country entries the request carried."
+      },
+      "PhoneLookupSummary": {
+        "type": "object",
+        "description": "One result from your application's Phone risk lookup history.",
+        "required": [
+          "lookup_id",
+          "phone_number",
+          "status",
+          "country",
+          "line_type",
+          "risk_score",
+          "created_at"
+        ],
+        "properties": {
+          "lookup_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the lookup.",
+            "example": "123e4567-e89b-42d3-a456-426614174001"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Full phone number used for the lookup.",
+            "example": "+12025550136"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status returned by the Phone risk lookup.",
+            "example": "Approved"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country code of the number, or an empty string when unknown.",
+            "example": "US"
+          },
+          "line_type": {
+            "type": "string",
+            "description": "Line type, or an empty string when unknown.",
+            "example": "mobile"
+          },
+          "risk_score": {
+            "type": "number",
+            "nullable": true,
+            "description": "Risk score when available.",
+            "example": 12.5
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the lookup was recorded.",
+            "example": "2026-11-21T12:00:00Z"
+          }
+        }
+      },
+      "PhoneLookupList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Rows that match the filters.",
+            "example": 1
+          },
+          "next": {
+            "type": "string",
+            "description": "Offset of the next page of lookups, as a string such as `\"20\"`, or null on the last page. It is not a URL: send it as `offset` to read that page.",
+            "nullable": true,
+            "example": "20",
+            "pattern": "^[0-9]+$"
+          },
+          "previous": {
+            "type": "string",
+            "description": "Offset of the previous page of lookups, as a string such as `\"0\"`, or null on the first page. It is not a URL: send it as `offset` to read that page.",
+            "nullable": true,
+            "example": "0",
+            "pattern": "^[0-9]+$"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhoneLookupSummary"
+            },
+            "description": "The rows, newest first."
+          }
+        }
+      },
+      "PhoneSettings": {
+        "type": "object",
+        "properties": {
+          "verification": {
+            "type": "object",
+            "properties": {
+              "code_length": {
+                "type": "integer",
+                "description": "4 to 10.",
+                "minimum": 4,
+                "maximum": 10,
+                "example": 6
+              },
+              "valid_minutes": {
+                "type": "integer",
+                "description": "How long a code works.",
+                "example": 5
+              },
+              "max_attempts": {
+                "type": "integer",
+                "description": "Maximum wrong code entries per standalone verification. The default is 5.",
+                "example": 5
+              },
+              "resend_limit": {
+                "type": "integer",
+                "description": "Codes per number per hour.",
+                "example": 5
+              },
+              "channel_order": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A verification channel.",
+                  "enum": [
+                    "silent",
+                    "sms",
+                    "whatsapp",
+                    "telegram",
+                    "voice",
+                    "rcs",
+                    "viber",
+                    "zalo",
+                    "email",
+                    "push",
+                    "totp",
+                    "passkey"
+                  ]
+                },
+                "description": "The default order.",
+                "example": [
+                  "silent",
+                  "whatsapp",
+                  "sms"
+                ]
+              },
+              "routing": {
+                "type": "string",
+                "description": "fixed or conversion.",
+                "enum": [
+                  "fixed",
+                  "conversion"
+                ],
+                "example": "conversion"
+              },
+              "voice": {
+                "type": "object",
+                "properties": {
+                  "tts_voice": {
+                    "type": "string",
+                    "description": "The identifier of the voice that reads verification codes aloud.",
+                    "example": "es-ES-female-2"
+                  }
+                },
+                "description": "Voice policy."
+              },
+              "email": {
+                "type": "object",
+                "properties": {
+                  "domain_id": {
+                    "type": "string",
+                    "description": "The verified domain email codes go out from.",
+                    "example": "ed_01JCH8S3"
+                  }
+                },
+                "description": "Email policy."
+              }
+            },
+            "description": "Verification settings."
+          },
+          "messages": {
+            "type": "object",
+            "properties": {
+              "retention_days": {
+                "type": "integer",
+                "description": "7, 30, 90 or 365.",
+                "enum": [
+                  7,
+                  30,
+                  90,
+                  365
+                ],
+                "example": 30
+              }
+            },
+            "description": "Message settings."
+          },
+          "data_region": {
+            "type": "string",
+            "description": "The application's saved data region preference.",
+            "enum": [
+              "eu",
+              "us"
+            ],
+            "example": "eu"
+          }
+        },
+        "description": "Your Phone settings."
+      },
+      "PhoneSettingsUpdate": {
+        "type": "object",
+        "properties": {
+          "verification": {
+            "type": "object",
+            "properties": {
+              "code_length": {
+                "type": "integer",
+                "description": "4 to 10 digits.",
+                "minimum": 4,
+                "maximum": 10,
+                "example": 6
+              },
+              "valid_minutes": {
+                "type": "integer",
+                "description": "1 to 15.",
+                "minimum": 1,
+                "maximum": 15
+              },
+              "max_attempts": {
+                "type": "integer",
+                "description": "Maximum wrong code entries per standalone verification. The default is 5.",
+                "minimum": 3,
+                "maximum": 10
+              },
+              "resend_limit": {
+                "type": "integer",
+                "description": "1 to 10 per hour.",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "cancel_on_resend": {
+                "type": "boolean",
+                "description": "A new code cancels the previous one."
+              },
+              "channel_order": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A verification channel.",
+                  "enum": [
+                    "silent",
+                    "sms",
+                    "whatsapp",
+                    "telegram",
+                    "voice",
+                    "rcs",
+                    "viber",
+                    "zalo",
+                    "email",
+                    "push",
+                    "totp",
+                    "passkey"
+                  ]
+                },
+                "description": "The default order."
+              },
+              "routing": {
+                "type": "string",
+                "description": "conversion picks the route and channel with the best conversion per country over 7 days; fixed keeps your order.",
+                "enum": [
+                  "conversion",
+                  "fixed"
+                ],
+                "example": "conversion"
+              },
+              "voice": {
+                "type": "object",
+                "properties": {
+                  "tts_voice": {
+                    "type": "string",
+                    "description": "The identifier of the voice that reads verification codes aloud."
+                  },
+                  "speech_rate": {
+                    "type": "number",
+                    "description": "0.8 to 1.2: slower reads each digit more clearly.",
+                    "minimum": 0.8,
+                    "maximum": 1.2
+                  }
+                },
+                "description": "Voice policy."
+              },
+              "email": {
+                "type": "object",
+                "properties": {
+                  "domain_id": {
+                    "type": "string",
+                    "description": "The verified domain email codes go out from."
+                  },
+                  "from_address": {
+                    "type": "string",
+                    "description": "The address on that domain."
+                  },
+                  "from_name": {
+                    "type": "string",
+                    "description": "The name people see."
+                  }
+                },
+                "description": "Email policy."
+              }
+            },
+            "description": "Each property you supply replaces its saved value."
+          },
+          "messages": {
+            "type": "object",
+            "properties": {
+              "retention_days": {
+                "type": "integer",
+                "description": "7, 30, 90 or 365.",
+                "enum": [
+                  7,
+                  30,
+                  90,
+                  365
+                ]
+              }
+            },
+            "description": "Message settings to change."
+          },
+          "data_region": {
+            "type": "string",
+            "description": "The data region preference to save for the application.",
+            "enum": [
+              "eu",
+              "us"
+            ]
+          }
+        },
+        "description": "The application settings to update. Omit a section to keep its current settings.",
+        "example": {
+          "verification": {
+            "code_length": 6,
+            "routing": "conversion"
+          },
+          "messages": {
+            "retention_days": 30
+          }
+        }
+      },
+      "PhoneSettingsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "updated_at": {
+            "type": "string",
+            "description": "When the settings changed.",
+            "format": "date-time",
+            "example": "2026-11-21T10:00:00Z"
+          }
+        }
+      },
+      "MessageCapabilities": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "object",
+            "properties": {
+              "sms": {
+                "type": "boolean",
+                "description": "True for a mobile number or one classified as fixed-line or mobile.",
+                "example": true
+              },
+              "whatsapp": {
+                "type": "boolean",
+                "description": "True for a mobile number or one classified as fixed-line or mobile.",
+                "example": true
+              },
+              "telegram": {
+                "type": "boolean",
+                "description": "Connected to your bot.",
+                "example": false
+              },
+              "rcs": {
+                "type": "boolean",
+                "description": "True for a mobile number or one classified as fixed-line or mobile.",
+                "example": true
+              },
+              "viber": {
+                "type": "boolean",
+                "description": "Whether this channel is available. Currently always false.",
+                "example": false
+              },
+              "mms": {
+                "type": "boolean",
+                "description": "True for a mobile number or one classified as fixed-line or mobile.",
+                "example": true
+              }
+            },
+            "description": "What the number can receive now."
+          }
+        },
+        "description": "Channels a number can receive now."
+      },
+      "MessagingConfiguration": {
+        "type": "object",
+        "properties": {
+          "configuration_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The configuration UUID.",
+            "example": "d7e3d55d-4fc8-4bab-9710-123456789abc"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name.",
+            "example": "Order updates"
+          },
+          "from": {
+            "type": "string",
+            "description": "Stored sender or sender pool. Leave empty to use this configuration in a send.",
+            "example": ""
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A messaging channel.",
+              "enum": [
+                "sms",
+                "whatsapp",
+                "telegram",
+                "voice",
+                "rcs",
+                "viber",
+                "zalo",
+                "email",
+                "mms"
+              ]
+            },
+            "description": "Channel order for this workload. Message sends use the supported channels in this order unless the request sets its own channels.",
+            "example": [
+              "sms"
+            ]
+          },
+          "status_callback_url": {
+            "type": "string",
+            "description": "Default URL for this workload's message.status.updated events."
+          },
+          "inbound_url": {
+            "type": "string",
+            "description": "Stored inbound URL. Leave empty to use this configuration in a send."
+          },
+          "opt_out": {
+            "type": "object",
+            "properties": {
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A word that opts a recipient out."
+                },
+                "description": "Words that opt a recipient out, STOP included.",
+                "example": [
+                  "STOP",
+                  "BAJA"
+                ]
+              },
+              "confirmation": {
+                "type": "string",
+                "description": "The reply sent after an opt-out.",
+                "example": "You will not get more messages. Reply START to come back."
+              }
+            },
+            "description": "Stored opt-out rules. Leave this object empty to use this configuration in a send.",
+            "example": {}
+          },
+          "append_opt_out_line": {
+            "type": "boolean",
+            "description": "Add the opt-out line to its SMS.",
+            "example": false
+          }
+        },
+        "description": "A messaging configuration.",
+        "required": [
+          "configuration_id",
+          "name",
+          "from",
+          "channels",
+          "status_callback_url",
+          "inbound_url",
+          "opt_out",
+          "append_opt_out_line"
+        ]
+      },
+      "MessagingConfigurationCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its name.",
+            "example": "Order updates"
+          },
+          "from": {
+            "type": "string",
+            "description": "Stored sender or sender pool. Leave empty to use this configuration in a send.",
+            "example": ""
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A messaging channel.",
+              "enum": [
+                "sms",
+                "whatsapp",
+                "telegram",
+                "voice",
+                "rcs",
+                "viber",
+                "zalo",
+                "email",
+                "mms"
+              ]
+            },
+            "description": "Channel order for this workload. Message sends use the supported channels in this order unless the request sets its own channels.",
+            "example": [
+              "sms"
+            ]
+          },
+          "status_callback_url": {
+            "type": "string",
+            "description": "Use a publicly reachable HTTPS URL for this workload's message.status.updated events. An empty string clears the callback.",
+            "maxLength": 500
+          },
+          "inbound_url": {
+            "type": "string",
+            "description": "Stored inbound URL. Leave empty to use this configuration in a send."
+          },
+          "opt_out": {
+            "type": "object",
+            "properties": {
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A word that opts a recipient out."
+                },
+                "description": "Words that opt a recipient out, STOP included.",
+                "example": [
+                  "STOP",
+                  "BAJA"
+                ]
+              },
+              "confirmation": {
+                "type": "string",
+                "description": "The reply sent after an opt-out.",
+                "example": "You will not get more messages. Reply START to come back."
+              }
+            },
+            "description": "Stored opt-out rules. Leave this object empty to use this configuration in a send.",
+            "example": {}
+          },
+          "append_opt_out_line": {
+            "type": "boolean",
+            "description": "Add the opt-out line to its SMS.",
+            "example": false
+          }
+        },
+        "description": "A messaging configuration to create.",
+        "required": [
+          "name"
+        ],
+        "example": {
+          "name": "Order updates",
+          "channels": [
+            "sms"
+          ],
+          "append_opt_out_line": true
+        }
+      },
+      "MessagingConfigurationUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its name.",
+            "example": "Order updates"
+          },
+          "from": {
+            "type": "string",
+            "description": "Stored sender or sender pool. Leave empty to use this configuration in a send.",
+            "example": ""
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A messaging channel.",
+              "enum": [
+                "sms",
+                "whatsapp",
+                "telegram",
+                "voice",
+                "rcs",
+                "viber",
+                "zalo",
+                "email",
+                "mms"
+              ]
+            },
+            "description": "Channel order for this workload. Message sends use the supported channels in this order unless the request sets its own channels.",
+            "example": [
+              "sms"
+            ]
+          },
+          "status_callback_url": {
+            "type": "string",
+            "description": "Use a publicly reachable HTTPS URL for this workload's message.status.updated events. An empty string clears the callback.",
+            "maxLength": 500
+          },
+          "inbound_url": {
+            "type": "string",
+            "description": "Stored inbound URL. Leave empty to use this configuration in a send."
+          },
+          "opt_out": {
+            "type": "object",
+            "properties": {
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A word that opts a recipient out."
+                },
+                "description": "Words that opt a recipient out, STOP included.",
+                "example": [
+                  "STOP",
+                  "BAJA"
+                ]
+              },
+              "confirmation": {
+                "type": "string",
+                "description": "The reply sent after an opt-out.",
+                "example": "You will not get more messages. Reply START to come back."
+              }
+            },
+            "description": "Stored opt-out rules. Leave this object empty to use this configuration in a send.",
+            "example": {}
+          },
+          "append_opt_out_line": {
+            "type": "boolean",
+            "description": "Add the opt-out line to its SMS.",
+            "example": false
+          }
+        },
+        "description": "The messaging configuration fields to change.",
+        "example": {
+          "name": "Order updates",
+          "channels": [
+            "whatsapp",
+            "sms"
+          ]
+        }
+      },
+      "MessagingConfigurationList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "The number of configurations, normally capped at 100. Follow the next page URL until it is null to read every configuration.",
+            "example": 1
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the next page, or null on the last page.",
+            "nullable": true,
+            "example": null
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the previous page, or null on the first page.",
+            "nullable": true,
+            "example": null
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessagingConfiguration"
+            },
+            "description": "The configurations."
+          }
+        }
+      },
+      "MessageValidationErrors": {
+        "type": "object",
+        "minProperties": 1,
+        "description": "Validation messages keyed by request field. Nested fields and list items identify the offending name or index.",
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": true
+            }
+          ]
+        }
+      },
+      "PhoneSendThrottleError": {
+        "type": "object",
+        "description": "A send refused by the verification's three-send limit or the application's hourly resend limit.",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "max_sends_reached",
+              "velocity_limit"
+            ],
+            "description": "`max_sends_reached`: the pending verification already used its three sends. `velocity_limit`: the number reached the application's hourly resend limit."
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable reason. Not a stable contract: branch on `code`."
+          },
+          "retry_after": {
+            "type": "integer",
+            "description": "Seconds until the hourly resend limit allows another send. Present with `velocity_limit`."
+          }
+        }
+      },
+      "PhoneResendChannelError": {
+        "type": "object",
+        "description": "A resend refused before any code goes out because of the channel or the number.",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "channel_not_allowed",
+              "invalid_phone_number",
+              "custom_code_unavailable"
+            ],
+            "description": "`channel_not_allowed`: the channel is unavailable or excluded by the verification's policy. `invalid_phone_number`: the number cannot receive a code. `custom_code_unavailable`: the channel cannot send the code."
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "PhoneVerificationExpiredError": {
+        "type": "object",
+        "description": "The verification's window has closed: start a new verification.",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "expired"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "PhoneApproveReasonError": {
+        "type": "object",
+        "description": "The `reason` of an approval is not `own_code_check`.",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_reason"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {

@@ -25,6 +25,22 @@ from didit.types.components.messages_settings import MessagesSettings
 from didit.types.messages.send_params import MessagesSendParams
 
 if TYPE_CHECKING:
+    from didit.resources.messages.capabilities import (
+        AsyncMessagesCapabilities,
+        AsyncMessagesCapabilitiesWithRawResponse,
+        AsyncMessagesCapabilitiesWithStreamingResponse,
+        MessagesCapabilities,
+        MessagesCapabilitiesWithRawResponse,
+        MessagesCapabilitiesWithStreamingResponse,
+    )
+    from didit.resources.messages.configurations import (
+        AsyncMessagesConfigurations,
+        AsyncMessagesConfigurationsWithRawResponse,
+        AsyncMessagesConfigurationsWithStreamingResponse,
+        MessagesConfigurations,
+        MessagesConfigurationsWithRawResponse,
+        MessagesConfigurationsWithStreamingResponse,
+    )
     from didit.resources.messages.consent import (
         AsyncMessagesConsent,
         AsyncMessagesConsentWithRawResponse,
@@ -73,8 +89,20 @@ class Messages(SyncAPIResource):
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
 
-    Nested resources: ``consent``, ``conversations``, ``rules``, ``templates``.
+    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``rules``, ``templates``.
     """
+
+    @cached_property
+    def capabilities(self) -> MessagesCapabilities:
+        from didit.resources.messages.capabilities import MessagesCapabilities
+
+        return MessagesCapabilities(self._client)
+
+    @cached_property
+    def configurations(self) -> MessagesConfigurations:
+        from didit.resources.messages.configurations import MessagesConfigurations
+
+        return MessagesConfigurations(self._client)
 
     @cached_property
     def consent(self) -> MessagesConsent:
@@ -464,8 +492,20 @@ class AsyncMessages(AsyncAPIResource):
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
 
-    Nested resources: ``consent``, ``conversations``, ``rules``, ``templates``.
+    Nested resources: ``capabilities``, ``configurations``, ``consent``, ``conversations``, ``rules``, ``templates``.
     """
+
+    @cached_property
+    def capabilities(self) -> AsyncMessagesCapabilities:
+        from didit.resources.messages.capabilities import AsyncMessagesCapabilities
+
+        return AsyncMessagesCapabilities(self._client)
+
+    @cached_property
+    def configurations(self) -> AsyncMessagesConfigurations:
+        from didit.resources.messages.configurations import AsyncMessagesConfigurations
+
+        return AsyncMessagesConfigurations(self._client)
 
     @cached_property
     def consent(self) -> AsyncMessagesConsent:
@@ -863,6 +903,18 @@ class MessagesWithRawResponse:
         self.update_settings = to_raw_response_wrapper(resource.update_settings)
 
     @cached_property
+    def capabilities(self) -> MessagesCapabilitiesWithRawResponse:
+        from didit.resources.messages.capabilities import MessagesCapabilitiesWithRawResponse
+
+        return MessagesCapabilitiesWithRawResponse(self._resource.capabilities)
+
+    @cached_property
+    def configurations(self) -> MessagesConfigurationsWithRawResponse:
+        from didit.resources.messages.configurations import MessagesConfigurationsWithRawResponse
+
+        return MessagesConfigurationsWithRawResponse(self._resource.configurations)
+
+    @cached_property
     def consent(self) -> MessagesConsentWithRawResponse:
         from didit.resources.messages.consent import MessagesConsentWithRawResponse
 
@@ -898,6 +950,20 @@ class AsyncMessagesWithRawResponse:
         self.cancel = async_to_raw_response_wrapper(resource.cancel)
         self.retrieve_settings = async_to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_raw_response_wrapper(resource.update_settings)
+
+    @cached_property
+    def capabilities(self) -> AsyncMessagesCapabilitiesWithRawResponse:
+        from didit.resources.messages.capabilities import AsyncMessagesCapabilitiesWithRawResponse
+
+        return AsyncMessagesCapabilitiesWithRawResponse(self._resource.capabilities)
+
+    @cached_property
+    def configurations(self) -> AsyncMessagesConfigurationsWithRawResponse:
+        from didit.resources.messages.configurations import (
+            AsyncMessagesConfigurationsWithRawResponse,
+        )
+
+        return AsyncMessagesConfigurationsWithRawResponse(self._resource.configurations)
 
     @cached_property
     def consent(self) -> AsyncMessagesConsentWithRawResponse:
@@ -937,6 +1003,20 @@ class MessagesWithStreamingResponse:
         self.update_settings = to_streamed_response_wrapper(resource.update_settings)
 
     @cached_property
+    def capabilities(self) -> MessagesCapabilitiesWithStreamingResponse:
+        from didit.resources.messages.capabilities import MessagesCapabilitiesWithStreamingResponse
+
+        return MessagesCapabilitiesWithStreamingResponse(self._resource.capabilities)
+
+    @cached_property
+    def configurations(self) -> MessagesConfigurationsWithStreamingResponse:
+        from didit.resources.messages.configurations import (
+            MessagesConfigurationsWithStreamingResponse,
+        )
+
+        return MessagesConfigurationsWithStreamingResponse(self._resource.configurations)
+
+    @cached_property
     def consent(self) -> MessagesConsentWithStreamingResponse:
         from didit.resources.messages.consent import MessagesConsentWithStreamingResponse
 
@@ -974,6 +1054,22 @@ class AsyncMessagesWithStreamingResponse:
         self.cancel = async_to_streamed_response_wrapper(resource.cancel)
         self.retrieve_settings = async_to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_streamed_response_wrapper(resource.update_settings)
+
+    @cached_property
+    def capabilities(self) -> AsyncMessagesCapabilitiesWithStreamingResponse:
+        from didit.resources.messages.capabilities import (
+            AsyncMessagesCapabilitiesWithStreamingResponse,
+        )
+
+        return AsyncMessagesCapabilitiesWithStreamingResponse(self._resource.capabilities)
+
+    @cached_property
+    def configurations(self) -> AsyncMessagesConfigurationsWithStreamingResponse:
+        from didit.resources.messages.configurations import (
+            AsyncMessagesConfigurationsWithStreamingResponse,
+        )
+
+        return AsyncMessagesConfigurationsWithStreamingResponse(self._resource.configurations)
 
     @cached_property
     def consent(self) -> AsyncMessagesConsentWithStreamingResponse:

@@ -157,7 +157,7 @@ class PhoneVerificationCheckResponse(BaseModel):
         | str
         | None
     ) = None
-    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this number in the last 5 minutes. For a TOTP factor check (a request that names `factor_id`) the status is `verified` (the code matched) or `failed`."""
+    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (your `verification.max_attempts` setting, 5 by default) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this number in the last 5 minutes. For a TOTP factor check (a request that names `factor_id`) the status is `verified` (the code matched) or `failed`."""
 
     message: str | None = None
     """Human-readable explanation of the outcome, including the number of attempts remaining after a wrong code."""
