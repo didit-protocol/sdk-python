@@ -3,10 +3,37 @@
 
 from __future__ import annotations
 
+from didit import AsyncPage, SyncPage
+from didit.types.components.phone_factor import PhoneFactor
+from didit.types.components.phone_factor_enrollment import PhoneFactorEnrollment
+from didit.types.components.phone_fraud_policy import PhoneFraudPolicy
+from didit.types.components.phone_list_entry import PhoneListEntry
+from didit.types.components.phone_network_registration import PhoneNetworkRegistration
+from didit.types.components.phone_network_registration_summary import (
+    PhoneNetworkRegistrationSummary,
+)
+from didit.types.components.phone_network_registration_test_number import (
+    PhoneNetworkRegistrationTestNumber,
+)
+from didit.types.components.phone_rate_limit import PhoneRateLimit
+from didit.types.components.phone_risk_bulk_job import PhoneRiskBulkJob
 from didit.types.components.phone_risk_response import PhoneRiskResponse
+from didit.types.components.phone_sdk_key import PhoneSdkKey
+from didit.types.components.phone_sdk_key_rotated import PhoneSdkKeyRotated
+from didit.types.components.phone_sdk_keys_page import PhoneSdkKeysPage
+from didit.types.components.phone_silent_coverage import PhoneSilentCoverage
+from didit.types.components.phone_silent_eligibility import PhoneSilentEligibility
+from didit.types.components.phone_silent_registration import PhoneSilentRegistration
 from didit.types.components.phone_verification_check_response import PhoneVerificationCheckResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
-from tests.harness import Expect, check_operation
+from didit.types.phone.fraud.evaluate_response import PhoneFraudEvaluateResponse
+from didit.types.phone.fraud.events.create_batch_response import PhoneFraudEventsCreateBatchResponse
+from didit.types.phone.fraud.update_response import PhoneFraudUpdateResponse
+from didit.types.phone.line_type_overrides.create_response import (
+    PhoneLineTypeOverridesCreateResponse,
+)
+from didit.types.phone.lists.check_response import PhoneListsCheckResponse
+from tests.harness import BINARY_BODY, Expect, check_operation
 
 
 def test_phone_assess_risk() -> None:
@@ -70,6 +97,32 @@ def test_phone_assess_risk() -> None:
         lambda c: c.phone.assess_risk(phone_number="+14155552671"),
         lambda r: isinstance(r, PhoneRiskResponse),
         lambda r: isinstance(r, PhoneRiskResponse),
+    )
+
+
+def test_phone_assess_risk_bulk() -> None:
+    """``POST /v3/phone/risk/bulk/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/risk/bulk/",
+            api="verification",
+            auth="api_key",
+            multipart_fields=["fields"],
+            multipart_files=["file"],
+            status=202,
+            response_json={
+                "job_id": "8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55",
+                "status": "queued",
+                "total": 2400,
+                "processed": 0,
+                "results_url": None,
+            },
+        ),
+        lambda c: c.phone.assess_risk_bulk(file=b"file-content", fields=["line_type", "sim_swap"]),
+        lambda c: c.phone.assess_risk_bulk(file=b"file-content", fields=["line_type", "sim_swap"]),
+        lambda r: isinstance(r, PhoneRiskBulkJob),
+        lambda r: isinstance(r, PhoneRiskBulkJob),
     )
 
 
@@ -148,6 +201,49 @@ def test_phone_check_code() -> None:
     )
 
 
+def test_phone_download_risk_bulk_results() -> None:
+    """``GET /v3/phone/risk/bulk/{job_id}/results/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/risk/bulk/8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55/results/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_bytes=BINARY_BODY,
+            response_content_type="text/csv",
+        ),
+        lambda c: c.phone.download_risk_bulk_results("8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55"),
+        lambda c: c.phone.download_risk_bulk_results("8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55"),
+        lambda r: r == BINARY_BODY,
+        lambda r: r == BINARY_BODY,
+    )
+
+
+def test_phone_retrieve_risk_bulk() -> None:
+    """``GET /v3/phone/risk/bulk/{job_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/risk/bulk/8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "job_id": "8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55",
+                "status": "done",
+                "total": 2400,
+                "processed": 2400,
+                "results_url": "/v3/phone/risk/bulk/8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55/results/",
+            },
+        ),
+        lambda c: c.phone.retrieve_risk_bulk("8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55"),
+        lambda c: c.phone.retrieve_risk_bulk("8c1f2d3e-5a47-4b90-8e21-7d3a9b6c4f55"),
+        lambda r: isinstance(r, PhoneRiskBulkJob),
+        lambda r: isinstance(r, PhoneRiskBulkJob),
+    )
+
+
 def test_phone_send_code() -> None:
     """``POST /v3/phone/send/``"""
     check_operation(
@@ -182,4 +278,1333 @@ def test_phone_send_code() -> None:
         ),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
+    )
+
+
+def test_phone_factors_create() -> None:
+    """``POST /v3/phone/factors/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/factors/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "type": "totp",
+                "user_id": "u_481",
+                "friendly_name": "Demo App",
+                "metadata": {"device": "iPhone 15"},
+            },
+            status=201,
+            response_json={
+                "factor_id": "fa_3f6c1b528d4e4a7b9c105e2a7d9b1c01",
+                "type": "totp",
+                "status": "unverified",
+                "totp": {"uri": "otpauth://totp/Demo%20App:u_481?secret=JBSWY3DP"},
+            },
+        ),
+        lambda c: c.phone.factors.create(
+            type="totp", user_id="u_481", friendly_name="Demo App", metadata={"device": "iPhone 15"}
+        ),
+        lambda c: c.phone.factors.create(
+            type="totp", user_id="u_481", friendly_name="Demo App", metadata={"device": "iPhone 15"}
+        ),
+        lambda r: isinstance(r, PhoneFactorEnrollment),
+        lambda r: isinstance(r, PhoneFactorEnrollment),
+    )
+
+
+def test_phone_factors_delete() -> None:
+    """``DELETE /v3/phone/factors/{factor_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/factors/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.factors.delete("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.phone.factors.delete("00000000-0000-4000-8000-000000000001"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_factors_list() -> None:
+    """``GET /v3/phone/factors/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/factors/",
+            api="verification",
+            auth="api_key",
+            query={
+                "user_id": ["u_481"],
+                "type": ["totp"],
+                "status": ["verified"],
+                "limit": ["1"],
+                "offset": ["1"],
+                "format": ["json"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "factor_id": "fa_3f6c1b528d4e4a7b9c105e2a7d9b1c01",
+                        "type": "totp",
+                        "status": "verified",
+                        "user_id": "u_481",
+                        "friendly_name": "Demo App",
+                        "metadata": {"device": "iPhone 15"},
+                        "created_at": "2026-11-02T08:14:00Z",
+                        "last_used_at": "2026-11-21T09:58:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.factors.list(
+            user_id="u_481", type="totp", status="verified", limit=1, offset=1, format="json"
+        ),
+        lambda c: c.phone.factors.list(
+            user_id="u_481", type="totp", status="verified", limit=1, offset=1, format="json"
+        ),
+        lambda r: isinstance(r, SyncPage) and all(isinstance(x1, PhoneFactor) for x1 in r.results),
+        lambda r: isinstance(r, AsyncPage) and all(isinstance(x1, PhoneFactor) for x1 in r.results),
+    )
+
+
+def test_phone_factors_retrieve() -> None:
+    """``GET /v3/phone/factors/{factor_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/factors/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "factor_id": "fa_3f6c1b528d4e4a7b9c105e2a7d9b1c01",
+                "type": "totp",
+                "status": "verified",
+                "user_id": "u_481",
+                "friendly_name": "Demo App",
+                "metadata": {"device": "iPhone 15"},
+                "created_at": "2026-11-02T08:14:00Z",
+                "last_used_at": "2026-11-21T09:58:00Z",
+            },
+        ),
+        lambda c: c.phone.factors.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.phone.factors.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, PhoneFactor),
+        lambda r: isinstance(r, PhoneFactor),
+    )
+
+
+def test_phone_factors_update() -> None:
+    """``PATCH /v3/phone/factors/{factor_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/factors/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "friendly_name": "Work phone",
+                "metadata": {"device": "iPhone 16"},
+                "status": "disabled",
+            },
+            status=200,
+            response_json={
+                "factor_id": "fa_3f6c1b528d4e4a7b9c105e2a7d9b1c01",
+                "type": "totp",
+                "status": "disabled",
+                "user_id": "u_481",
+                "friendly_name": "Work phone",
+                "metadata": {"device": "iPhone 16"},
+                "created_at": "2026-11-02T08:14:00Z",
+                "last_used_at": "2026-11-21T09:58:00Z",
+            },
+        ),
+        lambda c: c.phone.factors.update(
+            "00000000-0000-4000-8000-000000000001",
+            friendly_name="Work phone",
+            metadata={"device": "iPhone 16"},
+            status="disabled",
+        ),
+        lambda c: c.phone.factors.update(
+            "00000000-0000-4000-8000-000000000001",
+            friendly_name="Work phone",
+            metadata={"device": "iPhone 16"},
+            status="disabled",
+        ),
+        lambda r: isinstance(r, PhoneFactor),
+        lambda r: isinstance(r, PhoneFactor),
+    )
+
+
+def test_phone_fraud_evaluate() -> None:
+    """``POST /v3/phone/fraud/evaluate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/fraud/evaluate/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "phone_number": "+34600000012",
+                "action": "signup",
+                "existing_user": False,
+                "trusted_user": False,
+            },
+            status=200,
+            response_json={
+                "decision": "allow",
+                "score": 12,
+                "matched_rules": [],
+                "policy": {
+                    "policy_id": "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+                    "score": 40,
+                    "conditions_met": ["sim_swap"],
+                },
+                "challenge_channels": [],
+                "email": None,
+                "existing_user": False,
+                "exception": None,
+            },
+        ),
+        lambda c: c.phone.fraud.evaluate(
+            body={
+                "phone_number": "+34600000012",
+                "action": "signup",
+                "existing_user": False,
+                "trusted_user": False,
+            }
+        ),
+        lambda c: c.phone.fraud.evaluate(
+            body={
+                "phone_number": "+34600000012",
+                "action": "signup",
+                "existing_user": False,
+                "trusted_user": False,
+            }
+        ),
+        lambda r: isinstance(r, PhoneFraudEvaluateResponse),
+        lambda r: isinstance(r, PhoneFraudEvaluateResponse),
+    )
+
+
+def test_phone_fraud_update() -> None:
+    """``PATCH /v3/phone/fraud/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/fraud/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "level": "custom",
+                "rules": [{"key": "sim_swap", "action": "require_code", "countries": ["GB", "ES"]}],
+                "challenge_channels": ["silent", "whatsapp", "passkey"],
+                "sim_swap_within": 72,
+            },
+            status=200,
+            response_json={
+                "level": "custom",
+                "rules": [{"key": "sim_swap", "action": "require_code", "countries": ["GB", "ES"]}],
+                "challenge_channels": ["silent", "whatsapp", "passkey"],
+                "updated_at": "2026-11-21T10:00:00Z",
+                "sim_swap_within": 72,
+                "daily_cap": None,
+            },
+        ),
+        lambda c: c.phone.fraud.update(
+            level="custom",
+            rules=[{"key": "sim_swap", "action": "require_code", "countries": ["GB", "ES"]}],
+            challenge_channels=["silent", "whatsapp", "passkey"],
+            sim_swap_within=72,
+        ),
+        lambda c: c.phone.fraud.update(
+            level="custom",
+            rules=[{"key": "sim_swap", "action": "require_code", "countries": ["GB", "ES"]}],
+            challenge_channels=["silent", "whatsapp", "passkey"],
+            sim_swap_within=72,
+        ),
+        lambda r: isinstance(r, PhoneFraudUpdateResponse),
+        lambda r: isinstance(r, PhoneFraudUpdateResponse),
+    )
+
+
+def test_phone_fraud_events_create_batch() -> None:
+    """``POST /v3/phone/fraud/events/batch/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/fraud/events/batch/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "events": [
+                    {
+                        "type": "login",
+                        "phone_number": "+34600000012",
+                        "occurred_at": "2026-11-21T09:58:00Z",
+                        "reference": "login-99812",
+                    }
+                ]
+            },
+            status=207,
+            response_json={
+                "accepted": 1,
+                "results": [
+                    {
+                        "index": 0,
+                        "event_id": "ae4f1a36-8c7a-4d25-9a49-3f6b0c2d7e55",
+                        "status": "accepted",
+                        "error": None,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.fraud.events.create_batch(
+            events=[
+                {
+                    "type": "login",
+                    "phone_number": "+34600000012",
+                    "occurred_at": "2026-11-21T09:58:00Z",
+                    "reference": "login-99812",
+                }
+            ]
+        ),
+        lambda c: c.phone.fraud.events.create_batch(
+            events=[
+                {
+                    "type": "login",
+                    "phone_number": "+34600000012",
+                    "occurred_at": "2026-11-21T09:58:00Z",
+                    "reference": "login-99812",
+                }
+            ]
+        ),
+        lambda r: isinstance(r, PhoneFraudEventsCreateBatchResponse),
+        lambda r: isinstance(r, PhoneFraudEventsCreateBatchResponse),
+    )
+
+
+def test_phone_fraud_policies_create() -> None:
+    """``POST /v3/phone/fraud/policies/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/fraud/policies/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "name": "Payment check",
+                "flow": "payment",
+                "conditions": [
+                    {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+                ],
+                "threshold": 60,
+                "action": "challenge",
+            },
+            status=201,
+            response_json={
+                "policy_id": "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+                "name": "Payment check",
+                "flow": "payment",
+                "conditions": [
+                    {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+                ],
+                "threshold": 60,
+                "action": "challenge",
+                "updated_at": "2026-11-21T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.fraud.policies.create(
+            name="Payment check",
+            flow="payment",
+            conditions=[
+                {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+            ],
+            threshold=60,
+            action="challenge",
+        ),
+        lambda c: c.phone.fraud.policies.create(
+            name="Payment check",
+            flow="payment",
+            conditions=[
+                {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+            ],
+            threshold=60,
+            action="challenge",
+        ),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+    )
+
+
+def test_phone_fraud_policies_delete() -> None:
+    """``DELETE /v3/phone/fraud/policies/{policy_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/fraud/policies/9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.fraud.policies.delete("9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44"),
+        lambda c: c.phone.fraud.policies.delete("9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_fraud_policies_list() -> None:
+    """``GET /v3/phone/fraud/policies/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/fraud/policies/",
+            api="verification",
+            auth="api_key",
+            query={"flow": ["sample"], "limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "policy_id": "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+                        "name": "Payment check",
+                        "flow": "payment",
+                        "conditions": [
+                            {
+                                "signal": "sim_swap",
+                                "operator": "within_hours",
+                                "value": "72",
+                                "weight": 40,
+                            }
+                        ],
+                        "threshold": 60,
+                        "action": "challenge",
+                        "updated_at": "2026-11-21T09:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.fraud.policies.list(flow="sample", limit=1, offset=1),
+        lambda c: c.phone.fraud.policies.list(flow="sample", limit=1, offset=1),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, PhoneFraudPolicy) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, PhoneFraudPolicy) for x1 in r.results)
+        ),
+    )
+
+
+def test_phone_fraud_policies_retrieve() -> None:
+    """``GET /v3/phone/fraud/policies/{policy_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/fraud/policies/9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "policy_id": "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+                "name": "Payment check",
+                "flow": "payment",
+                "conditions": [
+                    {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40},
+                    {"signal": "email_risk", "operator": "eq", "value": "high", "weight": 30},
+                ],
+                "threshold": 60,
+                "action": "challenge",
+                "updated_at": "2026-11-21T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.fraud.policies.retrieve("9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44"),
+        lambda c: c.phone.fraud.policies.retrieve("9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44"),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+    )
+
+
+def test_phone_fraud_policies_update() -> None:
+    """``PATCH /v3/phone/fraud/policies/{policy_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/fraud/policies/9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "name": "Payment check",
+                "flow": "payment",
+                "conditions": [
+                    {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+                ],
+                "threshold": 60,
+                "action": "challenge",
+            },
+            status=200,
+            response_json={
+                "policy_id": "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+                "name": "Payment check",
+                "flow": "payment",
+                "conditions": [
+                    {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40},
+                    {"signal": "email_risk", "operator": "eq", "value": "high", "weight": 30},
+                ],
+                "threshold": 60,
+                "action": "challenge",
+                "updated_at": "2026-11-21T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.fraud.policies.update(
+            "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+            name="Payment check",
+            flow="payment",
+            conditions=[
+                {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+            ],
+            threshold=60,
+            action="challenge",
+        ),
+        lambda c: c.phone.fraud.policies.update(
+            "9d3e0f25-7b69-4c14-8f38-2e5a9b1c6d44",
+            name="Payment check",
+            flow="payment",
+            conditions=[
+                {"signal": "sim_swap", "operator": "within_hours", "value": "72", "weight": 40}
+            ],
+            threshold=60,
+            action="challenge",
+        ),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+        lambda r: isinstance(r, PhoneFraudPolicy),
+    )
+
+
+def test_phone_line_type_overrides_create() -> None:
+    """``POST /v3/phone/line-type-overrides/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/line-type-overrides/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "+34911234567", "line_type": "landline"},
+            status=201,
+            response_json={
+                "override_id": "7c2d9e14-6a58-4b03-9e27-1d4f8a0b5c33",
+                "phone_number": "+34911234567",
+                "line_type": "landline",
+                "created_at": "2026-11-21T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.line_type_overrides.create(
+            phone_number="+34911234567", line_type="landline"
+        ),
+        lambda c: c.phone.line_type_overrides.create(
+            phone_number="+34911234567", line_type="landline"
+        ),
+        lambda r: isinstance(r, PhoneLineTypeOverridesCreateResponse),
+        lambda r: isinstance(r, PhoneLineTypeOverridesCreateResponse),
+    )
+
+
+def test_phone_line_type_overrides_delete() -> None:
+    """``DELETE /v3/phone/line-type-overrides/{override_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/line-type-overrides/7c2d9e14-6a58-4b03-9e27-1d4f8a0b5c33/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.line_type_overrides.delete("7c2d9e14-6a58-4b03-9e27-1d4f8a0b5c33"),
+        lambda c: c.phone.line_type_overrides.delete("7c2d9e14-6a58-4b03-9e27-1d4f8a0b5c33"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_lists_add() -> None:
+    """``POST /v3/phone/lists/{list_id}/entries/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/lists/block/entries/",
+            api="verification",
+            auth="api_key",
+            json_body={"value": "+88216", "type": "prefix", "note": "Pumping from this prefix"},
+            status=201,
+            response_json={
+                "entry_id": "bf5a2b47-9d8b-4e36-8b5a-407c1d3e8f66",
+                "list_id": "block",
+                "value": "+88216",
+                "expires_at": None,
+                "type": "prefix",
+                "source": "api",
+            },
+        ),
+        lambda c: c.phone.lists.add(
+            "block", value="+88216", type="prefix", note="Pumping from this prefix"
+        ),
+        lambda c: c.phone.lists.add(
+            "block", value="+88216", type="prefix", note="Pumping from this prefix"
+        ),
+        lambda r: isinstance(r, PhoneListEntry),
+        lambda r: isinstance(r, PhoneListEntry),
+    )
+
+
+def test_phone_lists_check() -> None:
+    """``POST /v3/phone/lists/check/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/lists/check/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "+447700900123"},
+            status=200,
+            response_json={
+                "allowed": False,
+                "blocked": True,
+                "matches": [
+                    {
+                        "list_id": "block",
+                        "entry_id": "c06b3c58-ae9c-4f47-9c6b-518d2e4f9a77",
+                        "type": "prefix",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.lists.check(phone_number="+447700900123"),
+        lambda c: c.phone.lists.check(phone_number="+447700900123"),
+        lambda r: isinstance(r, PhoneListsCheckResponse),
+        lambda r: isinstance(r, PhoneListsCheckResponse),
+    )
+
+
+def test_phone_lists_list_entries() -> None:
+    """``GET /v3/phone/lists/{list_id}/entries/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/lists/block/entries/",
+            api="verification",
+            auth="api_key",
+            query={
+                "type": ["number"],
+                "search": ["sample"],
+                "limit": ["1"],
+                "offset": ["1"],
+                "format": ["json"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "entry_id": "c06b3c58-ae9c-4f47-9c6b-518d2e4f9a77",
+                        "value": "+4475",
+                        "type": "prefix",
+                        "expires_at": None,
+                        "source": "alert",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.lists.list_entries(
+            "block", type="number", search="sample", limit=1, offset=1, format="json"
+        ),
+        lambda c: c.phone.lists.list_entries(
+            "block", type="number", search="sample", limit=1, offset=1, format="json"
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, PhoneListEntry) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, PhoneListEntry) for x1 in r.results)
+        ),
+    )
+
+
+def test_phone_lists_remove() -> None:
+    """``DELETE /v3/phone/lists/{list_id}/entries/{entry_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/lists/block/entries/bf5a2b47-9d8b-4e36-8b5a-407c1d3e8f66/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.lists.remove("block", "bf5a2b47-9d8b-4e36-8b5a-407c1d3e8f66"),
+        lambda c: c.phone.lists.remove("block", "bf5a2b47-9d8b-4e36-8b5a-407c1d3e8f66"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_network_registrations_create() -> None:
+    """``POST /v3/phone/network/registrations/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/network/registrations/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "feature": "sim_swap",
+                "country": "BR",
+                "use_case": "account_recovery",
+                "company_name": "Demo Application S.L.",
+                "website": "https://app.example.com",
+                "networks": ["Mobile network A", "Mobile network B"],
+                "purpose": "Check for a recent SIM change before a password reset",
+                "monthly_volume": 20000,
+            },
+            status=201,
+            response_json={
+                "registration_id": "nr_5b1e7a902c434d688f150a9c3e6d7b22",
+                "feature": "sim_swap",
+                "country": "BR",
+                "use_case": "account_recovery",
+                "status": "partly_approved",
+                "networks": [
+                    {
+                        "name": "Mobile network A",
+                        "status": "approved",
+                        "decided_at": "2026-11-20T15:02:00Z",
+                        "reason": None,
+                    },
+                    {
+                        "name": "Mobile network B",
+                        "status": "in_review",
+                        "decided_at": None,
+                        "reason": None,
+                    },
+                ],
+                "live_at": None,
+                "test_access": "on",
+                "test_numbers": [{"phone_number": "+34600000012", "status": "verified"}],
+            },
+        ),
+        lambda c: c.phone.network.registrations.create(
+            feature="sim_swap",
+            country="BR",
+            use_case="account_recovery",
+            company_name="Demo Application S.L.",
+            website="https://app.example.com",
+            networks=["Mobile network A", "Mobile network B"],
+            purpose="Check for a recent SIM change before a password reset",
+            monthly_volume=20000,
+        ),
+        lambda c: c.phone.network.registrations.create(
+            feature="sim_swap",
+            country="BR",
+            use_case="account_recovery",
+            company_name="Demo Application S.L.",
+            website="https://app.example.com",
+            networks=["Mobile network A", "Mobile network B"],
+            purpose="Check for a recent SIM change before a password reset",
+            monthly_volume=20000,
+        ),
+        lambda r: isinstance(r, PhoneNetworkRegistration),
+        lambda r: isinstance(r, PhoneNetworkRegistration),
+    )
+
+
+def test_phone_network_registrations_list() -> None:
+    """``GET /v3/phone/network/registrations/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/network/registrations/",
+            api="verification",
+            auth="api_key",
+            query={
+                "feature": ["sim_swap"],
+                "country": ["ES"],
+                "status": ["partly_approved"],
+                "limit": ["1"],
+                "offset": ["1"],
+                "format": ["json"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "registration_id": "nr_5b1e7a902c434d688f150a9c3e6d7b22",
+                        "feature": "sim_swap",
+                        "country": "BR",
+                        "use_case": "account_recovery",
+                        "status": "partly_approved",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.network.registrations.list(
+            feature="sim_swap",
+            country="ES",
+            status="partly_approved",
+            limit=1,
+            offset=1,
+            format="json",
+        ),
+        lambda c: c.phone.network.registrations.list(
+            feature="sim_swap",
+            country="ES",
+            status="partly_approved",
+            limit=1,
+            offset=1,
+            format="json",
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, PhoneNetworkRegistrationSummary) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, PhoneNetworkRegistrationSummary) for x1 in r.results)
+        ),
+    )
+
+
+def test_phone_network_registrations_retrieve() -> None:
+    """``GET /v3/phone/network/registrations/{registration_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/network/registrations/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "registration_id": "nr_5b1e7a902c434d688f150a9c3e6d7b22",
+                "feature": "sim_swap",
+                "country": "BR",
+                "use_case": "account_recovery",
+                "status": "partly_approved",
+                "networks": [
+                    {
+                        "name": "Mobile network A",
+                        "status": "approved",
+                        "decided_at": "2026-11-20T15:02:00Z",
+                        "reason": None,
+                    },
+                    {
+                        "name": "Mobile network B",
+                        "status": "in_review",
+                        "decided_at": None,
+                        "reason": None,
+                    },
+                ],
+                "live_at": None,
+                "test_access": "on",
+                "test_numbers": [{"phone_number": "+34600000012", "status": "verified"}],
+            },
+        ),
+        lambda c: c.phone.network.registrations.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.phone.network.registrations.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, PhoneNetworkRegistration),
+        lambda r: isinstance(r, PhoneNetworkRegistration),
+    )
+
+
+def test_phone_network_registrations_test_numbers_create() -> None:
+    """``POST /v3/phone/network/registrations/{registration_id}/test-numbers/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/network/registrations/00000000-0000-4000-8000-000000000001/test-numbers/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "+34600000012"},
+            status=201,
+            response_json={
+                "phone_number": "+34600000012",
+                "status": "code_sent",
+                "verification_id": "pv_ae4f1a368c7a4d259a493f6b0c2d7e55",
+                "test_access": "on",
+            },
+        ),
+        lambda c: c.phone.network.registrations.test_numbers.create(
+            "00000000-0000-4000-8000-000000000001", phone_number="+34600000012"
+        ),
+        lambda c: c.phone.network.registrations.test_numbers.create(
+            "00000000-0000-4000-8000-000000000001", phone_number="+34600000012"
+        ),
+        lambda r: isinstance(r, PhoneNetworkRegistrationTestNumber),
+        lambda r: isinstance(r, PhoneNetworkRegistrationTestNumber),
+    )
+
+
+def test_phone_network_registrations_test_numbers_delete() -> None:
+    """``DELETE /v3/phone/network/registrations/{registration_id}/test-numbers/{phone_number}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/network/registrations/00000000-0000-4000-8000-000000000001/test-numbers/00000000-0000-4000-8000-000000000002/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.network.registrations.test_numbers.delete(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda c: c.phone.network.registrations.test_numbers.delete(
+            "00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_rate_limits_create() -> None:
+    """``POST /v3/phone/rate-limits/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/rate-limits/",
+            api="verification",
+            auth="api_key",
+            json_body={"key": "user_id", "buckets": [{"max": 5, "interval": 3600}]},
+            status=201,
+            response_json={
+                "rate_limit_id": "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+                "key": "user_id",
+                "buckets": [
+                    {
+                        "bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10",
+                        "max": 5,
+                        "interval": 3600,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.rate_limits.create(key="user_id", buckets=[{"max": 5, "interval": 3600}]),
+        lambda c: c.phone.rate_limits.create(key="user_id", buckets=[{"max": 5, "interval": 3600}]),
+        lambda r: isinstance(r, PhoneRateLimit),
+        lambda r: isinstance(r, PhoneRateLimit),
+    )
+
+
+def test_phone_rate_limits_delete() -> None:
+    """``DELETE /v3/phone/rate-limits/{rate_limit_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/rate-limits/3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.rate_limits.delete("3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01"),
+        lambda c: c.phone.rate_limits.delete("3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_rate_limits_list() -> None:
+    """``GET /v3/phone/rate-limits/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/rate-limits/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "rate_limit_id": "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+                        "key": "user_id",
+                        "buckets": [
+                            {
+                                "bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10",
+                                "max": 5,
+                                "interval": 3600,
+                                "in_use": 2,
+                            }
+                        ],
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.rate_limits.list(limit=1, offset=1),
+        lambda c: c.phone.rate_limits.list(limit=1, offset=1),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, PhoneRateLimit) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, PhoneRateLimit) for x1 in r.results)
+        ),
+    )
+
+
+def test_phone_rate_limits_retrieve() -> None:
+    """``GET /v3/phone/rate-limits/{rate_limit_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/rate-limits/3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "rate_limit_id": "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+                "key": "user_id",
+                "buckets": [
+                    {
+                        "bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10",
+                        "max": 5,
+                        "interval": 3600,
+                        "in_use": 2,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.rate_limits.retrieve("3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01"),
+        lambda c: c.phone.rate_limits.retrieve("3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01"),
+        lambda r: isinstance(r, PhoneRateLimit),
+        lambda r: isinstance(r, PhoneRateLimit),
+    )
+
+
+def test_phone_rate_limits_update() -> None:
+    """``PATCH /v3/phone/rate-limits/{rate_limit_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/rate-limits/3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "buckets": [
+                    {
+                        "bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10",
+                        "max": 10,
+                        "interval": 86400,
+                    }
+                ]
+            },
+            status=200,
+            response_json={
+                "rate_limit_id": "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+                "key": "user_id",
+                "buckets": [
+                    {
+                        "bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10",
+                        "max": 10,
+                        "interval": 86400,
+                        "in_use": 2,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.rate_limits.update(
+            "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+            buckets=[
+                {"bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10", "max": 10, "interval": 86400}
+            ],
+        ),
+        lambda c: c.phone.rate_limits.update(
+            "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01",
+            buckets=[
+                {"bucket_id": "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10", "max": 10, "interval": 86400}
+            ],
+        ),
+        lambda r: isinstance(r, PhoneRateLimit),
+        lambda r: isinstance(r, PhoneRateLimit),
+    )
+
+
+def test_phone_rate_limits_buckets_delete() -> None:
+    """``DELETE /v3/phone/rate-limits/{rate_limit_id}/buckets/{bucket_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/rate-limits/3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01/buckets/0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.rate_limits.buckets.delete(
+            "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01", "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10"
+        ),
+        lambda c: c.phone.rate_limits.buckets.delete(
+            "3f6c1b52-8d4e-4a7b-9c10-5e2a7d9b1c01", "0b6f6a4e-3f1a-4c6e-9a53-6b1d2f9c7a10"
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_sdk_keys_create() -> None:
+    """``POST /v3/phone/sdk-keys/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/sdk-keys/",
+            api="verification",
+            auth="api_key",
+            json_body={"platform": "ios", "app_ids": ["com.demoapp.ios"], "name": "iOS app"},
+            status=201,
+            response_json={
+                "key_id": "sk_9d3e0f257b694c148f382e5a9b1c6d44",
+                "platform": "ios",
+                "publishable_key": "pk_live_ios_7Hq2",
+                "app_ids": ["com.demoapp.ios"],
+                "status": "active",
+                "created_at": "2026-11-21T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.sdk_keys.create(
+            platform="ios", app_ids=["com.demoapp.ios"], name="iOS app"
+        ),
+        lambda c: c.phone.sdk_keys.create(
+            platform="ios", app_ids=["com.demoapp.ios"], name="iOS app"
+        ),
+        lambda r: isinstance(r, PhoneSdkKey),
+        lambda r: isinstance(r, PhoneSdkKey),
+    )
+
+
+def test_phone_sdk_keys_list() -> None:
+    """``GET /v3/phone/sdk-keys/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/sdk-keys/",
+            api="verification",
+            auth="api_key",
+            query={"platform": ["ios"]},
+            status=200,
+            response_json={
+                "results": [
+                    {
+                        "key_id": "sk_9d3e0f257b694c148f382e5a9b1c6d44",
+                        "platform": "ios",
+                        "status": "active",
+                    }
+                ]
+            },
+        ),
+        lambda c: c.phone.sdk_keys.list(platform="ios"),
+        lambda c: c.phone.sdk_keys.list(platform="ios"),
+        lambda r: isinstance(r, PhoneSdkKeysPage),
+        lambda r: isinstance(r, PhoneSdkKeysPage),
+    )
+
+
+def test_phone_sdk_keys_revoke() -> None:
+    """``DELETE /v3/phone/sdk-keys/{key_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/phone/sdk-keys/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.phone.sdk_keys.revoke("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.phone.sdk_keys.revoke("00000000-0000-4000-8000-000000000001"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_phone_sdk_keys_rotate() -> None:
+    """``POST /v3/phone/sdk-keys/{key_id}/rotate/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/sdk-keys/00000000-0000-4000-8000-000000000001/rotate/",
+            api="verification",
+            auth="api_key",
+            json_body={"overlap_hours": 72},
+            status=200,
+            response_json={
+                "key_id": "sk_9d3e0f257b694c148f382e5a9b1c6d44",
+                "platform": "ios",
+                "publishable_key": "pk_live_ios_9Zt4",
+                "app_ids": ["com.demoapp.ios"],
+                "status": "active",
+                "created_at": "2026-11-21T09:00:00Z",
+                "previous_expires_at": "2026-11-24T09:00:00Z",
+            },
+        ),
+        lambda c: c.phone.sdk_keys.rotate("00000000-0000-4000-8000-000000000001", overlap_hours=72),
+        lambda c: c.phone.sdk_keys.rotate("00000000-0000-4000-8000-000000000001", overlap_hours=72),
+        lambda r: isinstance(r, PhoneSdkKeyRotated),
+        lambda r: isinstance(r, PhoneSdkKeyRotated),
+    )
+
+
+def test_phone_silent_coverage() -> None:
+    """``GET /v3/phone/silent/coverage/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/silent/coverage/",
+            api="verification",
+            auth="api_key",
+            query={"country": ["ES"]},
+            status=200,
+            response_json={
+                "countries": [
+                    {
+                        "country": "ES",
+                        "wifi": True,
+                        "networks": [{"name": "Mobile network A", "approval": "live"}],
+                    }
+                ]
+            },
+        ),
+        lambda c: c.phone.silent.coverage(country="ES"),
+        lambda c: c.phone.silent.coverage(country="ES"),
+        lambda r: isinstance(r, PhoneSilentCoverage),
+        lambda r: isinstance(r, PhoneSilentCoverage),
+    )
+
+
+def test_phone_silent_eligibility() -> None:
+    """``POST /v3/phone/silent/eligibility/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/silent/eligibility/",
+            api="verification",
+            auth="api_key",
+            json_body={"phone_number": "+34600000012", "ip_address": "83.44.10.12"},
+            status=200,
+            response_json={
+                "eligible": True,
+                "reason": None,
+                "network": "Mobile network A",
+                "country": "ES",
+                "wifi_possible": True,
+            },
+        ),
+        lambda c: c.phone.silent.eligibility(phone_number="+34600000012", ip_address="83.44.10.12"),
+        lambda c: c.phone.silent.eligibility(phone_number="+34600000012", ip_address="83.44.10.12"),
+        lambda r: isinstance(r, PhoneSilentEligibility),
+        lambda r: isinstance(r, PhoneSilentEligibility),
+    )
+
+
+def test_phone_silent_registrations_create() -> None:
+    """``POST /v3/phone/silent/registrations/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/silent/registrations/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "country": "BR",
+                "use_case": "login",
+                "company_name": "Demo Application S.L.",
+                "website": "https://app.example.com",
+                "monthly_volume": 40000,
+            },
+            status=201,
+            response_json={
+                "registration_id": "sr_7c2d9e146a584b039e271d4f8a0b5c33",
+                "country": "BR",
+                "status": "in_review",
+                "networks": [
+                    {
+                        "name": "Mobile network A",
+                        "status": "approved",
+                        "decided_at": "2026-11-20T15:02:00Z",
+                        "reason": None,
+                    },
+                    {
+                        "name": "Mobile network B",
+                        "status": "in_review",
+                        "decided_at": None,
+                        "reason": None,
+                    },
+                ],
+                "live_at": None,
+            },
+        ),
+        lambda c: c.phone.silent.registrations.create(
+            country="BR",
+            use_case="login",
+            company_name="Demo Application S.L.",
+            website="https://app.example.com",
+            monthly_volume=40000,
+        ),
+        lambda c: c.phone.silent.registrations.create(
+            country="BR",
+            use_case="login",
+            company_name="Demo Application S.L.",
+            website="https://app.example.com",
+            monthly_volume=40000,
+        ),
+        lambda r: isinstance(r, PhoneSilentRegistration),
+        lambda r: isinstance(r, PhoneSilentRegistration),
+    )
+
+
+def test_phone_silent_registrations_retrieve() -> None:
+    """``GET /v3/phone/silent/registrations/{registration_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/silent/registrations/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "registration_id": "sr_7c2d9e146a584b039e271d4f8a0b5c33",
+                "country": "BR",
+                "status": "partly_approved",
+                "networks": [
+                    {
+                        "name": "Mobile network A",
+                        "status": "approved",
+                        "decided_at": "2026-11-20T15:02:00Z",
+                        "reason": None,
+                    },
+                    {
+                        "name": "Mobile network B",
+                        "status": "rejected",
+                        "decided_at": "2026-11-20T16:40:00Z",
+                        "reason": "Use case not covered by the approval",
+                    },
+                ],
+                "live_at": "2026-11-21T08:00:00Z",
+            },
+        ),
+        lambda c: c.phone.silent.registrations.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.phone.silent.registrations.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, PhoneSilentRegistration),
+        lambda r: isinstance(r, PhoneSilentRegistration),
     )

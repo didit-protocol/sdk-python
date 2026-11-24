@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from functools import cached_property
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import httpx
 
@@ -24,6 +24,40 @@ from didit.types.components.message_prices import MessagePrices
 from didit.types.components.messages_settings import MessagesSettings
 from didit.types.messages.send_params import MessagesSendParams
 
+if TYPE_CHECKING:
+    from didit.resources.messages.consent import (
+        AsyncMessagesConsent,
+        AsyncMessagesConsentWithRawResponse,
+        AsyncMessagesConsentWithStreamingResponse,
+        MessagesConsent,
+        MessagesConsentWithRawResponse,
+        MessagesConsentWithStreamingResponse,
+    )
+    from didit.resources.messages.conversations import (
+        AsyncMessagesConversations,
+        AsyncMessagesConversationsWithRawResponse,
+        AsyncMessagesConversationsWithStreamingResponse,
+        MessagesConversations,
+        MessagesConversationsWithRawResponse,
+        MessagesConversationsWithStreamingResponse,
+    )
+    from didit.resources.messages.rules import (
+        AsyncMessagesRules,
+        AsyncMessagesRulesWithRawResponse,
+        AsyncMessagesRulesWithStreamingResponse,
+        MessagesRules,
+        MessagesRulesWithRawResponse,
+        MessagesRulesWithStreamingResponse,
+    )
+    from didit.resources.messages.templates import (
+        AsyncMessagesTemplates,
+        AsyncMessagesTemplatesWithRawResponse,
+        AsyncMessagesTemplatesWithStreamingResponse,
+        MessagesTemplates,
+        MessagesTemplatesWithRawResponse,
+        MessagesTemplatesWithStreamingResponse,
+    )
+
 __all__ = [
     "Messages",
     "AsyncMessages",
@@ -38,7 +72,33 @@ class Messages(SyncAPIResource):
     """The ``messages`` resource of the Didit API.
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
+
+    Nested resources: ``consent``, ``conversations``, ``rules``, ``templates``.
     """
+
+    @cached_property
+    def consent(self) -> MessagesConsent:
+        from didit.resources.messages.consent import MessagesConsent
+
+        return MessagesConsent(self._client)
+
+    @cached_property
+    def conversations(self) -> MessagesConversations:
+        from didit.resources.messages.conversations import MessagesConversations
+
+        return MessagesConversations(self._client)
+
+    @cached_property
+    def rules(self) -> MessagesRules:
+        from didit.resources.messages.rules import MessagesRules
+
+        return MessagesRules(self._client)
+
+    @cached_property
+    def templates(self) -> MessagesTemplates:
+        from didit.resources.messages.templates import MessagesTemplates
+
+        return MessagesTemplates(self._client)
 
     @cached_property
     def with_raw_response(self) -> MessagesWithRawResponse:
@@ -133,7 +193,7 @@ class Messages(SyncAPIResource):
 
         **Fallback.** List several `channels`: each is tried in order, and the next one is used when a channel cannot take the message (switched off, the recipient opted out, no approved WhatsApp template, balance) or when the message fails on it later (rejected, undeliverable, expired). Every attempt is in `attempts`; a skipped channel is a `failed` attempt with its `error` and no price.
 
-        **Statuses** reach your webhook destinations subscribed to `message.status.updated`.
+        **Statuses** reach your webhook destinations subscribed to `message.status.updated`; a reply from the person reaches `message.received` (WhatsApp and Telegram) and a change of their consent `contact.consent.updated`.
 
         **Billing.** SMS: the carrier's price plus Didit's fee, per segment. WhatsApp from Didit's number: WhatsApp's rate for the market plus Didit's fee; from your own connected WhatsApp Business account, WhatsApp bills its rate to your account directly and Didit charges only its fee. Email: a flat price. Your plan's discount applies to the fee, never to the carrier's or WhatsApp's part. A failed SMS or WhatsApp attempt, a skipped one and a cancelled one are free; an email is charged once the receiving mail system accepts it, so an email that bounces later is charged. SMS and WhatsApp open with a paid plan or after your first top-up (`403 plan_locked`); a sandbox application simulates every message and charges nothing. See the [prices per country](/getting-started/pricing).
 
@@ -403,7 +463,33 @@ class AsyncMessages(AsyncAPIResource):
     """The ``messages`` resource of the Didit API.
 
     Methods: ``cancel``, ``delete``, ``list``, ``list_prices``, ``retrieve``, ``retrieve_settings``, ``send``, ``update_settings``.
+
+    Nested resources: ``consent``, ``conversations``, ``rules``, ``templates``.
     """
+
+    @cached_property
+    def consent(self) -> AsyncMessagesConsent:
+        from didit.resources.messages.consent import AsyncMessagesConsent
+
+        return AsyncMessagesConsent(self._client)
+
+    @cached_property
+    def conversations(self) -> AsyncMessagesConversations:
+        from didit.resources.messages.conversations import AsyncMessagesConversations
+
+        return AsyncMessagesConversations(self._client)
+
+    @cached_property
+    def rules(self) -> AsyncMessagesRules:
+        from didit.resources.messages.rules import AsyncMessagesRules
+
+        return AsyncMessagesRules(self._client)
+
+    @cached_property
+    def templates(self) -> AsyncMessagesTemplates:
+        from didit.resources.messages.templates import AsyncMessagesTemplates
+
+        return AsyncMessagesTemplates(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncMessagesWithRawResponse:
@@ -498,7 +584,7 @@ class AsyncMessages(AsyncAPIResource):
 
         **Fallback.** List several `channels`: each is tried in order, and the next one is used when a channel cannot take the message (switched off, the recipient opted out, no approved WhatsApp template, balance) or when the message fails on it later (rejected, undeliverable, expired). Every attempt is in `attempts`; a skipped channel is a `failed` attempt with its `error` and no price.
 
-        **Statuses** reach your webhook destinations subscribed to `message.status.updated`.
+        **Statuses** reach your webhook destinations subscribed to `message.status.updated`; a reply from the person reaches `message.received` (WhatsApp and Telegram) and a change of their consent `contact.consent.updated`.
 
         **Billing.** SMS: the carrier's price plus Didit's fee, per segment. WhatsApp from Didit's number: WhatsApp's rate for the market plus Didit's fee; from your own connected WhatsApp Business account, WhatsApp bills its rate to your account directly and Didit charges only its fee. Email: a flat price. Your plan's discount applies to the fee, never to the carrier's or WhatsApp's part. A failed SMS or WhatsApp attempt, a skipped one and a cancelled one are free; an email is charged once the receiving mail system accepts it, so an email that bounces later is charged. SMS and WhatsApp open with a paid plan or after your first top-up (`403 plan_locked`); a sandbox application simulates every message and charges nothing. See the [prices per country](/getting-started/pricing).
 
@@ -776,6 +862,30 @@ class MessagesWithRawResponse:
         self.retrieve_settings = to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_raw_response_wrapper(resource.update_settings)
 
+    @cached_property
+    def consent(self) -> MessagesConsentWithRawResponse:
+        from didit.resources.messages.consent import MessagesConsentWithRawResponse
+
+        return MessagesConsentWithRawResponse(self._resource.consent)
+
+    @cached_property
+    def conversations(self) -> MessagesConversationsWithRawResponse:
+        from didit.resources.messages.conversations import MessagesConversationsWithRawResponse
+
+        return MessagesConversationsWithRawResponse(self._resource.conversations)
+
+    @cached_property
+    def rules(self) -> MessagesRulesWithRawResponse:
+        from didit.resources.messages.rules import MessagesRulesWithRawResponse
+
+        return MessagesRulesWithRawResponse(self._resource.rules)
+
+    @cached_property
+    def templates(self) -> MessagesTemplatesWithRawResponse:
+        from didit.resources.messages.templates import MessagesTemplatesWithRawResponse
+
+        return MessagesTemplatesWithRawResponse(self._resource.templates)
+
 
 class AsyncMessagesWithRawResponse:
     def __init__(self, resource: AsyncMessages) -> None:
@@ -788,6 +898,30 @@ class AsyncMessagesWithRawResponse:
         self.cancel = async_to_raw_response_wrapper(resource.cancel)
         self.retrieve_settings = async_to_raw_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_raw_response_wrapper(resource.update_settings)
+
+    @cached_property
+    def consent(self) -> AsyncMessagesConsentWithRawResponse:
+        from didit.resources.messages.consent import AsyncMessagesConsentWithRawResponse
+
+        return AsyncMessagesConsentWithRawResponse(self._resource.consent)
+
+    @cached_property
+    def conversations(self) -> AsyncMessagesConversationsWithRawResponse:
+        from didit.resources.messages.conversations import AsyncMessagesConversationsWithRawResponse
+
+        return AsyncMessagesConversationsWithRawResponse(self._resource.conversations)
+
+    @cached_property
+    def rules(self) -> AsyncMessagesRulesWithRawResponse:
+        from didit.resources.messages.rules import AsyncMessagesRulesWithRawResponse
+
+        return AsyncMessagesRulesWithRawResponse(self._resource.rules)
+
+    @cached_property
+    def templates(self) -> AsyncMessagesTemplatesWithRawResponse:
+        from didit.resources.messages.templates import AsyncMessagesTemplatesWithRawResponse
+
+        return AsyncMessagesTemplatesWithRawResponse(self._resource.templates)
 
 
 class MessagesWithStreamingResponse:
@@ -802,6 +936,32 @@ class MessagesWithStreamingResponse:
         self.retrieve_settings = to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = to_streamed_response_wrapper(resource.update_settings)
 
+    @cached_property
+    def consent(self) -> MessagesConsentWithStreamingResponse:
+        from didit.resources.messages.consent import MessagesConsentWithStreamingResponse
+
+        return MessagesConsentWithStreamingResponse(self._resource.consent)
+
+    @cached_property
+    def conversations(self) -> MessagesConversationsWithStreamingResponse:
+        from didit.resources.messages.conversations import (
+            MessagesConversationsWithStreamingResponse,
+        )
+
+        return MessagesConversationsWithStreamingResponse(self._resource.conversations)
+
+    @cached_property
+    def rules(self) -> MessagesRulesWithStreamingResponse:
+        from didit.resources.messages.rules import MessagesRulesWithStreamingResponse
+
+        return MessagesRulesWithStreamingResponse(self._resource.rules)
+
+    @cached_property
+    def templates(self) -> MessagesTemplatesWithStreamingResponse:
+        from didit.resources.messages.templates import MessagesTemplatesWithStreamingResponse
+
+        return MessagesTemplatesWithStreamingResponse(self._resource.templates)
+
 
 class AsyncMessagesWithStreamingResponse:
     def __init__(self, resource: AsyncMessages) -> None:
@@ -814,3 +974,29 @@ class AsyncMessagesWithStreamingResponse:
         self.cancel = async_to_streamed_response_wrapper(resource.cancel)
         self.retrieve_settings = async_to_streamed_response_wrapper(resource.retrieve_settings)
         self.update_settings = async_to_streamed_response_wrapper(resource.update_settings)
+
+    @cached_property
+    def consent(self) -> AsyncMessagesConsentWithStreamingResponse:
+        from didit.resources.messages.consent import AsyncMessagesConsentWithStreamingResponse
+
+        return AsyncMessagesConsentWithStreamingResponse(self._resource.consent)
+
+    @cached_property
+    def conversations(self) -> AsyncMessagesConversationsWithStreamingResponse:
+        from didit.resources.messages.conversations import (
+            AsyncMessagesConversationsWithStreamingResponse,
+        )
+
+        return AsyncMessagesConversationsWithStreamingResponse(self._resource.conversations)
+
+    @cached_property
+    def rules(self) -> AsyncMessagesRulesWithStreamingResponse:
+        from didit.resources.messages.rules import AsyncMessagesRulesWithStreamingResponse
+
+        return AsyncMessagesRulesWithStreamingResponse(self._resource.rules)
+
+    @cached_property
+    def templates(self) -> AsyncMessagesTemplatesWithStreamingResponse:
+        from didit.resources.messages.templates import AsyncMessagesTemplatesWithStreamingResponse
+
+        return AsyncMessagesTemplatesWithStreamingResponse(self._resource.templates)

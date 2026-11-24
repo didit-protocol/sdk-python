@@ -5,8 +5,14 @@ from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
 from didit.types.components.message import Message
+from didit.types.components.message_consent import MessageConsent
+from didit.types.components.message_consent_channels import MessageConsentChannels
+from didit.types.components.message_conversation import MessageConversation
+from didit.types.components.message_conversation_webhook import MessageConversationWebhook
 from didit.types.components.message_prices import MessagePrices
+from didit.types.components.message_template import MessageTemplate
 from didit.types.components.messages_settings import MessagesSettings
+from didit.types.messages.rules.create_response import MessagesRulesCreateResponse
 from tests.harness import Expect, check_operation
 
 
@@ -424,4 +430,415 @@ def test_messages_update_settings() -> None:
         lambda c: c.messages.update_settings(retention_days=7),
         lambda r: isinstance(r, MessagesSettings),
         lambda r: isinstance(r, MessagesSettings),
+    )
+
+
+def test_messages_consent_retrieve() -> None:
+    """``GET /v3/messages/contacts/{to}/consent/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/contacts/00000000-0000-4000-8000-000000000001/consent/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "channels": [
+                    {
+                        "channel": "sms",
+                        "status": "opted_in",
+                        "source": "api",
+                        "updated_at": "2026-11-12T08:30:00Z",
+                    }
+                ],
+                "reassigned": False,
+            },
+        ),
+        lambda c: c.messages.consent.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.messages.consent.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, MessageConsent),
+        lambda r: isinstance(r, MessageConsent),
+    )
+
+
+def test_messages_consent_update() -> None:
+    """``PATCH /v3/messages/contacts/{to}/consent/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/messages/contacts/00000000-0000-4000-8000-000000000001/consent/",
+            api="verification",
+            auth="api_key",
+            json_body={"channel": "whatsapp", "status": "opted_out", "source": "api"},
+            status=200,
+            response_json={
+                "channels": [
+                    {
+                        "channel": "whatsapp",
+                        "status": "opted_out",
+                        "source": "api",
+                        "updated_at": "2026-11-22T09:41:00Z",
+                    }
+                ]
+            },
+        ),
+        lambda c: c.messages.consent.update(
+            "00000000-0000-4000-8000-000000000001",
+            channel="whatsapp",
+            status="opted_out",
+            source="api",
+        ),
+        lambda c: c.messages.consent.update(
+            "00000000-0000-4000-8000-000000000001",
+            channel="whatsapp",
+            status="opted_out",
+            source="api",
+        ),
+        lambda r: isinstance(r, MessageConsentChannels),
+        lambda r: isinstance(r, MessageConsentChannels),
+    )
+
+
+def test_messages_conversations_list() -> None:
+    """``GET /v3/messages/conversations/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/conversations/",
+            api="verification",
+            auth="api_key",
+            query={"status": ["open"], "assignee": ["sample"], "limit": ["1"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "conversation_id": "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+                        "assignee": "mem_ana",
+                        "unread_count": 2,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.messages.conversations.list(
+            status="open", assignee="sample", limit=1, offset=1
+        ),
+        lambda c: c.messages.conversations.list(
+            status="open", assignee="sample", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, MessageConversation) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, MessageConversation) for x1 in r.results)
+        ),
+    )
+
+
+def test_messages_conversations_update() -> None:
+    """``PATCH /v3/messages/conversations/{conversation_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/messages/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90/",
+            api="verification",
+            auth="api_key",
+            json_body={"assignee": "mem_ana"},
+            status=200,
+            response_json={
+                "conversation_id": "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+                "assignee": "mem_ana",
+                "unread_count": 0,
+            },
+        ),
+        lambda c: c.messages.conversations.update(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90", assignee="mem_ana"
+        ),
+        lambda c: c.messages.conversations.update(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90", assignee="mem_ana"
+        ),
+        lambda r: isinstance(r, MessageConversation),
+        lambda r: isinstance(r, MessageConversation),
+    )
+
+
+def test_messages_conversations_webhooks_create() -> None:
+    """``POST /v3/messages/conversations/{conversation_id}/webhooks/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/messages/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90/webhooks/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "url": "https://YOUR_PUBLIC_HOST/didit/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+                "events": ["message.received"],
+            },
+            status=201,
+            response_json={
+                "webhook_id": "b3e1d7a2-5c4f-4e8b-9d16-0a7c3f2e8b51",
+                "secret": "sample-secret",
+                "events": ["message.received"],
+            },
+        ),
+        lambda c: c.messages.conversations.webhooks.create(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+            url="https://YOUR_PUBLIC_HOST/didit/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+            events=["message.received"],
+        ),
+        lambda c: c.messages.conversations.webhooks.create(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+            url="https://YOUR_PUBLIC_HOST/didit/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90",
+            events=["message.received"],
+        ),
+        lambda r: isinstance(r, MessageConversationWebhook),
+        lambda r: isinstance(r, MessageConversationWebhook),
+    )
+
+
+def test_messages_conversations_webhooks_delete() -> None:
+    """``DELETE /v3/messages/conversations/{conversation_id}/webhooks/{webhook_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/messages/conversations/6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90/webhooks/b3e1d7a2-5c4f-4e8b-9d16-0a7c3f2e8b51/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.messages.conversations.webhooks.delete(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90", "b3e1d7a2-5c4f-4e8b-9d16-0a7c3f2e8b51"
+        ),
+        lambda c: c.messages.conversations.webhooks.delete(
+            "6f0c2a8e-3b1d-4c5e-9a7f-2d8b1e4c6a90", "b3e1d7a2-5c4f-4e8b-9d16-0a7c3f2e8b51"
+        ),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_messages_rules_create() -> None:
+    """``POST /v3/messages/rules/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/messages/rules/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "action": "block",
+                "match": {"prefix": "+88216"},
+                "direction": "outbound",
+                "channels": ["sms"],
+            },
+            status=201,
+            response_json={"rule_id": "5b1e7a90-2c43-4d68-8f15-0a9c3e6d7b22"},
+        ),
+        lambda c: c.messages.rules.create(
+            action="block", match={"prefix": "+88216"}, direction="outbound", channels=["sms"]
+        ),
+        lambda c: c.messages.rules.create(
+            action="block", match={"prefix": "+88216"}, direction="outbound", channels=["sms"]
+        ),
+        lambda r: isinstance(r, MessagesRulesCreateResponse),
+        lambda r: isinstance(r, MessagesRulesCreateResponse),
+    )
+
+
+def test_messages_templates_delete() -> None:
+    """``DELETE /v3/messages/templates/{template_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/messages/templates/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.messages.templates.delete("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.messages.templates.delete("00000000-0000-4000-8000-000000000001"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_messages_templates_list() -> None:
+    """``GET /v3/messages/templates/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/templates/",
+            api="verification",
+            auth="api_key",
+            query={
+                "status": ["approved"],
+                "channel": ["sms"],
+                "locale": ["sample"],
+                "limit": ["1"],
+                "offset": ["1"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": "https://example.com/resource",
+                "previous": "https://example.com/resource",
+                "results": [
+                    {
+                        "id": "00000000-0000-4000-8000-000000000006",
+                        "name": "sample",
+                        "description": "sample",
+                        "channels": ["sms"],
+                        "languages": ["sample"],
+                        "variables": ["sample"],
+                        "variable_examples": {"customer": "Ana", "order_number": "1042"},
+                        "whatsapp": {"status": "draft", "reason": "sample"},
+                        "version": 1,
+                        "contents": [
+                            {
+                                "channel": "sms",
+                                "language": "sample",
+                                "subject": "sample",
+                                "body": "sample",
+                                "whatsapp": None,
+                                "updated_at": "2026-01-01T00:00:00Z",
+                            }
+                        ],
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "updated_at": "2026-01-01T00:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.messages.templates.list(
+            status="approved", channel="sms", locale="sample", limit=1, offset=1
+        ),
+        lambda c: c.messages.templates.list(
+            status="approved", channel="sms", locale="sample", limit=1, offset=1
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, MessageTemplate) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, MessageTemplate) for x1 in r.results)
+        ),
+    )
+
+
+def test_messages_templates_retrieve() -> None:
+    """``GET /v3/messages/templates/{template_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/templates/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "id": "3b7f2c1e-9d4a-4e6b-8a15-6c0d2f9e7a42",
+                "name": "Order shipped",
+                "description": "Sent when an order leaves the warehouse.",
+                "channels": ["email", "sms", "whatsapp"],
+                "languages": ["en"],
+                "variables": ["order_number", "customer"],
+                "variable_examples": {"customer": "Ana", "order_number": "1042"},
+                "whatsapp": {"status": "pending", "reason": ""},
+                "version": 1,
+                "contents": [
+                    {
+                        "channel": "email",
+                        "language": "en",
+                        "subject": "Order {{order_number}} ships today",
+                        "body": "Hi {{customer}},\n\nyour order {{order_number}} ships today.",
+                        "whatsapp": None,
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                    {
+                        "channel": "sms",
+                        "language": "en",
+                        "subject": None,
+                        "body": "Hi {{customer}}, order {{order_number}} ships today.",
+                        "whatsapp": None,
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                    {
+                        "channel": "whatsapp",
+                        "language": "en",
+                        "subject": None,
+                        "body": "Hi {{customer}}, order {{order_number}} ships today.",
+                        "whatsapp": {"status": "pending", "reason": ""},
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                ],
+                "created_at": "2026-11-21T10:00:00Z",
+                "updated_at": "2026-11-21T10:00:00Z",
+            },
+        ),
+        lambda c: c.messages.templates.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda c: c.messages.templates.retrieve("00000000-0000-4000-8000-000000000001"),
+        lambda r: isinstance(r, MessageTemplate),
+        lambda r: isinstance(r, MessageTemplate),
+    )
+
+
+def test_messages_templates_update() -> None:
+    """``PATCH /v3/messages/templates/{template_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/messages/templates/00000000-0000-4000-8000-000000000001/",
+            api="verification",
+            auth="api_key",
+            json_body={"name": "Order on its way"},
+            status=200,
+            response_json={
+                "id": "3b7f2c1e-9d4a-4e6b-8a15-6c0d2f9e7a42",
+                "name": "Order on its way",
+                "description": "Sent when an order leaves the warehouse.",
+                "channels": ["email", "sms", "whatsapp"],
+                "languages": ["en"],
+                "variables": ["order_number", "customer"],
+                "variable_examples": {"customer": "Ana", "order_number": "1042"},
+                "whatsapp": {"status": "pending", "reason": ""},
+                "version": 2,
+                "contents": [
+                    {
+                        "channel": "email",
+                        "language": "en",
+                        "subject": "Order {{order_number}} ships today",
+                        "body": "Hi {{customer}},\n\nyour order {{order_number}} ships today.",
+                        "whatsapp": None,
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                    {
+                        "channel": "sms",
+                        "language": "en",
+                        "subject": None,
+                        "body": "Hi {{customer}}, order {{order_number}} ships today.",
+                        "whatsapp": None,
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                    {
+                        "channel": "whatsapp",
+                        "language": "en",
+                        "subject": None,
+                        "body": "Hi {{customer}}, order {{order_number}} ships today.",
+                        "whatsapp": {"status": "pending", "reason": ""},
+                        "updated_at": "2026-11-21T10:00:00Z",
+                    },
+                ],
+                "created_at": "2026-11-21T10:00:00Z",
+                "updated_at": "2026-11-21T10:00:00Z",
+            },
+        ),
+        lambda c: c.messages.templates.update(
+            "00000000-0000-4000-8000-000000000001", name="Order on its way"
+        ),
+        lambda c: c.messages.templates.update(
+            "00000000-0000-4000-8000-000000000001", name="Order on its way"
+        ),
+        lambda r: isinstance(r, MessageTemplate),
+        lambda r: isinstance(r, MessageTemplate),
     )

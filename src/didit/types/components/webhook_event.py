@@ -59,6 +59,8 @@ WebhookEvent: TypeAlias = (
         "bank.sync.failed",
         "bank.sync.recovered",
         "message.status.updated",
+        "message.received",
+        "contact.consent.updated",
     ]
     | str
 )

@@ -152,8 +152,12 @@ class PhoneVerificationCheckResponse(BaseModel):
     request_id: str | None = None
     """On `Approved`/`Declined`: the session id of the matched verification - identical to the `request_id` returned by `POST /v3/phone/send/`. On `Failed` and `Expired or Not Found`: a random one-off UUID that cannot be looked up later."""
 
-    status: Literal["Approved", "Declined", "Failed", "Expired or Not Found"] | str | None = None
-    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this number in the last 5 minutes."""
+    status: (
+        Literal["Approved", "Declined", "Failed", "Expired or Not Found", "verified", "failed"]
+        | str
+        | None
+    ) = None
+    """`Approved` - correct code, no declining risk. `Declined` - terminal: a declining risk matched or the attempt budget (3) was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - no pending verification for this number in the last 5 minutes. For a TOTP factor check (a request that names `factor_id`) the status is `verified` (the code matched) or `failed`."""
 
     message: str | None = None
     """Human-readable explanation of the outcome, including the number of attempts remaining after a wrong code."""
@@ -169,3 +173,9 @@ class PhoneVerificationCheckResponse(BaseModel):
 
     created_at: _dt.datetime | None = None
     """Timestamp of this check response."""
+
+    verification_id: str | None = None
+    """A TOTP factor check only: the id of the factor that was checked, `fa_` followed by 32 hexadecimal characters. Not present in the answer to a phone code check."""
+
+    attempts: int | None = None
+    """A TOTP factor check only: the failed codes in the current window including this one. Not present in the answer to a phone code check."""

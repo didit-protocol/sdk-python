@@ -1359,10 +1359,39 @@ if TYPE_CHECKING:
     from didit.types.components.message_channel_price import (
         MessageChannelPrice as MessageChannelPrice,
     )
+    from didit.types.components.message_consent import MessageConsent as MessageConsent
+    from didit.types.components.message_consent_channel import (
+        MessageConsentChannel as MessageConsentChannel,
+    )
+    from didit.types.components.message_consent_channels import (
+        MessageConsentChannels as MessageConsentChannels,
+    )
+    from didit.types.components.message_conversation import (
+        MessageConversation as MessageConversation,
+    )
+    from didit.types.components.message_conversation_list import (
+        MessageConversationList as MessageConversationList,
+    )
+    from didit.types.components.message_conversation_webhook import (
+        MessageConversationWebhook as MessageConversationWebhook,
+    )
     from didit.types.components.message_error import MessageError as MessageError
     from didit.types.components.message_list import MessageList as MessageList
     from didit.types.components.message_price import MessagePrice as MessagePrice
     from didit.types.components.message_prices import MessagePrices as MessagePrices
+    from didit.types.components.message_template import MessageTemplate as MessageTemplate
+    from didit.types.components.message_template_content import (
+        MessageTemplateContent as MessageTemplateContent,
+    )
+    from didit.types.components.message_template_content_input import (
+        MessageTemplateContentInput as MessageTemplateContentInput,
+    )
+    from didit.types.components.message_template_list import (
+        MessageTemplateList as MessageTemplateList,
+    )
+    from didit.types.components.message_template_whats_app import (
+        MessageTemplateWhatsApp as MessageTemplateWhatsApp,
+    )
     from didit.types.components.messages_settings import MessagesSettings as MessagesSettings
     from didit.types.components.monitoring_event import MonitoringEvent as MonitoringEvent
     from didit.types.components.monitoring_event_create_request import (
@@ -1567,17 +1596,84 @@ if TYPE_CHECKING:
     from didit.types.components.paginated_organization_list import (
         PaginatedOrganizationList as PaginatedOrganizationList,
     )
+    from didit.types.components.phone_factor import PhoneFactor as PhoneFactor
+    from didit.types.components.phone_factor_enrollment import (
+        PhoneFactorEnrollment as PhoneFactorEnrollment,
+    )
+    from didit.types.components.phone_factor_enrollment import (
+        PhoneFactorEnrollmentTotp as PhoneFactorEnrollmentTotp,
+    )
+    from didit.types.components.phone_factors_page import PhoneFactorsPage as PhoneFactorsPage
+    from didit.types.components.phone_fraud_event_result import (
+        PhoneFraudEventResult as PhoneFraudEventResult,
+    )
+    from didit.types.components.phone_fraud_policy import PhoneFraudPolicy as PhoneFraudPolicy
+    from didit.types.components.phone_fraud_policy_condition import (
+        PhoneFraudPolicyCondition as PhoneFraudPolicyCondition,
+    )
+    from didit.types.components.phone_fraud_policy_condition import (
+        PhoneFraudPolicyConditionParam as PhoneFraudPolicyConditionParam,
+    )
+    from didit.types.components.phone_fraud_rule import PhoneFraudRule as PhoneFraudRule
     from didit.types.components.phone_intelligence import PhoneIntelligence as PhoneIntelligence
     from didit.types.components.phone_intelligence import (
         PhoneIntelligenceReasonCodes as PhoneIntelligenceReasonCodes,
     )
+    from didit.types.components.phone_list_entry import PhoneListEntry as PhoneListEntry
+    from didit.types.components.phone_list_match import PhoneListMatch as PhoneListMatch
     from didit.types.components.phone_match_item import PhoneMatchItem as PhoneMatchItem
+    from didit.types.components.phone_network_decision import (
+        PhoneNetworkDecision as PhoneNetworkDecision,
+    )
+    from didit.types.components.phone_network_registration import (
+        PhoneNetworkRegistration as PhoneNetworkRegistration,
+    )
+    from didit.types.components.phone_network_registration_summary import (
+        PhoneNetworkRegistrationSummary as PhoneNetworkRegistrationSummary,
+    )
+    from didit.types.components.phone_network_registration_test_number import (
+        PhoneNetworkRegistrationTestNumber as PhoneNetworkRegistrationTestNumber,
+    )
+    from didit.types.components.phone_network_registration_test_number_summary import (
+        PhoneNetworkRegistrationTestNumberSummary as PhoneNetworkRegistrationTestNumberSummary,
+    )
+    from didit.types.components.phone_network_registrations_page import (
+        PhoneNetworkRegistrationsPage as PhoneNetworkRegistrationsPage,
+    )
+    from didit.types.components.phone_rate_limit import PhoneRateLimit as PhoneRateLimit
+    from didit.types.components.phone_rate_limit_bucket import (
+        PhoneRateLimitBucket as PhoneRateLimitBucket,
+    )
+    from didit.types.components.phone_risk_bulk_job import PhoneRiskBulkJob as PhoneRiskBulkJob
     from didit.types.components.phone_risk_response import PhoneRiskResponse as PhoneRiskResponse
     from didit.types.components.phone_risk_response import (
         PhoneRiskResponsePhone as PhoneRiskResponsePhone,
     )
     from didit.types.components.phone_risk_response import (
         PhoneRiskResponsePhoneCarrier as PhoneRiskResponsePhoneCarrier,
+    )
+    from didit.types.components.phone_sdk_key import PhoneSdkKey as PhoneSdkKey
+    from didit.types.components.phone_sdk_key_rotated import (
+        PhoneSdkKeyRotated as PhoneSdkKeyRotated,
+    )
+    from didit.types.components.phone_sdk_key_summary import (
+        PhoneSdkKeySummary as PhoneSdkKeySummary,
+    )
+    from didit.types.components.phone_sdk_keys_page import PhoneSdkKeysPage as PhoneSdkKeysPage
+    from didit.types.components.phone_silent_coverage import (
+        PhoneSilentCoverage as PhoneSilentCoverage,
+    )
+    from didit.types.components.phone_silent_coverage_country import (
+        PhoneSilentCoverageCountry as PhoneSilentCoverageCountry,
+    )
+    from didit.types.components.phone_silent_coverage_network import (
+        PhoneSilentCoverageNetwork as PhoneSilentCoverageNetwork,
+    )
+    from didit.types.components.phone_silent_eligibility import (
+        PhoneSilentEligibility as PhoneSilentEligibility,
+    )
+    from didit.types.components.phone_silent_registration import (
+        PhoneSilentRegistration as PhoneSilentRegistration,
     )
     from didit.types.components.phone_social_footprint import (
         PhoneSocialFootprint as PhoneSocialFootprint,
@@ -3182,6 +3278,33 @@ if TYPE_CHECKING:
     from didit.types.lists.list_response import ListsListResponse as ListsListResponse
     from didit.types.lists.update_params import ListsUpdateParams as ListsUpdateParams
     from didit.types.lists.update_response import ListsUpdateResponse as ListsUpdateResponse
+    from didit.types.messages.consent.update_params import (
+        MessagesConsentUpdateParams as MessagesConsentUpdateParams,
+    )
+    from didit.types.messages.conversations.update_params import (
+        MessagesConversationsUpdateParams as MessagesConversationsUpdateParams,
+    )
+    from didit.types.messages.conversations.webhooks.create_params import (
+        MessagesConversationsWebhooksCreateParams as MessagesConversationsWebhooksCreateParams,
+    )
+    from didit.types.messages.rules.create_params import (
+        MessagesRulesCreateParams as MessagesRulesCreateParams,
+    )
+    from didit.types.messages.rules.create_params import (
+        MessagesRulesCreateParamsMatch as MessagesRulesCreateParamsMatch,
+    )
+    from didit.types.messages.rules.create_params import (
+        MessagesRulesCreateParamsMatchVariant1 as MessagesRulesCreateParamsMatchVariant1,
+    )
+    from didit.types.messages.rules.create_params import (
+        MessagesRulesCreateParamsMatchVariant2 as MessagesRulesCreateParamsMatchVariant2,
+    )
+    from didit.types.messages.rules.create_params import (
+        MessagesRulesCreateParamsMatchVariant3 as MessagesRulesCreateParamsMatchVariant3,
+    )
+    from didit.types.messages.rules.create_response import (
+        MessagesRulesCreateResponse as MessagesRulesCreateResponse,
+    )
     from didit.types.messages.send_params import MessagesSendParams as MessagesSendParams
     from didit.types.messages.send_params import (
         MessagesSendParamsVariant1 as MessagesSendParamsVariant1,
@@ -3194,6 +3317,9 @@ if TYPE_CHECKING:
     )
     from didit.types.messages.send_params import (
         MessagesSendParamsVariant2Options as MessagesSendParamsVariant2Options,
+    )
+    from didit.types.messages.templates.update_params import (
+        MessagesTemplatesUpdateParams as MessagesTemplatesUpdateParams,
     )
     from didit.types.messages.update_settings_params import (
         MessagesUpdateSettingsParams as MessagesUpdateSettingsParams,
@@ -3281,14 +3407,118 @@ if TYPE_CHECKING:
     from didit.types.passive_liveness.check_response import (
         PassiveLivenessCheckResponseLivenessWarnings as PassiveLivenessCheckResponseLivenessWarnings,
     )
+    from didit.types.phone.assess_risk_bulk_params import (
+        PhoneAssessRiskBulkParams as PhoneAssessRiskBulkParams,
+    )
     from didit.types.phone.assess_risk_params import PhoneAssessRiskParams as PhoneAssessRiskParams
     from didit.types.phone.check_code_params import PhoneCheckCodeParams as PhoneCheckCodeParams
+    from didit.types.phone.factors.create_params import (
+        PhoneFactorsCreateParams as PhoneFactorsCreateParams,
+    )
+    from didit.types.phone.factors.update_params import (
+        PhoneFactorsUpdateParams as PhoneFactorsUpdateParams,
+    )
+    from didit.types.phone.fraud.evaluate_params import (
+        PhoneFraudEvaluateParams as PhoneFraudEvaluateParams,
+    )
+    from didit.types.phone.fraud.evaluate_params import (
+        PhoneFraudEvaluateParamsVariant1 as PhoneFraudEvaluateParamsVariant1,
+    )
+    from didit.types.phone.fraud.evaluate_params import (
+        PhoneFraudEvaluateParamsVariant2 as PhoneFraudEvaluateParamsVariant2,
+    )
+    from didit.types.phone.fraud.evaluate_response import (
+        PhoneFraudEvaluateResponse as PhoneFraudEvaluateResponse,
+    )
+    from didit.types.phone.fraud.evaluate_response import (
+        PhoneFraudEvaluateResponseEmail as PhoneFraudEvaluateResponseEmail,
+    )
+    from didit.types.phone.fraud.evaluate_response import (
+        PhoneFraudEvaluateResponseMatchedRules as PhoneFraudEvaluateResponseMatchedRules,
+    )
+    from didit.types.phone.fraud.evaluate_response import (
+        PhoneFraudEvaluateResponsePolicy as PhoneFraudEvaluateResponsePolicy,
+    )
+    from didit.types.phone.fraud.events.create_batch_params import (
+        PhoneFraudEventsCreateBatchParams as PhoneFraudEventsCreateBatchParams,
+    )
+    from didit.types.phone.fraud.events.create_batch_params import (
+        PhoneFraudEventsCreateBatchParamsEvents as PhoneFraudEventsCreateBatchParamsEvents,
+    )
+    from didit.types.phone.fraud.events.create_batch_response import (
+        PhoneFraudEventsCreateBatchResponse as PhoneFraudEventsCreateBatchResponse,
+    )
+    from didit.types.phone.fraud.policies.create_params import (
+        PhoneFraudPoliciesCreateParams as PhoneFraudPoliciesCreateParams,
+    )
+    from didit.types.phone.fraud.policies.list_response import (
+        PhoneFraudPoliciesListResponse as PhoneFraudPoliciesListResponse,
+    )
+    from didit.types.phone.fraud.policies.update_params import (
+        PhoneFraudPoliciesUpdateParams as PhoneFraudPoliciesUpdateParams,
+    )
+    from didit.types.phone.fraud.update_params import (
+        PhoneFraudUpdateParams as PhoneFraudUpdateParams,
+    )
+    from didit.types.phone.fraud.update_params import (
+        PhoneFraudUpdateParamsRules as PhoneFraudUpdateParamsRules,
+    )
+    from didit.types.phone.fraud.update_response import (
+        PhoneFraudUpdateResponse as PhoneFraudUpdateResponse,
+    )
+    from didit.types.phone.line_type_overrides.create_params import (
+        PhoneLineTypeOverridesCreateParams as PhoneLineTypeOverridesCreateParams,
+    )
+    from didit.types.phone.line_type_overrides.create_response import (
+        PhoneLineTypeOverridesCreateResponse as PhoneLineTypeOverridesCreateResponse,
+    )
+    from didit.types.phone.lists.add_params import PhoneListsAddParams as PhoneListsAddParams
+    from didit.types.phone.lists.check_params import PhoneListsCheckParams as PhoneListsCheckParams
+    from didit.types.phone.lists.check_response import (
+        PhoneListsCheckResponse as PhoneListsCheckResponse,
+    )
+    from didit.types.phone.lists.list_entries_response import (
+        PhoneListsListEntriesResponse as PhoneListsListEntriesResponse,
+    )
+    from didit.types.phone.network.registrations.create_params import (
+        PhoneNetworkRegistrationsCreateParams as PhoneNetworkRegistrationsCreateParams,
+    )
+    from didit.types.phone.network.registrations.test_numbers.create_params import (
+        PhoneNetworkRegistrationsTestNumbersCreateParams as PhoneNetworkRegistrationsTestNumbersCreateParams,
+    )
+    from didit.types.phone.rate_limits.create_params import (
+        PhoneRateLimitsCreateParams as PhoneRateLimitsCreateParams,
+    )
+    from didit.types.phone.rate_limits.create_params import (
+        PhoneRateLimitsCreateParamsBuckets as PhoneRateLimitsCreateParamsBuckets,
+    )
+    from didit.types.phone.rate_limits.list_response import (
+        PhoneRateLimitsListResponse as PhoneRateLimitsListResponse,
+    )
+    from didit.types.phone.rate_limits.update_params import (
+        PhoneRateLimitsUpdateParams as PhoneRateLimitsUpdateParams,
+    )
+    from didit.types.phone.rate_limits.update_params import (
+        PhoneRateLimitsUpdateParamsBuckets as PhoneRateLimitsUpdateParamsBuckets,
+    )
+    from didit.types.phone.sdk_keys.create_params import (
+        PhoneSdkKeysCreateParams as PhoneSdkKeysCreateParams,
+    )
+    from didit.types.phone.sdk_keys.rotate_params import (
+        PhoneSdkKeysRotateParams as PhoneSdkKeysRotateParams,
+    )
     from didit.types.phone.send_code_params import PhoneSendCodeParams as PhoneSendCodeParams
     from didit.types.phone.send_code_params import (
         PhoneSendCodeParamsOptions as PhoneSendCodeParamsOptions,
     )
     from didit.types.phone.send_code_params import (
         PhoneSendCodeParamsSignals as PhoneSendCodeParamsSignals,
+    )
+    from didit.types.phone.silent.eligibility_params import (
+        PhoneSilentEligibilityParams as PhoneSilentEligibilityParams,
+    )
+    from didit.types.phone.silent.registrations.create_params import (
+        PhoneSilentRegistrationsCreateParams as PhoneSilentRegistrationsCreateParams,
     )
     from didit.types.proof_of_address.verify_params import (
         ProofOfAddressVerifyParams as ProofOfAddressVerifyParams,
@@ -4593,16 +4823,37 @@ _MODULES: dict[str, str] = {
     "Message": "components.message",
     "MessageAttempt": "components.message_attempt",
     "MessageChannelPrice": "components.message_channel_price",
+    "MessageConsent": "components.message_consent",
+    "MessageConsentChannel": "components.message_consent_channel",
+    "MessageConsentChannels": "components.message_consent_channels",
+    "MessageConversation": "components.message_conversation",
+    "MessageConversationList": "components.message_conversation_list",
+    "MessageConversationWebhook": "components.message_conversation_webhook",
     "MessageError": "components.message_error",
     "MessageList": "components.message_list",
     "MessagePrice": "components.message_price",
     "MessagePrices": "components.message_prices",
+    "MessageTemplate": "components.message_template",
+    "MessageTemplateContent": "components.message_template_content",
+    "MessageTemplateContentInput": "components.message_template_content_input",
+    "MessageTemplateList": "components.message_template_list",
+    "MessageTemplateWhatsApp": "components.message_template_whats_app",
+    "MessagesConsentUpdateParams": "messages.consent.update_params",
+    "MessagesConversationsUpdateParams": "messages.conversations.update_params",
+    "MessagesConversationsWebhooksCreateParams": "messages.conversations.webhooks.create_params",
+    "MessagesRulesCreateParams": "messages.rules.create_params",
+    "MessagesRulesCreateParamsMatch": "messages.rules.create_params",
+    "MessagesRulesCreateParamsMatchVariant1": "messages.rules.create_params",
+    "MessagesRulesCreateParamsMatchVariant2": "messages.rules.create_params",
+    "MessagesRulesCreateParamsMatchVariant3": "messages.rules.create_params",
+    "MessagesRulesCreateResponse": "messages.rules.create_response",
     "MessagesSendParams": "messages.send_params",
     "MessagesSendParamsVariant1": "messages.send_params",
     "MessagesSendParamsVariant1Options": "messages.send_params",
     "MessagesSendParamsVariant2": "messages.send_params",
     "MessagesSendParamsVariant2Options": "messages.send_params",
     "MessagesSettings": "components.messages_settings",
+    "MessagesTemplatesUpdateParams": "messages.templates.update_params",
     "MessagesUpdateSettingsParams": "messages.update_settings_params",
     "MonitoringEvent": "components.monitoring_event",
     "MonitoringEventCreateRequest": "components.monitoring_event_create_request",
@@ -4714,17 +4965,82 @@ _MODULES: dict[str, str] = {
     "PassiveLivenessCheckResponseLivenessUserImage": "passive_liveness.check_response",
     "PassiveLivenessCheckResponseLivenessUserImageEntities": "passive_liveness.check_response",
     "PassiveLivenessCheckResponseLivenessWarnings": "passive_liveness.check_response",
+    "PhoneAssessRiskBulkParams": "phone.assess_risk_bulk_params",
     "PhoneAssessRiskParams": "phone.assess_risk_params",
     "PhoneCheckCodeParams": "phone.check_code_params",
+    "PhoneFactor": "components.phone_factor",
+    "PhoneFactorEnrollment": "components.phone_factor_enrollment",
+    "PhoneFactorEnrollmentTotp": "components.phone_factor_enrollment",
+    "PhoneFactorsCreateParams": "phone.factors.create_params",
+    "PhoneFactorsPage": "components.phone_factors_page",
+    "PhoneFactorsUpdateParams": "phone.factors.update_params",
+    "PhoneFraudEvaluateParams": "phone.fraud.evaluate_params",
+    "PhoneFraudEvaluateParamsVariant1": "phone.fraud.evaluate_params",
+    "PhoneFraudEvaluateParamsVariant2": "phone.fraud.evaluate_params",
+    "PhoneFraudEvaluateResponse": "phone.fraud.evaluate_response",
+    "PhoneFraudEvaluateResponseEmail": "phone.fraud.evaluate_response",
+    "PhoneFraudEvaluateResponseMatchedRules": "phone.fraud.evaluate_response",
+    "PhoneFraudEvaluateResponsePolicy": "phone.fraud.evaluate_response",
+    "PhoneFraudEventResult": "components.phone_fraud_event_result",
+    "PhoneFraudEventsCreateBatchParams": "phone.fraud.events.create_batch_params",
+    "PhoneFraudEventsCreateBatchParamsEvents": "phone.fraud.events.create_batch_params",
+    "PhoneFraudEventsCreateBatchResponse": "phone.fraud.events.create_batch_response",
+    "PhoneFraudPoliciesCreateParams": "phone.fraud.policies.create_params",
+    "PhoneFraudPoliciesListResponse": "phone.fraud.policies.list_response",
+    "PhoneFraudPoliciesUpdateParams": "phone.fraud.policies.update_params",
+    "PhoneFraudPolicy": "components.phone_fraud_policy",
+    "PhoneFraudPolicyCondition": "components.phone_fraud_policy_condition",
+    "PhoneFraudPolicyConditionParam": "components.phone_fraud_policy_condition",
+    "PhoneFraudRule": "components.phone_fraud_rule",
+    "PhoneFraudUpdateParams": "phone.fraud.update_params",
+    "PhoneFraudUpdateParamsRules": "phone.fraud.update_params",
+    "PhoneFraudUpdateResponse": "phone.fraud.update_response",
     "PhoneIntelligence": "components.phone_intelligence",
     "PhoneIntelligenceReasonCodes": "components.phone_intelligence",
+    "PhoneLineTypeOverridesCreateParams": "phone.line_type_overrides.create_params",
+    "PhoneLineTypeOverridesCreateResponse": "phone.line_type_overrides.create_response",
+    "PhoneListEntry": "components.phone_list_entry",
+    "PhoneListMatch": "components.phone_list_match",
+    "PhoneListsAddParams": "phone.lists.add_params",
+    "PhoneListsCheckParams": "phone.lists.check_params",
+    "PhoneListsCheckResponse": "phone.lists.check_response",
+    "PhoneListsListEntriesResponse": "phone.lists.list_entries_response",
     "PhoneMatchItem": "components.phone_match_item",
+    "PhoneNetworkDecision": "components.phone_network_decision",
+    "PhoneNetworkRegistration": "components.phone_network_registration",
+    "PhoneNetworkRegistrationSummary": "components.phone_network_registration_summary",
+    "PhoneNetworkRegistrationTestNumber": "components.phone_network_registration_test_number",
+    "PhoneNetworkRegistrationTestNumberSummary": "components.phone_network_registration_test_number_summary",
+    "PhoneNetworkRegistrationsCreateParams": "phone.network.registrations.create_params",
+    "PhoneNetworkRegistrationsPage": "components.phone_network_registrations_page",
+    "PhoneNetworkRegistrationsTestNumbersCreateParams": "phone.network.registrations.test_numbers.create_params",
+    "PhoneRateLimit": "components.phone_rate_limit",
+    "PhoneRateLimitBucket": "components.phone_rate_limit_bucket",
+    "PhoneRateLimitsCreateParams": "phone.rate_limits.create_params",
+    "PhoneRateLimitsCreateParamsBuckets": "phone.rate_limits.create_params",
+    "PhoneRateLimitsListResponse": "phone.rate_limits.list_response",
+    "PhoneRateLimitsUpdateParams": "phone.rate_limits.update_params",
+    "PhoneRateLimitsUpdateParamsBuckets": "phone.rate_limits.update_params",
+    "PhoneRiskBulkJob": "components.phone_risk_bulk_job",
     "PhoneRiskResponse": "components.phone_risk_response",
     "PhoneRiskResponsePhone": "components.phone_risk_response",
     "PhoneRiskResponsePhoneCarrier": "components.phone_risk_response",
+    "PhoneSdkKey": "components.phone_sdk_key",
+    "PhoneSdkKeyRotated": "components.phone_sdk_key_rotated",
+    "PhoneSdkKeySummary": "components.phone_sdk_key_summary",
+    "PhoneSdkKeysCreateParams": "phone.sdk_keys.create_params",
+    "PhoneSdkKeysPage": "components.phone_sdk_keys_page",
+    "PhoneSdkKeysRotateParams": "phone.sdk_keys.rotate_params",
     "PhoneSendCodeParams": "phone.send_code_params",
     "PhoneSendCodeParamsOptions": "phone.send_code_params",
     "PhoneSendCodeParamsSignals": "phone.send_code_params",
+    "PhoneSilentCoverage": "components.phone_silent_coverage",
+    "PhoneSilentCoverageCountry": "components.phone_silent_coverage_country",
+    "PhoneSilentCoverageNetwork": "components.phone_silent_coverage_network",
+    "PhoneSilentEligibility": "components.phone_silent_eligibility",
+    "PhoneSilentEligibilityParams": "phone.silent.eligibility_params",
+    "PhoneSilentRegistration": "components.phone_silent_registration",
+    "PhoneSilentRegistrationsCreateParams": "phone.silent.registrations.create_params",
     "PhoneSocialFootprint": "components.phone_social_footprint",
     "PhoneVerificationCheckResponse": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhone": "components.phone_verification_check_response",
@@ -6066,16 +6382,37 @@ __all__ = [
     "Message",
     "MessageAttempt",
     "MessageChannelPrice",
+    "MessageConsent",
+    "MessageConsentChannel",
+    "MessageConsentChannels",
+    "MessageConversation",
+    "MessageConversationList",
+    "MessageConversationWebhook",
     "MessageError",
     "MessageList",
     "MessagePrice",
     "MessagePrices",
+    "MessageTemplate",
+    "MessageTemplateContent",
+    "MessageTemplateContentInput",
+    "MessageTemplateList",
+    "MessageTemplateWhatsApp",
+    "MessagesConsentUpdateParams",
+    "MessagesConversationsUpdateParams",
+    "MessagesConversationsWebhooksCreateParams",
+    "MessagesRulesCreateParams",
+    "MessagesRulesCreateParamsMatch",
+    "MessagesRulesCreateParamsMatchVariant1",
+    "MessagesRulesCreateParamsMatchVariant2",
+    "MessagesRulesCreateParamsMatchVariant3",
+    "MessagesRulesCreateResponse",
     "MessagesSendParams",
     "MessagesSendParamsVariant1",
     "MessagesSendParamsVariant1Options",
     "MessagesSendParamsVariant2",
     "MessagesSendParamsVariant2Options",
     "MessagesSettings",
+    "MessagesTemplatesUpdateParams",
     "MessagesUpdateSettingsParams",
     "MonitoringEvent",
     "MonitoringEventCreateRequest",
@@ -6187,17 +6524,82 @@ __all__ = [
     "PassiveLivenessCheckResponseLivenessUserImage",
     "PassiveLivenessCheckResponseLivenessUserImageEntities",
     "PassiveLivenessCheckResponseLivenessWarnings",
+    "PhoneAssessRiskBulkParams",
     "PhoneAssessRiskParams",
     "PhoneCheckCodeParams",
+    "PhoneFactor",
+    "PhoneFactorEnrollment",
+    "PhoneFactorEnrollmentTotp",
+    "PhoneFactorsCreateParams",
+    "PhoneFactorsPage",
+    "PhoneFactorsUpdateParams",
+    "PhoneFraudEvaluateParams",
+    "PhoneFraudEvaluateParamsVariant1",
+    "PhoneFraudEvaluateParamsVariant2",
+    "PhoneFraudEvaluateResponse",
+    "PhoneFraudEvaluateResponseEmail",
+    "PhoneFraudEvaluateResponseMatchedRules",
+    "PhoneFraudEvaluateResponsePolicy",
+    "PhoneFraudEventResult",
+    "PhoneFraudEventsCreateBatchParams",
+    "PhoneFraudEventsCreateBatchParamsEvents",
+    "PhoneFraudEventsCreateBatchResponse",
+    "PhoneFraudPoliciesCreateParams",
+    "PhoneFraudPoliciesListResponse",
+    "PhoneFraudPoliciesUpdateParams",
+    "PhoneFraudPolicy",
+    "PhoneFraudPolicyCondition",
+    "PhoneFraudPolicyConditionParam",
+    "PhoneFraudRule",
+    "PhoneFraudUpdateParams",
+    "PhoneFraudUpdateParamsRules",
+    "PhoneFraudUpdateResponse",
     "PhoneIntelligence",
     "PhoneIntelligenceReasonCodes",
+    "PhoneLineTypeOverridesCreateParams",
+    "PhoneLineTypeOverridesCreateResponse",
+    "PhoneListEntry",
+    "PhoneListMatch",
+    "PhoneListsAddParams",
+    "PhoneListsCheckParams",
+    "PhoneListsCheckResponse",
+    "PhoneListsListEntriesResponse",
     "PhoneMatchItem",
+    "PhoneNetworkDecision",
+    "PhoneNetworkRegistration",
+    "PhoneNetworkRegistrationSummary",
+    "PhoneNetworkRegistrationTestNumber",
+    "PhoneNetworkRegistrationTestNumberSummary",
+    "PhoneNetworkRegistrationsCreateParams",
+    "PhoneNetworkRegistrationsPage",
+    "PhoneNetworkRegistrationsTestNumbersCreateParams",
+    "PhoneRateLimit",
+    "PhoneRateLimitBucket",
+    "PhoneRateLimitsCreateParams",
+    "PhoneRateLimitsCreateParamsBuckets",
+    "PhoneRateLimitsListResponse",
+    "PhoneRateLimitsUpdateParams",
+    "PhoneRateLimitsUpdateParamsBuckets",
+    "PhoneRiskBulkJob",
     "PhoneRiskResponse",
     "PhoneRiskResponsePhone",
     "PhoneRiskResponsePhoneCarrier",
+    "PhoneSdkKey",
+    "PhoneSdkKeyRotated",
+    "PhoneSdkKeySummary",
+    "PhoneSdkKeysCreateParams",
+    "PhoneSdkKeysPage",
+    "PhoneSdkKeysRotateParams",
     "PhoneSendCodeParams",
     "PhoneSendCodeParamsOptions",
     "PhoneSendCodeParamsSignals",
+    "PhoneSilentCoverage",
+    "PhoneSilentCoverageCountry",
+    "PhoneSilentCoverageNetwork",
+    "PhoneSilentEligibility",
+    "PhoneSilentEligibilityParams",
+    "PhoneSilentRegistration",
+    "PhoneSilentRegistrationsCreateParams",
     "PhoneSocialFootprint",
     "PhoneVerificationCheckResponse",
     "PhoneVerificationCheckResponsePhone",

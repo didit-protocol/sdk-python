@@ -44,3 +44,9 @@ class PhoneCheckCodeParams(TypedDict, total=False):
 
     phone_no_social_presence_action: Literal["NO_ACTION", "DECLINE"] | str
     """Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name."""
+
+    factor_id: str
+    """Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`."""
+
+    verification_id: str
+    """Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`."""
