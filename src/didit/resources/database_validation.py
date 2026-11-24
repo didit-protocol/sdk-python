@@ -122,6 +122,7 @@ class DatabaseValidation(SyncAPIResource):
         phone_number: str | NotGiven = NOT_GIVEN,
         right_thumb: str | NotGiven = NOT_GIVEN,
         left_thumb: str | NotGiven = NOT_GIVEN,
+        cnh_qr_code_image: str | NotGiven = NOT_GIVEN,
         score_level: int | NotGiven = NOT_GIVEN,
         max_matches: int | NotGiven = NOT_GIVEN,
         vehicle_register_number: str | NotGiven = NOT_GIVEN,
@@ -234,6 +235,7 @@ class DatabaseValidation(SyncAPIResource):
           phone_number: Contact mobile number, for the services that cross-check contactability (`zaf_bank_account_holder`, `zaf_fraud_prevention`, `zaf_refugee`).
           right_thumb: Base64-encoded right thumb fingerprint for `zaf_dha_fingerprint_match`, with `left_thumb` or on its own.
           left_thumb: Base64-encoded left thumb fingerprint for `zaf_dha_fingerprint_match`, with `right_thumb` or on its own.
+          cnh_qr_code_image: Base64-encoded image of the CNH page carrying the Senatran QR code, required by `bra_cnh_facial_qrcode`. Send the whole page as a text field (`data:image/png;base64,...` or the bare base64 payload), never as a file part: the registry decodes the QR code server-side. JPEG, PNG or a PDF export of the digital CNH; a WebP payload returns `400`.
           score_level: Minimum biometric score level for `zaf_criminal_face_screening`. Defaults to `3`.
           max_matches: Maximum number of candidate matches `zaf_criminal_face_screening` returns. Defaults to `1`.
           vehicle_register_number: Vehicle register number. Required, with `vehicle_licence_plate` and `vin`, by `zaf_vehicle_ownership`.
@@ -331,6 +333,7 @@ class DatabaseValidation(SyncAPIResource):
                     "phone_number": phone_number,
                     "right_thumb": right_thumb,
                     "left_thumb": left_thumb,
+                    "cnh_qr_code_image": cnh_qr_code_image,
                     "score_level": score_level,
                     "max_matches": max_matches,
                     "vehicle_register_number": vehicle_register_number,
@@ -449,6 +452,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
         phone_number: str | NotGiven = NOT_GIVEN,
         right_thumb: str | NotGiven = NOT_GIVEN,
         left_thumb: str | NotGiven = NOT_GIVEN,
+        cnh_qr_code_image: str | NotGiven = NOT_GIVEN,
         score_level: int | NotGiven = NOT_GIVEN,
         max_matches: int | NotGiven = NOT_GIVEN,
         vehicle_register_number: str | NotGiven = NOT_GIVEN,
@@ -561,6 +565,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
           phone_number: Contact mobile number, for the services that cross-check contactability (`zaf_bank_account_holder`, `zaf_fraud_prevention`, `zaf_refugee`).
           right_thumb: Base64-encoded right thumb fingerprint for `zaf_dha_fingerprint_match`, with `left_thumb` or on its own.
           left_thumb: Base64-encoded left thumb fingerprint for `zaf_dha_fingerprint_match`, with `right_thumb` or on its own.
+          cnh_qr_code_image: Base64-encoded image of the CNH page carrying the Senatran QR code, required by `bra_cnh_facial_qrcode`. Send the whole page as a text field (`data:image/png;base64,...` or the bare base64 payload), never as a file part: the registry decodes the QR code server-side. JPEG, PNG or a PDF export of the digital CNH; a WebP payload returns `400`.
           score_level: Minimum biometric score level for `zaf_criminal_face_screening`. Defaults to `3`.
           max_matches: Maximum number of candidate matches `zaf_criminal_face_screening` returns. Defaults to `1`.
           vehicle_register_number: Vehicle register number. Required, with `vehicle_licence_plate` and `vin`, by `zaf_vehicle_ownership`.
@@ -658,6 +663,7 @@ class AsyncDatabaseValidation(AsyncAPIResource):
                     "phone_number": phone_number,
                     "right_thumb": right_thumb,
                     "left_thumb": left_thumb,
+                    "cnh_qr_code_image": cnh_qr_code_image,
                     "score_level": score_level,
                     "max_matches": max_matches,
                     "vehicle_register_number": vehicle_register_number,

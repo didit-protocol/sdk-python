@@ -227,6 +227,9 @@ class DatabaseValidationValidateParams(TypedDict, total=False):
     left_thumb: str
     """Base64-encoded left thumb fingerprint for `zaf_dha_fingerprint_match`, with `right_thumb` or on its own."""
 
+    cnh_qr_code_image: str
+    """Base64-encoded image of the CNH page carrying the Senatran QR code, required by `bra_cnh_facial_qrcode`. Send the whole page as a text field (`data:image/png;base64,...` or the bare base64 payload), never as a file part: the registry decodes the QR code server-side. JPEG, PNG or a PDF export of the digital CNH; a WebP payload returns `400`."""
+
     score_level: int
     """Minimum biometric score level for `zaf_criminal_face_screening`. Defaults to `3`."""
 
