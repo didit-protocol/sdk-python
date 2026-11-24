@@ -67,3 +67,21 @@ class PhoneSendCodeParams(TypedDict, total=False):
 
     metadata: Mapping[str, object] | None
     """Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console."""
+
+    code: str
+    """Supply 4 to 10 letters and digits, such as K7P2QX. Letters match in either case. Your code takes precedence over `code_length` and `options.code_size`. Choose a channel that supports caller-supplied codes, such as WhatsApp. If the allowed channels cannot carry your code, the send returns `400 custom_code_unavailable`."""
+
+    code_length: int
+    """4 to 10 digits, for this request. Wins over `options.code_size` when both are sent; ignored when `code` is sent."""
+
+    on_conflict: Literal["replace", "reuse", "retry", "reject"] | str
+    """A code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window (up to two retries, three sends total), `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code."""
+
+    trusted_user: bool
+    """Your server vouches for this user: this one request goes past your fraud rules (velocity limits, risk score, network blocks, policies). Needs a `fraud_override` signed for it; a block list still stops the number."""
+
+    force_challenge: bool
+    """Your server asks for a challenge on this request: Didit uses only fraud-resistant channels (`fraud.channels_allowed`) and records it as challenged by you; it is not reported or scored as fraud."""
+
+    fraud_override: str
+    """A token signed for this phone number and expiry, in the form `v1.<expires_at>.<signature>`. `<expires_at>` is the Unix time in seconds, at most 5 minutes ahead. `<signature>` is the base64url encoding, without padding, of the HMAC-SHA256 of the UTF-8 string `v1\\n<phone_number>\\n<expires_at>` (the number in E.164 format, with a newline between each value), keyed with your application's webhook signing secret. It lets the request past a temporary network block, or with `trusted_user` past your fraud rules. An unsigned token, a past expiry, a wrong signature or one signed for another number is refused with `403 invalid_fraud_override`."""

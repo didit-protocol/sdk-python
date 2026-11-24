@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
+from didit.types.components.phone_countries_update_response import PhoneCountriesUpdateResponse
 from didit.types.components.phone_factor import PhoneFactor
 from didit.types.components.phone_factor_enrollment import PhoneFactorEnrollment
+from didit.types.components.phone_feedback_batch_response import PhoneFeedbackBatchResponse
+from didit.types.components.phone_feedback_response import PhoneFeedbackResponse
 from didit.types.components.phone_fraud_policy import PhoneFraudPolicy
 from didit.types.components.phone_list_entry import PhoneListEntry
+from didit.types.components.phone_lookup_summary import PhoneLookupSummary
 from didit.types.components.phone_network_registration import PhoneNetworkRegistration
 from didit.types.components.phone_network_registration_summary import (
     PhoneNetworkRegistrationSummary,
@@ -21,10 +25,21 @@ from didit.types.components.phone_risk_response import PhoneRiskResponse
 from didit.types.components.phone_sdk_key import PhoneSdkKey
 from didit.types.components.phone_sdk_key_rotated import PhoneSdkKeyRotated
 from didit.types.components.phone_sdk_keys_page import PhoneSdkKeysPage
+from didit.types.components.phone_settings import PhoneSettings
+from didit.types.components.phone_settings_update_response import PhoneSettingsUpdateResponse
 from didit.types.components.phone_silent_coverage import PhoneSilentCoverage
 from didit.types.components.phone_silent_eligibility import PhoneSilentEligibility
 from didit.types.components.phone_silent_registration import PhoneSilentRegistration
+from didit.types.components.phone_verification_approve_response import (
+    PhoneVerificationApproveResponse,
+)
+from didit.types.components.phone_verification_cancel_response import (
+    PhoneVerificationCancelResponse,
+)
 from didit.types.components.phone_verification_check_response import PhoneVerificationCheckResponse
+from didit.types.components.phone_verification_detail import PhoneVerificationDetail
+from didit.types.components.phone_verification_next_response import PhoneVerificationNextResponse
+from didit.types.components.phone_verification_retry_response import PhoneVerificationRetryResponse
 from didit.types.components.phone_verification_send_response import PhoneVerificationSendResponse
 from didit.types.phone.fraud.evaluate_response import PhoneFraudEvaluateResponse
 from didit.types.phone.fraud.events.create_batch_response import PhoneFraudEventsCreateBatchResponse
@@ -265,6 +280,7 @@ def test_phone_send_code() -> None:
                 "reason": None,
                 "vendor_data": "user-1234",
                 "metadata": None,
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
             },
         ),
         lambda c: c.phone.send_code(
@@ -279,6 +295,52 @@ def test_phone_send_code() -> None:
         ),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
         lambda r: isinstance(r, PhoneVerificationSendResponse),
+    )
+
+
+def test_phone_countries_update() -> None:
+    """``PATCH /v3/phone/countries/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/countries/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "countries": [
+                    {
+                        "country": "TJ",
+                        "sms": False,
+                        "objective": "conversion",
+                        "closed_channels": [{"channel": "sms", "platforms": ["web"]}],
+                    }
+                ]
+            },
+            status=200,
+            response_json={"updated": 1},
+        ),
+        lambda c: c.phone.countries.update(
+            countries=[
+                {
+                    "country": "TJ",
+                    "sms": False,
+                    "objective": "conversion",
+                    "closed_channels": [{"channel": "sms", "platforms": ["web"]}],
+                }
+            ]
+        ),
+        lambda c: c.phone.countries.update(
+            countries=[
+                {
+                    "country": "TJ",
+                    "sms": False,
+                    "objective": "conversion",
+                    "closed_channels": [{"channel": "sms", "platforms": ["web"]}],
+                }
+            ]
+        ),
+        lambda r: isinstance(r, PhoneCountriesUpdateResponse),
+        lambda r: isinstance(r, PhoneCountriesUpdateResponse),
     )
 
 
@@ -444,6 +506,95 @@ def test_phone_factors_update() -> None:
         ),
         lambda r: isinstance(r, PhoneFactor),
         lambda r: isinstance(r, PhoneFactor),
+    )
+
+
+def test_phone_feedback_create() -> None:
+    """``POST /v3/phone/feedback/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/feedback/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "outcome": "converted",
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "event": "chargeback",
+                "confidence": "high",
+                "occurred_at": "2026-11-20T18:40:00Z",
+            },
+            status=202,
+            response_json={"received": True, "weight": 0.9},
+        ),
+        lambda c: c.phone.feedback.create(
+            outcome="converted",
+            verification_id="c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            event="chargeback",
+            confidence="high",
+            occurred_at="2026-11-20T18:40:00Z",
+        ),
+        lambda c: c.phone.feedback.create(
+            outcome="converted",
+            verification_id="c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+            event="chargeback",
+            confidence="high",
+            occurred_at="2026-11-20T18:40:00Z",
+        ),
+        lambda r: isinstance(r, PhoneFeedbackResponse),
+        lambda r: isinstance(r, PhoneFeedbackResponse),
+    )
+
+
+def test_phone_feedback_create_batch() -> None:
+    """``POST /v3/phone/feedback/batch/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/feedback/batch/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "items": [
+                    {
+                        "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                        "outcome": "fraud",
+                        "event": "chargeback",
+                        "confidence": "high",
+                        "occurred_at": "2026-11-20T18:40:00Z",
+                    }
+                ]
+            },
+            status=207,
+            response_json={
+                "accepted": 1,
+                "results": [{"index": 0, "status": "accepted", "error": None}],
+            },
+        ),
+        lambda c: c.phone.feedback.create_batch(
+            items=[
+                {
+                    "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                    "outcome": "fraud",
+                    "event": "chargeback",
+                    "confidence": "high",
+                    "occurred_at": "2026-11-20T18:40:00Z",
+                }
+            ]
+        ),
+        lambda c: c.phone.feedback.create_batch(
+            items=[
+                {
+                    "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                    "outcome": "fraud",
+                    "event": "chargeback",
+                    "confidence": "high",
+                    "occurred_at": "2026-11-20T18:40:00Z",
+                }
+            ]
+        ),
+        lambda r: isinstance(r, PhoneFeedbackBatchResponse),
+        lambda r: isinstance(r, PhoneFeedbackBatchResponse),
     )
 
 
@@ -962,6 +1113,62 @@ def test_phone_lists_remove() -> None:
     )
 
 
+def test_phone_lookups_list() -> None:
+    """``GET /v3/phone/lookups/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/lookups/",
+            api="verification",
+            auth="api_key",
+            query={
+                "phone_number": ["+12025550136"],
+                "created_after": ["2026-01-01T00:00:00Z"],
+                "created_before": ["2026-01-01T00:00:00Z"],
+                "limit": ["20"],
+                "offset": ["1"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "lookup_id": "123e4567-e89b-42d3-a456-426614174001",
+                        "phone_number": "+12025550136",
+                        "status": "Approved",
+                        "country": "US",
+                        "line_type": "mobile",
+                        "risk_score": 12.5,
+                        "created_at": "2026-11-21T12:00:00Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.lookups.list(
+            phone_number="+12025550136",
+            created_after="2026-01-01T00:00:00Z",
+            created_before="2026-01-01T00:00:00Z",
+            limit=20,
+            offset=1,
+        ),
+        lambda c: c.phone.lookups.list(
+            phone_number="+12025550136",
+            created_after="2026-01-01T00:00:00Z",
+            created_before="2026-01-01T00:00:00Z",
+            limit=20,
+            offset=1,
+        ),
+        lambda r: (
+            isinstance(r, SyncPage) and all(isinstance(x1, PhoneLookupSummary) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage) and all(isinstance(x1, PhoneLookupSummary) for x1 in r.results)
+        ),
+    )
+
+
 def test_phone_network_registrations_create() -> None:
     """``POST /v3/phone/network/registrations/``"""
     check_operation(
@@ -1466,6 +1673,65 @@ def test_phone_sdk_keys_rotate() -> None:
     )
 
 
+def test_phone_settings_retrieve() -> None:
+    """``GET /v3/phone/settings/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/settings/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "verification": {
+                    "code_length": 6,
+                    "valid_minutes": 5,
+                    "max_attempts": 5,
+                    "resend_limit": 5,
+                    "channel_order": ["silent", "whatsapp", "sms"],
+                    "routing": "conversion",
+                    "voice": {"tts_voice": "es-ES-female-2"},
+                    "email": {"domain_id": "ed_01JCH8S3"},
+                },
+                "messages": {"retention_days": 30},
+                "data_region": "eu",
+            },
+        ),
+        lambda c: c.phone.settings.retrieve(),
+        lambda c: c.phone.settings.retrieve(),
+        lambda r: isinstance(r, PhoneSettings),
+        lambda r: isinstance(r, PhoneSettings),
+    )
+
+
+def test_phone_settings_update() -> None:
+    """``PATCH /v3/phone/settings/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/phone/settings/",
+            api="verification",
+            auth="api_key",
+            json_body={
+                "verification": {"code_length": 6, "routing": "conversion"},
+                "messages": {"retention_days": 30},
+            },
+            status=200,
+            response_json={"updated_at": "2026-11-21T10:00:00Z"},
+        ),
+        lambda c: c.phone.settings.update(
+            verification={"code_length": 6, "routing": "conversion"},
+            messages={"retention_days": 30},
+        ),
+        lambda c: c.phone.settings.update(
+            verification={"code_length": 6, "routing": "conversion"},
+            messages={"retention_days": 30},
+        ),
+        lambda r: isinstance(r, PhoneSettingsUpdateResponse),
+        lambda r: isinstance(r, PhoneSettingsUpdateResponse),
+    )
+
+
 def test_phone_silent_coverage() -> None:
     """``GET /v3/phone/silent/coverage/``"""
     check_operation(
@@ -1608,4 +1874,245 @@ def test_phone_silent_registrations_retrieve() -> None:
         lambda c: c.phone.silent.registrations.retrieve("00000000-0000-4000-8000-000000000001"),
         lambda r: isinstance(r, PhoneSilentRegistration),
         lambda r: isinstance(r, PhoneSilentRegistration),
+    )
+
+
+def test_phone_verifications_approve() -> None:
+    """``POST /v3/phone/verifications/{verification_id}/approve/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/approve/",
+            api="verification",
+            auth="api_key",
+            json_body={"reason": "own_code_check"},
+            status=200,
+            response_json={
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "status": "verified",
+                "verified_by": "api",
+                "verified_at": "2026-11-21T10:00:12Z",
+            },
+        ),
+        lambda c: c.phone.verifications.approve(
+            "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", reason="own_code_check"
+        ),
+        lambda c: c.phone.verifications.approve(
+            "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", reason="own_code_check"
+        ),
+        lambda r: isinstance(r, PhoneVerificationApproveResponse),
+        lambda r: isinstance(r, PhoneVerificationApproveResponse),
+    )
+
+
+def test_phone_verifications_cancel() -> None:
+    """``POST /v3/phone/verifications/{verification_id}/cancel/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/cancel/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "status": "cancelled",
+            },
+        ),
+        lambda c: c.phone.verifications.cancel("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"),
+        lambda c: c.phone.verifications.cancel("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"),
+        lambda r: isinstance(r, PhoneVerificationCancelResponse),
+        lambda r: isinstance(r, PhoneVerificationCancelResponse),
+    )
+
+
+def test_phone_verifications_list() -> None:
+    """``GET /v3/phone/verifications/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/verifications/",
+            api="verification",
+            auth="api_key",
+            query={
+                "status": ["verified"],
+                "channel": ["silent"],
+                "phone_number": ["+34600000012"],
+                "reference": ["signup-48221"],
+                "tag": ["flow:signup"],
+                "created_after": ["2026-01-01T00:00:00Z"],
+                "created_before": ["2026-01-01T00:00:00Z"],
+                "limit": ["20"],
+                "offset": ["1"],
+                "format": ["json"],
+            },
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                        "status": "verified",
+                        "phone_number": "+12025550136",
+                        "country": "US",
+                        "attempts": [
+                            {
+                                "channel": "whatsapp",
+                                "status": "delivered",
+                                "network": "Mobile network A",
+                                "route": "Route A",
+                                "error": None,
+                                "silent_result": None,
+                                "sent_at": "2026-11-21T10:00:01Z",
+                                "delivered_at": "2026-11-21T10:00:03Z",
+                                "read_at": None,
+                                "expired_at": None,
+                                "charged": True,
+                                "price": {
+                                    "amount": "0.0300",
+                                    "carrier": None,
+                                    "fee": None,
+                                    "final": True,
+                                },
+                            }
+                        ],
+                        "reference": "signup-48221",
+                        "tags": {"flow": "signup"},
+                        "created_at": "2026-11-21T10:00:00Z",
+                        "verified_at": "2026-11-21T10:00:12Z",
+                    }
+                ],
+            },
+        ),
+        lambda c: c.phone.verifications.list(
+            status="verified",
+            channel="silent",
+            phone_number="+34600000012",
+            reference="signup-48221",
+            tag="flow:signup",
+            created_after="2026-01-01T00:00:00Z",
+            created_before="2026-01-01T00:00:00Z",
+            limit=20,
+            offset=1,
+            format="json",
+        ),
+        lambda c: c.phone.verifications.list(
+            status="verified",
+            channel="silent",
+            phone_number="+34600000012",
+            reference="signup-48221",
+            tag="flow:signup",
+            created_after="2026-01-01T00:00:00Z",
+            created_before="2026-01-01T00:00:00Z",
+            limit=20,
+            offset=1,
+            format="json",
+        ),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, PhoneVerificationDetail) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, PhoneVerificationDetail) for x1 in r.results)
+        ),
+    )
+
+
+def test_phone_verifications_next() -> None:
+    """``POST /v3/phone/verifications/{verification_id}/next/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/next/",
+            api="verification",
+            auth="api_key",
+            json_body={"channel": "sms"},
+            status=200,
+            response_json={
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "channel": "sms",
+                "status": "pending",
+            },
+        ),
+        lambda c: c.phone.verifications.next("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", channel="sms"),
+        lambda c: c.phone.verifications.next("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", channel="sms"),
+        lambda r: isinstance(r, PhoneVerificationNextResponse),
+        lambda r: isinstance(r, PhoneVerificationNextResponse),
+    )
+
+
+def test_phone_verifications_retrieve() -> None:
+    """``GET /v3/phone/verifications/{verification_id}/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/",
+            api="verification",
+            auth="api_key",
+            status=200,
+            response_json={
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "status": "verified",
+                "phone_number": "+12025550136",
+                "country": "US",
+                "attempts": [
+                    {
+                        "channel": "whatsapp",
+                        "status": "delivered",
+                        "network": "Mobile network A",
+                        "route": "Route A",
+                        "error": None,
+                        "silent_result": None,
+                        "sent_at": "2026-11-21T10:00:01Z",
+                        "delivered_at": "2026-11-21T10:00:03Z",
+                        "read_at": None,
+                        "expired_at": None,
+                        "charged": True,
+                        "price": {"amount": "0.0300", "carrier": None, "fee": None, "final": True},
+                    }
+                ],
+                "reference": "signup-48221",
+                "tags": {"flow": "signup"},
+                "created_at": "2026-11-21T10:00:00Z",
+                "verified_at": "2026-11-21T10:00:12Z",
+            },
+        ),
+        lambda c: c.phone.verifications.retrieve("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"),
+        lambda c: c.phone.verifications.retrieve("c9b18621-9f8f-4590-a3b4-f8ebea4baa7d"),
+        lambda r: isinstance(r, PhoneVerificationDetail),
+        lambda r: isinstance(r, PhoneVerificationDetail),
+    )
+
+
+def test_phone_verifications_retry() -> None:
+    """``POST /v3/phone/verifications/{verification_id}/retry/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/phone/verifications/c9b18621-9f8f-4590-a3b4-f8ebea4baa7d/retry/",
+            api="verification",
+            auth="api_key",
+            json_body={"channel": "silent"},
+            status=200,
+            response_json={
+                "verification_id": "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d",
+                "status": "pending",
+                "channel": "sms",
+                "sends": 2,
+                "sends_left": 1,
+                "expires_at": "2026-11-21T10:05:00Z",
+                "charged": True,
+            },
+        ),
+        lambda c: c.phone.verifications.retry(
+            "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", channel="silent"
+        ),
+        lambda c: c.phone.verifications.retry(
+            "c9b18621-9f8f-4590-a3b4-f8ebea4baa7d", channel="silent"
+        ),
+        lambda r: isinstance(r, PhoneVerificationRetryResponse),
+        lambda r: isinstance(r, PhoneVerificationRetryResponse),
     )

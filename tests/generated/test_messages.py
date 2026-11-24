@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from didit import AsyncPage, SyncPage
 from didit.types.components.message import Message
+from didit.types.components.message_capabilities import MessageCapabilities
 from didit.types.components.message_consent import MessageConsent
 from didit.types.components.message_consent_channels import MessageConsentChannels
 from didit.types.components.message_conversation import MessageConversation
@@ -12,6 +13,7 @@ from didit.types.components.message_conversation_webhook import MessageConversat
 from didit.types.components.message_prices import MessagePrices
 from didit.types.components.message_template import MessageTemplate
 from didit.types.components.messages_settings import MessagesSettings
+from didit.types.components.messaging_configuration import MessagingConfiguration
 from didit.types.messages.rules.create_response import MessagesRulesCreateResponse
 from tests.harness import Expect, check_operation
 
@@ -430,6 +432,160 @@ def test_messages_update_settings() -> None:
         lambda c: c.messages.update_settings(retention_days=7),
         lambda r: isinstance(r, MessagesSettings),
         lambda r: isinstance(r, MessagesSettings),
+    )
+
+
+def test_messages_capabilities_retrieve() -> None:
+    """``GET /v3/messages/capabilities/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/capabilities/",
+            api="verification",
+            auth="api_key",
+            query={"to": ["+34600000012"]},
+            status=200,
+            response_json={
+                "channels": {
+                    "sms": True,
+                    "whatsapp": True,
+                    "telegram": False,
+                    "rcs": True,
+                    "viber": False,
+                    "mms": True,
+                }
+            },
+        ),
+        lambda c: c.messages.capabilities.retrieve(to="+34600000012"),
+        lambda c: c.messages.capabilities.retrieve(to="+34600000012"),
+        lambda r: isinstance(r, MessageCapabilities),
+        lambda r: isinstance(r, MessageCapabilities),
+    )
+
+
+def test_messages_configurations_create() -> None:
+    """``POST /v3/messages/configurations/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/messages/configurations/",
+            api="verification",
+            auth="api_key",
+            json_body={"name": "Order updates", "channels": ["sms"], "append_opt_out_line": True},
+            status=201,
+            response_json={
+                "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                "name": "Order updates",
+                "from": "",
+                "channels": ["sms"],
+                "status_callback_url": "",
+                "inbound_url": "",
+                "opt_out": {},
+                "append_opt_out_line": True,
+            },
+        ),
+        lambda c: c.messages.configurations.create(
+            name="Order updates", channels=["sms"], append_opt_out_line=True
+        ),
+        lambda c: c.messages.configurations.create(
+            name="Order updates", channels=["sms"], append_opt_out_line=True
+        ),
+        lambda r: isinstance(r, MessagingConfiguration),
+        lambda r: isinstance(r, MessagingConfiguration),
+    )
+
+
+def test_messages_configurations_delete() -> None:
+    """``DELETE /v3/messages/configurations/{configuration_id}/``"""
+    check_operation(
+        Expect(
+            method="DELETE",
+            path="/v3/messages/configurations/d7e3d55d-4fc8-4bab-9710-123456789abc/",
+            api="verification",
+            auth="api_key",
+            status=204,
+        ),
+        lambda c: c.messages.configurations.delete("d7e3d55d-4fc8-4bab-9710-123456789abc"),
+        lambda c: c.messages.configurations.delete("d7e3d55d-4fc8-4bab-9710-123456789abc"),
+        lambda r: r is None,
+        lambda r: r is None,
+    )
+
+
+def test_messages_configurations_list() -> None:
+    """``GET /v3/messages/configurations/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/messages/configurations/",
+            api="verification",
+            auth="api_key",
+            query={"limit": ["20"], "offset": ["1"]},
+            status=200,
+            response_json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                        "name": "Order updates",
+                        "from": "",
+                        "channels": ["sms"],
+                        "status_callback_url": "",
+                        "inbound_url": "",
+                        "opt_out": {},
+                        "append_opt_out_line": True,
+                    }
+                ],
+            },
+        ),
+        lambda c: c.messages.configurations.list(limit=20, offset=1),
+        lambda c: c.messages.configurations.list(limit=20, offset=1),
+        lambda r: (
+            isinstance(r, SyncPage)
+            and all(isinstance(x1, MessagingConfiguration) for x1 in r.results)
+        ),
+        lambda r: (
+            isinstance(r, AsyncPage)
+            and all(isinstance(x1, MessagingConfiguration) for x1 in r.results)
+        ),
+    )
+
+
+def test_messages_configurations_update() -> None:
+    """``PATCH /v3/messages/configurations/{configuration_id}/``"""
+    check_operation(
+        Expect(
+            method="PATCH",
+            path="/v3/messages/configurations/d7e3d55d-4fc8-4bab-9710-123456789abc/",
+            api="verification",
+            auth="api_key",
+            json_body={"name": "Order updates", "channels": ["whatsapp", "sms"]},
+            status=200,
+            response_json={
+                "configuration_id": "d7e3d55d-4fc8-4bab-9710-123456789abc",
+                "name": "Order updates",
+                "from": "",
+                "channels": ["whatsapp", "sms"],
+                "status_callback_url": "",
+                "inbound_url": "",
+                "opt_out": {},
+                "append_opt_out_line": True,
+            },
+        ),
+        lambda c: c.messages.configurations.update(
+            "d7e3d55d-4fc8-4bab-9710-123456789abc",
+            name="Order updates",
+            channels=["whatsapp", "sms"],
+        ),
+        lambda c: c.messages.configurations.update(
+            "d7e3d55d-4fc8-4bab-9710-123456789abc",
+            name="Order updates",
+            channels=["whatsapp", "sms"],
+        ),
+        lambda r: isinstance(r, MessagingConfiguration),
+        lambda r: isinstance(r, MessagingConfiguration),
     )
 
 

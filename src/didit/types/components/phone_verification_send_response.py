@@ -4,8 +4,25 @@ from __future__ import annotations
 from typing import Literal
 
 from didit._models import BaseModel
+from didit.types.components.phone_channel import PhoneChannel
 
-__all__ = ["PhoneVerificationSendResponse"]
+__all__ = ["PhoneVerificationSendResponse", "PhoneVerificationSendResponseFraud"]
+
+
+class PhoneVerificationSendResponseFraud(BaseModel):
+    """The fraud decision for this send."""
+
+    action: Literal["allow", "challenge"] | str | None = None
+    """allow, or challenge: the verification continues on fraud-resistant channels only."""
+
+    challenge_source: Literal["caller", "policy"] | str | None = None
+    """caller (your force_challenge) or policy (a fraud rule), when challenged."""
+
+    channels_allowed: list[PhoneChannel] | None = None
+    """The channels it may use, when challenged."""
+
+    exception: Literal["trusted_user"] | str | None = None
+    """trusted_user when this request went past your fraud rules as a trusted user; null otherwise."""
 
 
 class PhoneVerificationSendResponse(BaseModel):
@@ -26,3 +43,12 @@ class PhoneVerificationSendResponse(BaseModel):
 
     metadata: dict[str, object] | None = None
     """Echo of the `metadata` stored on the session (from the first send)."""
+
+    verification_id: str | None = None
+    """UUID of the phone verification. Pass this value to check the code, retrieve the record, cancel, change channels, approve or retry. A same-window retry keeps this UUID. Use `request_id` to retrieve the session decision."""
+
+    expires_in: int | None = None
+    """Seconds the code stays valid. A new send returns the full configured window; a same-window retry or a `reuse` of a pending verification returns the seconds left, because a retry keeps the expiry of the first send."""
+
+    fraud: PhoneVerificationSendResponseFraud | None = None
+    """The fraud decision for this send."""

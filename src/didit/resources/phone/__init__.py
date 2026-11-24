@@ -27,6 +27,14 @@ from didit.types.phone.send_code_params import (
 )
 
 if TYPE_CHECKING:
+    from didit.resources.phone.countries import (
+        AsyncPhoneCountries,
+        AsyncPhoneCountriesWithRawResponse,
+        AsyncPhoneCountriesWithStreamingResponse,
+        PhoneCountries,
+        PhoneCountriesWithRawResponse,
+        PhoneCountriesWithStreamingResponse,
+    )
     from didit.resources.phone.factors import (
         AsyncPhoneFactors,
         AsyncPhoneFactorsWithRawResponse,
@@ -34,6 +42,14 @@ if TYPE_CHECKING:
         PhoneFactors,
         PhoneFactorsWithRawResponse,
         PhoneFactorsWithStreamingResponse,
+    )
+    from didit.resources.phone.feedback import (
+        AsyncPhoneFeedback,
+        AsyncPhoneFeedbackWithRawResponse,
+        AsyncPhoneFeedbackWithStreamingResponse,
+        PhoneFeedback,
+        PhoneFeedbackWithRawResponse,
+        PhoneFeedbackWithStreamingResponse,
     )
     from didit.resources.phone.fraud import (
         AsyncPhoneFraud,
@@ -59,6 +75,14 @@ if TYPE_CHECKING:
         PhoneListsWithRawResponse,
         PhoneListsWithStreamingResponse,
     )
+    from didit.resources.phone.lookups import (
+        AsyncPhoneLookups,
+        AsyncPhoneLookupsWithRawResponse,
+        AsyncPhoneLookupsWithStreamingResponse,
+        PhoneLookups,
+        PhoneLookupsWithRawResponse,
+        PhoneLookupsWithStreamingResponse,
+    )
     from didit.resources.phone.network import (
         AsyncPhoneNetwork,
         AsyncPhoneNetworkWithRawResponse,
@@ -83,6 +107,14 @@ if TYPE_CHECKING:
         PhoneSdkKeysWithRawResponse,
         PhoneSdkKeysWithStreamingResponse,
     )
+    from didit.resources.phone.settings import (
+        AsyncPhoneSettingsResource,
+        AsyncPhoneSettingsResourceWithRawResponse,
+        AsyncPhoneSettingsResourceWithStreamingResponse,
+        PhoneSettingsResource,
+        PhoneSettingsResourceWithRawResponse,
+        PhoneSettingsResourceWithStreamingResponse,
+    )
     from didit.resources.phone.silent import (
         AsyncPhoneSilent,
         AsyncPhoneSilentWithRawResponse,
@@ -90,6 +122,14 @@ if TYPE_CHECKING:
         PhoneSilent,
         PhoneSilentWithRawResponse,
         PhoneSilentWithStreamingResponse,
+    )
+    from didit.resources.phone.verifications import (
+        AsyncPhoneVerifications,
+        AsyncPhoneVerificationsWithRawResponse,
+        AsyncPhoneVerificationsWithStreamingResponse,
+        PhoneVerifications,
+        PhoneVerificationsWithRawResponse,
+        PhoneVerificationsWithStreamingResponse,
     )
 
 __all__ = [
@@ -107,14 +147,26 @@ class Phone(SyncAPIResource):
 
     Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
 
-    Nested resources: ``factors``, ``fraud``, ``line_type_overrides``, ``lists``, ``network``, ``rate_limits``, ``sdk_keys``, ``silent``.
+    Nested resources: ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sdk_keys``, ``settings``, ``silent``, ``verifications``.
     """
+
+    @cached_property
+    def countries(self) -> PhoneCountries:
+        from didit.resources.phone.countries import PhoneCountries
+
+        return PhoneCountries(self._client)
 
     @cached_property
     def factors(self) -> PhoneFactors:
         from didit.resources.phone.factors import PhoneFactors
 
         return PhoneFactors(self._client)
+
+    @cached_property
+    def feedback(self) -> PhoneFeedback:
+        from didit.resources.phone.feedback import PhoneFeedback
+
+        return PhoneFeedback(self._client)
 
     @cached_property
     def fraud(self) -> PhoneFraud:
@@ -135,6 +187,12 @@ class Phone(SyncAPIResource):
         return PhoneLists(self._client)
 
     @cached_property
+    def lookups(self) -> PhoneLookups:
+        from didit.resources.phone.lookups import PhoneLookups
+
+        return PhoneLookups(self._client)
+
+    @cached_property
     def network(self) -> PhoneNetwork:
         from didit.resources.phone.network import PhoneNetwork
 
@@ -153,10 +211,22 @@ class Phone(SyncAPIResource):
         return PhoneSdkKeys(self._client)
 
     @cached_property
+    def settings(self) -> PhoneSettingsResource:
+        from didit.resources.phone.settings import PhoneSettingsResource
+
+        return PhoneSettingsResource(self._client)
+
+    @cached_property
     def silent(self) -> PhoneSilent:
         from didit.resources.phone.silent import PhoneSilent
 
         return PhoneSilent(self._client)
+
+    @cached_property
+    def verifications(self) -> PhoneVerifications:
+        from didit.resources.phone.verifications import PhoneVerifications
+
+        return PhoneVerifications(self._client)
 
     @cached_property
     def with_raw_response(self) -> PhoneWithRawResponse:
@@ -247,6 +317,12 @@ class Phone(SyncAPIResource):
         signals: PhoneSendCodeParamsSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        code: str | NotGiven = NOT_GIVEN,
+        code_length: int | NotGiven = NOT_GIVEN,
+        on_conflict: Literal["replace", "reuse", "retry", "reject"] | str | NotGiven = NOT_GIVEN,
+        trusted_user: bool | NotGiven = NOT_GIVEN,
+        force_challenge: bool | NotGiven = NOT_GIVEN,
+        fraud_override: str | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -257,7 +333,9 @@ class Phone(SyncAPIResource):
 
         Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).
 
-        **How send and check pair up.** Verification state is keyed by your application plus the E.164 `phone_number` - the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same number and the code the user received before the window closes. Calling send again for the same number while a verification is pending re-sends a code for that same verification (`status: "Retry"`, same `request_id`). At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
+        **How send and check pair up.** Send the same E.164 `phone_number` and the code to check the latest pending verification of that number in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. The verification window defaults to **5 minutes**. Calling send again for the same number while a verification is pending follows `on_conflict`: by default (`replace`) it starts a fresh verification with a new `request_id`; `retry` re-sends a code for the same verification (`status: "Retry"`, same `request_id` and `verification_id`), at most twice (three sends total, the first included, shared with `POST /v3/phone/verifications/{verification_id}/retry/`); `reuse` returns the pending verification without sending; `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code. A same-window retry keeps the expiry from the first send.
+
+        **Conflict, challenge and code options.** `on_conflict` picks what happens while a code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window, up to two retries (three sends total, the first included), and `reject` answers `409 verification_in_progress`. `force_challenge` restricts the send to `fraud.channels_allowed` and records the challenge as yours, not as fraud. `trusted_user` needs a `fraud_override` signed for this number with your application's webhook signing secret; an unsigned or wrongly signed one returns `403 invalid_fraud_override`. `code` sets your own 4 to 10 letter-and-digit code and `code_length` the length of a Didit-made numeric code; `code` wins over `code_length`, and `code_length` wins over `options.code_size`.
 
         **Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS - the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).
 
@@ -271,9 +349,9 @@ class Phone(SyncAPIResource):
 
         **Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.
 
-        **Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no message is sent and nothing is persisted. Use code `123456` on the sandbox check.
+        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
         **Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.
 
@@ -285,6 +363,12 @@ class Phone(SyncAPIResource):
           signals: Optional device and network signals about the end user, forwarded to the anti-fraud layer to improve detection of abusive or automated traffic. All fields are optional.
           vendor_data: Optional caller-controlled identifier (your internal user id, an email, a UUID, etc.) persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console. Use it to correlate Didit's `request_id` with your user record.
           metadata: Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console.
+          code: Supply 4 to 10 letters and digits, such as K7P2QX. Letters match in either case. Your code takes precedence over `code_length` and `options.code_size`. Choose a channel that supports caller-supplied codes, such as WhatsApp. If the allowed channels cannot carry your code, the send returns `400 custom_code_unavailable`.
+          code_length: 4 to 10 digits, for this request. Wins over `options.code_size` when both are sent; ignored when `code` is sent.
+          on_conflict: A code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window (up to two retries, three sends total), `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code.
+          trusted_user: Your server vouches for this user: this one request goes past your fraud rules (velocity limits, risk score, network blocks, policies). Needs a `fraud_override` signed for it; a block list still stops the number.
+          force_challenge: Your server asks for a challenge on this request: Didit uses only fraud-resistant channels (`fraud.channels_allowed`) and records it as challenged by you; it is not reported or scored as fraud.
+          fraud_override: A token signed for this phone number and expiry, in the form `v1.<expires_at>.<signature>`. `<expires_at>` is the Unix time in seconds, at most 5 minutes ahead. `<signature>` is the base64url encoding, without padding, of the HMAC-SHA256 of the UTF-8 string `v1\\n<phone_number>\\n<expires_at>` (the number in E.164 format, with a newline between each value), keyed with your application's webhook signing secret. It lets the request past a temporary network block, or with `trusted_user` past your fraud rules. An unsigned token, a past expiry, a wrong signature or one signed for another number is refused with `403 invalid_fraud_override`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -304,6 +388,12 @@ class Phone(SyncAPIResource):
                     "signals": signals,
                     "vendor_data": vendor_data,
                     "metadata": metadata,
+                    "code": code,
+                    "code_length": code_length,
+                    "on_conflict": on_conflict,
+                    "trusted_user": trusted_user,
+                    "force_challenge": force_challenge,
+                    "fraud_override": fraud_override,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
@@ -346,9 +436,9 @@ class Phone(SyncAPIResource):
 
         Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.
 
-        **How the check finds the verification.** Matching is by your application plus the E.164 `phone_number` - `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
+        **How the check finds the verification.** Send the code and the E.164 `phone_number`: the number selects its latest pending verification in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. A finalized or expired verification, or no matching verification, returns `200` with `status: "Expired or Not Found"`.
 
-        **Attempt budget.** Each verification allows **3 code attempts**. The first two wrong codes return `status: "Failed"` with the attempts remaining and `phone: null`; the third wrong code finalizes the verification as `Declined` with a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning and returns the full phone report.
+        **Attempt budget for delivered codes.** Your application's `verification.max_attempts` setting (3 to 10) sets how many wrong codes a verification takes, and it defaults to 5 on v3. With that default, the first four wrong codes return `Failed` with the attempts remaining and `phone: null`, and the fifth returns `Declined` with the full phone report and a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning. A verification started in a hosted flow uses the workflow's own limit instead.
 
         **Outcomes.** `Approved` - correct code and no declining risk. `Declined` - terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
 
@@ -358,9 +448,9 @@ class Phone(SyncAPIResource):
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
-        **Sandbox.** Sandbox API keys skip all processing: any well-formed code (4–8 digits, `123456` included) returns a static `Approved` payload with a simplified flat `phone` object (`status`, `phone_number`, `country_code`, `carrier_name`, `line_type`, `flags`); malformed input still returns `400`. Nothing is persisted.
+        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
         **Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.
 
@@ -372,7 +462,7 @@ class Phone(SyncAPIResource):
 
         Args:
           phone_number: The same phone number used in the matching [`POST /v3/phone/send/`](/standalone-apis/phone-send) call, in E.164 format. This is what links the check to the send.
-          code: The OTP the end user received. Must be 4–8 numeric digits - anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: "Failed"` and consumes one of the 3 attempts.
+          code: For a delivered code, enter 4 to 10 letters or digits. Letters match in either case. A wrong delivered code consumes one attempt and returns `Failed` while attempts remain or `Declined` on the last attempt.
           duplicated_phone_number_action: What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`.
           disposable_number_action: What to do when the carrier lookup flags the number as a temporary/burner line (`phone.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
           voip_number_action: What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
@@ -384,7 +474,7 @@ class Phone(SyncAPIResource):
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           factor_id: Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`.
-          verification_id: Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`.
+          verification_id: Check this verification instead of the number's latest one: the `verification_id` a send returned, or the one `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned for a registration test number. Didit takes the number from that verification, so the request's `phone_number` is not used, but it stays a required field. An ID that is not one of your application's checkable verifications is ignored and the check uses the latest pending verification of `phone_number`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -571,14 +661,26 @@ class AsyncPhone(AsyncAPIResource):
 
     Methods: ``assess_risk``, ``assess_risk_bulk``, ``check_code``, ``download_risk_bulk_results``, ``retrieve_risk_bulk``, ``send_code``.
 
-    Nested resources: ``factors``, ``fraud``, ``line_type_overrides``, ``lists``, ``network``, ``rate_limits``, ``sdk_keys``, ``silent``.
+    Nested resources: ``countries``, ``factors``, ``feedback``, ``fraud``, ``line_type_overrides``, ``lists``, ``lookups``, ``network``, ``rate_limits``, ``sdk_keys``, ``settings``, ``silent``, ``verifications``.
     """
+
+    @cached_property
+    def countries(self) -> AsyncPhoneCountries:
+        from didit.resources.phone.countries import AsyncPhoneCountries
+
+        return AsyncPhoneCountries(self._client)
 
     @cached_property
     def factors(self) -> AsyncPhoneFactors:
         from didit.resources.phone.factors import AsyncPhoneFactors
 
         return AsyncPhoneFactors(self._client)
+
+    @cached_property
+    def feedback(self) -> AsyncPhoneFeedback:
+        from didit.resources.phone.feedback import AsyncPhoneFeedback
+
+        return AsyncPhoneFeedback(self._client)
 
     @cached_property
     def fraud(self) -> AsyncPhoneFraud:
@@ -599,6 +701,12 @@ class AsyncPhone(AsyncAPIResource):
         return AsyncPhoneLists(self._client)
 
     @cached_property
+    def lookups(self) -> AsyncPhoneLookups:
+        from didit.resources.phone.lookups import AsyncPhoneLookups
+
+        return AsyncPhoneLookups(self._client)
+
+    @cached_property
     def network(self) -> AsyncPhoneNetwork:
         from didit.resources.phone.network import AsyncPhoneNetwork
 
@@ -617,10 +725,22 @@ class AsyncPhone(AsyncAPIResource):
         return AsyncPhoneSdkKeys(self._client)
 
     @cached_property
+    def settings(self) -> AsyncPhoneSettingsResource:
+        from didit.resources.phone.settings import AsyncPhoneSettingsResource
+
+        return AsyncPhoneSettingsResource(self._client)
+
+    @cached_property
     def silent(self) -> AsyncPhoneSilent:
         from didit.resources.phone.silent import AsyncPhoneSilent
 
         return AsyncPhoneSilent(self._client)
+
+    @cached_property
+    def verifications(self) -> AsyncPhoneVerifications:
+        from didit.resources.phone.verifications import AsyncPhoneVerifications
+
+        return AsyncPhoneVerifications(self._client)
 
     @cached_property
     def with_raw_response(self) -> AsyncPhoneWithRawResponse:
@@ -711,6 +831,12 @@ class AsyncPhone(AsyncAPIResource):
         signals: PhoneSendCodeParamsSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
         metadata: Mapping[str, object] | None | NotGiven = NOT_GIVEN,
+        code: str | NotGiven = NOT_GIVEN,
+        code_length: int | NotGiven = NOT_GIVEN,
+        on_conflict: Literal["replace", "reuse", "retry", "reject"] | str | NotGiven = NOT_GIVEN,
+        trusted_user: bool | NotGiven = NOT_GIVEN,
+        force_challenge: bool | NotGiven = NOT_GIVEN,
+        fraud_override: str | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -721,7 +847,9 @@ class AsyncPhone(AsyncAPIResource):
 
         Send a one-time passcode (OTP) to a phone number over WhatsApp, SMS, or another supported channel, then verify it with [`POST /v3/phone/check/`](/standalone-apis/phone-check).
 
-        **How send and check pair up.** Verification state is keyed by your application plus the E.164 `phone_number` - the check call does not take `request_id`. Each new send creates a pending verification that lives for **5 minutes**: call the check with the same number and the code the user received before the window closes. Calling send again for the same number while a verification is pending re-sends a code for that same verification (`status: "Retry"`, same `request_id`). At most one retry is attached this way (two sends total); a further send starts a fresh verification with a new `request_id`. The 5-minute window is measured from the first send and is not extended by retries.
+        **How send and check pair up.** Send the same E.164 `phone_number` and the code to check the latest pending verification of that number in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. The verification window defaults to **5 minutes**. Calling send again for the same number while a verification is pending follows `on_conflict`: by default (`replace`) it starts a fresh verification with a new `request_id`; `retry` re-sends a code for the same verification (`status: "Retry"`, same `request_id` and `verification_id`), at most twice (three sends total, the first included, shared with `POST /v3/phone/verifications/{verification_id}/retry/`); `reuse` returns the pending verification without sending; `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code. A same-window retry keeps the expiry from the first send.
+
+        **Conflict, challenge and code options.** `on_conflict` picks what happens while a code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window, up to two retries (three sends total, the first included), and `reject` answers `409 verification_in_progress`. `force_challenge` restricts the send to `fraud.channels_allowed` and records the challenge as yours, not as fraud. `trusted_user` needs a `fraud_override` signed for this number with your application's webhook signing secret; an unsigned or wrongly signed one returns `403 invalid_fraud_override`. `code` sets your own 4 to 10 letter-and-digit code and `code_length` the length of a Didit-made numeric code; `code` wins over `code_length`, and `code_length` wins over `options.code_size`.
 
         **Delivery channels.** `options.preferred_channel` selects the channel (`whatsapp` by default; `sms`, `telegram`, `voice`, `rcs`, `viber`, and `zalo` are also supported). When the preferred channel is unavailable for the destination country or number, delivery automatically falls back to SMS - the send still reports `Success`, and the channel actually used is reported by the check response (`phone.verification_method` and the `lifecycle` events).
 
@@ -735,9 +863,9 @@ class AsyncPhone(AsyncAPIResource):
 
         **Session persistence.** Every new verification is persisted as an API-type session: `request_id` is a real session id you can pass to `GET /v3/session/{sessionId}/decision/`, the verification appears in the Business Console, and `status.updated` webhooks fire as it progresses.
 
-        **Sandbox.** Sandbox API keys skip delivery and billing: after request validation (malformed input still returns `400`), the endpoint returns a static `Success` payload with a random `request_id`; no message is sent and nothing is persisted. Use code `123456` on the sandbox check.
+        **Sandbox.** A sandbox application's send takes the same path as a live one: the same validation, `on_conflict` handling, channel policy and refusals (an unsupported destination included) and the same answer, with a `verification_id` you can read, cancel or approve. Only the delivery is simulated: no message is sent and nothing is charged. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
         **Rate limits.** Shared write budget of 300 requests/min per API key across all POST/PATCH/DELETE endpoints, plus an anti-abuse cap of 4 send attempts per phone number per hour; exceeding either returns `429`.
 
@@ -749,6 +877,12 @@ class AsyncPhone(AsyncAPIResource):
           signals: Optional device and network signals about the end user, forwarded to the anti-fraud layer to improve detection of abusive or automated traffic. All fields are optional.
           vendor_data: Optional caller-controlled identifier (your internal user id, an email, a UUID, etc.) persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console. Use it to correlate Didit's `request_id` with your user record.
           metadata: Optional free-form JSON object persisted on the session and echoed back in the send response, the matching check response, webhooks, and the Business Console.
+          code: Supply 4 to 10 letters and digits, such as K7P2QX. Letters match in either case. Your code takes precedence over `code_length` and `options.code_size`. Choose a channel that supports caller-supplied codes, such as WhatsApp. If the allowed channels cannot carry your code, the send returns `400 custom_code_unavailable`.
+          code_length: 4 to 10 digits, for this request. Wins over `options.code_size` when both are sent; ignored when `code` is sent.
+          on_conflict: A code is still valid: `replace` (default) sends a new one, `reuse` returns it without sending, `retry` sends the same code again in the same window (up to two retries, three sends total), `reject` answers `409 verification_in_progress`. For `reuse` and `retry`, if the pending verification does not meet the requested channel or challenge policy, the send starts a new verification. A retry also starts a new verification if the requested channel differs from the last delivery channel. Both `reuse` and `retry` start a new verification if the caller supplies a different code.
+          trusted_user: Your server vouches for this user: this one request goes past your fraud rules (velocity limits, risk score, network blocks, policies). Needs a `fraud_override` signed for it; a block list still stops the number.
+          force_challenge: Your server asks for a challenge on this request: Didit uses only fraud-resistant channels (`fraud.channels_allowed`) and records it as challenged by you; it is not reported or scored as fraud.
+          fraud_override: A token signed for this phone number and expiry, in the form `v1.<expires_at>.<signature>`. `<expires_at>` is the Unix time in seconds, at most 5 minutes ahead. `<signature>` is the base64url encoding, without padding, of the HMAC-SHA256 of the UTF-8 string `v1\\n<phone_number>\\n<expires_at>` (the number in E.164 format, with a newline between each value), keyed with your application's webhook signing secret. It lets the request past a temporary network block, or with `trusted_user` past your fraud rules. An unsigned token, a past expiry, a wrong signature or one signed for another number is refused with `403 invalid_fraud_override`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -768,6 +902,12 @@ class AsyncPhone(AsyncAPIResource):
                     "signals": signals,
                     "vendor_data": vendor_data,
                     "metadata": metadata,
+                    "code": code,
+                    "code_length": code_length,
+                    "on_conflict": on_conflict,
+                    "trusted_user": trusted_user,
+                    "force_challenge": force_challenge,
+                    "fraud_override": fraud_override,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
@@ -810,9 +950,9 @@ class AsyncPhone(AsyncAPIResource):
 
         Verify the OTP delivered by [`POST /v3/phone/send/`](/standalone-apis/phone-send) and get the final verification result plus phone intelligence: carrier name and line type, virtual (VoIP) and disposable flags, and duplicate usage of the number across your sessions.
 
-        **How the check finds the verification.** Matching is by your application plus the E.164 `phone_number` - `request_id` is not an input. The most recent pending verification created within the last **5 minutes** is checked. If there is none (never sent, already finalized, or older than 5 minutes) the endpoint returns `200` with `status: "Expired or Not Found"`.
+        **How the check finds the verification.** Send the code and the E.164 `phone_number`: the number selects its latest pending verification in your application. Add the `verification_id` the send returned to check that specific verification: Didit then checks it and takes its number, so the `phone_number` of the request is not used. `phone_number` stays a required field of the request. An ID that is not one of your application's checkable verifications (unknown, cancelled, or of another application) is ignored, and the check falls back to the latest pending verification of `phone_number`. A finalized or expired verification, or no matching verification, returns `200` with `status: "Expired or Not Found"`.
 
-        **Attempt budget.** Each verification allows **3 code attempts**. The first two wrong codes return `status: "Failed"` with the attempts remaining and `phone: null`; the third wrong code finalizes the verification as `Declined` with a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning and returns the full phone report.
+        **Attempt budget for delivered codes.** Your application's `verification.max_attempts` setting (3 to 10) sets how many wrong codes a verification takes, and it defaults to 5 on v3. With that default, the first four wrong codes return `Failed` with the attempts remaining and `phone: null`, and the fifth returns `Declined` with the full phone report and a `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` warning. A verification started in a hosted flow uses the workflow's own limit instead.
 
         **Outcomes.** `Approved` - correct code and no declining risk. `Declined` - terminal: the code was correct but a declining risk matched (a `DECLINE` action below, a blocklisted or high-risk number), or the attempt budget was exhausted. `Failed` - wrong code, attempts remaining. `Expired or Not Found` - nothing to check. On `Approved`/`Declined` the `request_id` equals the send's `request_id` (the session id) and `phone` carries the full report (`carrier`, `is_virtual`, `is_disposable`, `warnings`, `lifecycle`, `matches`); on `Failed` and `Expired or Not Found` the `request_id` is a one-off random UUID.
 
@@ -822,9 +962,9 @@ class AsyncPhone(AsyncAPIResource):
 
         **Session persistence.** A finalized check updates the session created by the send (visible in the Business Console, queryable via `GET /v3/session/{sessionId}/decision/`) and fires a `status.updated` webhook.
 
-        **Sandbox.** Sandbox API keys skip all processing: any well-formed code (4–8 digits, `123456` included) returns a static `Approved` payload with a simplified flat `phone` object (`status`, `phone_number`, `country_code`, `carrier_name`, `line_type`, `flags`); malformed input still returns `400`. Nothing is persisted.
+        **Sandbox.** Sandbox API keys skip all processing and charge nothing; malformed input still returns `400`. In a sandbox application, use the code `123456` or the fixed code of a sandbox test number. Today the sandbox check also approves any other well-formed code for a number that has no fixed code; that is being tightened to the two codes above, so do not rely on it.
 
-        **Authentication.** Send your application's API key in the `x-api-key` header. Missing or invalid credentials return `403` (`{"detail": "You do not have permission to perform this action."}`) - this API never returns `401`.
+        **Authentication.** Send your application's API key in the `x-api-key` header. A missing `x-api-key` header, or a key that is scoped and does not carry write access to `sessions`, returns `403`; a wrong, revoked or expired key returns `401`.
 
         **Rate limits.** Shared write budget of 300 requests/min per API key, plus the upstream anti-abuse cap of 4 attempts per number per hour; exceeding either returns `429`.
 
@@ -836,7 +976,7 @@ class AsyncPhone(AsyncAPIResource):
 
         Args:
           phone_number: The same phone number used in the matching [`POST /v3/phone/send/`](/standalone-apis/phone-send) call, in E.164 format. This is what links the check to the send.
-          code: The OTP the end user received. Must be 4–8 numeric digits - anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: "Failed"` and consumes one of the 3 attempts.
+          code: For a delivered code, enter 4 to 10 letters or digits. Letters match in either case. A wrong delivered code consumes one attempt and returns `Failed` while attempts remain or `Declined` on the last attempt.
           duplicated_phone_number_action: What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`.
           disposable_number_action: What to do when the carrier lookup flags the number as a temporary/burner line (`phone.is_disposable`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
           voip_number_action: What to do when the carrier lookup reports a virtual line type - `voip`, `isp`, or `vpn` (`phone.is_virtual`). `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings`.
@@ -848,7 +988,7 @@ class AsyncPhone(AsyncAPIResource):
           enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
           phone_no_social_presence_action: Action when the social footprint check finds the number registered on none of the platforms it covers. Only NO_ACTION and DECLINE are accepted on this endpoint; REVIEW is available on the workflow configuration key of the same name.
           factor_id: Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`.
-          verification_id: Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`.
+          verification_id: Check this verification instead of the number's latest one: the `verification_id` a send returned, or the one `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned for a registration test number. Didit takes the number from that verification, so the request's `phone_number` is not used, but it stays a required field. An ID that is not one of your application's checkable verifications is ignored and the check uses the latest pending verification of `phone_number`.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1043,10 +1183,22 @@ class PhoneWithRawResponse:
         )
 
     @cached_property
+    def countries(self) -> PhoneCountriesWithRawResponse:
+        from didit.resources.phone.countries import PhoneCountriesWithRawResponse
+
+        return PhoneCountriesWithRawResponse(self._resource.countries)
+
+    @cached_property
     def factors(self) -> PhoneFactorsWithRawResponse:
         from didit.resources.phone.factors import PhoneFactorsWithRawResponse
 
         return PhoneFactorsWithRawResponse(self._resource.factors)
+
+    @cached_property
+    def feedback(self) -> PhoneFeedbackWithRawResponse:
+        from didit.resources.phone.feedback import PhoneFeedbackWithRawResponse
+
+        return PhoneFeedbackWithRawResponse(self._resource.feedback)
 
     @cached_property
     def fraud(self) -> PhoneFraudWithRawResponse:
@@ -1067,6 +1219,12 @@ class PhoneWithRawResponse:
         return PhoneListsWithRawResponse(self._resource.lists)
 
     @cached_property
+    def lookups(self) -> PhoneLookupsWithRawResponse:
+        from didit.resources.phone.lookups import PhoneLookupsWithRawResponse
+
+        return PhoneLookupsWithRawResponse(self._resource.lookups)
+
+    @cached_property
     def network(self) -> PhoneNetworkWithRawResponse:
         from didit.resources.phone.network import PhoneNetworkWithRawResponse
 
@@ -1085,10 +1243,22 @@ class PhoneWithRawResponse:
         return PhoneSdkKeysWithRawResponse(self._resource.sdk_keys)
 
     @cached_property
+    def settings(self) -> PhoneSettingsResourceWithRawResponse:
+        from didit.resources.phone.settings import PhoneSettingsResourceWithRawResponse
+
+        return PhoneSettingsResourceWithRawResponse(self._resource.settings)
+
+    @cached_property
     def silent(self) -> PhoneSilentWithRawResponse:
         from didit.resources.phone.silent import PhoneSilentWithRawResponse
 
         return PhoneSilentWithRawResponse(self._resource.silent)
+
+    @cached_property
+    def verifications(self) -> PhoneVerificationsWithRawResponse:
+        from didit.resources.phone.verifications import PhoneVerificationsWithRawResponse
+
+        return PhoneVerificationsWithRawResponse(self._resource.verifications)
 
 
 class AsyncPhoneWithRawResponse:
@@ -1104,10 +1274,22 @@ class AsyncPhoneWithRawResponse:
         )
 
     @cached_property
+    def countries(self) -> AsyncPhoneCountriesWithRawResponse:
+        from didit.resources.phone.countries import AsyncPhoneCountriesWithRawResponse
+
+        return AsyncPhoneCountriesWithRawResponse(self._resource.countries)
+
+    @cached_property
     def factors(self) -> AsyncPhoneFactorsWithRawResponse:
         from didit.resources.phone.factors import AsyncPhoneFactorsWithRawResponse
 
         return AsyncPhoneFactorsWithRawResponse(self._resource.factors)
+
+    @cached_property
+    def feedback(self) -> AsyncPhoneFeedbackWithRawResponse:
+        from didit.resources.phone.feedback import AsyncPhoneFeedbackWithRawResponse
+
+        return AsyncPhoneFeedbackWithRawResponse(self._resource.feedback)
 
     @cached_property
     def fraud(self) -> AsyncPhoneFraudWithRawResponse:
@@ -1130,6 +1312,12 @@ class AsyncPhoneWithRawResponse:
         return AsyncPhoneListsWithRawResponse(self._resource.lists)
 
     @cached_property
+    def lookups(self) -> AsyncPhoneLookupsWithRawResponse:
+        from didit.resources.phone.lookups import AsyncPhoneLookupsWithRawResponse
+
+        return AsyncPhoneLookupsWithRawResponse(self._resource.lookups)
+
+    @cached_property
     def network(self) -> AsyncPhoneNetworkWithRawResponse:
         from didit.resources.phone.network import AsyncPhoneNetworkWithRawResponse
 
@@ -1148,10 +1336,22 @@ class AsyncPhoneWithRawResponse:
         return AsyncPhoneSdkKeysWithRawResponse(self._resource.sdk_keys)
 
     @cached_property
+    def settings(self) -> AsyncPhoneSettingsResourceWithRawResponse:
+        from didit.resources.phone.settings import AsyncPhoneSettingsResourceWithRawResponse
+
+        return AsyncPhoneSettingsResourceWithRawResponse(self._resource.settings)
+
+    @cached_property
     def silent(self) -> AsyncPhoneSilentWithRawResponse:
         from didit.resources.phone.silent import AsyncPhoneSilentWithRawResponse
 
         return AsyncPhoneSilentWithRawResponse(self._resource.silent)
+
+    @cached_property
+    def verifications(self) -> AsyncPhoneVerificationsWithRawResponse:
+        from didit.resources.phone.verifications import AsyncPhoneVerificationsWithRawResponse
+
+        return AsyncPhoneVerificationsWithRawResponse(self._resource.verifications)
 
 
 class PhoneWithStreamingResponse:
@@ -1167,10 +1367,22 @@ class PhoneWithStreamingResponse:
         )
 
     @cached_property
+    def countries(self) -> PhoneCountriesWithStreamingResponse:
+        from didit.resources.phone.countries import PhoneCountriesWithStreamingResponse
+
+        return PhoneCountriesWithStreamingResponse(self._resource.countries)
+
+    @cached_property
     def factors(self) -> PhoneFactorsWithStreamingResponse:
         from didit.resources.phone.factors import PhoneFactorsWithStreamingResponse
 
         return PhoneFactorsWithStreamingResponse(self._resource.factors)
+
+    @cached_property
+    def feedback(self) -> PhoneFeedbackWithStreamingResponse:
+        from didit.resources.phone.feedback import PhoneFeedbackWithStreamingResponse
+
+        return PhoneFeedbackWithStreamingResponse(self._resource.feedback)
 
     @cached_property
     def fraud(self) -> PhoneFraudWithStreamingResponse:
@@ -1193,6 +1405,12 @@ class PhoneWithStreamingResponse:
         return PhoneListsWithStreamingResponse(self._resource.lists)
 
     @cached_property
+    def lookups(self) -> PhoneLookupsWithStreamingResponse:
+        from didit.resources.phone.lookups import PhoneLookupsWithStreamingResponse
+
+        return PhoneLookupsWithStreamingResponse(self._resource.lookups)
+
+    @cached_property
     def network(self) -> PhoneNetworkWithStreamingResponse:
         from didit.resources.phone.network import PhoneNetworkWithStreamingResponse
 
@@ -1211,10 +1429,22 @@ class PhoneWithStreamingResponse:
         return PhoneSdkKeysWithStreamingResponse(self._resource.sdk_keys)
 
     @cached_property
+    def settings(self) -> PhoneSettingsResourceWithStreamingResponse:
+        from didit.resources.phone.settings import PhoneSettingsResourceWithStreamingResponse
+
+        return PhoneSettingsResourceWithStreamingResponse(self._resource.settings)
+
+    @cached_property
     def silent(self) -> PhoneSilentWithStreamingResponse:
         from didit.resources.phone.silent import PhoneSilentWithStreamingResponse
 
         return PhoneSilentWithStreamingResponse(self._resource.silent)
+
+    @cached_property
+    def verifications(self) -> PhoneVerificationsWithStreamingResponse:
+        from didit.resources.phone.verifications import PhoneVerificationsWithStreamingResponse
+
+        return PhoneVerificationsWithStreamingResponse(self._resource.verifications)
 
 
 class AsyncPhoneWithStreamingResponse:
@@ -1230,10 +1460,22 @@ class AsyncPhoneWithStreamingResponse:
         )
 
     @cached_property
+    def countries(self) -> AsyncPhoneCountriesWithStreamingResponse:
+        from didit.resources.phone.countries import AsyncPhoneCountriesWithStreamingResponse
+
+        return AsyncPhoneCountriesWithStreamingResponse(self._resource.countries)
+
+    @cached_property
     def factors(self) -> AsyncPhoneFactorsWithStreamingResponse:
         from didit.resources.phone.factors import AsyncPhoneFactorsWithStreamingResponse
 
         return AsyncPhoneFactorsWithStreamingResponse(self._resource.factors)
+
+    @cached_property
+    def feedback(self) -> AsyncPhoneFeedbackWithStreamingResponse:
+        from didit.resources.phone.feedback import AsyncPhoneFeedbackWithStreamingResponse
+
+        return AsyncPhoneFeedbackWithStreamingResponse(self._resource.feedback)
 
     @cached_property
     def fraud(self) -> AsyncPhoneFraudWithStreamingResponse:
@@ -1256,6 +1498,12 @@ class AsyncPhoneWithStreamingResponse:
         return AsyncPhoneListsWithStreamingResponse(self._resource.lists)
 
     @cached_property
+    def lookups(self) -> AsyncPhoneLookupsWithStreamingResponse:
+        from didit.resources.phone.lookups import AsyncPhoneLookupsWithStreamingResponse
+
+        return AsyncPhoneLookupsWithStreamingResponse(self._resource.lookups)
+
+    @cached_property
     def network(self) -> AsyncPhoneNetworkWithStreamingResponse:
         from didit.resources.phone.network import AsyncPhoneNetworkWithStreamingResponse
 
@@ -1274,7 +1522,19 @@ class AsyncPhoneWithStreamingResponse:
         return AsyncPhoneSdkKeysWithStreamingResponse(self._resource.sdk_keys)
 
     @cached_property
+    def settings(self) -> AsyncPhoneSettingsResourceWithStreamingResponse:
+        from didit.resources.phone.settings import AsyncPhoneSettingsResourceWithStreamingResponse
+
+        return AsyncPhoneSettingsResourceWithStreamingResponse(self._resource.settings)
+
+    @cached_property
     def silent(self) -> AsyncPhoneSilentWithStreamingResponse:
         from didit.resources.phone.silent import AsyncPhoneSilentWithStreamingResponse
 
         return AsyncPhoneSilentWithStreamingResponse(self._resource.silent)
+
+    @cached_property
+    def verifications(self) -> AsyncPhoneVerificationsWithStreamingResponse:
+        from didit.resources.phone.verifications import AsyncPhoneVerificationsWithStreamingResponse
+
+        return AsyncPhoneVerificationsWithStreamingResponse(self._resource.verifications)

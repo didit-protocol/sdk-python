@@ -13,7 +13,7 @@ class PhoneCheckCodeParams(TypedDict, total=False):
     """The same phone number used in the matching [`POST /v3/phone/send/`](/standalone-apis/phone-send) call, in E.164 format. This is what links the check to the send."""
 
     code: Required[str]
-    """The OTP the end user received. Must be 4–8 numeric digits - anything else returns `400` without consuming an attempt. A well-formed but wrong code returns `200` with `status: "Failed"` and consumes one of the 3 attempts."""
+    """For a delivered code, enter 4 to 10 letters or digits. Letters match in either case. A wrong delivered code consumes one attempt and returns `Failed` while attempts remain or `Declined` on the last attempt."""
 
     duplicated_phone_number_action: Literal["NO_ACTION", "DECLINE"] | str
     """What to do when the same number was already used by a different user (different `vendor_data`) of your application. `DECLINE` flips the final `status` to `Declined`; `NO_ACTION` records the risk in `phone.warnings` and fills `phone.matches`."""
@@ -49,4 +49,4 @@ class PhoneCheckCodeParams(TypedDict, total=False):
     """Check a TOTP factor enrolled with `POST /v3/phone/factors/` instead of a phone code: send the 4-8 digit `code` its authenticator app shows. With `factor_id` the service does not read `phone_number` (typed SDKs still take it, because it stays a required field of this request, so pass the user's number or any valid E.164 number). The answer carries `verification_id`, `status` (`verified` or `failed`) and `attempts`. A `disabled` factor answers `409 factor_disabled`, an unknown one `404 not_found` and a request without `code` `400 code_required`."""
 
     verification_id: str
-    """Check the code Didit sent to a registration test number: send the `verification_id` that `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned with the `code`. The number itself still goes in `phone_number`."""
+    """Check this verification instead of the number's latest one: the `verification_id` a send returned, or the one `POST /v3/phone/network/registrations/{registration_id}/test-numbers/` returned for a registration test number. Didit takes the number from that verification, so the request's `phone_number` is not used, but it stays a required field. An ID that is not one of your application's checkable verifications is ignored and the check uses the latest pending verification of `phone_number`."""

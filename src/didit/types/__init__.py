@@ -1356,6 +1356,12 @@ if TYPE_CHECKING:
     from didit.types.components.login_response import LoginResponse as LoginResponse
     from didit.types.components.message import Message as Message
     from didit.types.components.message_attempt import MessageAttempt as MessageAttempt
+    from didit.types.components.message_capabilities import (
+        MessageCapabilities as MessageCapabilities,
+    )
+    from didit.types.components.message_capabilities import (
+        MessageCapabilitiesChannels as MessageCapabilitiesChannels,
+    )
     from didit.types.components.message_channel_price import (
         MessageChannelPrice as MessageChannelPrice,
     )
@@ -1393,6 +1399,15 @@ if TYPE_CHECKING:
         MessageTemplateWhatsApp as MessageTemplateWhatsApp,
     )
     from didit.types.components.messages_settings import MessagesSettings as MessagesSettings
+    from didit.types.components.messaging_configuration import (
+        MessagingConfiguration as MessagingConfiguration,
+    )
+    from didit.types.components.messaging_configuration import (
+        MessagingConfigurationOptOut as MessagingConfigurationOptOut,
+    )
+    from didit.types.components.messaging_configuration_list import (
+        MessagingConfigurationList as MessagingConfigurationList,
+    )
     from didit.types.components.monitoring_event import MonitoringEvent as MonitoringEvent
     from didit.types.components.monitoring_event_create_request import (
         MonitoringEventCreateRequest as MonitoringEventCreateRequest,
@@ -1596,6 +1611,14 @@ if TYPE_CHECKING:
     from didit.types.components.paginated_organization_list import (
         PaginatedOrganizationList as PaginatedOrganizationList,
     )
+    from didit.types.components.phone_channel import PhoneChannel as PhoneChannel
+    from didit.types.components.phone_countries_update_response import (
+        PhoneCountriesUpdateResponse as PhoneCountriesUpdateResponse,
+    )
+    from didit.types.components.phone_country_closed_channel import (
+        PhoneCountryClosedChannel as PhoneCountryClosedChannel,
+    )
+    from didit.types.components.phone_country_update import PhoneCountryUpdate as PhoneCountryUpdate
     from didit.types.components.phone_factor import PhoneFactor as PhoneFactor
     from didit.types.components.phone_factor_enrollment import (
         PhoneFactorEnrollment as PhoneFactorEnrollment,
@@ -1604,6 +1627,18 @@ if TYPE_CHECKING:
         PhoneFactorEnrollmentTotp as PhoneFactorEnrollmentTotp,
     )
     from didit.types.components.phone_factors_page import PhoneFactorsPage as PhoneFactorsPage
+    from didit.types.components.phone_feedback_batch_item import (
+        PhoneFeedbackBatchItem as PhoneFeedbackBatchItem,
+    )
+    from didit.types.components.phone_feedback_batch_response import (
+        PhoneFeedbackBatchResponse as PhoneFeedbackBatchResponse,
+    )
+    from didit.types.components.phone_feedback_batch_response import (
+        PhoneFeedbackBatchResponseResults as PhoneFeedbackBatchResponseResults,
+    )
+    from didit.types.components.phone_feedback_response import (
+        PhoneFeedbackResponse as PhoneFeedbackResponse,
+    )
     from didit.types.components.phone_fraud_event_result import (
         PhoneFraudEventResult as PhoneFraudEventResult,
     )
@@ -1621,6 +1656,8 @@ if TYPE_CHECKING:
     )
     from didit.types.components.phone_list_entry import PhoneListEntry as PhoneListEntry
     from didit.types.components.phone_list_match import PhoneListMatch as PhoneListMatch
+    from didit.types.components.phone_lookup_list import PhoneLookupList as PhoneLookupList
+    from didit.types.components.phone_lookup_summary import PhoneLookupSummary as PhoneLookupSummary
     from didit.types.components.phone_match_item import PhoneMatchItem as PhoneMatchItem
     from didit.types.components.phone_network_decision import (
         PhoneNetworkDecision as PhoneNetworkDecision,
@@ -1660,6 +1697,20 @@ if TYPE_CHECKING:
         PhoneSdkKeySummary as PhoneSdkKeySummary,
     )
     from didit.types.components.phone_sdk_keys_page import PhoneSdkKeysPage as PhoneSdkKeysPage
+    from didit.types.components.phone_settings import PhoneSettings as PhoneSettings
+    from didit.types.components.phone_settings import PhoneSettingsMessages as PhoneSettingsMessages
+    from didit.types.components.phone_settings import (
+        PhoneSettingsVerification as PhoneSettingsVerification,
+    )
+    from didit.types.components.phone_settings import (
+        PhoneSettingsVerificationEmail as PhoneSettingsVerificationEmail,
+    )
+    from didit.types.components.phone_settings import (
+        PhoneSettingsVerificationVoice as PhoneSettingsVerificationVoice,
+    )
+    from didit.types.components.phone_settings_update_response import (
+        PhoneSettingsUpdateResponse as PhoneSettingsUpdateResponse,
+    )
     from didit.types.components.phone_silent_coverage import (
         PhoneSilentCoverage as PhoneSilentCoverage,
     )
@@ -1677,6 +1728,15 @@ if TYPE_CHECKING:
     )
     from didit.types.components.phone_social_footprint import (
         PhoneSocialFootprint as PhoneSocialFootprint,
+    )
+    from didit.types.components.phone_verification_approve_response import (
+        PhoneVerificationApproveResponse as PhoneVerificationApproveResponse,
+    )
+    from didit.types.components.phone_verification_attempt import (
+        PhoneVerificationAttempt as PhoneVerificationAttempt,
+    )
+    from didit.types.components.phone_verification_cancel_response import (
+        PhoneVerificationCancelResponse as PhoneVerificationCancelResponse,
     )
     from didit.types.components.phone_verification_check_response import (
         PhoneVerificationCheckResponse as PhoneVerificationCheckResponse,
@@ -1696,8 +1756,26 @@ if TYPE_CHECKING:
     from didit.types.components.phone_verification_check_response import (
         PhoneVerificationCheckResponsePhoneWarnings as PhoneVerificationCheckResponsePhoneWarnings,
     )
+    from didit.types.components.phone_verification_detail import (
+        PhoneVerificationDetail as PhoneVerificationDetail,
+    )
+    from didit.types.components.phone_verification_list import (
+        PhoneVerificationList as PhoneVerificationList,
+    )
+    from didit.types.components.phone_verification_next_response import (
+        PhoneVerificationNextResponse as PhoneVerificationNextResponse,
+    )
+    from didit.types.components.phone_verification_price import (
+        PhoneVerificationPrice as PhoneVerificationPrice,
+    )
+    from didit.types.components.phone_verification_retry_response import (
+        PhoneVerificationRetryResponse as PhoneVerificationRetryResponse,
+    )
     from didit.types.components.phone_verification_send_response import (
         PhoneVerificationSendResponse as PhoneVerificationSendResponse,
+    )
+    from didit.types.components.phone_verification_send_response import (
+        PhoneVerificationSendResponseFraud as PhoneVerificationSendResponseFraud,
     )
     from didit.types.components.public_price_book import PublicPriceBook as PublicPriceBook
     from didit.types.components.public_price_book_line import (
@@ -3278,6 +3356,18 @@ if TYPE_CHECKING:
     from didit.types.lists.list_response import ListsListResponse as ListsListResponse
     from didit.types.lists.update_params import ListsUpdateParams as ListsUpdateParams
     from didit.types.lists.update_response import ListsUpdateResponse as ListsUpdateResponse
+    from didit.types.messages.configurations.create_params import (
+        MessagesConfigurationsCreateParams as MessagesConfigurationsCreateParams,
+    )
+    from didit.types.messages.configurations.create_params import (
+        MessagesConfigurationsCreateParamsOptOut as MessagesConfigurationsCreateParamsOptOut,
+    )
+    from didit.types.messages.configurations.update_params import (
+        MessagesConfigurationsUpdateParams as MessagesConfigurationsUpdateParams,
+    )
+    from didit.types.messages.configurations.update_params import (
+        MessagesConfigurationsUpdateParamsOptOut as MessagesConfigurationsUpdateParamsOptOut,
+    )
     from didit.types.messages.consent.update_params import (
         MessagesConsentUpdateParams as MessagesConsentUpdateParams,
     )
@@ -3412,11 +3502,20 @@ if TYPE_CHECKING:
     )
     from didit.types.phone.assess_risk_params import PhoneAssessRiskParams as PhoneAssessRiskParams
     from didit.types.phone.check_code_params import PhoneCheckCodeParams as PhoneCheckCodeParams
+    from didit.types.phone.countries.update_params import (
+        PhoneCountriesUpdateParams as PhoneCountriesUpdateParams,
+    )
     from didit.types.phone.factors.create_params import (
         PhoneFactorsCreateParams as PhoneFactorsCreateParams,
     )
     from didit.types.phone.factors.update_params import (
         PhoneFactorsUpdateParams as PhoneFactorsUpdateParams,
+    )
+    from didit.types.phone.feedback.create_batch_params import (
+        PhoneFeedbackCreateBatchParams as PhoneFeedbackCreateBatchParams,
+    )
+    from didit.types.phone.feedback.create_params import (
+        PhoneFeedbackCreateParams as PhoneFeedbackCreateParams,
     )
     from didit.types.phone.fraud.evaluate_params import (
         PhoneFraudEvaluateParams as PhoneFraudEvaluateParams,
@@ -3514,11 +3613,35 @@ if TYPE_CHECKING:
     from didit.types.phone.send_code_params import (
         PhoneSendCodeParamsSignals as PhoneSendCodeParamsSignals,
     )
+    from didit.types.phone.settings.update_params import (
+        PhoneSettingsUpdateParams as PhoneSettingsUpdateParams,
+    )
+    from didit.types.phone.settings.update_params import (
+        PhoneSettingsUpdateParamsMessages as PhoneSettingsUpdateParamsMessages,
+    )
+    from didit.types.phone.settings.update_params import (
+        PhoneSettingsUpdateParamsVerification as PhoneSettingsUpdateParamsVerification,
+    )
+    from didit.types.phone.settings.update_params import (
+        PhoneSettingsUpdateParamsVerificationEmail as PhoneSettingsUpdateParamsVerificationEmail,
+    )
+    from didit.types.phone.settings.update_params import (
+        PhoneSettingsUpdateParamsVerificationVoice as PhoneSettingsUpdateParamsVerificationVoice,
+    )
     from didit.types.phone.silent.eligibility_params import (
         PhoneSilentEligibilityParams as PhoneSilentEligibilityParams,
     )
     from didit.types.phone.silent.registrations.create_params import (
         PhoneSilentRegistrationsCreateParams as PhoneSilentRegistrationsCreateParams,
+    )
+    from didit.types.phone.verifications.approve_params import (
+        PhoneVerificationsApproveParams as PhoneVerificationsApproveParams,
+    )
+    from didit.types.phone.verifications.next_params import (
+        PhoneVerificationsNextParams as PhoneVerificationsNextParams,
+    )
+    from didit.types.phone.verifications.retry_params import (
+        PhoneVerificationsRetryParams as PhoneVerificationsRetryParams,
     )
     from didit.types.proof_of_address.verify_params import (
         ProofOfAddressVerifyParams as ProofOfAddressVerifyParams,
@@ -4822,6 +4945,8 @@ _MODULES: dict[str, str] = {
     "LoginResponse": "components.login_response",
     "Message": "components.message",
     "MessageAttempt": "components.message_attempt",
+    "MessageCapabilities": "components.message_capabilities",
+    "MessageCapabilitiesChannels": "components.message_capabilities",
     "MessageChannelPrice": "components.message_channel_price",
     "MessageConsent": "components.message_consent",
     "MessageConsentChannel": "components.message_consent_channel",
@@ -4838,6 +4963,10 @@ _MODULES: dict[str, str] = {
     "MessageTemplateContentInput": "components.message_template_content_input",
     "MessageTemplateList": "components.message_template_list",
     "MessageTemplateWhatsApp": "components.message_template_whats_app",
+    "MessagesConfigurationsCreateParams": "messages.configurations.create_params",
+    "MessagesConfigurationsCreateParamsOptOut": "messages.configurations.create_params",
+    "MessagesConfigurationsUpdateParams": "messages.configurations.update_params",
+    "MessagesConfigurationsUpdateParamsOptOut": "messages.configurations.update_params",
     "MessagesConsentUpdateParams": "messages.consent.update_params",
     "MessagesConversationsUpdateParams": "messages.conversations.update_params",
     "MessagesConversationsWebhooksCreateParams": "messages.conversations.webhooks.create_params",
@@ -4855,6 +4984,9 @@ _MODULES: dict[str, str] = {
     "MessagesSettings": "components.messages_settings",
     "MessagesTemplatesUpdateParams": "messages.templates.update_params",
     "MessagesUpdateSettingsParams": "messages.update_settings_params",
+    "MessagingConfiguration": "components.messaging_configuration",
+    "MessagingConfigurationList": "components.messaging_configuration_list",
+    "MessagingConfigurationOptOut": "components.messaging_configuration",
     "MonitoringEvent": "components.monitoring_event",
     "MonitoringEventCreateRequest": "components.monitoring_event_create_request",
     "MonitoringEventCreateRequestBusiness": "components.monitoring_event_create_request",
@@ -4967,13 +5099,24 @@ _MODULES: dict[str, str] = {
     "PassiveLivenessCheckResponseLivenessWarnings": "passive_liveness.check_response",
     "PhoneAssessRiskBulkParams": "phone.assess_risk_bulk_params",
     "PhoneAssessRiskParams": "phone.assess_risk_params",
+    "PhoneChannel": "components.phone_channel",
     "PhoneCheckCodeParams": "phone.check_code_params",
+    "PhoneCountriesUpdateParams": "phone.countries.update_params",
+    "PhoneCountriesUpdateResponse": "components.phone_countries_update_response",
+    "PhoneCountryClosedChannel": "components.phone_country_closed_channel",
+    "PhoneCountryUpdate": "components.phone_country_update",
     "PhoneFactor": "components.phone_factor",
     "PhoneFactorEnrollment": "components.phone_factor_enrollment",
     "PhoneFactorEnrollmentTotp": "components.phone_factor_enrollment",
     "PhoneFactorsCreateParams": "phone.factors.create_params",
     "PhoneFactorsPage": "components.phone_factors_page",
     "PhoneFactorsUpdateParams": "phone.factors.update_params",
+    "PhoneFeedbackBatchItem": "components.phone_feedback_batch_item",
+    "PhoneFeedbackBatchResponse": "components.phone_feedback_batch_response",
+    "PhoneFeedbackBatchResponseResults": "components.phone_feedback_batch_response",
+    "PhoneFeedbackCreateBatchParams": "phone.feedback.create_batch_params",
+    "PhoneFeedbackCreateParams": "phone.feedback.create_params",
+    "PhoneFeedbackResponse": "components.phone_feedback_response",
     "PhoneFraudEvaluateParams": "phone.fraud.evaluate_params",
     "PhoneFraudEvaluateParamsVariant1": "phone.fraud.evaluate_params",
     "PhoneFraudEvaluateParamsVariant2": "phone.fraud.evaluate_params",
@@ -5005,6 +5148,8 @@ _MODULES: dict[str, str] = {
     "PhoneListsCheckParams": "phone.lists.check_params",
     "PhoneListsCheckResponse": "phone.lists.check_response",
     "PhoneListsListEntriesResponse": "phone.lists.list_entries_response",
+    "PhoneLookupList": "components.phone_lookup_list",
+    "PhoneLookupSummary": "components.phone_lookup_summary",
     "PhoneMatchItem": "components.phone_match_item",
     "PhoneNetworkDecision": "components.phone_network_decision",
     "PhoneNetworkRegistration": "components.phone_network_registration",
@@ -5034,6 +5179,17 @@ _MODULES: dict[str, str] = {
     "PhoneSendCodeParams": "phone.send_code_params",
     "PhoneSendCodeParamsOptions": "phone.send_code_params",
     "PhoneSendCodeParamsSignals": "phone.send_code_params",
+    "PhoneSettings": "components.phone_settings",
+    "PhoneSettingsMessages": "components.phone_settings",
+    "PhoneSettingsUpdateParams": "phone.settings.update_params",
+    "PhoneSettingsUpdateParamsMessages": "phone.settings.update_params",
+    "PhoneSettingsUpdateParamsVerification": "phone.settings.update_params",
+    "PhoneSettingsUpdateParamsVerificationEmail": "phone.settings.update_params",
+    "PhoneSettingsUpdateParamsVerificationVoice": "phone.settings.update_params",
+    "PhoneSettingsUpdateResponse": "components.phone_settings_update_response",
+    "PhoneSettingsVerification": "components.phone_settings",
+    "PhoneSettingsVerificationEmail": "components.phone_settings",
+    "PhoneSettingsVerificationVoice": "components.phone_settings",
     "PhoneSilentCoverage": "components.phone_silent_coverage",
     "PhoneSilentCoverageCountry": "components.phone_silent_coverage_country",
     "PhoneSilentCoverageNetwork": "components.phone_silent_coverage_network",
@@ -5042,13 +5198,25 @@ _MODULES: dict[str, str] = {
     "PhoneSilentRegistration": "components.phone_silent_registration",
     "PhoneSilentRegistrationsCreateParams": "phone.silent.registrations.create_params",
     "PhoneSocialFootprint": "components.phone_social_footprint",
+    "PhoneVerificationApproveResponse": "components.phone_verification_approve_response",
+    "PhoneVerificationAttempt": "components.phone_verification_attempt",
+    "PhoneVerificationCancelResponse": "components.phone_verification_cancel_response",
     "PhoneVerificationCheckResponse": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhone": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhoneCarrier": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhoneLifecycle": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhoneMatches": "components.phone_verification_check_response",
     "PhoneVerificationCheckResponsePhoneWarnings": "components.phone_verification_check_response",
+    "PhoneVerificationDetail": "components.phone_verification_detail",
+    "PhoneVerificationList": "components.phone_verification_list",
+    "PhoneVerificationNextResponse": "components.phone_verification_next_response",
+    "PhoneVerificationPrice": "components.phone_verification_price",
+    "PhoneVerificationRetryResponse": "components.phone_verification_retry_response",
     "PhoneVerificationSendResponse": "components.phone_verification_send_response",
+    "PhoneVerificationSendResponseFraud": "components.phone_verification_send_response",
+    "PhoneVerificationsApproveParams": "phone.verifications.approve_params",
+    "PhoneVerificationsNextParams": "phone.verifications.next_params",
+    "PhoneVerificationsRetryParams": "phone.verifications.retry_params",
     "ProofOfAddressVerifyParams": "proof_of_address.verify_params",
     "ProofOfAddressVerifyResponse": "proof_of_address.verify_response",
     "ProofOfAddressVerifyResponsePoa": "proof_of_address.verify_response",
@@ -6381,6 +6549,8 @@ __all__ = [
     "LoginResponse",
     "Message",
     "MessageAttempt",
+    "MessageCapabilities",
+    "MessageCapabilitiesChannels",
     "MessageChannelPrice",
     "MessageConsent",
     "MessageConsentChannel",
@@ -6397,6 +6567,10 @@ __all__ = [
     "MessageTemplateContentInput",
     "MessageTemplateList",
     "MessageTemplateWhatsApp",
+    "MessagesConfigurationsCreateParams",
+    "MessagesConfigurationsCreateParamsOptOut",
+    "MessagesConfigurationsUpdateParams",
+    "MessagesConfigurationsUpdateParamsOptOut",
     "MessagesConsentUpdateParams",
     "MessagesConversationsUpdateParams",
     "MessagesConversationsWebhooksCreateParams",
@@ -6414,6 +6588,9 @@ __all__ = [
     "MessagesSettings",
     "MessagesTemplatesUpdateParams",
     "MessagesUpdateSettingsParams",
+    "MessagingConfiguration",
+    "MessagingConfigurationList",
+    "MessagingConfigurationOptOut",
     "MonitoringEvent",
     "MonitoringEventCreateRequest",
     "MonitoringEventCreateRequestBusiness",
@@ -6526,13 +6703,24 @@ __all__ = [
     "PassiveLivenessCheckResponseLivenessWarnings",
     "PhoneAssessRiskBulkParams",
     "PhoneAssessRiskParams",
+    "PhoneChannel",
     "PhoneCheckCodeParams",
+    "PhoneCountriesUpdateParams",
+    "PhoneCountriesUpdateResponse",
+    "PhoneCountryClosedChannel",
+    "PhoneCountryUpdate",
     "PhoneFactor",
     "PhoneFactorEnrollment",
     "PhoneFactorEnrollmentTotp",
     "PhoneFactorsCreateParams",
     "PhoneFactorsPage",
     "PhoneFactorsUpdateParams",
+    "PhoneFeedbackBatchItem",
+    "PhoneFeedbackBatchResponse",
+    "PhoneFeedbackBatchResponseResults",
+    "PhoneFeedbackCreateBatchParams",
+    "PhoneFeedbackCreateParams",
+    "PhoneFeedbackResponse",
     "PhoneFraudEvaluateParams",
     "PhoneFraudEvaluateParamsVariant1",
     "PhoneFraudEvaluateParamsVariant2",
@@ -6564,6 +6752,8 @@ __all__ = [
     "PhoneListsCheckParams",
     "PhoneListsCheckResponse",
     "PhoneListsListEntriesResponse",
+    "PhoneLookupList",
+    "PhoneLookupSummary",
     "PhoneMatchItem",
     "PhoneNetworkDecision",
     "PhoneNetworkRegistration",
@@ -6593,6 +6783,17 @@ __all__ = [
     "PhoneSendCodeParams",
     "PhoneSendCodeParamsOptions",
     "PhoneSendCodeParamsSignals",
+    "PhoneSettings",
+    "PhoneSettingsMessages",
+    "PhoneSettingsUpdateParams",
+    "PhoneSettingsUpdateParamsMessages",
+    "PhoneSettingsUpdateParamsVerification",
+    "PhoneSettingsUpdateParamsVerificationEmail",
+    "PhoneSettingsUpdateParamsVerificationVoice",
+    "PhoneSettingsUpdateResponse",
+    "PhoneSettingsVerification",
+    "PhoneSettingsVerificationEmail",
+    "PhoneSettingsVerificationVoice",
     "PhoneSilentCoverage",
     "PhoneSilentCoverageCountry",
     "PhoneSilentCoverageNetwork",
@@ -6601,13 +6802,25 @@ __all__ = [
     "PhoneSilentRegistration",
     "PhoneSilentRegistrationsCreateParams",
     "PhoneSocialFootprint",
+    "PhoneVerificationApproveResponse",
+    "PhoneVerificationAttempt",
+    "PhoneVerificationCancelResponse",
     "PhoneVerificationCheckResponse",
     "PhoneVerificationCheckResponsePhone",
     "PhoneVerificationCheckResponsePhoneCarrier",
     "PhoneVerificationCheckResponsePhoneLifecycle",
     "PhoneVerificationCheckResponsePhoneMatches",
     "PhoneVerificationCheckResponsePhoneWarnings",
+    "PhoneVerificationDetail",
+    "PhoneVerificationList",
+    "PhoneVerificationNextResponse",
+    "PhoneVerificationPrice",
+    "PhoneVerificationRetryResponse",
     "PhoneVerificationSendResponse",
+    "PhoneVerificationSendResponseFraud",
+    "PhoneVerificationsApproveParams",
+    "PhoneVerificationsNextParams",
+    "PhoneVerificationsRetryParams",
     "ProofOfAddressVerifyParams",
     "ProofOfAddressVerifyResponse",
     "ProofOfAddressVerifyResponsePoa",

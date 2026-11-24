@@ -57,6 +57,9 @@ class MessagesSendParamsVariant1(TypedDict, total=False):
 
     options: MessagesSendParamsVariant1Options
 
+    configuration_id: str
+    """One of your messaging configurations (`POST /v3/messages/configurations/`): its channel order applies unless this request sets `channels` itself, its status callback URL is used for the message's status events, and its `append_opt_out_line` applies unless `options.append_opt_out_line` is sent. A configuration that sets a sender (`from`), an `inbound_url` or `opt_out` rules cannot be used in a send yet and answers `400` on `configuration_id`, as does an id that is not one of your application's configurations or a configuration that lists no channel Messages can send on."""
+
 
 class MessagesSendParamsVariant2Options(TypedDict, total=False):
     append_opt_out_line: bool
@@ -99,6 +102,9 @@ class MessagesSendParamsVariant2(TypedDict, total=False):
     """Your reference, returned in every response and webhook, filterable in the list."""
 
     options: MessagesSendParamsVariant2Options
+
+    configuration_id: str
+    """One of your messaging configurations (`POST /v3/messages/configurations/`): its channel order applies unless this request sets `channels` itself, its status callback URL is used for the message's status events, and its `append_opt_out_line` applies unless `options.append_opt_out_line` is sent. A configuration that sets a sender (`from`), an `inbound_url` or `opt_out` rules cannot be used in a send yet and answers `400` on `configuration_id`, as does an id that is not one of your application's configurations or a configuration that lists no channel Messages can send on."""
 
 
 MessagesSendParams: TypeAlias = MessagesSendParamsVariant1 | MessagesSendParamsVariant2
