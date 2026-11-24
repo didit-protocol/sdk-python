@@ -682,7 +682,8 @@ def test_body_branches_preserve_shared_and_variant_requirements(
     }
     _write(openapi / "verification.json", spec)
     files = generate(openapi)
-    resource = files["src/didit/resources/messages.py"]
+    # `messages` is a module, or a package once it has sub-resources.
+    resource = files.get("src/didit/resources/messages.py") or files["src/didit/resources/messages/__init__.py"]
     assert resource.count("body: MessagesSendParams,") == 2
     assert 'body={"to": "sample", "body": "sample"}' in files["tests/generated/test_messages.py"]
 
