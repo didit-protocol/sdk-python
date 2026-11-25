@@ -48,7 +48,7 @@ class BankConnectionConsent(BaseModel):
     """Set when `renewal_action` is `reconfirm`: the last moment to reconfirm."""
 
     renewable_until: _dt.datetime | None
-    """The last moment the same connection can be revived after the consent ended. After it the person connects again. It equals `retain_until`."""
+    """The last moment the same connection can be renewed with its renewal link after access ended. `null` while access has not ended and whenever the connection cannot be renewed, so a non-null value is the test for a renewal and `ended_by` does not decide it. After it the person connects again."""
 
     retain_until: _dt.datetime | None
     """Set once access ended: how long the stored data stays readable, set by the retention setting of your application."""
