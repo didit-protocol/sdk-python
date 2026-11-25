@@ -22,6 +22,7 @@ __all__ = [
     "TransactionDetailNetworkSnapshot",
     "TransactionDetailParties",
     "TransactionDetailPartiesDevice",
+    "TransactionDetailPartiesDeviceMetadata",
     "TransactionDetailPartiesDeviceNetworkContext",
     "TransactionDetailPaymentMethods",
     "TransactionDetailProviderResults",
@@ -119,6 +120,13 @@ class TransactionDetailNetworkSnapshot(BaseModel):
     metrics: dict[str, object] | None = None
 
 
+class TransactionDetailPartiesDeviceMetadata(BaseModel):
+    """Further keys of the device context, free-form: the `metadata` that was sent, of any shape, returned as stored. For the subject (the `APPLICANT` party) of a transaction submitted from a device with a transaction token (`POST /v1/transactions/`, the Didit SDKs), Didit adds what it read from the request, such as `bot_score`."""
+
+    bot_score: object = None
+    """The device's automation score. Its type is not fixed for every party: read it as described here. For the subject (the `APPLICANT` party) of a transaction submitted from a device with a transaction token, Didit decides it on the server and it is a number from 0 (no sign of automation) to 1 (automated): from the request itself (a user agent that names an automation tool scores 1) and from what the SDK sent, which is what it read about how the page or app is driven or, from an older SDK version, its own score. Nothing the device sends can lower it, and a `bot_score` the device posts in its own device context is not kept. It is absent when Didit had nothing to decide it from: absent means unknown, not 0. For any other party, on a transaction your backend submitted with an API key, and on transactions stored before this behaviour, it is whatever was sent in `metadata`, unchanged and of whatever type it was sent."""
+
+
 class TransactionDetailPartiesDeviceNetworkContext(BaseModel):
     """Network context with IP address and geo-location."""
 
@@ -173,6 +181,9 @@ class TransactionDetailPartiesDevice(BaseModel):
 
     network_context: TransactionDetailPartiesDeviceNetworkContext | None = None
     """Network context with IP address and geo-location."""
+
+    metadata: TransactionDetailPartiesDeviceMetadata | None = None
+    """Further keys of the device context, free-form: the `metadata` that was sent, of any shape, returned as stored. For the subject (the `APPLICANT` party) of a transaction submitted from a device with a transaction token (`POST /v1/transactions/`, the Didit SDKs), Didit adds what it read from the request, such as `bot_score`."""
 
 
 class TransactionDetailParties(BaseModel):

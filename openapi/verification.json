@@ -34811,7 +34811,7 @@
     "/v1/transactions/": {
       "post": {
         "summary": "Submit a transaction from an SDK",
-        "description": "Device-facing endpoint the Didit SDKs call to submit a transaction directly from the end-user's device. Authentication is a scoped token from `POST /v3/transactions/sdk-token/` sent in the `X-Transaction-Token` header instead of an API key, and the endpoint is CORS-enabled so browsers can call it cross-origin. The payload uses the camelCase wire aliases shown below (the SDK `submitTransaction` methods build it for you). Three server-side guarantees: the application is always taken from the token; the subject identity (`externalUserId`) is always enforced from the token's `vendor_data`, so spoofed payload values are ignored; and device intelligence (the SDK device fingerprint plus server-derived IP and user agent) is attached to the subject automatically.",
+        "description": "Device-facing endpoint the Didit SDKs call to submit a transaction directly from the end-user's device. Authentication is a scoped token from `POST /v3/transactions/sdk-token/` sent in the `X-Transaction-Token` header instead of an API key, and the endpoint is CORS-enabled so browsers can call it cross-origin. The payload uses the camelCase wire aliases shown below (the SDK `submitTransaction` methods build it for you). Three server-side guarantees: the application is always taken from the token; the subject identity (`externalUserId`) is always enforced from the token's `vendor_data`, so spoofed payload values are ignored; and device intelligence (the SDK device fingerprint plus server-derived IP and user agent) is attached to the subject automatically. The device's automation score is Didit's to decide: it is returned in the subject's device context as `metadata.bot_score`, from 0 to 1, nothing the device sends can lower it, and it is absent when Didit had nothing to decide it from (absent means unknown, not 0).",
         "operationId": "submitTransactionFromSdk",
         "x-didit-sdk": {
           "resource": "transactions",
@@ -34951,7 +34951,7 @@
                       },
                       "device": {
                         "type": "object",
-                        "description": "Optional explicit device context. Merged with the automatically captured device intelligence; server-derived fields win on conflict."
+                        "description": "Optional explicit device context. Merged with the automatically captured device intelligence; server-derived fields win on conflict. A `metadata.bot_score` posted here is not kept: Didit decides the automation score."
                       },
                       "paymentMethod": {
                         "type": "object",
@@ -35068,7 +35068,7 @@
                   },
                   "fingerprint_v2": {
                     "type": "object",
-                    "description": "The `didit-fp-v2` device fingerprint payload. Injected automatically by the SDKs; only relevant when calling the wire API directly."
+                    "description": "The `didit-fp-v2` device fingerprint payload. Injected automatically by the SDKs; only relevant when calling the wire API directly. Newer SDK versions add `evidence`, a text of what they read about how the page or app is driven: Didit reads it to decide the automation score, and it is not stored with the transaction or returned."
                   }
                 },
                 "required": [
@@ -119692,6 +119692,16 @@
                         "longitude": {
                           "type": "number",
                           "description": "Geographic longitude of the IP."
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Further keys of the device context, free-form: the `metadata` that was sent, of any shape, returned as stored. For the subject (the `APPLICANT` party) of a transaction submitted from a device with a transaction token (`POST /v1/transactions/`, the Didit SDKs), Didit adds what it read from the request, such as `bot_score`.",
+                      "properties": {
+                        "bot_score": {
+                          "description": "The device's automation score. Its type is not fixed for every party: read it as described here. For the subject (the `APPLICANT` party) of a transaction submitted from a device with a transaction token, Didit decides it on the server and it is a number from 0 (no sign of automation) to 1 (automated): from the request itself (a user agent that names an automation tool scores 1) and from what the SDK sent, which is what it read about how the page or app is driven or, from an older SDK version, its own score. Nothing the device sends can lower it, and a `bot_score` the device posts in its own device context is not kept. It is absent when Didit had nothing to decide it from: absent means unknown, not 0. For any other party, on a transaction your backend submitted with an API key, and on transactions stored before this behaviour, it is whatever was sent in `metadata`, unchanged and of whatever type it was sent."
                         }
                       }
                     }
