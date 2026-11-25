@@ -10,7 +10,7 @@ class PhoneVerificationPrice(BaseModel):
     """The price line of one attempt."""
 
     amount: str | None = None
-    """What it cost, in USD: the estimated price until `final` is true, then the price billing recorded for the attempt. Under a contract, your invoice prices each code at the contract's rate, which this amount does not show. `0.0000` in the sandbox."""
+    """What the attempt costs, in USD. It is the estimated price, with `final` false, until billing records a charge or billing close comes (a few minutes after the code's 5-minute validity ends). Once billing records a charge it is that charge, and `final` is true. An attempt that is not charged reads `0.0000` from billing close: final for a `Blocked` attempt, which is never charged, and not final (`final` false) for an attempt whose every message was reported undeliverable, because a later delivery report showing one of its messages was delivered charges it and replaces the `0.0000`. Under a contract, your invoice prices each code at the contract's rate, which this amount does not show. `0.0000` in the sandbox."""
 
     carrier: str | None = None
     """The carrier part, passed on at cost."""
@@ -19,4 +19,4 @@ class PhoneVerificationPrice(BaseModel):
     """Didit's fee."""
 
     final: bool | None = None
-    """true once billing has recorded the attempt's charge: on its delivery report or, when no delivery report comes, no later than a few minutes after the code's 5-minute validity ends. Until then `amount` is the estimated price. Always true in the sandbox, where nothing is charged."""
+    """true once billing has recorded the attempt's charge (on its delivery report or, when no report comes, at billing close, a few minutes after the code's 5-minute validity ends), and from billing close for a `Blocked` attempt, which is never charged (`amount` `0.0000`). false while `amount` is the estimated price before billing close, and for an attempt whose every message was reported undeliverable: it reads `amount` `0.0000` from billing close, but a later delivery report showing one of its messages was delivered charges it. Always true in the sandbox, where nothing is charged."""
