@@ -19,4 +19,4 @@ class BankInstitutionSummary(BaseModel):
     """Country of the bank, ISO 3166-1 alpha-3."""
 
     logo_url: str | None
-    """Logo of the bank, or `null`."""
+    """The address of the bank's logo hosted by Didit."""
