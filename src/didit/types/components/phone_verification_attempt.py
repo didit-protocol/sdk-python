@@ -61,7 +61,7 @@ class PhoneVerificationAttempt(BaseModel):
     """When the code ran out before delivery."""
 
     charged: bool | None = None
-    """True when the attempt has been billed or has a nonzero actual price. See `status` for the delivery outcome."""
+    """True when the attempt has been billed or has a nonzero actual price. Always false in the sandbox, which charges nothing. See `status` for the delivery outcome."""
 
     price: PhoneVerificationPrice | None = None
     """The price line of one attempt."""

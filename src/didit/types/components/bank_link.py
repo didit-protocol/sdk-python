@@ -37,7 +37,10 @@ class BankLink(BaseModel):
     """When an unredeemed link stops working."""
 
     connection_id: str | None
-    """The connection this link created or renewed, once `status` is `completed`."""
+    """The connection this link produced or renewed. `null` until the link completes, on every kind of link."""
+
+    renews_connection_id: str | None
+    """The connection a renewal link (`mode: renew`) targets, set when the link is created; `null` on a link that renews nothing. Always present. `connection_id` stays `null` until the link completes."""
 
     check_id: str | None
     """The ownership result of this link, when it asked for `ownership.compare` other than `none`."""
