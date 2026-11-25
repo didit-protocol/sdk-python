@@ -35,7 +35,7 @@ class BankConnection(BaseModel):
         Literal["pending", "active", "renewal_required", "paused", "revoked", "deleted", "failed"]
         | str
     )
-    """`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you, or ended because the read of a one-time connection is complete. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. The list returns these only for `status=deleted`; reading one by id always returns it. `failed`: the first sync never succeeded."""
+    """`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced; a month that begins while it waits is not charged. `paused`: the current month could not be paid, so syncing stops. It resumes by itself once your balance covers the month: when a credit reaches your wallet, or at the daily check at 05:30 UTC. `revoked`: access stopped by the person, the bank or you, ended because the read of a one-time connection is complete, or ended by Didit because its coming month was not paid by the deadline (`status_reason: unpaid`). `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. The list returns these only for `status=deleted`; reading one by id always returns it. `failed`: the first sync never succeeded."""
 
     status_reason: (
         Literal[
@@ -49,6 +49,7 @@ class BankConnection(BaseModel):
             "insufficient_balance",
             "paused_by_customer",
             "first_sync_failed",
+            "unpaid",
             "deleted_by_customer",
             "retention_elapsed",
             "application_deleted",
@@ -56,7 +57,7 @@ class BankConnection(BaseModel):
         | str
         | None
     )
-    """Why the connection is in this status. `collection_complete`: a one-time connection whose read is complete, so its access has ended. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`."""
+    """Why the connection is in this status. `collection_complete`: a one-time connection whose read is complete, so its access has ended. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`. `unpaid`: the coming month was not paid by 20:00 UTC on the last day of the month before it, so Didit ended access and removed the connection at the bank; nothing more is charged. `bank.connection.revoked` with this reason is the final signal of that ending."""
 
     institution: BankInstitutionSummary | None = None
     """The bank a connection or link is for."""
