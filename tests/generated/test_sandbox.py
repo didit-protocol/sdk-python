@@ -60,7 +60,7 @@ def test_sandbox_list_scenarios() -> None:
                     "documents": [
                         {
                             "sandbox_sample": None,
-                            "document_name": "Brazil - Passport (2015)",
+                            "document_type": "P",
                             "is_default": True,
                             "first_name": "ALICE",
                             "last_name": "SILVA",
