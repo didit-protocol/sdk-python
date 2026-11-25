@@ -1,0 +1,26 @@
+# Weekly dependency updates, one grouped pull request per ecosystem.
+# Commit messages follow conventional commits: "ci: ..." for actions,
+# "chore(deps): ..." and "chore(deps-dev): ..." for Python packages.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python-dependencies:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
