@@ -19,6 +19,7 @@ class BankInstitution(BaseModel):
     country: str
 
     logo_url: str | None
+    """The address of the bank's logo hosted by Didit."""
 
     timezone: str | None
     """IANA time zone the bank's dates are in."""

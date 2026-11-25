@@ -81,7 +81,7 @@ class BankVerificationResultConnection(BaseModel):
     ) = None
 
     institution_id: str | None = None
-    """The bank's ID. `null` for an account check, where no bank is picked."""
+    """Didit's own ID of the bank, never the identifier the bank is reached by. It is opaque, so do not parse it, and stable for a bank in Didit's catalogue; a bank outside the catalogue has an ID that changes once the bank is added to it. The session's bank step (its start and continue calls and the saved bank lists of a workflow's bank node) accepts both the earlier form and this one; the Bank Data endpoints accept only this one. `null` for an account check, where no bank is picked."""
 
     institution_name: str | None = None
     """The bank's name. `null` for an account check."""
@@ -125,7 +125,7 @@ class BankVerificationResultContinuation(BaseModel):
     """The other ways to verify that country offered the person when they continued, in the order it offered them: `statement` (a statement upload), then `microdeposits`. Empty when it offered none."""
 
     institution_id: str | None = None
-    """For `institution_unsupported`, the ID of the bank the person could not use: the bank they picked, or the bank their last attempt ended on. Didit takes it from its own list of banks, never from the person's device, so a bank that list does not have is `null`. `null` for every other reason."""
+    """For `institution_unsupported`, Didit's ID of the bank the person could not use (the same ID as `connection.institution_id`): the bank they picked, or the bank their last attempt ended on. Didit takes it from its own list of banks, never from the person's device, so a bank that list does not have is `null`. `null` for every other reason."""
 
     institution_name: str | None = None
     """For `institution_unsupported`, the name of that bank, from the same list as `institution_id`. `null` when that list does not have the bank, and for every other reason."""
