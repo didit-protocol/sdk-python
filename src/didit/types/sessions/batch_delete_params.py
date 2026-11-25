@@ -55,9 +55,6 @@ class SessionsBatchDeleteParams(TypedDict, total=False):
     filter_document_type: str | Sequence[str]
     """Narrows a `delete_all` to the sessions that match the `document_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection."""
 
-    filter_document_name: str | Sequence[str]
-    """Narrows a `delete_all` to the sessions that match the `document_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection."""
-
     filter_region: str | Sequence[str]
     """Narrows a `delete_all` to the sessions that match the `region` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection."""
 

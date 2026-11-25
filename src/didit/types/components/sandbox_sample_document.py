@@ -10,8 +10,8 @@ class SandboxSampleDocument(BaseModel):
     sandbox_sample: str | None
     """The sample slug that selects this document, or `null` for the default document."""
 
-    document_name: str
-    """The document the sandbox OCR mock returns."""
+    document_type: str | None
+    """The type of the document the sandbox OCR mock returns: `P` (Passport), `ID` (Identity Card), `DL` (Driver's License) or `RP` (Residence Permit). Its issuing country is `id_country`."""
 
     is_default: bool
     """Whether this is the document returned when no sample is selected."""

@@ -643,7 +643,6 @@ class Sessions(SyncAPIResource):
         decided_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         document_type: str | NotGiven = NOT_GIVEN,
-        document_name: str | NotGiven = NOT_GIVEN,
         region: str | NotGiven = NOT_GIVEN,
         didit_internal_id: str | NotGiven = NOT_GIVEN,
         session_type: str | NotGiven = NOT_GIVEN,
@@ -690,7 +689,7 @@ class Sessions(SyncAPIResource):
 
         **Pagination.** Standard limit/offset: `limit` (default 50) and `offset` (default 0), with `next`/`previous` ready-made page URLs. For KYC rows `count` is exact. For KYB rows `count` is computed with a bounded scan and is capped at 100 - when there are more than 100 matches it stays at 100, so iterate using `next` (or by checking whether a full page came back) rather than computing total pages from `count`.
 
-        **Filter semantics.** All filters combine with AND and apply to KYC rows. When `session_kind` is `business` or `all`, the KYB side honors the shared parameters `vendor_data`, `status`, `workflow_id`, `country` (registry-company country code), `date_from`, `date_to`, `search` (company name, registration number - type registration numbers without separators, e.g. `DPC001` not `DPC-001` - vendor_data, session number, or session UUID), `warning`, and `organization_name`; the remaining KYC-only filters are ignored for KYB rows. Comma-separated parameters (`status`, `country`, `document_type`, `region`, `workflow_id`, `document_name`, `warning`, `organization_name`, `session_type`) match any of the listed values (OR within the parameter). `vendor_data` is an exact match - use `search` for partial matching. Unknown values in list filters simply return no rows (no error); malformed typed values (`date_from`, `date_to`, `didit_internal_id`, `api_service`, `session_kind`) return `400` with a per-field error object.
+        **Filter semantics.** All filters combine with AND and apply to KYC rows. When `session_kind` is `business` or `all`, the KYB side honors the shared parameters `vendor_data`, `status`, `workflow_id`, `country` (registry-company country code), `date_from`, `date_to`, `search` (company name, registration number - type registration numbers without separators, e.g. `DPC001` not `DPC-001` - vendor_data, session number, or session UUID), `warning`, and `organization_name`; the remaining KYC-only filters are ignored for KYB rows. Comma-separated parameters (`status`, `country`, `document_type`, `region`, `workflow_id`, `warning`, `organization_name`, `session_type`) match any of the listed values (OR within the parameter). `vendor_data` is an exact match - use `search` for partial matching. Unknown values in list filters simply return no rows (no error); malformed typed values (`date_from`, `date_to`, `didit_internal_id`, `api_service`, `session_kind`) return `400` with a per-field error object. `document_name` is no longer accepted: a request that still sends it gets `400` with `{"document_name": ["This filter is not available."]}`. Filter by `document_type` and `country` instead.
 
         **Search.** `search` adapts to the input: a full UUID looks up `session_id`; digits (with optional `+ - . space`) match session-number prefix, document/personal numbers, phone-number prefix, or `vendor_data`; values containing `@` match email prefixes; any other text matches names (accent-insensitive) and `vendor_data`.
 
@@ -713,7 +712,6 @@ class Sessions(SyncAPIResource):
           decided_to: ISO 8601 datetime. Returns the sessions whose status last changed before it. Combine with `decided_from` for a half-open window.
           country: Comma-separated country filter. For KYC rows: ISO 3166-1 alpha-3 codes of the ID document's issuing state (e.g. `ESP,USA`), which may differ from nationality. For KYB rows: the registry company's country code.
           document_type: Comma-separated ID-document type codes verified in the session (KYC rows only): `P` (Passport), `ID` (Identity Card), `DL` (Driver's License), `RP` (Residence Permit), `SSC` (Social Security Card), `HIC` (Health Insurance Card), `WP` (Work Permit), `TC` (Tax Card), `VISA`, `PSC` (Public Service Card), `BC` (Birth Certificate), `OTHER`. Note the response field `document_type` contains the display name, not the code.
-          document_name: Exact document names; multiple names can be passed comma-separated, but the value is only split on commas when it contains more than one ` - ` separator (a lone name with an embedded comma is matched whole). Names are as recognized by document verification (front or back side), e.g. `Spain - Id Card (2021)`. KYC rows only.
           region: Comma-separated document region/state values (for documents issued per region, such as US driver's licenses). KYC rows only.
           didit_internal_id: Filter by Didit's internal user identifier (the `didit_internal_id` response field) to list all sessions of one verified user. Must be a valid UUID; malformed values return `400`. KYC rows only.
           session_type: Comma-separated session creation channels: `API`, `HOSTED`, `MIGRATED`. The special value `ALL` (or omitting the parameter) disables the filter. KYC rows only.
@@ -752,7 +750,6 @@ class Sessions(SyncAPIResource):
                     "decided_to": decided_to,
                     "country": country,
                     "document_type": document_type,
-                    "document_name": document_name,
                     "region": region,
                     "didit_internal_id": didit_internal_id,
                     "session_type": session_type,
@@ -887,7 +884,6 @@ class Sessions(SyncAPIResource):
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_country: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_document_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
-        filter_document_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_region: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_didit_internal_id: str | NotGiven = NOT_GIVEN,
         filter_session_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
@@ -917,7 +913,7 @@ class Sessions(SyncAPIResource):
         Each deleted session gets exactly the same treatment as the single-session delete endpoint: the session, every verification attempt it holds, its decision and extracted data, its related feature records (ID verification, face, liveness, face match, and so on) and all of its stored files are deleted, it disappears from every read endpoint, and previously issued media URLs stop resolving. Webhook deliveries still queued for a deleted session, and their retries, are dropped; webhooks already delivered are not affected. Blocklist entries are **not** removed, credits already consumed are **not** refunded, and the parent User entities are **not** deleted (use `POST /v3/users/delete/` for those); no webhook is emitted for the deletion. Deletion is permanent and irreversible.
 
         **Selection semantics:**
-        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `document_name`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
+        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
         - An unknown `filter_*` key, or a filter value that cannot be read, rejects the whole request with `400` before anything is deleted, so a mistyped filter never widens the deletion to every session.
         - Entries in `session_numbers` that do not match a live KYC session in your application (unknown numbers, already-deleted sessions, or sessions owned by another application) are **silently skipped**: they do not appear in `results` and are not counted in a job's `total`.
         - Validation failures (a non-numeric entry, an empty list, neither `session_numbers` nor `delete_all` provided, or a template retention the application cannot honour) reject the **whole request** with `400` and delete nothing.
@@ -958,7 +954,6 @@ class Sessions(SyncAPIResource):
           filter_date_to: Narrows a `delete_all` to the sessions that match the `date_to` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_country: Narrows a `delete_all` to the sessions that match the `country` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_document_type: Narrows a `delete_all` to the sessions that match the `document_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
-          filter_document_name: Narrows a `delete_all` to the sessions that match the `document_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_region: Narrows a `delete_all` to the sessions that match the `region` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_didit_internal_id: Narrows a `delete_all` to the sessions that match the `didit_internal_id` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_session_type: Narrows a `delete_all` to the sessions that match the `session_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
@@ -998,7 +993,6 @@ class Sessions(SyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "filter_country": filter_country,
                     "filter_document_type": filter_document_type,
-                    "filter_document_name": filter_document_name,
                     "filter_region": filter_region,
                     "filter_didit_internal_id": filter_didit_internal_id,
                     "filter_session_type": filter_session_type,
@@ -3402,7 +3396,6 @@ class AsyncSessions(AsyncAPIResource):
         decided_to: str | _dt.datetime | NotGiven = NOT_GIVEN,
         country: str | NotGiven = NOT_GIVEN,
         document_type: str | NotGiven = NOT_GIVEN,
-        document_name: str | NotGiven = NOT_GIVEN,
         region: str | NotGiven = NOT_GIVEN,
         didit_internal_id: str | NotGiven = NOT_GIVEN,
         session_type: str | NotGiven = NOT_GIVEN,
@@ -3449,7 +3442,7 @@ class AsyncSessions(AsyncAPIResource):
 
         **Pagination.** Standard limit/offset: `limit` (default 50) and `offset` (default 0), with `next`/`previous` ready-made page URLs. For KYC rows `count` is exact. For KYB rows `count` is computed with a bounded scan and is capped at 100 - when there are more than 100 matches it stays at 100, so iterate using `next` (or by checking whether a full page came back) rather than computing total pages from `count`.
 
-        **Filter semantics.** All filters combine with AND and apply to KYC rows. When `session_kind` is `business` or `all`, the KYB side honors the shared parameters `vendor_data`, `status`, `workflow_id`, `country` (registry-company country code), `date_from`, `date_to`, `search` (company name, registration number - type registration numbers without separators, e.g. `DPC001` not `DPC-001` - vendor_data, session number, or session UUID), `warning`, and `organization_name`; the remaining KYC-only filters are ignored for KYB rows. Comma-separated parameters (`status`, `country`, `document_type`, `region`, `workflow_id`, `document_name`, `warning`, `organization_name`, `session_type`) match any of the listed values (OR within the parameter). `vendor_data` is an exact match - use `search` for partial matching. Unknown values in list filters simply return no rows (no error); malformed typed values (`date_from`, `date_to`, `didit_internal_id`, `api_service`, `session_kind`) return `400` with a per-field error object.
+        **Filter semantics.** All filters combine with AND and apply to KYC rows. When `session_kind` is `business` or `all`, the KYB side honors the shared parameters `vendor_data`, `status`, `workflow_id`, `country` (registry-company country code), `date_from`, `date_to`, `search` (company name, registration number - type registration numbers without separators, e.g. `DPC001` not `DPC-001` - vendor_data, session number, or session UUID), `warning`, and `organization_name`; the remaining KYC-only filters are ignored for KYB rows. Comma-separated parameters (`status`, `country`, `document_type`, `region`, `workflow_id`, `warning`, `organization_name`, `session_type`) match any of the listed values (OR within the parameter). `vendor_data` is an exact match - use `search` for partial matching. Unknown values in list filters simply return no rows (no error); malformed typed values (`date_from`, `date_to`, `didit_internal_id`, `api_service`, `session_kind`) return `400` with a per-field error object. `document_name` is no longer accepted: a request that still sends it gets `400` with `{"document_name": ["This filter is not available."]}`. Filter by `document_type` and `country` instead.
 
         **Search.** `search` adapts to the input: a full UUID looks up `session_id`; digits (with optional `+ - . space`) match session-number prefix, document/personal numbers, phone-number prefix, or `vendor_data`; values containing `@` match email prefixes; any other text matches names (accent-insensitive) and `vendor_data`.
 
@@ -3472,7 +3465,6 @@ class AsyncSessions(AsyncAPIResource):
           decided_to: ISO 8601 datetime. Returns the sessions whose status last changed before it. Combine with `decided_from` for a half-open window.
           country: Comma-separated country filter. For KYC rows: ISO 3166-1 alpha-3 codes of the ID document's issuing state (e.g. `ESP,USA`), which may differ from nationality. For KYB rows: the registry company's country code.
           document_type: Comma-separated ID-document type codes verified in the session (KYC rows only): `P` (Passport), `ID` (Identity Card), `DL` (Driver's License), `RP` (Residence Permit), `SSC` (Social Security Card), `HIC` (Health Insurance Card), `WP` (Work Permit), `TC` (Tax Card), `VISA`, `PSC` (Public Service Card), `BC` (Birth Certificate), `OTHER`. Note the response field `document_type` contains the display name, not the code.
-          document_name: Exact document names; multiple names can be passed comma-separated, but the value is only split on commas when it contains more than one ` - ` separator (a lone name with an embedded comma is matched whole). Names are as recognized by document verification (front or back side), e.g. `Spain - Id Card (2021)`. KYC rows only.
           region: Comma-separated document region/state values (for documents issued per region, such as US driver's licenses). KYC rows only.
           didit_internal_id: Filter by Didit's internal user identifier (the `didit_internal_id` response field) to list all sessions of one verified user. Must be a valid UUID; malformed values return `400`. KYC rows only.
           session_type: Comma-separated session creation channels: `API`, `HOSTED`, `MIGRATED`. The special value `ALL` (or omitting the parameter) disables the filter. KYC rows only.
@@ -3511,7 +3503,6 @@ class AsyncSessions(AsyncAPIResource):
                     "decided_to": decided_to,
                     "country": country,
                     "document_type": document_type,
-                    "document_name": document_name,
                     "region": region,
                     "didit_internal_id": didit_internal_id,
                     "session_type": session_type,
@@ -3646,7 +3637,6 @@ class AsyncSessions(AsyncAPIResource):
         filter_date_to: str | _dt.date | NotGiven = NOT_GIVEN,
         filter_country: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_document_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
-        filter_document_name: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_region: str | Sequence[str] | NotGiven = NOT_GIVEN,
         filter_didit_internal_id: str | NotGiven = NOT_GIVEN,
         filter_session_type: str | Sequence[str] | NotGiven = NOT_GIVEN,
@@ -3676,7 +3666,7 @@ class AsyncSessions(AsyncAPIResource):
         Each deleted session gets exactly the same treatment as the single-session delete endpoint: the session, every verification attempt it holds, its decision and extracted data, its related feature records (ID verification, face, liveness, face match, and so on) and all of its stored files are deleted, it disappears from every read endpoint, and previously issued media URLs stop resolving. Webhook deliveries still queued for a deleted session, and their retries, are dropped; webhooks already delivered are not affected. Blocklist entries are **not** removed, credits already consumed are **not** refunded, and the parent User entities are **not** deleted (use `POST /v3/users/delete/` for those); no webhook is emitted for the deletion. Deletion is permanent and irreversible.
 
         **Selection semantics:**
-        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `document_name`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
+        - With `delete_all: true` you can narrow the selection with the filters of `GET /v3/sessions/`, each prefixed with `filter_` (for example `filter_status`, `filter_workflow_id`, `filter_date_from`). Filters that take several values in List Sessions (`status`, `workflow_id`, `country`, `region`, `document_type`, `session_type`, `warning`, `organization_name`) accept a comma-separated string or an array; the others take one value. An empty value is ignored. Filters apply only together with `delete_all`, and a deletion job applies the same filters.
         - An unknown `filter_*` key, or a filter value that cannot be read, rejects the whole request with `400` before anything is deleted, so a mistyped filter never widens the deletion to every session.
         - Entries in `session_numbers` that do not match a live KYC session in your application (unknown numbers, already-deleted sessions, or sessions owned by another application) are **silently skipped**: they do not appear in `results` and are not counted in a job's `total`.
         - Validation failures (a non-numeric entry, an empty list, neither `session_numbers` nor `delete_all` provided, or a template retention the application cannot honour) reject the **whole request** with `400` and delete nothing.
@@ -3717,7 +3707,6 @@ class AsyncSessions(AsyncAPIResource):
           filter_date_to: Narrows a `delete_all` to the sessions that match the `date_to` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_country: Narrows a `delete_all` to the sessions that match the `country` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_document_type: Narrows a `delete_all` to the sessions that match the `document_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
-          filter_document_name: Narrows a `delete_all` to the sessions that match the `document_name` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_region: Narrows a `delete_all` to the sessions that match the `region` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_didit_internal_id: Narrows a `delete_all` to the sessions that match the `didit_internal_id` filter of [List Sessions](/sessions-api/list-sessions), with the same value. One value, not a list: an array is joined into one comma-separated value, so several values are refused with `400`. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
           filter_session_type: Narrows a `delete_all` to the sessions that match the `session_type` filter of [List Sessions](/sessions-api/list-sessions), with the same values. A comma-separated string or an array. Ignored without `delete_all`. An empty value is ignored and does not narrow the selection.
@@ -3757,7 +3746,6 @@ class AsyncSessions(AsyncAPIResource):
                     "filter_date_to": filter_date_to,
                     "filter_country": filter_country,
                     "filter_document_type": filter_document_type,
-                    "filter_document_name": filter_document_name,
                     "filter_region": filter_region,
                     "filter_didit_internal_id": filter_didit_internal_id,
                     "filter_session_type": filter_session_type,
