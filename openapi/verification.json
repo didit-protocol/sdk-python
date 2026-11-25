@@ -157308,7 +157308,7 @@
           },
           "logo_url": {
             "type": "string",
-            "description": "The address of the bank's logo hosted by Didit.",
+            "description": "The address of the bank's logo hosted by Didit, or `null` when Didit has no logo for the bank.",
             "nullable": true,
             "format": "uri"
           }
@@ -159465,7 +159465,7 @@
             "type": "string",
             "nullable": true,
             "format": "uri",
-            "description": "The address of the bank's logo hosted by Didit."
+            "description": "The address of the bank's logo hosted by Didit, or `null` when Didit has no logo for the bank."
           },
           "timezone": {
             "type": "string",
