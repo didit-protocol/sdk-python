@@ -24565,6 +24565,35 @@
                       }
                     ]
                   }
+                },
+                "KYC + bank account": {
+                  "summary": "Verify the bank account holder after ID verification",
+                  "value": {
+                    "workflow_label": "KYC with bank account",
+                    "features": [
+                      {
+                        "feature": "OCR"
+                      },
+                      {
+                        "feature": "BANK_VERIFICATION",
+                        "config": {
+                          "bank_method_order": [
+                            "open_banking",
+                            "account_lookup"
+                          ],
+                          "bank_countries": {
+                            "ESP": {
+                              "enabled": true,
+                              "institutions": "all"
+                            }
+                          },
+                          "bank_scopes": {
+                            "ownership": true
+                          }
+                        }
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -118262,6 +118291,7 @@
               "PHONE_VERIFICATION",
               "EMAIL_VERIFICATION",
               "DATABASE_VALIDATION",
+              "BANK_VERIFICATION",
               "AML",
               "IP_ANALYSIS",
               "AGE_ESTIMATION",
@@ -118273,7 +118303,7 @@
           },
           "config": {
             "type": "object",
-            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed), `aes` and `qes` (Qualified, an add-on that is refused with `qes_not_available` while `signature_availability.qes` is `false`), and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`.",
+            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `BANK_VERIFICATION`, `bank_countries` is a whitelist: an empty map offers no bank and runs no check; see [Bank Verification](/management-api/workflows/feature-configs#bank-verification) for every key. The node is accepted only on an account where Bank Verification is enabled. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed), `aes` and `qes` (Qualified, an add-on that is refused with `qes_not_available` while `signature_availability.qes` is `false`), and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`.",
             "additionalProperties": true
           },
           "label": {
