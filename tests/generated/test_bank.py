@@ -1247,7 +1247,7 @@ def test_bank_revoke_connection() -> None:
                     "renewal_action": "bank_auth",
                     "renew_by": "2027-05-20T12:04:11Z",
                     "reconfirm_by": None,
-                    "renewable_until": "2026-12-21T15:10:00Z",
+                    "renewable_until": None,
                     "retain_until": "2026-12-21T15:10:00Z",
                     "ended_at": "2026-11-21T15:10:00Z",
                     "ended_by": "customer",
