@@ -86,6 +86,9 @@ class BankVerificationResultConnection(BaseModel):
     institution_name: str | None = None
     """The bank's name. `null` for an account check."""
 
+    logo_url: str | None = None
+    """The address of the bank's logo hosted by Didit, or `null` when Didit has no logo for the bank. `null` for an account check, where no bank is picked. Returned with `institution_name`."""
+
     institution_country: str | None = None
     """The account's country, ISO 3166-1 alpha-3."""
 
