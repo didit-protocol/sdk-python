@@ -119,7 +119,8 @@ def test_renewal_target_and_result(
 def test_connection_update_shapes(monkeypatch: pytest.MonkeyPatch) -> None:
     pending = _receive("bank_connection_updated", monkeypatch)
     assert pending.revocation_status == "pending"
-    assert pending.status_reason is None and pending.ends_at is None
+    assert pending.status_reason is None
+    assert pending.ends_at is None
     assert pending.model_fields_set.isdisjoint({"status_reason", "ends_at"})
 
     paused = _receive("bank_connection_updated_insufficient_balance", monkeypatch)
@@ -130,7 +131,8 @@ def test_connection_update_shapes(monkeypatch: pytest.MonkeyPatch) -> None:
 
     active = _receive("bank_connection_updated_no_end", monkeypatch)
     assert {"status_reason", "ends_at"} <= active.model_fields_set
-    assert active.status_reason is None and active.ends_at is None
+    assert active.status_reason is None
+    assert active.ends_at is None
 
 
 def test_system_revocation_for_unpaid_connection(monkeypatch: pytest.MonkeyPatch) -> None:
