@@ -56,4 +56,4 @@ class BankConnectionConsent(BaseModel):
     ended_at: _dt.datetime | None
 
     ended_by: Literal["end_user", "bank", "customer", "system", "unknown"] | str | None
-    """Who ended access, set from evidence. `system` when Didit ended it by design: a one-time connection once its read is complete. `unknown` when neither the bank nor the sync says."""
+    """Who ended access, set from evidence. `system` when Didit ended it: a one-time connection once its read is complete (`status_reason: collection_complete`), or a connection whose coming month was not paid by the deadline (`status_reason: unpaid`). `unknown` when neither the bank nor the sync says."""

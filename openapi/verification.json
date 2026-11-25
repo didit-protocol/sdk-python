@@ -106861,7 +106861,8 @@
                           "billing": {
                             "unit": "connection_month",
                             "price_usd": "0.9000",
-                            "billed_through": "2026-11-30"
+                            "billed_through": "2026-11-30",
+                            "ends_at": null
                           },
                           "possible_duplicate_of": null,
                           "erasure": null,
@@ -107110,7 +107111,8 @@
                       "billing": {
                         "unit": "connection_month",
                         "price_usd": "0.9000",
-                        "billed_through": "2026-11-30"
+                        "billed_through": "2026-11-30",
+                        "ends_at": null
                       },
                       "possible_duplicate_of": null,
                       "erasure": null,
@@ -107221,7 +107223,8 @@
                       "billing": {
                         "unit": "connection_month",
                         "price_usd": "0.9000",
-                        "billed_through": "2026-11-30"
+                        "billed_through": "2026-11-30",
+                        "ends_at": null
                       },
                       "possible_duplicate_of": null,
                       "erasure": null,
@@ -108680,7 +108683,8 @@
                       "billing": {
                         "unit": "connection_month",
                         "price_usd": "0.9000",
-                        "billed_through": "2026-11-30"
+                        "billed_through": "2026-11-30",
+                        "ends_at": null
                       },
                       "possible_duplicate_of": null,
                       "erasure": null,
@@ -108944,7 +108948,8 @@
                       "billing": {
                         "unit": "connection_month",
                         "price_usd": "0.9000",
-                        "billed_through": "2026-11-30"
+                        "billed_through": "2026-11-30",
+                        "ends_at": null
                       },
                       "possible_duplicate_of": null,
                       "erasure": null,
@@ -158105,7 +158110,7 @@
               "unknown",
               null
             ],
-            "description": "Who ended access, set from evidence. `system` when Didit ended it by design: a one-time connection once its read is complete. `unknown` when neither the bank nor the sync says.",
+            "description": "Who ended access, set from evidence. `system` when Didit ended it: a one-time connection once its read is complete (`status_reason: collection_complete`), or a connection whose coming month was not paid by the deadline (`status_reason: unpaid`). `unknown` when neither the bank nor the sync says.",
             "nullable": true
           }
         },
@@ -158250,7 +158255,7 @@
           },
           "price_usd": {
             "type": "string",
-            "description": "Your price for the month meter today, for your application and the country, in USD, a decimal string with 4 decimals. A connection is charged for a month only when every accepted scope published data for at least one account in that month. `null` for one-time connections and in the sandbox. Ongoing access is billed per active connection per month; the current price is on the pricing page (https://docs.didit.me/getting-started/pricing). Amounts in examples are illustrative; the price for a country is shown on the pricing page.",
+            "description": "Your price for the month meter today, for your application and the country, in USD, a decimal string with 4 decimals. A connection is charged once for each calendar month (UTC) it is active: its first month when its first sync succeeds, and every later month in advance, in the last five days of the month before it, while the connection's consent reaches into it. A connection created in the last five days of a month whose first read starts in the next month needs both months covered together before that read: with funds for only one, the read fails and neither is charged. `null` for one-time connections and in the sandbox. Ongoing access is billed per active connection per month; the current price is on the pricing page (https://docs.didit.me/getting-started/pricing). Amounts in examples are illustrative; the price for a country is shown on the pricing page.",
             "pattern": "^-?\\d+(\\.\\d+)?$",
             "nullable": true
           },
@@ -158259,12 +158264,19 @@
             "description": "The last month end already settled.",
             "format": "date",
             "nullable": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the connection ends unless its coming month is paid first: 20:00 UTC on the last day of the month before it. Set once a payment of the coming month has failed, while the connection is `active` or `paused`. `null` when nothing has failed yet and once the month is paid, and also while the connection is `pending`, needs renewal, is being revoked or has ended, is a sandbox connection, or its consent ends before the month begins, so a `null` alone does not mean the month was paid."
           }
         },
         "required": [
           "unit",
           "price_usd",
-          "billed_through"
+          "billed_through",
+          "ends_at"
         ]
       },
       "BankConnectionErasure": {
@@ -158332,7 +158344,7 @@
               "deleted",
               "failed"
             ],
-            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced and nothing charged. `paused`: balance too low for the month. `revoked`: access stopped by the person, the bank or you, or ended because the read of a one-time connection is complete. `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. The list returns these only for `status=deleted`; reading one by id always returns it. `failed`: the first sync never succeeded."
+            "description": "`pending`: first sync running. `active`: consent valid. `renewal_required`: the consent ended or the bank wants the person to sign in again, data readable as last synced; a month that begins while it waits is not charged. `paused`: the current month could not be paid, so syncing stops. It resumes by itself once your balance covers the month: when a credit reaches your wallet, or at the daily check at 05:30 UTC. `revoked`: access stopped by the person, the bank or you, ended because the read of a one-time connection is complete, or ended by Didit because its coming month was not paid by the deadline (`status_reason: unpaid`). `deleted`: only `id`, `status`, `status_reason`, `created_at` and `erasure` remain. The list returns these only for `status=deleted`; reading one by id always returns it. `failed`: the first sync never succeeded."
           },
           "status_reason": {
             "type": "string",
@@ -158347,12 +158359,13 @@
               "insufficient_balance",
               "paused_by_customer",
               "first_sync_failed",
+              "unpaid",
               "deleted_by_customer",
               "retention_elapsed",
               "application_deleted",
               null
             ],
-            "description": "Why the connection is in this status. `collection_complete`: a one-time connection whose read is complete, so its access has ended. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`.",
+            "description": "Why the connection is in this status. `collection_complete`: a one-time connection whose read is complete, so its access has ended. `paused_by_customer` is reserved. On a `deleted` connection: `deleted_by_customer`, `consent_lapsed`, `retention_elapsed` or `application_deleted`. `unpaid`: the coming month was not paid by 20:00 UTC on the last day of the month before it, so Didit ended access and removed the connection at the bank; nothing more is charged. `bank.connection.revoked` with this reason is the final signal of that ending.",
             "nullable": true
           },
           "institution": {
@@ -159824,7 +159837,7 @@
               "system",
               "unknown"
             ],
-            "description": "Who ended access. `system` when Didit ended it by design: a one-time connection once its read is complete."
+            "description": "Who ended access. `system` when Didit ended it: a one-time connection once its read is complete (`status_reason: collection_complete`), or a connection whose coming month was not paid by the deadline (`status_reason: unpaid`)."
           },
           "status_reason": {
             "type": "string",
@@ -159839,10 +159852,11 @@
               "insufficient_balance",
               "paused_by_customer",
               "first_sync_failed",
+              "unpaid",
               "collection_complete",
               null
             ],
-            "description": "Why the connection is in this status."
+            "description": "Why the connection is in this status. `unpaid`: the coming month was not paid by 20:00 UTC on the last day of the month before it, so Didit ended access and removed the connection at the bank; nothing more is charged. `bank.connection.revoked` with `unpaid` is the final signal of that ending."
           },
           "ended_at": {
             "type": "string",
@@ -160214,7 +160228,7 @@
         ]
       },
       "BankConnectionUpdatedEvent": {
-        "description": "A connection's status changed in a way no other event reports. It is sent when a revocation starts: `revocation_status` is `pending` until the bank confirms, then `bank.connection.revoked` follows. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
+        "description": "A connection's status changed in a way no other event reports. It is sent when a revocation starts (`revocation_status` is `pending` until the bank confirms, then `bank.connection.revoked` follows), when the coming month cannot be paid (with `ends_at`), one day before the deadline for a connection already told (the same `ends_at`), when that month is then paid (`ends_at: null`), when a connection pauses or resumes, and when a first read that was never started is given up (`status: failed`, `status_reason: first_sync_failed`). The pending-revocation payload has no `status_reason` and no `ends_at`; every other payload has both. Sent for live and sandbox applications. Ids, statuses, `status_reason` and `ends_at` only: fetch the object to read it.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -160318,7 +160332,7 @@
         ]
       },
       "BankConnectionRevokedEvent": {
-        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended a one-time connection once its read was complete. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
+        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended it: a one-time connection once its read was complete (`status_reason: collection_complete`), or a connection whose coming month was not paid by the deadline (`status_reason: unpaid`). It is the final signal of an ending. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
         "allOf": [
           {
             "$ref": "#/components/schemas/WebhookEventEnvelope"
@@ -161552,7 +161566,7 @@
       },
       "BankConnectionUpdatedData": {
         "type": "object",
-        "description": "Fields of `bank.connection.updated`. The fields are at the top level of the body, next to the envelope fields.",
+        "description": "Fields of `bank.connection.updated`. The fields are at the top level of the body, next to the envelope fields. There are two shapes. When a revocation starts: `connection_id`, `status` and `revocation_status: pending`, with no `status_reason` and no `ends_at`. For every other trigger: `connection_id`, `status`, `status_reason` and `ends_at` (always present, a date-time or an explicit `null`), and no `revocation_status`.",
         "properties": {
           "connection_id": {
             "type": "string",
@@ -161577,13 +161591,28 @@
             "enum": [
               "pending"
             ],
-            "description": "`pending`: a revocation was requested and the bank has not confirmed it yet."
+            "description": "`pending`: a revocation was requested and the bank has not confirmed it yet. Present only in the payload that announces the revocation."
+          },
+          "status_reason": {
+            "type": "string",
+            "enum": [
+              "insufficient_balance",
+              "first_sync_failed",
+              null
+            ],
+            "description": "Why the connection is paused or failed: `insufficient_balance` while it is paused for a month it could not pay; `first_sync_failed` when its first read was never started and was given up; `null` otherwise. Absent when a revocation starts.",
+            "nullable": true
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the connection ends unless its coming month is paid first. An explicit `null` once the month is paid or when nothing is pending. Absent when a revocation starts."
           }
         },
         "required": [
           "connection_id",
-          "status",
-          "revocation_status"
+          "status"
         ]
       },
       "BankConnectionRenewalRequiredData": {
@@ -167969,7 +167998,7 @@
     "bank.connection.updated": {
       "post": {
         "summary": "Bank connection updated",
-        "description": "A connection's status changed in a way no other event reports. It is sent when a revocation starts: `revocation_status` is `pending` until the bank confirms, then `bank.connection.revoked` follows. Sent for live and sandbox applications.",
+        "description": "A connection's status changed in a way no other event reports. It is sent when a revocation starts (`revocation_status` is `pending` until the bank confirms, then `bank.connection.revoked` follows), when the coming month cannot be paid (with `ends_at`), one day before the deadline for a connection already told (the same `ends_at`), when that month is then paid (`ends_at: null`), when a connection pauses or resumes, and when a first read that was never started is given up (`status: failed`, `status_reason: first_sync_failed`). The pending-revocation payload has no `status_reason` and no `ends_at`; every other payload has both. Sent for live and sandbox applications. Ids, statuses, `status_reason` and `ends_at` only: fetch the object to read it.",
         "tags": [
           "Webhook"
         ],
@@ -168121,7 +168150,7 @@
     "bank.connection.revoked": {
       "post": {
         "summary": "Bank connection revoked",
-        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended a one-time connection once its read was complete. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications.",
+        "description": "Access ended: the person, the bank or you stopped it and the bank confirmed it, or Didit ended it: a one-time connection once its read was complete (`status_reason: collection_complete`), or a connection whose coming month was not paid by the deadline (`status_reason: unpaid`). It is the final signal of an ending. `ended_by` says who ended it: `end_user`, `bank`, `customer` or `system`. Sent for live and sandbox applications. Ids and statuses only: fetch the object to read it.",
         "tags": [
           "Webhook"
         ],
