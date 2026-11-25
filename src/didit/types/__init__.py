@@ -2496,6 +2496,9 @@ if TYPE_CHECKING:
         TransactionDetailPartiesDevice as TransactionDetailPartiesDevice,
     )
     from didit.types.components.transaction_detail import (
+        TransactionDetailPartiesDeviceMetadata as TransactionDetailPartiesDeviceMetadata,
+    )
+    from didit.types.components.transaction_detail import (
         TransactionDetailPartiesDeviceNetworkContext as TransactionDetailPartiesDeviceNetworkContext,
     )
     from didit.types.components.transaction_detail import (
@@ -5637,6 +5640,7 @@ _MODULES: dict[str, str] = {
     "TransactionDetailNetworkSnapshot": "components.transaction_detail",
     "TransactionDetailParties": "components.transaction_detail",
     "TransactionDetailPartiesDevice": "components.transaction_detail",
+    "TransactionDetailPartiesDeviceMetadata": "components.transaction_detail",
     "TransactionDetailPartiesDeviceNetworkContext": "components.transaction_detail",
     "TransactionDetailPaymentMethods": "components.transaction_detail",
     "TransactionDetailProviderResults": "components.transaction_detail",
@@ -7257,6 +7261,7 @@ __all__ = [
     "TransactionDetailNetworkSnapshot",
     "TransactionDetailParties",
     "TransactionDetailPartiesDevice",
+    "TransactionDetailPartiesDeviceMetadata",
     "TransactionDetailPartiesDeviceNetworkContext",
     "TransactionDetailPaymentMethods",
     "TransactionDetailProviderResults",
