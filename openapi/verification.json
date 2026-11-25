@@ -105742,6 +105742,7 @@
                       "client_token": "example-client-token",
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": null,
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": null,
@@ -106055,6 +106056,7 @@
                       "client_token": null,
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": null,
@@ -106090,6 +106092,7 @@
                       "client_token": null,
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": null,
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": {
@@ -106258,6 +106261,7 @@
                       "client_token": null,
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": null,
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": null,
@@ -106447,6 +106451,7 @@
                       "client_token": null,
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": null,
@@ -106482,6 +106487,7 @@
                       "client_token": null,
                       "expires_at": "2026-11-21T13:00:00Z",
                       "connection_id": null,
+                      "renews_connection_id": null,
                       "check_id": null,
                       "reused": false,
                       "error": {
@@ -108297,7 +108303,8 @@
                       "url": "https://verify.didit.me/bank/link/example-link-token",
                       "client_token": "example-client-token",
                       "expires_at": "2026-11-21T13:00:00Z",
-                      "connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
+                      "connection_id": null,
+                      "renews_connection_id": "5e1d2a70-3b94-4c1f-8a6e-d2f07b9c1e35",
                       "check_id": null,
                       "reused": false,
                       "error": null,
@@ -113839,7 +113846,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field.",
+        "description": "List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field. A Phone risk lookup is not a verification and is not listed here: read lookups with `GET /v3/phone/lookups/`.",
         "x-codeSamples": [
           {
             "lang": "curl",
@@ -117633,7 +117640,7 @@
                     },
                     "fee": {
                       "type": "number",
-                      "description": "USD amount billed for this event. Non-zero only on send events (the delivery price); 0 for code entries, delivery confirmations, and status events."
+                      "description": "USD price of this event. Non-zero only on send events: the send's estimated price until billing charges it, then the price billing recorded for it. 0 for code entries, delivery confirmations, and status events, and 0 on every event in the sandbox."
                     }
                   }
                 }
@@ -157809,9 +157816,15 @@
           },
           "connection_id": {
             "type": "string",
-            "description": "The connection this link created or renewed, once `status` is `completed`.",
+            "description": "The connection this link produced or renewed. `null` until the link completes, on every kind of link.",
             "format": "uuid",
             "nullable": true
+          },
+          "renews_connection_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The connection a renewal link (`mode: renew`) targets, set when the link is created; `null` on a link that renews nothing. Always present. `connection_id` stays `null` until the link completes."
           },
           "check_id": {
             "type": "string",
@@ -157854,7 +157867,8 @@
           "reused",
           "error",
           "quote",
-          "vendor_data"
+          "vendor_data",
+          "renews_connection_id"
         ]
       },
       "BankSyncBudget": {
@@ -159742,7 +159756,7 @@
       },
       "BankLinkEventData": {
         "type": "object",
-        "description": "Ids and statuses of a link. No personal data.",
+        "description": "Ids and statuses of a link. No personal data. `renews_connection_id` is optional and names the connection a renewal link targets; an older stored failed, cancelled or expired renewal event does not have it and carries that connection in `connection_id`. Every delivery attempt of one event carries the same body.",
         "properties": {
           "link_id": {
             "type": "string",
@@ -159760,9 +159774,15 @@
           },
           "connection_id": {
             "type": "string",
-            "description": "The connection the link created or renewed.",
+            "description": "The connection the link produced or renewed. `null` until the link completes.",
             "format": "uuid",
             "nullable": true
+          },
+          "renews_connection_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The connection a renewal link targets, set when the link was created; `null` on a link that renews nothing. Optional: a redelivery sends the stored body again, and an event stored before this field existed does not have the key. A receiver uses the key when it is there. An older failed, cancelled or expired renewal event without it carried the connection it was renewing in `connection_id`."
           },
           "check_id": {
             "type": "string",
@@ -164546,7 +164566,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "What it cost, in USD.",
+            "description": "What it cost, in USD: the estimated price until `final` is true, then the price billing recorded for the attempt. Under a contract, your invoice prices each code at the contract's rate, which this amount does not show. `0.0000` in the sandbox.",
             "example": "0.0300"
           },
           "carrier": {
@@ -164563,7 +164583,7 @@
           },
           "final": {
             "type": "boolean",
-            "description": "false until the carrier reports delivery, then the reported price.",
+            "description": "true once billing has recorded the attempt's charge: on its delivery report or, when no delivery report comes, no later than a few minutes after the code's 5-minute validity ends. Until then `amount` is the estimated price. Always true in the sandbox, where nothing is charged.",
             "example": true
           }
         },
@@ -164661,7 +164681,7 @@
           },
           "charged": {
             "type": "boolean",
-            "description": "True when the attempt has been billed or has a nonzero actual price. See `status` for the delivery outcome.",
+            "description": "True when the attempt has been billed or has a nonzero actual price. Always false in the sandbox, which charges nothing. See `status` for the delivery outcome.",
             "example": true
           },
           "price": {
@@ -166326,7 +166346,7 @@
           },
           "spend": {
             "type": "string",
-            "description": "Spend in USD.",
+            "description": "Spend in USD. For `verification` and `lookups`: what Didit charged, debited from your balance or invoiced under a contract in USD. For `messages`: the price recorded on each message sent. `0.00` in the sandbox.",
             "example": "412.20"
           }
         }

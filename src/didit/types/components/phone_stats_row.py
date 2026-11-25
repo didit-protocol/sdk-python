@@ -32,4 +32,4 @@ class PhoneStatsRow(BaseModel):
     """Inbound replies per delivered message in the same group and date range. Zero for verifications and lookups."""
 
     spend: str
-    """Spend in USD."""
+    """Spend in USD. For `verification` and `lookups`: what Didit charged, debited from your balance or invoiced under a contract in USD. For `messages`: the price recorded on each message sent. `0.00` in the sandbox."""

@@ -78,7 +78,7 @@ class PhoneVerifications(SyncAPIResource):
     ) -> SyncPage[PhoneVerificationDetail]:
         """List or export verifications.
 
-        List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field.
+        List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field. A Phone risk lookup is not a verification and is not listed here: read lookups with `GET /v3/phone/lookups/`.
 
         ``GET /v3/phone/verifications/``
 
@@ -400,7 +400,7 @@ class AsyncPhoneVerifications(AsyncAPIResource):
     ) -> AsyncPaginator[PhoneVerificationDetail]:
         """List or export verifications.
 
-        List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field.
+        List your application's verifications, newest first. Filter by status, channel, phone number, reference, tag (`key:value`) or creation time. Use `limit` and `offset` to page through JSON results: `next` and `previous` are offsets, not URLs, so send `next` as `offset` to read the next page. Use `format=csv` to export all matching verifications. The `template` query parameter does not filter these records. Verification history does not return a `template_used` field. A Phone risk lookup is not a verification and is not listed here: read lookups with `GET /v3/phone/lookups/`.
 
         ``GET /v3/phone/verifications/``
 
