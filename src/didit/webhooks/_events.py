@@ -223,7 +223,9 @@ class BankLinkEventData(BaseModel):
     link_id: str | None = None
     status: Literal["completed", "cancelled", "expired", "failed"] | str | None = None
     connection_id: str | None = None
-    """The connection the link created or renewed."""
+    """The resulting connection, null until completion on current deliveries."""
+    renews_connection_id: str | None = None
+    """The renewal target from link creation, absent on older deliveries."""
     check_id: str | None = None
     """The ownership result, when one was asked for."""
     error_code: (
@@ -295,13 +297,15 @@ class BankConnectionCreatedEvent(WebhookEventBase):
 
 
 class BankConnectionUpdatedEvent(WebhookEventBase):
-    """``bank.connection.updated``: a revocation started; ``bank.connection.revoked`` follows."""
+    """``bank.connection.updated``: a revocation started or the connection status or end time changed."""
 
     webhook_type: Literal["bank.connection.updated"] = "bank.connection.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
     connection_id: str | None = None
     status: BankConnectionStatus | str | None = None
     revocation_status: Literal["pending"] | str | None = None
     """``pending``: the bank has not confirmed the revocation yet."""
+    status_reason: Literal["insufficient_balance", "first_sync_failed"] | str | None = None
+    ends_at: str | None = None
 
 
 class BankConnectionConsentExpiringEvent(WebhookEventBase):
@@ -342,12 +346,12 @@ class BankConnectionRenewedEvent(WebhookEventBase):
 
 
 class BankConnectionRevokedEvent(WebhookEventBase):
-    """``bank.connection.revoked``: access ended and the bank confirmed it."""
+    """``bank.connection.revoked``: access to the connection ended."""
 
     webhook_type: Literal["bank.connection.revoked"] = "bank.connection.revoked"  # pyright: ignore[reportIncompatibleVariableOverride]
     connection_id: str | None = None
     status: Literal["revoked"] | str | None = None
-    ended_by: Literal["end_user", "bank", "customer", "unknown"] | str | None = None
+    ended_by: Literal["end_user", "bank", "customer", "system", "unknown"] | str | None = None
     """Who ended access."""
     status_reason: (
         Literal[
@@ -361,6 +365,7 @@ class BankConnectionRevokedEvent(WebhookEventBase):
             "paused_by_customer",
             "first_sync_failed",
             "collection_complete",
+            "unpaid",
         ]
         | str
         | None

@@ -237,6 +237,23 @@ asyncio.run(main())
 
 Events: `SessionStatusUpdatedEvent`, `SessionDataUpdatedEvent`, `UserStatusUpdatedEvent`, `UserDataUpdatedEvent`, `BusinessStatusUpdatedEvent`, `BusinessDataUpdatedEvent`, `ActivityCreatedEvent`, `TransactionCreatedEvent`, `TransactionStatusUpdatedEvent`, `TravelRuleStatusUpdatedEvent`, `WorkflowComplianceChangedEvent`, `KybRegistrySearchResolvedEvent`, the Bank events (`BankLinkCompletedEvent`, `BankLinkCancelledEvent`, `BankLinkExpiredEvent`, `BankLinkFailedEvent`, `BankConnectionCreatedEvent`, `BankConnectionUpdatedEvent`, `BankConnectionConsentExpiringEvent`, `BankConnectionRenewalRequiredEvent`, `BankConnectionRenewedEvent`, `BankConnectionRevokedEvent`, `BankConnectionDeletedEvent`, `BankConnectionHistoryCompleteEvent`, `BankDataUpdatedEvent`, `BankSyncCompletedEvent`, `BankSyncFailedEvent`, `BankSyncRecoveredEvent`; the four `bank.link.*` events carry their fields under `data`, the others next to the envelope fields), and `UnknownEvent` (with the whole `payload`) for types this version does not know. `client.webhooks.verify(...)` does the same as `didit.webhooks.verify(...)`.
 
+For Bank links, `data.renews_connection_id` identifies the renewal target from creation. An explicit null means the link renews nothing. On current deliveries, `data.connection_id` identifies the resulting connection only after completion. To correlate a replayed older failed renewal, fall back to `connection_id` only when the renewal target key is absent.
+
+```python
+from didit import webhooks
+
+event = webhooks.verify(raw_body, headers, secret)
+if isinstance(event, webhooks.BankLinkFailedEvent) and event.data is not None:
+    data = event.data
+    renewal_target = (
+        data.renews_connection_id
+        if "renews_connection_id" in data.model_fields_set
+        else data.connection_id
+    )
+```
+
+A `bank.connection.updated` event carries `revocation_status="pending"` when revocation starts. Other updates carry `status_reason` and `ends_at`, either of which can be null. On `bank.connection.revoked`, `ended_by="system"` can indicate an unpaid coming month (`status_reason="unpaid"`) or a completed one-time read (`status_reason="collection_complete"`).
+
 ## Authentication
 
 [Didit Authentication](https://docs.didit.me) gives your application its own OpenID Connect issuer for your end users (early access; production with the 2026-11-01 release). The `didit.authentication` module verifies the tokens that issuer signs, in your backend, and calls its token, session and step-up endpoints. It never uses the API key. Install it with `pip install "didit-sdk[auth]"`.
