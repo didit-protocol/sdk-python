@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.52.0](https://github.com/didit-protocol/sdk-python/compare/v1.51.0...v1.52.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+
+
+### API changes that can break typed code
+
+* **spec:** `GET /v1/sandbox/scenarios/` response `sample_identity.documents[].document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+* **spec:** `GET /v3/sessions/` query parameter `document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+* **spec:** `POST /v3/sessions/delete/` request body `filter_document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+
 ## [1.51.0](https://github.com/didit-protocol/sdk-python/compare/v1.50.0...v1.51.0) (2026-11-25)
 
 
