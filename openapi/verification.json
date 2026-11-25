@@ -107456,7 +107456,7 @@
     "/v3/bank/connections/{id}/refresh/": {
       "post": {
         "summary": "Refresh a bank connection",
-        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.",
+        "description": "Syncs now: reads the bank for new data at any moment. Answers `202` with the `sync_id`; if a sync is already running you get that same `sync_id`, not a second job. With `\"wait\": true` in the body, or the header `Prefer: wait=<seconds>` (up to 25), the call holds for up to 25 seconds and answers `200` with the finished sync (`outcome`, the per-account counts and `balances_changed`), so one request returns fresh data. If the bank has not answered in that time it answers `202`: read the sync with `get_sync_run` using the `sync_id`, or subscribe to `bank.sync.completed`. `bank.data.updated` follows only when the sync stores changes.\n\nLive syncs are included in the monthly price of the connection, like the automatic syncs: nothing extra is charged. The only limit is the bank's. Banks limit reads without the person present, for example to four a day (the Didit Test Bank in sandbox does the same). The automatic syncs of the day (`sync.frequency_per_day`) are set aside first and the rest are yours, so `sync.budgets` shows what is left and `sync.live_syncs_left_today` how many live syncs remain today. The automatic schedule never uses the last two reads of a day, so two live syncs always remain. When the budget is used up the call answers `429 refresh_limit_reached` with `Retry-After` (the seconds until the budget resets, 1 to 86400) and a `sync` object with `live_syncs_left_today` and `budgets`. The limit is a ceiling set by the bank, not a promise of a number of syncs.\n\nThe bank also asks to rest after every read of a connection, whoever made it (a few minutes, 15 on most banks): a call inside that rest answers `429 refresh_too_soon` with `Retry-After` set to the end of the rest, in seconds, and the same `sync` object. It costs nothing and does not touch the day's budget, so wait `Retry-After` and call again; `refresh_limit_reached` means the day's budget is used up and the wait runs to its reset. An automatic sync that meets the rest is skipped without a failure and runs again after it.\n\nWhen a sync stores changes, `bank.data.updated` tells you; then read the change feed.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.\n\nRefreshing a deleted connection answers `409 connection_not_active`. A one-time connection is read once and its access then ends, so refreshing it answers `409 one_time_connection`: create a new link to read the bank again.",
         "operationId": "refreshBankConnection",
         "tags": [
           "Bank Data"
@@ -107653,7 +107653,7 @@
             }
           },
           "429": {
-            "description": "The bank's budget for fetches without the person present is used up.",
+            "description": "Either the bank's budget for fetches without the person present is used up (`refresh_limit_reached`), or the bank was read a moment ago and asks to wait (`refresh_too_soon`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -107677,6 +107677,29 @@
                             "resource": "all",
                             "limit": 4,
                             "remaining": 0,
+                            "resets_at": "2026-11-22T00:00:00Z"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "Refresh too soon": {
+                    "summary": "Refresh too soon",
+                    "value": {
+                      "code": "refresh_too_soon",
+                      "message": "The bank was read a moment ago and asks to wait before it is read again.",
+                      "request_id": "3f6a1c8e-92b5-4d07-a1e3-8c4b7f0d2e59",
+                      "field": null,
+                      "next_action": "retry_later",
+                      "retry_after": 862,
+                      "sync": {
+                        "live_syncs_left_today": 2,
+                        "budgets": [
+                          {
+                            "scope": "connection",
+                            "resource": "all",
+                            "limit": 4,
+                            "remaining": 2,
                             "resets_at": "2026-11-22T00:00:00Z"
                           }
                         ]
@@ -157210,6 +157233,7 @@
               "renewal_window_expired",
               "access_removed",
               "refresh_limit_reached",
+              "refresh_too_soon",
               "cursor_expired",
               "page_expired",
               "invalid_cursor",
@@ -160589,7 +160613,7 @@
             ]
           }
         ],
-        "description": "The refresh limit error with the connection's `sync` limits. `Retry-After` carries the seconds until the budget resets, between 1 and 86400."
+        "description": "The refresh error with the connection's `sync` limits: `refresh_limit_reached` (the day's budget is used up; `Retry-After` is the seconds until it resets) or `refresh_too_soon` (the bank is resting after its last read; `Retry-After` is the seconds until the rest ends). Both are between 1 and 86400 seconds."
       },
       "PublicPriceBookPlan": {
         "type": "object",
