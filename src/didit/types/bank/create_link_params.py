@@ -88,7 +88,7 @@ class BankCreateLinkParams(TypedDict, total=False):
     """The person or company that connects the account."""
 
     redirect_url: str
-    """Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet. Without a `redirect_url` the person finishes on Didit's own result page."""
+    """Where the browser goes at the end, with `link_id`, `status` and a signed `state` (for display only: the webhook and `get_link` are authoritative). `status` is the link's own status: `completed`, `failed`, `cancelled` or `expired`. In a sandbox application a plain `http` address of `localhost`, `127.0.0.1` or `[::1]` (any port and path, no credentials, no fragment) needs no registration. Any other address answers `400 redirect_url_not_registered`: registering other addresses is not available yet. Without a `redirect_url` the person finishes on Didit's own result page."""
 
     allowed_origins: Sequence[str]
     """Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50."""
