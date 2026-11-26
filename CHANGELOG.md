@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.53.0](https://github.com/didit-protocol/sdk-python/compare/v1.52.0...v1.53.0) (2026-11-26)
+
+
+### Features
+
+* **webhooks:** Bank link and connection event fields (renews_connection_id, status_reason, ends_at, unpaid) in the hand-written webhook events [sdk-python] ([#176](https://github.com/didit-protocol/sdk-python/issues/176)) ([10ccc04](https://github.com/didit-protocol/sdk-python/commit/10ccc04ca089857253409e2466a799511d49a69d))
+
 ## [1.52.0](https://github.com/didit-protocol/sdk-python/compare/v1.51.0...v1.52.0) (2026-11-25)
 
 
