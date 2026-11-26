@@ -718,6 +718,7 @@ class Bank(SyncAPIResource):
         allowed_origins: Sequence[str] | NotGiven = NOT_GIVEN,
         language: str | NotGiven = NOT_GIVEN,
         expires_in: int | NotGiven = NOT_GIVEN,
+        consent_days: int | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -729,6 +730,8 @@ class Bank(SyncAPIResource):
         Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.
 
         Send the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.
+
+        Send `consent_days` to choose how many days the renewal asks the bank for; without it the renewal asks for the length the person chose before, and either way the bank's own maximum is never exceeded.
 
         A one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.
 
@@ -744,6 +747,7 @@ class Bank(SyncAPIResource):
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
           language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           expires_in: Lifetime in seconds, 300 to 86400.
+          consent_days: Optional. How many days to ask the bank to keep access open, 1 or more. Without it, the bank is asked for the length the person chose before, never above the bank's maximum; only a connection with no recorded length is asked for the maximum. With it, the bank is asked for that many days, never above its maximum: a longer value is capped, not refused. A value below 1, above 32767 or not a whole number answers `400 invalid_request` with `field: consent_days`. The connection reports the date the bank actually granted in `consent.expires_at`. `create_link` with `mode: renew` takes the same field with the same rule.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -763,6 +767,7 @@ class Bank(SyncAPIResource):
                     "allowed_origins": allowed_origins,
                     "language": language,
                     "expires_in": expires_in,
+                    "consent_days": consent_days,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
@@ -1935,6 +1940,7 @@ class AsyncBank(AsyncAPIResource):
         allowed_origins: Sequence[str] | NotGiven = NOT_GIVEN,
         language: str | NotGiven = NOT_GIVEN,
         expires_in: int | NotGiven = NOT_GIVEN,
+        consent_days: int | NotGiven = NOT_GIVEN,
         idempotency_key: str | NotGiven = NOT_GIVEN,
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
@@ -1946,6 +1952,8 @@ class AsyncBank(AsyncAPIResource):
         Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.
 
         Send the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.
+
+        Send `consent_days` to choose how many days the renewal asks the bank for; without it the renewal asks for the length the person chose before, and either way the bank's own maximum is never exceeded.
 
         A one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.
 
@@ -1961,6 +1969,7 @@ class AsyncBank(AsyncAPIResource):
           allowed_origins: Accepted and not used today: reserved for Didit's embedded Bank Link, which is not released yet. HTTPS origins, up to 50.
           language: Optional. One of the [supported languages](/integration/supported-languages), the same codes the `language` of the session API takes, for example `es`, `pt`, `pt-BR` or `zh-CN` (`pt-PT` is not one of them). The match is exact and case-sensitive (`ES` and `pt-PT` are refused). A code outside that list answers `400 invalid_request` with `field: language`. The language of the hosted page and of the consent text is, in this order: the language the person chose on the page, this `language`, the browser's language, then English.
           expires_in: Lifetime in seconds, 300 to 86400.
+          consent_days: Optional. How many days to ask the bank to keep access open, 1 or more. Without it, the bank is asked for the length the person chose before, never above the bank's maximum; only a connection with no recorded length is asked for the maximum. With it, the bank is asked for that many days, never above its maximum: a longer value is capped, not refused. A value below 1, above 32767 or not a whole number answers `400 invalid_request` with `field: consent_days`. The connection reports the date the bank actually granted in `consent.expires_at`. `create_link` with `mode: renew` takes the same field with the same rule.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -1980,6 +1989,7 @@ class AsyncBank(AsyncAPIResource):
                     "allowed_origins": allowed_origins,
                     "language": language,
                     "expires_in": expires_in,
+                    "consent_days": consent_days,
                 },
                 headers={"Idempotency-Key": idempotency_key},
                 extra_headers=extra_headers,
