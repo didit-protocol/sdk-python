@@ -80086,7 +80086,7 @@
     "/v3/webhook/destinations/{destination_uuid}/deliveries/{delivery_uuid}/resend/": {
       "post": {
         "summary": "Resend webhook destination delivery",
-        "description": "Send a past delivery again, for example after your endpoint was down. Didit takes the stored payload, sets a fresh `timestamp`, signs it again with the destination's current `secret_shared_key` (`X-Signature`, `X-Signature-V2`, `X-Signature-Simple` and `X-Timestamp`) and posts it to the delivery's `request_url`, even if the destination's URL has changed since or the destination is disabled. `event_id` and the rest of the payload are unchanged, so deduplicate on `event_id`. The call waits up to 5 seconds for your endpoint and returns the new delivery with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, every call sends again and creates a new delivery, and the request has no body. A scoped API key needs `webhooks: write` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.",
+        "description": "Send a past delivery again, for example after your endpoint was down. Didit takes the stored payload, sets a fresh `timestamp`, signs it again with the destination's current `secret_shared_key` (`X-Signature`, `X-Signature-V2`, `X-Signature-Simple` and `X-Timestamp`) and posts it to the delivery's `request_url`, even if the destination's URL has changed since or the destination is disabled. `event_id` and the rest of the payload are unchanged, so deduplicate on `event_id`. The call waits up to 5 seconds for your endpoint and returns the new delivery with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, every call sends again and creates a new delivery, and the request has no body. The one exception is a delivery of the sandbox's example data (the example records every sandbox starts with): it is never resent, nothing is recorded, and the call answers `409` with `code` `example_delivery`. A scoped API key needs `webhooks: write` and `decisions: read`; a key limited to some workflows or to approved sessions cannot use this endpoint.",
         "operationId": "resend_webhook_destination_delivery",
         "x-didit-sdk": {
           "resource": "webhooks.destinations",
@@ -80309,6 +80309,26 @@
                   "Delivery not found": {
                     "value": {
                       "detail": "Webhook delivery not found."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The delivery belongs to the sandbox's example data: the example records every sandbox starts with, whose events were never owed to an endpoint. It is never resent: nothing is sent and no attempt is recorded. Branch on `code` (`example_delivery`); `delivery_uuid` names the refused delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExampleDeliveryNotResendable"
+                },
+                "examples": {
+                  "Example delivery": {
+                    "summary": "A delivery of the sandbox's example data",
+                    "value": {
+                      "detail": "This delivery belongs to the sandbox's example data and is never sent to an endpoint.",
+                      "code": "example_delivery",
+                      "delivery_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                     }
                   }
                 }
@@ -87206,7 +87226,7 @@
     "/v3/session/{sessionId}/webhook/{webhook_uuid}/resend": {
       "post": {
         "summary": "Resend session webhook delivery",
-        "description": "Send a recorded session webhook again to the URL it first went to, with the same payload and `event_id` and a fresh `timestamp`, `X-Timestamp` header and signatures. Didit signs it with the current secret of the destination the delivery belongs to (or the application-level secret for a delivery to the legacy webhook URL), waits up to 5 seconds for your endpoint, records the attempt as a new delivery and returns it with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, and every call sends again, so make your endpoint idempotent on `event_id`. The path has no trailing slash and the request has no body. A scoped API key needs `webhooks: write` and `decisions: read`.",
+        "description": "Send a recorded session webhook again to the URL it first went to, with the same payload and `event_id` and a fresh `timestamp`, `X-Timestamp` header and signatures. Didit signs it with the current secret of the destination the delivery belongs to (or the application-level secret for a delivery to the legacy webhook URL), waits up to 5 seconds for your endpoint, records the attempt as a new delivery and returns it with `200` whatever your endpoint answered: read `response_status`. A resend is not retried automatically, and every call sends again, so make your endpoint idempotent on `event_id`. The one exception is a delivery of the sandbox's example data (the example records every sandbox starts with): it is never resent, nothing is recorded, and the call answers `409` with `code` `example_delivery`. The path has no trailing slash and the request has no body. A scoped API key needs `webhooks: write` and `decisions: read`.",
         "operationId": "post_v3_session_webhook_resend",
         "x-didit-sdk": {
           "resource": "sessions.webhooks",
@@ -87439,6 +87459,26 @@
                   "Delivery not in this session": {
                     "value": {
                       "detail": "Webhook log not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The webhook delivery belongs to the sandbox's example data: the example records every sandbox starts with, whose events were never owed to an endpoint. It is never resent: nothing is sent and no attempt is recorded. Branch on `code` (`example_delivery`); `delivery_uuid` names the refused delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExampleDeliveryNotResendable"
+                },
+                "examples": {
+                  "Example delivery": {
+                    "summary": "A delivery of the sandbox's example data",
+                    "value": {
+                      "detail": "This delivery belongs to the sandbox's example data and is never sent to an endpoint.",
+                      "code": "example_delivery",
+                      "delivery_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                     }
                   }
                 }
@@ -166802,6 +166842,33 @@
             "$ref": "#/components/schemas/PlanRefusalError"
           }
         ]
+      },
+      "ExampleDeliveryNotResendable": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable error message."
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error code. Branch on this, not on `detail`.",
+            "enum": [
+              "example_delivery"
+            ]
+          },
+          "delivery_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The delivery that was not resent."
+          }
+        },
+        "required": [
+          "detail",
+          "code",
+          "delivery_uuid"
+        ],
+        "description": "The refusal to resend a delivery of the sandbox's example data: nothing is sent and no attempt is recorded."
       }
     },
     "securitySchemes": {
