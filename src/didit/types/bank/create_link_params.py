@@ -61,7 +61,7 @@ class BankCreateLinkParams(TypedDict, total=False):
     """Optional. Without it the person picks among the countries your application enabled. It has to be a country Bank Link serves; a malformed value answers `400 invalid_request`, and a country the product does not serve, or where no bank is offered, answers `400 country_not_available`, both with `field: country`. An empty request body stays valid."""
 
     institution_id: str
-    """Optional bank to preselect, from `list_institutions`. Skips the picker."""
+    """Optional. The bank the person starts with, from `list_institutions`. The picker is skipped; the person can still choose another bank the link allows, for example when this one is unavailable. The connection's `institution` reports the bank that was actually connected."""
 
     segment: Literal["personal", "business", "any"] | str
     """Filters the picker and tells the bank which login to open where the bank separates them. Default `any`."""
