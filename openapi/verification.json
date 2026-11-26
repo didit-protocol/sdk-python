@@ -96473,7 +96473,7 @@
     "/v3/session/imports/{importId}/retry/": {
       "post": {
         "summary": "Retry a migration",
-        "description": "Run a migration that ended again as a new job, with a new key (the old one was erased). It keeps the provider, workflow, region, status mapping and face templates choice; everything already in Didit is skipped.",
+        "description": "Supply read-only provider credentials again when retrying an API migration. Didit erases credentials when a job ends. Retrying a failed Sumsub migration keeps the same job ID and continues its preview or import from the saved position. Other eligible retries create a new job with the original migration settings and skip previously imported records.",
         "operationId": "post_v3_session_imports_retry",
         "x-didit-sdk": {
           "resource": "sessions.imports",
@@ -96530,7 +96530,7 @@
         },
         "responses": {
           "201": {
-            "description": "The new import job.",
+            "description": "The resumed job for a failed Sumsub migration, or the new job for other eligible retries.",
             "content": {
               "application/json": {
                 "schema": {
