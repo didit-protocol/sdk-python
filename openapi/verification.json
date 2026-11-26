@@ -108263,7 +108263,7 @@
     "/v3/bank/connections/{id}/renew/": {
       "post": {
         "summary": "Renew a bank connection",
-        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nA one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
+        "description": "Creates a renew link for this connection, a shortcut for `create_link` with `mode: renew`. The connection id and every account id stay the same.\n\nSend the returned `url` to the person: the hosted page shows what continues to be shared and until when, the person signs in at their bank once and returns to your `redirect_url`, and `bank.connection.renewed` confirms it. Afterwards the connection's `consent` shows a new `version`, `renewed_count`, `expires_at` and `renew_by`, with `renewal_action` `bank_auth`.\n\nSend `consent_days` to choose how many days the renewal asks the bank for; without it the renewal asks for the length the person chose before, and either way the bank's own maximum is never exceeded.\n\nA one-time connection has no consent to renew: it answers `409 one_time_connection`, and a new link reads the bank again.\n\nUntil the consent has 30 days left or fewer it answers `409 renewal_not_needed`; after `consent.renewable_until` it answers `409 renewal_window_expired` and the person connects again.\n\nNeeds an API key with write access to Bank data, because this operation changes something: a full-access key has it, and a scoped key needs `bank-data` write in its scopes. Otherwise the call answers `403 bank_data_access_denied`.",
         "operationId": "renewBankConnection",
         "tags": [
           "Bank Data"
@@ -158617,6 +158617,12 @@
             "minimum": 300,
             "maximum": 86400,
             "default": 3600
+          },
+          "consent_days": {
+            "type": "integer",
+            "description": "Optional. How many days to ask the bank to keep access open, 1 or more. Without it, the bank is asked for the length the person chose before, never above the bank's maximum; only a connection with no recorded length is asked for the maximum. With it, the bank is asked for that many days, never above its maximum: a longer value is capped, not refused. A value below 1, above 32767 or not a whole number answers `400 invalid_request` with `field: consent_days`. The connection reports the date the bank actually granted in `consent.expires_at`. `create_link` with `mode: renew` takes the same field with the same rule.",
+            "minimum": 1,
+            "maximum": 32767
           }
         }
       },

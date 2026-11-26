@@ -22,3 +22,6 @@ class BankRenewConnectionParams(TypedDict, total=False):
 
     expires_in: int
     """Lifetime in seconds, 300 to 86400."""
+
+    consent_days: int
+    """Optional. How many days to ask the bank to keep access open, 1 or more. Without it, the bank is asked for the length the person chose before, never above the bank's maximum; only a connection with no recorded length is asked for the maximum. With it, the bank is asked for that many days, never above its maximum: a longer value is capped, not refused. A value below 1, above 32767 or not a whole number answers `400 invalid_request` with `field: consent_days`. The connection reports the date the bank actually granted in `consent.expires_at`. `create_link` with `mode: renew` takes the same field with the same rule."""
