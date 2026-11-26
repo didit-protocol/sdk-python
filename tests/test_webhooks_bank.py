@@ -153,3 +153,49 @@ def test_a_tampered_bank_delivery_is_still_refused(monkeypatch: pytest.MonkeyPat
     with pytest.raises(webhooks.WebhookVerificationError) as info:
         webhooks.verify(tampered, delivery["headers"], secret=delivery["secret"])
     assert info.value.reason == "invalid_signature"
+
+
+def test_link_data_reads_renews_connection_id() -> None:
+    renewal = BankLinkCompletedEvent.model_validate(
+        {
+            "webhook_type": "bank.link.completed",
+            "data": {
+                "link_id": "bbbbbbbb-0000-4000-8000-000000000005",
+                "status": "completed",
+                "connection_id": "cccccccc-0000-4000-8000-000000000001",
+                "renews_connection_id": "cccccccc-0000-4000-8000-000000000001",
+                "check_id": None,
+                "error_code": None,
+            },
+        }
+    )
+    assert renewal.data is not None
+    assert renewal.data.renews_connection_id == "cccccccc-0000-4000-8000-000000000001"
+    assert not renewal.data.model_extra
+
+
+def test_connection_updated_has_two_shapes() -> None:
+    paused = BankConnectionUpdatedEvent.model_validate(
+        {
+            "webhook_type": "bank.connection.updated",
+            "connection_id": "cccccccc-0000-4000-8000-000000000001",
+            "status": "paused",
+            "status_reason": "insufficient_balance",
+            "ends_at": "2026-12-22T09:00:00Z",
+        }
+    )
+    assert paused.status_reason == "insufficient_balance"
+    assert paused.ends_at == "2026-12-22T09:00:00Z"
+    assert paused.revocation_status is None
+    assert not paused.model_extra
+    paid = BankConnectionUpdatedEvent.model_validate(
+        {
+            "webhook_type": "bank.connection.updated",
+            "connection_id": "cccccccc-0000-4000-8000-000000000001",
+            "status": "active",
+            "status_reason": None,
+            "ends_at": None,
+        }
+    )
+    assert paid.ends_at is None
+    assert not paid.model_extra
