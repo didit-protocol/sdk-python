@@ -157653,7 +157653,7 @@
           },
           "institution_id": {
             "type": "string",
-            "description": "Optional bank to preselect, from `list_institutions`. Skips the picker.",
+            "description": "Optional. The bank the person starts with, from `list_institutions`. The picker is skipped; the person can still choose another bank the link allows, for example when this one is unavailable. The connection's `institution` reports the bank that was actually connected.",
             "maxLength": 64
           },
           "segment": {
