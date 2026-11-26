@@ -5,7 +5,7 @@ It is the contract that keeps the seven SDKs consistent.
 A change to it is made in all seven repositories, in the same words.
 Where this document and an SDK disagree, the SDK is wrong.
 
-Version 2, 2026-11-13.
+Version 3, 2026-11-25.
 
 ## 1. Goal
 
@@ -318,4 +318,4 @@ A live sync beyond the bank's daily limit answers `429` with `code: refresh_limi
 
 ### 16.3 Webhook events
 
-The typed `bank.*` events are part of the union in section 9.4. The four `bank.link.*` events carry `link_id`, `status`, `connection_id`, `check_id` and `error_code` under `data`. Connection, data and sync events carry their fields next to the envelope fields: `connection_id`, `link_id`, `status`, `status_reason`, `initial_status`, `revocation_status`, `reason`, `ended_by`, `ended_at`, `retain_until`, `erasure_status`, `erased_at`, `consent_version`, `consent_expires_at`, `days_left`, `renew_by`, `renewable_until`, `accounts` (each account with `account_id`, `added`, `modified` and `removed`), `trigger`, `outcome`, `changed`, `balances_changed`, `error_code`, `failing_since` and `sync_id`. The envelope is the same as every other event.
+The typed `bank.*` events are part of the union in section 9.4. The four `bank.link.*` events carry `link_id`, `status`, `connection_id`, `renews_connection_id`, `check_id` and `error_code` under `data`. `renews_connection_id` is optional: it is absent on events stored before it existed, and null on a link that renews nothing. `bank.connection.updated` has two shapes: a revocation starting carries `connection_id`, `status` and `revocation_status`, every other update carries `connection_id`, `status`, `status_reason` and `ends_at`, so `revocation_status`, `status_reason` and `ends_at` are each optional. `bank.connection.revoked` may carry `status_reason` `unpaid` and `ended_by` `system`. Connection, data and sync events carry their fields next to the envelope fields: `connection_id`, `link_id`, `status`, `status_reason`, `initial_status`, `revocation_status`, `reason`, `ended_by`, `ended_at`, `retain_until`, `erasure_status`, `erased_at`, `consent_version`, `consent_expires_at`, `days_left`, `renew_by`, `renewable_until`, `accounts` (each account with `account_id`, `added`, `modified` and `removed`), `trigger`, `outcome`, `changed`, `balances_changed`, `error_code`, `failing_since` and `sync_id`. The envelope is the same as every other event.

@@ -224,6 +224,8 @@ class BankLinkEventData(BaseModel):
     status: Literal["completed", "cancelled", "expired", "failed"] | str | None = None
     connection_id: str | None = None
     """The connection the link created or renewed."""
+    renews_connection_id: str | None = None
+    """The connection a renewal link targets, set when the link was created; ``None`` on a link that renews nothing. Absent on an event stored before the field existed: an older failed, cancelled or expired renewal event carries that connection in ``connection_id``."""
     check_id: str | None = None
     """The ownership result, when one was asked for."""
     error_code: (
@@ -295,13 +297,21 @@ class BankConnectionCreatedEvent(WebhookEventBase):
 
 
 class BankConnectionUpdatedEvent(WebhookEventBase):
-    """``bank.connection.updated``: a revocation started; ``bank.connection.revoked`` follows."""
+    """``bank.connection.updated``: a revocation started (``bank.connection.revoked`` follows), or another status change.
+
+    A revocation carries ``revocation_status`` and no ``status_reason`` or ``ends_at``. Every other
+    update carries ``status_reason`` and ``ends_at`` (a date-time or ``None``) and no ``revocation_status``.
+    """
 
     webhook_type: Literal["bank.connection.updated"] = "bank.connection.updated"  # pyright: ignore[reportIncompatibleVariableOverride]
     connection_id: str | None = None
     status: BankConnectionStatus | str | None = None
     revocation_status: Literal["pending"] | str | None = None
-    """``pending``: the bank has not confirmed the revocation yet."""
+    """``pending``: the bank has not confirmed the revocation yet. Only in the payload that announces the revocation."""
+    status_reason: Literal["insufficient_balance", "first_sync_failed"] | str | None = None
+    """Why the connection is paused or failed; ``None`` otherwise. Absent when a revocation starts."""
+    ends_at: str | None = None
+    """When the connection ends unless its coming month is paid first; ``None`` once it is paid or when nothing is pending. Absent when a revocation starts."""
 
 
 class BankConnectionConsentExpiringEvent(WebhookEventBase):
@@ -347,7 +357,7 @@ class BankConnectionRevokedEvent(WebhookEventBase):
     webhook_type: Literal["bank.connection.revoked"] = "bank.connection.revoked"  # pyright: ignore[reportIncompatibleVariableOverride]
     connection_id: str | None = None
     status: Literal["revoked"] | str | None = None
-    ended_by: Literal["end_user", "bank", "customer", "unknown"] | str | None = None
+    ended_by: Literal["end_user", "bank", "customer", "system", "unknown"] | str | None = None
     """Who ended access."""
     status_reason: (
         Literal[
@@ -360,6 +370,7 @@ class BankConnectionRevokedEvent(WebhookEventBase):
             "insufficient_balance",
             "paused_by_customer",
             "first_sync_failed",
+            "unpaid",
             "collection_complete",
         ]
         | str
