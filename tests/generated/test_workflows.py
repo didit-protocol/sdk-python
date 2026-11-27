@@ -271,6 +271,7 @@ def test_workflows_update() -> None:
                 "workflow_id": "00000000-0000-4000-8000-000000000003",
                 "workflow_label": "sample",
                 "workflow_type": "kyc",
+                "is_welcome_handoff_enabled": True,
                 "is_default": True,
                 "is_archived": True,
                 "version": 1,

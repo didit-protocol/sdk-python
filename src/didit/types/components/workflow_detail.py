@@ -50,6 +50,9 @@ class WorkflowDetail(BaseModel):
     ) = None
     """Workflow template. `null` for graph workflows created without a template."""
 
+    is_welcome_handoff_enabled: bool | None = None
+    """Whether the hosted phone welcome screen offers the QR code and link to continue on another device."""
+
     is_default: bool | None = None
     """Whether this is the application's default workflow."""
 
