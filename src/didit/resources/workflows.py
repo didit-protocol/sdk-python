@@ -97,6 +97,7 @@ class Workflows(SyncAPIResource):
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
         is_white_label_enabled: bool | NotGiven = NOT_GIVEN,
         is_desktop_allowed: bool | NotGiven = NOT_GIVEN,
+        is_welcome_handoff_enabled: bool | NotGiven = NOT_GIVEN,
         is_session_reference_enabled: bool | NotGiven = NOT_GIVEN,
         max_retry_attempts: int | NotGiven = NOT_GIVEN,
         retry_window_days: int | None | NotGiven = NOT_GIVEN,
@@ -122,6 +123,7 @@ class Workflows(SyncAPIResource):
           status: Omit this field to create a published workflow ready for sessions. Use `draft` only when you want to save without publishing.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
           is_desktop_allowed: Allow the verification flow to run on desktop browsers.
+          is_welcome_handoff_enabled: Show “Continue on another device” on the hosted verification welcome screen. Set to false to hide the QR code and link from the phone welcome.
           is_session_reference_enabled: On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs.
           max_retry_attempts: Maximum retry attempts allowed after a declined verification. `0` blocks the user after the first decline.
           retry_window_days: Rolling window in days used to count retries. `null` enforces an all-time limit.
@@ -148,6 +150,7 @@ class Workflows(SyncAPIResource):
                     "status": status,
                     "is_white_label_enabled": is_white_label_enabled,
                     "is_desktop_allowed": is_desktop_allowed,
+                    "is_welcome_handoff_enabled": is_welcome_handoff_enabled,
                     "is_session_reference_enabled": is_session_reference_enabled,
                     "max_retry_attempts": max_retry_attempts,
                     "retry_window_days": retry_window_days,
@@ -250,6 +253,7 @@ class Workflows(SyncAPIResource):
         features: Sequence[SimpleWorkflowFeature] | NotGiven = NOT_GIVEN,
         is_white_label_enabled: bool | NotGiven = NOT_GIVEN,
         is_desktop_allowed: bool | NotGiven = NOT_GIVEN,
+        is_welcome_handoff_enabled: bool | NotGiven = NOT_GIVEN,
         is_session_reference_enabled: bool | NotGiven = NOT_GIVEN,
         max_retry_attempts: int | NotGiven = NOT_GIVEN,
         retry_window_days: int | None | NotGiven = NOT_GIVEN,
@@ -276,6 +280,7 @@ class Workflows(SyncAPIResource):
           features: If provided, this replaces the full feature order and configuration.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
           is_desktop_allowed: Allow the verification flow to run on desktop browsers.
+          is_welcome_handoff_enabled: Show “Continue on another device” on the hosted verification welcome screen. Set to false to hide the QR code and link from the phone welcome.
           is_session_reference_enabled: On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs.
           max_retry_attempts: Maximum retry attempts allowed after a declined verification. `0` blocks the user after the first decline.
           retry_window_days: Rolling window in days used to count retries. `null` enforces an all-time limit.
@@ -303,6 +308,7 @@ class Workflows(SyncAPIResource):
                     "features": features,
                     "is_white_label_enabled": is_white_label_enabled,
                     "is_desktop_allowed": is_desktop_allowed,
+                    "is_welcome_handoff_enabled": is_welcome_handoff_enabled,
                     "is_session_reference_enabled": is_session_reference_enabled,
                     "max_retry_attempts": max_retry_attempts,
                     "retry_window_days": retry_window_days,
@@ -384,6 +390,7 @@ class AsyncWorkflows(AsyncAPIResource):
         status: Literal["draft", "published"] | str | NotGiven = NOT_GIVEN,
         is_white_label_enabled: bool | NotGiven = NOT_GIVEN,
         is_desktop_allowed: bool | NotGiven = NOT_GIVEN,
+        is_welcome_handoff_enabled: bool | NotGiven = NOT_GIVEN,
         is_session_reference_enabled: bool | NotGiven = NOT_GIVEN,
         max_retry_attempts: int | NotGiven = NOT_GIVEN,
         retry_window_days: int | None | NotGiven = NOT_GIVEN,
@@ -409,6 +416,7 @@ class AsyncWorkflows(AsyncAPIResource):
           status: Omit this field to create a published workflow ready for sessions. Use `draft` only when you want to save without publishing.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
           is_desktop_allowed: Allow the verification flow to run on desktop browsers.
+          is_welcome_handoff_enabled: Show “Continue on another device” on the hosted verification welcome screen. Set to false to hide the QR code and link from the phone welcome.
           is_session_reference_enabled: On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs.
           max_retry_attempts: Maximum retry attempts allowed after a declined verification. `0` blocks the user after the first decline.
           retry_window_days: Rolling window in days used to count retries. `null` enforces an all-time limit.
@@ -435,6 +443,7 @@ class AsyncWorkflows(AsyncAPIResource):
                     "status": status,
                     "is_white_label_enabled": is_white_label_enabled,
                     "is_desktop_allowed": is_desktop_allowed,
+                    "is_welcome_handoff_enabled": is_welcome_handoff_enabled,
                     "is_session_reference_enabled": is_session_reference_enabled,
                     "max_retry_attempts": max_retry_attempts,
                     "retry_window_days": retry_window_days,
@@ -537,6 +546,7 @@ class AsyncWorkflows(AsyncAPIResource):
         features: Sequence[SimpleWorkflowFeature] | NotGiven = NOT_GIVEN,
         is_white_label_enabled: bool | NotGiven = NOT_GIVEN,
         is_desktop_allowed: bool | NotGiven = NOT_GIVEN,
+        is_welcome_handoff_enabled: bool | NotGiven = NOT_GIVEN,
         is_session_reference_enabled: bool | NotGiven = NOT_GIVEN,
         max_retry_attempts: int | NotGiven = NOT_GIVEN,
         retry_window_days: int | None | NotGiven = NOT_GIVEN,
@@ -563,6 +573,7 @@ class AsyncWorkflows(AsyncAPIResource):
           features: If provided, this replaces the full feature order and configuration.
           is_white_label_enabled: Enable white-label customization for sessions created with this workflow.
           is_desktop_allowed: Allow the verification flow to run on desktop browsers.
+          is_welcome_handoff_enabled: Show “Continue on another device” on the hosted verification welcome screen. Set to false to hide the QR code and link from the phone welcome.
           is_session_reference_enabled: On Declined and In review results, the person being verified sees a short reference to the session, such as `S-20481`, shown on one line. This is the session number as the console shows it, so your support team can find the session in the console by typing it. When `false`, the result screens show no reference. Applies to the hosted flow and the SDKs.
           max_retry_attempts: Maximum retry attempts allowed after a declined verification. `0` blocks the user after the first decline.
           retry_window_days: Rolling window in days used to count retries. `null` enforces an all-time limit.
@@ -590,6 +601,7 @@ class AsyncWorkflows(AsyncAPIResource):
                     "features": features,
                     "is_white_label_enabled": is_white_label_enabled,
                     "is_desktop_allowed": is_desktop_allowed,
+                    "is_welcome_handoff_enabled": is_welcome_handoff_enabled,
                     "is_session_reference_enabled": is_session_reference_enabled,
                     "max_retry_attempts": max_retry_attempts,
                     "retry_window_days": retry_window_days,
