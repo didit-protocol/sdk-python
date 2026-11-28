@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing_extensions import TypedDict
 
 from didit._types import FileTypes
+from didit.types.components.branding_appearance_update import BrandingAppearanceUpdate
 
 __all__ = ["CustomizationUpdateParams"]
 
@@ -49,6 +50,9 @@ class CustomizationUpdateParams(TypedDict, total=False):
 
     color_pill_text: str
     """Text color for pills, inputs and selectors."""
+
+    appearance: BrandingAppearanceUpdate
+    """Omit this field to keep the saved appearance."""
 
     border_radius_panel: int
     """Panel corner radius in pixels."""

@@ -16,6 +16,7 @@ from didit._response import (
     to_streamed_response_wrapper,
 )
 from didit._types import NOT_GIVEN, Body, FileTypes, Headers, NotGiven, Query
+from didit.types.components.branding_appearance_update import BrandingAppearanceUpdate
 from didit.types.components.branding_customization import BrandingCustomization
 
 __all__ = [
@@ -54,7 +55,7 @@ class Customization(SyncAPIResource):
     ) -> BrandingCustomization:
         """Get branding customization.
 
-        Returns the white-label branding for the application resolved from the API key: colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.
+        Returns the white-label branding for the application resolved from the API key: appearance, colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.
 
         ``GET /v3/customization/``
 
@@ -94,6 +95,7 @@ class Customization(SyncAPIResource):
         color_button_text_1: str | NotGiven = NOT_GIVEN,
         color_button_text_2: str | NotGiven = NOT_GIVEN,
         color_pill_text: str | NotGiven = NOT_GIVEN,
+        appearance: BrandingAppearanceUpdate | NotGiven = NOT_GIVEN,
         border_radius_panel: int | NotGiven = NOT_GIVEN,
         border_radius_buttons: int | NotGiven = NOT_GIVEN,
         font_family: str | NotGiven = NOT_GIVEN,
@@ -120,7 +122,7 @@ class Customization(SyncAPIResource):
     ) -> BrandingCustomization:
         """Update branding customization.
 
-        Partial update of the application's white-label branding. Send `application/json` to change colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint - use the Business Console for those.
+        Partial update of the application's white-label branding. Send `application/json` to change appearance, colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint - use the Business Console for those.
 
         ``PATCH /v3/customization/``
 
@@ -138,6 +140,7 @@ class Customization(SyncAPIResource):
           color_button_text_1: Primary button text color.
           color_button_text_2: Secondary button text color.
           color_pill_text: Text color for pills, inputs and selectors.
+          appearance: Omit this field to keep the saved appearance.
           border_radius_panel: Panel corner radius in pixels.
           border_radius_buttons: Button corner radius in pixels.
           font_family: Google Font family name (e.g. `Inter`, `AR One Sans`).
@@ -183,6 +186,7 @@ class Customization(SyncAPIResource):
                     "color_button_text_1": color_button_text_1,
                     "color_button_text_2": color_button_text_2,
                     "color_pill_text": color_pill_text,
+                    "appearance": appearance,
                     "border_radius_panel": border_radius_panel,
                     "border_radius_buttons": border_radius_buttons,
                     "font_family": font_family,
@@ -244,7 +248,7 @@ class AsyncCustomization(AsyncAPIResource):
     ) -> BrandingCustomization:
         """Get branding customization.
 
-        Returns the white-label branding for the application resolved from the API key: colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.
+        Returns the white-label branding for the application resolved from the API key: appearance, colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.
 
         ``GET /v3/customization/``
 
@@ -284,6 +288,7 @@ class AsyncCustomization(AsyncAPIResource):
         color_button_text_1: str | NotGiven = NOT_GIVEN,
         color_button_text_2: str | NotGiven = NOT_GIVEN,
         color_pill_text: str | NotGiven = NOT_GIVEN,
+        appearance: BrandingAppearanceUpdate | NotGiven = NOT_GIVEN,
         border_radius_panel: int | NotGiven = NOT_GIVEN,
         border_radius_buttons: int | NotGiven = NOT_GIVEN,
         font_family: str | NotGiven = NOT_GIVEN,
@@ -310,7 +315,7 @@ class AsyncCustomization(AsyncAPIResource):
     ) -> BrandingCustomization:
         """Update branding customization.
 
-        Partial update of the application's white-label branding. Send `application/json` to change colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint - use the Business Console for those.
+        Partial update of the application's white-label branding. Send `application/json` to change appearance, colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint - use the Business Console for those.
 
         ``PATCH /v3/customization/``
 
@@ -328,6 +333,7 @@ class AsyncCustomization(AsyncAPIResource):
           color_button_text_1: Primary button text color.
           color_button_text_2: Secondary button text color.
           color_pill_text: Text color for pills, inputs and selectors.
+          appearance: Omit this field to keep the saved appearance.
           border_radius_panel: Panel corner radius in pixels.
           border_radius_buttons: Button corner radius in pixels.
           font_family: Google Font family name (e.g. `Inter`, `AR One Sans`).
@@ -373,6 +379,7 @@ class AsyncCustomization(AsyncAPIResource):
                     "color_button_text_1": color_button_text_1,
                     "color_button_text_2": color_button_text_2,
                     "color_pill_text": color_pill_text,
+                    "appearance": appearance,
                     "border_radius_panel": border_radius_panel,
                     "border_radius_buttons": border_radius_buttons,
                     "font_family": font_family,

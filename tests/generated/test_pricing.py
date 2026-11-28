@@ -178,6 +178,55 @@ def test_pricing_bank_verification_coverage() -> None:
     )
 
 
+def test_pricing_kyb_registry() -> None:
+    """``GET /v3/organization/kyb-registry-pricing/``"""
+    check_operation(
+        Expect(
+            method="GET",
+            path="/v3/organization/kyb-registry-pricing/",
+            api="verification",
+            auth="none",
+            status=200,
+            response_json={
+                "AL": {
+                    "name": "Albania",
+                    "validated": False,
+                    "tiers": {
+                        "basic": {"available": True, "price_usd": "2.00"},
+                        "shareholders": {"available": True, "price_usd": "5.00"},
+                        "ubo": {"available": True, "price_usd": "9.00"},
+                    },
+                    "monitoring": {"available": False, "price_usd": "2.00"},
+                },
+                "ES": {
+                    "name": "Spain",
+                    "validated": True,
+                    "tiers": {
+                        "basic": {"available": True, "price_usd": "2.00"},
+                        "shareholders": {"available": True, "price_usd": "5.00"},
+                        "ubo": {"available": True, "price_usd": "9.00"},
+                    },
+                    "monitoring": {"available": False, "price_usd": "2.00"},
+                },
+                "XK": {
+                    "name": "Kosovo",
+                    "validated": False,
+                    "tiers": {
+                        "basic": {"available": True, "price_usd": "2.00"},
+                        "shareholders": {"available": True, "price_usd": "5.00"},
+                        "ubo": {"available": True, "price_usd": "9.00"},
+                    },
+                    "monitoring": {"available": False, "price_usd": "2.00"},
+                },
+            },
+        ),
+        lambda c: c.pricing.kyb_registry(),
+        lambda c: c.pricing.kyb_registry(),
+        lambda r: isinstance(r, dict),
+        lambda r: isinstance(r, dict),
+    )
+
+
 def test_pricing_price_book() -> None:
     """``GET /v3/organization/price-book/``"""
     check_operation(
