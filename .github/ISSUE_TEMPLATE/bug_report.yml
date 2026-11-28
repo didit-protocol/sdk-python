@@ -1,0 +1,67 @@
+name: Bug report
+description: Something in the Didit Python SDK does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste API keys, webhook secrets, access or refresh tokens, or personal data**
+        (names, documents, images, addresses, phone numbers, emails) into this issue.
+        Replace them with placeholders such as `YOUR_API_KEY`.
+
+        To report a security vulnerability, do not open an issue: see [SECURITY.md](https://github.com/didit-protocol/sdk-python/blob/main/SECURITY.md).
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: "Output of `python -c \"import didit; print(didit.__version__)\"`."
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.12.7"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04, macOS 15, Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code that shows the problem, with secrets and personal data removed.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead, including the full traceback.
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: Request id
+      description: The `request_id` of the failing API call, if any (from `APIStatusError.request_id` or the response headers).
+  - type: checkboxes
+    id: no-secrets
+    attributes:
+      label: Confirmation
+      options:
+        - label: I removed every API key, secret, token and piece of personal data from this issue.
+          required: true
