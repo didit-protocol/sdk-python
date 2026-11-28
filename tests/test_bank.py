@@ -264,6 +264,26 @@ def test_the_example_waits_for_the_link_then_the_first_sync(
     ]
 
 
+def test_the_example_reads_a_connection_whose_first_sync_was_partial(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(EXAMPLE.time, "sleep", lambda _seconds: None)
+    completed = _spec_example("/v3/bank/links/{id}/", "Completed")
+    partial = copy.deepcopy(
+        _spec_example("/v3/bank/connections/{id}/", "Active ongoing connection")
+    )
+    partial["sync"]["initial_status"] = "partial"
+    partial["sync"]["initial_complete"] = False
+    api = MockAPI().json(200, completed).json(200, partial)
+
+    connection = EXAMPLE.wait_for_connection(api.client(), completed["id"], interval=0, timeout=5)
+
+    assert connection.status == "active"
+    assert connection.sync is not None
+    assert connection.sync.initial_status == "partial"
+    assert len(api.requests) == 2
+
+
 def test_the_example_stops_when_the_link_ends_without_a_connection() -> None:
     completed = _spec_example("/v3/bank/links/{id}/", "Completed")
     api = MockAPI().json(200, {**completed, "status": "expired", "connection_id": None})
