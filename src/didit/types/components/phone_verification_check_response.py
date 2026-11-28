@@ -142,7 +142,7 @@ class PhoneVerificationCheckResponsePhone(BaseModel):
     """Other sessions of your application (KYC, KYB, or API) where the same phone number was used by a different user (different `vendor_data`). Up to 5 entries, a synthetic list-entry blocklist match first when present (session-derived matches keep query order). Empty array when there are no matches."""
 
     phone_social: PhoneSocialFootprint | None = None
-    """Social footprint of the phone number: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
+    """Social footprint of the phone number: the online platforms it is registered on. Returned when a requested social check completes. Request it with `tier: "social"` on a Phone Risk lookup, or with `enable_social: true` on a risk-tier lookup or Phone Verification check. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
 
     phone_intelligence: PhoneIntelligence | None = None
     """Phone intelligence signals. Present only when `enable_enrichment` was `true` on the check."""

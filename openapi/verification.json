@@ -550,7 +550,7 @@
     "/v3/phone/risk/": {
       "post": {
         "summary": "Risk-score a phone number",
-        "description": "Resolve a phone number and return carrier, line-type, porting, disposable-number, cross-session match, and normalized risk-intelligence signals without sending an OTP. The endpoint creates an API session and returns its id as `request_id`.\n\n**Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.\n\n**Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.\n\n**Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.\n\n**Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).\n\n**Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.",
+        "description": "Look up a phone number without sending an OTP, at one of three tiers chosen with `tier`. The endpoint creates an API session and returns its id as `request_id`.\n\n**Tiers.**\n- `basic` (basic lookup, $0.006): line type (`phone.carrier.type`), current carrier (`phone.carrier.name`), porting status (`phone.is_ported`), country (`phone.country_code`) and validity (`phone.is_valid`). Original carrier (`phone.original_carrier`) and temporary-number status (`phone.is_disposable`) are reported when available. No `phone_intelligence` or `phone_social` block.\n- `risk` (risk and intelligence, $0.04, the default): everything in the basic lookup plus the `phone_intelligence` block: the 0-100 risk score, phone-type risk, the trust and network-stability indexes, porting signals and `reachability`.\n- `social` (social profiles, $0.05): everything in the basic lookup plus the `phone_social` block, the online platforms the number is registered on. No `phone_intelligence` block.\n\n**Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.\n\n**Invalid numbers.** An invalid or unparseable number is not a request error: every tier answers it with `200` and `phone.is_valid: false`, with no `phone_intelligence` or `phone_social` block and nothing billed. Read `phone.is_valid`, not the HTTP status, to tell a refused number from one that was looked up.\n\n**Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent on the `basic` and `social` tiers and when no usable intelligence data was returned.\n\n**Billing.** Each tier bills its own price once: a basic lookup $0.006, a risk and intelligence lookup $0.04, a social profiles lookup $0.05. A number the prefilter rejects - an invalid number, or a fixed line where only mobile is allowed - is answered without a paid lookup and is not billed. A risk and intelligence lookup that returns no intelligence data, and a social profiles lookup whose check could not be completed, are not billed either. Phone lookups are Phone usage, including the `enable_social` add-on on the risk tier: the free credit pays them only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. A request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it.\n\n**Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.\n\n**Authentication.** Send your application's API key in `x-api-key`. Missing or invalid credentials return `403` - this API never returns `401`.\n\n**Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).\n\n**Social footprint.** `phone_social` lists the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. Ask for it with `tier: \"social\"`, or add it to a risk and intelligence lookup with `enable_social: true`, which bills $0.05 on top of the $0.04. The block is absent when it was not requested or the check could not be completed, and it is not billed in that case.",
         "operationId": "post_v3phone_risk",
         "x-didit-sdk": {
           "resource": "phone",
@@ -612,15 +612,30 @@
               },
               "examples": {
                 "Minimal": {
-                  "summary": "Score a number with defaults",
+                  "summary": "Risk and intelligence lookup with defaults",
                   "value": {
                     "phone_number": "+14155552671"
+                  }
+                },
+                "Basic lookup": {
+                  "summary": "Basic lookup only, without the risk score",
+                  "value": {
+                    "phone_number": "+14155552671",
+                    "tier": "basic"
+                  }
+                },
+                "Social profiles": {
+                  "summary": "Social profiles only, without the risk score",
+                  "value": {
+                    "phone_number": "+14155552671",
+                    "tier": "social"
                   }
                 },
                 "Full context": {
                   "summary": "Score with signals, country hint, and correlation ids",
                   "value": {
                     "phone_number": "+14155552671",
+                    "tier": "risk",
                     "country_code": "US",
                     "signals": {
                       "ip": "192.0.2.1",
@@ -666,6 +681,9 @@
                           "name": "Example Mobile",
                           "type": "mobile"
                         },
+                        "original_carrier": "Example Mobile",
+                        "is_ported": false,
+                        "is_valid": true,
                         "is_disposable": false,
                         "is_virtual": false,
                         "verification_method": null,
@@ -679,6 +697,7 @@
                           "phone_type_risk": "Low",
                           "phone_trust_index": 97,
                           "network_stability_index": 95,
+                          "reachability": "reachable",
                           "is_disposable": false,
                           "is_ported": false,
                           "is_recently_ported": false,
@@ -690,6 +709,7 @@
                           "phone_type_risk": "Low",
                           "phone_trust_index": 97,
                           "network_stability_index": 95,
+                          "reachability": "reachable",
                           "is_disposable": false,
                           "is_ported": false,
                           "is_recently_ported": false,
@@ -701,6 +721,77 @@
                       "metadata": {
                         "source": "signup_prescreen"
                       },
+                      "created_at": "2026-09-01T10:30:00.123456+00:00"
+                    }
+                  },
+                  "Basic lookup": {
+                    "summary": "Basic lookup: carrier, porting and validity, no risk score",
+                    "value": {
+                      "request_id": "b7e3a1c4-2d5f-4e6a-8b9c-0d1e2f3a4b5c",
+                      "status": "Approved",
+                      "phone": {
+                        "status": "Approved",
+                        "phone_number_prefix": "+1",
+                        "phone_number": "4155552671",
+                        "full_number": "+14155552671",
+                        "country_code": "US",
+                        "country_name": "United States",
+                        "carrier": {
+                          "name": "Example Mobile",
+                          "type": "mobile"
+                        },
+                        "original_carrier": "Example Telecom",
+                        "is_ported": true,
+                        "is_valid": true,
+                        "is_disposable": false,
+                        "is_virtual": false,
+                        "verification_method": null,
+                        "verification_attempts": 0,
+                        "verified_at": null,
+                        "warnings": [],
+                        "lifecycle": [],
+                        "matches": []
+                      },
+                      "vendor_data": "lead-125",
+                      "metadata": null,
+                      "created_at": "2026-09-01T10:30:00.123456+00:00"
+                    }
+                  },
+                  "Social profiles": {
+                    "summary": "Social profiles lookup with a completed platform check",
+                    "value": {
+                      "request_id": "44444444-4444-4444-8444-444444444444",
+                      "status": "Approved",
+                      "phone": {
+                        "status": "Approved",
+                        "phone_number_prefix": "+1",
+                        "phone_number": "4155552671",
+                        "full_number": "+14155552671",
+                        "country_code": "US",
+                        "country_name": "United States",
+                        "carrier": {
+                          "name": "Example Mobile",
+                          "type": "mobile"
+                        },
+                        "original_carrier": "Example Telecom",
+                        "is_ported": true,
+                        "is_valid": true,
+                        "is_disposable": false,
+                        "is_virtual": false,
+                        "verification_method": null,
+                        "verification_attempts": 0,
+                        "verified_at": null,
+                        "warnings": [],
+                        "lifecycle": [],
+                        "matches": [],
+                        "phone_social": {
+                          "profiles_registered": 0,
+                          "profiles_checked": 3,
+                          "registered_platforms": []
+                        }
+                      },
+                      "vendor_data": null,
+                      "metadata": null,
                       "created_at": "2026-09-01T10:30:00.123456+00:00"
                     }
                   },
@@ -720,6 +811,9 @@
                           "name": "Example VoIP",
                           "type": "voip"
                         },
+                        "original_carrier": "Example Mobile UK",
+                        "is_ported": true,
+                        "is_valid": true,
                         "is_disposable": true,
                         "is_virtual": true,
                         "verification_method": null,
@@ -733,6 +827,7 @@
                           "phone_type_risk": "High",
                           "phone_trust_index": 28,
                           "network_stability_index": 40,
+                          "reachability": "unknown",
                           "is_disposable": true,
                           "is_ported": true,
                           "is_recently_ported": true,
@@ -751,6 +846,7 @@
                           "phone_type_risk": "High",
                           "phone_trust_index": 28,
                           "network_stability_index": 40,
+                          "reachability": "unknown",
                           "is_disposable": true,
                           "is_ported": true,
                           "is_recently_ported": true,
@@ -768,6 +864,39 @@
                       "vendor_data": "lead-124",
                       "metadata": null,
                       "created_at": "2026-09-01T10:30:00.123456+00:00"
+                    }
+                  },
+                  "Invalid number": {
+                    "summary": "Invalid number: the prefilter answers it, on every tier, at no charge",
+                    "value": {
+                      "request_id": "9f2c8d1e-7a4b-4c3d-9e8f-1a2b3c4d5e6f",
+                      "status": "Approved",
+                      "phone": {
+                        "status": "Approved",
+                        "phone_number_prefix": "+49",
+                        "phone_number": "1511234567",
+                        "full_number": "+491511234567",
+                        "country_code": "DE",
+                        "country_name": "Germany",
+                        "carrier": {
+                          "name": "",
+                          "type": "unknown"
+                        },
+                        "original_carrier": "",
+                        "is_ported": false,
+                        "is_valid": false,
+                        "is_disposable": false,
+                        "is_virtual": false,
+                        "verification_method": null,
+                        "verification_attempts": 0,
+                        "verified_at": null,
+                        "warnings": [],
+                        "lifecycle": [],
+                        "matches": []
+                      },
+                      "vendor_data": "lead-125",
+                      "metadata": null,
+                      "created_at": "2026-09-01T10:31:00.123456+00:00"
                     }
                   }
                 }
@@ -126033,8 +126162,19 @@
           "phone_number": {
             "type": "string",
             "maxLength": 20,
-            "description": "Phone number to score. It is validated and normalized to E.164.",
+            "description": "Phone number to score. Normalized to E.164 when it can be parsed; a number that cannot be parsed or is invalid is accepted and answered with `phone.is_valid: false`, not rejected.",
             "example": "+14155552671"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "risk",
+              "social"
+            ],
+            "default": "risk",
+            "description": "Lookup tier. `basic` ($0.006) reports line type, current carrier, porting status, country and validity. It identifies the original carrier and flags temporary numbers when that information is available. `risk` ($0.04, the default) adds the `phone_intelligence` block: the 0-100 risk score, reachability and network intelligence. `social` ($0.05) adds the `phone_social` block instead. An invalid number, or a fixed line where only mobile is allowed, is answered without a paid lookup and is not billed.",
+            "example": "basic"
           },
           "country_code": {
             "type": "string",
@@ -126058,7 +126198,7 @@
           "enable_social": {
             "type": "boolean",
             "default": false,
-            "description": "When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.",
+            "description": "On the `risk` tier only: when true, also return the `phone_social` block, billed as one `phone_social` unit ($0.05) on top of the $0.04 risk and intelligence lookup. To get the social profiles without the risk lookup, send `tier: \"social\"` instead.",
             "example": true
           }
         }
@@ -126323,6 +126463,17 @@
             "type": "number",
             "nullable": true,
             "description": "Stability of the line's network."
+          },
+          "reachability": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "reachable",
+              "unreachable",
+              "unknown",
+              null
+            ],
+            "description": "Whether the line could be reached on its network at the time of the lookup: `reachable`, `unreachable` or `unknown`. `null` when reachability was not checked."
           },
           "is_disposable": {
             "type": "boolean",
@@ -126680,7 +126831,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "description": "Carrier name. Empty string when the lookup could not identify it."
+                    "description": "Current carrier name. Empty string when the lookup could not identify it."
                   },
                   "type": {
                     "type": "string",
@@ -126688,9 +126839,22 @@
                   }
                 }
               },
+              "original_carrier": {
+                "type": "string",
+                "description": "Carrier that first issued the number, before any port. Empty string when the lookup could not identify it.",
+                "example": "Example Mobile"
+              },
+              "is_ported": {
+                "type": "boolean",
+                "description": "`true` when the number has moved from its original carrier to the current one."
+              },
+              "is_valid": {
+                "type": "boolean",
+                "description": "`true` when the number is a valid, dialable number for its country. An invalid number is answered by the prefilter and is not billed."
+              },
               "is_disposable": {
                 "type": "boolean",
-                "description": "`true` when the number belongs to a temporary or burner number service."
+                "description": "`true` when the lookup identifies the number as temporary. Coverage varies, so a negative flag alone cannot rule out a temporary number."
               },
               "is_virtual": {
                 "type": "boolean",
@@ -127152,7 +127316,7 @@
       "PhoneSocialFootprint": {
         "type": "object",
         "nullable": true,
-        "description": "Social footprint of the phone number: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal.",
+        "description": "Social footprint of the phone number: the online platforms it is registered on. Returned when a requested social check completes. Request it with `tier: \"social\"` on a Phone Risk lookup, or with `enable_social: true` on a risk-tier lookup or Phone Verification check. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal.",
         "properties": {
           "profiles_registered": {
             "type": "integer",
@@ -167608,14 +167772,6 @@
                 "value": {
                   "phone_number": [
                     "This field is required."
-                  ]
-                }
-              },
-              "Invalid phone number": {
-                "summary": "Invalid phone number",
-                "value": {
-                  "phone_number": [
-                    "Invalid phone number provided."
                   ]
                 }
               },

@@ -40,6 +40,9 @@ class PhoneIntelligence(BaseModel):
     network_stability_index: float | None = None
     """Stability of the line's network."""
 
+    reachability: Literal["reachable", "unreachable", "unknown"] | str | None = None
+    """Whether the line could be reached on its network at the time of the lookup: `reachable`, `unreachable` or `unknown`. `null` when reachability was not checked."""
+
     is_disposable: bool | None = None
     """`true` when the number looks disposable or virtual."""
 

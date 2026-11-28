@@ -12,7 +12,7 @@ __all__ = ["PhoneSocialFootprint"]
 
 
 class PhoneSocialFootprint(BaseModel):
-    """Social footprint of the phone number: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
+    """Social footprint of the phone number: the online platforms it is registered on. Returned when a requested social check completes. Request it with `tier: "social"` on a Phone Risk lookup, or with `enable_social: true` on a risk-tier lookup or Phone Verification check. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
 
     profiles_registered: int | None = None
     """Platforms where the phone number is confirmed registered."""

@@ -18,7 +18,7 @@ class PhoneRiskResponsePhoneCarrier(BaseModel):
     """Current network serving the number. `null` when the lookup could not resolve a carrier."""
 
     name: str | None = None
-    """Carrier name. Empty string when the lookup could not identify it."""
+    """Current carrier name. Empty string when the lookup could not identify it."""
 
     type: str | None = None
     """Line type reported by the lookup: `mobile`, `fixed_line`, `voip`, `isp`, `vpn`, `toll_free`, `premium_rate`, or similar."""
@@ -48,8 +48,17 @@ class PhoneRiskResponsePhone(BaseModel):
     carrier: PhoneRiskResponsePhoneCarrier | None = None
     """Current network serving the number. `null` when the lookup could not resolve a carrier."""
 
+    original_carrier: str | None = None
+    """Carrier that first issued the number, before any port. Empty string when the lookup could not identify it."""
+
+    is_ported: bool | None = None
+    """`true` when the number has moved from its original carrier to the current one."""
+
+    is_valid: bool | None = None
+    """`true` when the number is a valid, dialable number for its country. An invalid number is answered by the prefilter and is not billed."""
+
     is_disposable: bool | None = None
-    """`true` when the number belongs to a temporary or burner number service."""
+    """`true` when the lookup identifies the number as temporary. Coverage varies, so a negative flag alone cannot rule out a temporary number."""
 
     is_virtual: bool | None = None
     """`true` when the line type is virtual (`voip`, `isp`, or `vpn`)."""
@@ -79,7 +88,7 @@ class PhoneRiskResponsePhone(BaseModel):
     """Normalized phone-intelligence block. Present only when the intelligence add-on ran for this lookup; when present it is also exposed under the `enrichment` alias with identical values."""
 
     phone_social: PhoneSocialFootprint | None = None
-    """Social footprint of the phone number: the online platforms it is registered on. Present only when `enable_social` was set and the check completed. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
+    """Social footprint of the phone number: the online platforms it is registered on. Returned when a requested social check completes. Request it with `tier: "social"` on a Phone Risk lookup, or with `enable_social: true` on a risk-tier lookup or Phone Verification check. Every count may be null when no data was returned for it. `profiles_registered: 0` means the platforms were checked and the phone number was found on none of them - a valid, billable answer and a common synthetic-identity signal."""
 
 
 class PhoneRiskResponse(BaseModel):
