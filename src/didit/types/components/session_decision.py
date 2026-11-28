@@ -1542,7 +1542,7 @@ class SessionDecisionIdVerificationsParsedAddress(BaseModel):
 
 
 class SessionDecisionIdVerificationsWalletVerification(BaseModel):
-    """Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. UAE PASS (`provider` `uae_pass`) is outcome only: the identity fields of this ID verification (`full_name`, `first_name`, `last_name`, `date_of_birth`, `nationality`, the document numbers) stay `null`, `attributes` holds only whether each detail declared in `expected_details` matched, and nothing UAE PASS shared about the person is returned or kept."""
+    """Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. A UAE PASS sign-in (`provider` `uae_pass`) returns the verified identity like every other wallet: the identity fields of this ID verification carry what UAE PASS verified, and `attributes` holds its extra attributes."""
 
     provider: str | None = None
     """Catalog wallet id, e.g. `mitid`."""
@@ -1569,7 +1569,7 @@ class SessionDecisionIdVerificationsWalletVerification(BaseModel):
     """Whether the signed assertion the wallet returned validated."""
 
     attributes: dict[str, object] | None = None
-    """The attributes the wallet shared, keyed as the wallet's catalog entry lists them. For UAE PASS only the comparison with `expected_details`, one key per declared detail, each `match` or `no_match`: `name_match` (`first_name` / `last_name`), `date_of_birth_match` and `identification_number_match` (the Emirates ID number). A declared detail that does not match also raises the expected-details warning (`FULL_NAME_MISMATCH_WITH_PROVIDED`, `DOB_MISMATCH_WITH_PROVIDED` or `IDENTIFICATION_NUMBER_MISMATCH_WITH_PROVIDED`), handled by the workflow's expected-details mismatch action."""
+    """The attributes the wallet shared, keyed as the wallet's catalog entry lists them. A UAE PASS sign-in returns the verified identity attributes `name_ar`, `emirates_id_number` (absent for visitors), `nationality`, `gender`, `document_type`, `document_issue_date`, `document_expiry_date` and `user_type` (`SOP2` or `SOP3`), alongside the normalized `full_name` and `date_of_birth`, and never the UAE PASS UUID. Declared `expected_details` stay optional: when a session declares them, a verified identity that contradicts them raises the expected-details warning (`FULL_NAME_MISMATCH_WITH_PROVIDED`, `DOB_MISMATCH_WITH_PROVIDED` or `IDENTIFICATION_NUMBER_MISMATCH_WITH_PROVIDED`), handled by the workflow's expected-details mismatch action."""
 
     portrait: str | None = None
     """Short-lived presigned URL to the portrait the wallet shared, where it shares one."""
@@ -1643,7 +1643,7 @@ class SessionDecisionIdVerifications(BaseModel):
     """Registry evidence. Present only when `verification_method` is `id_lookup`; `null` otherwise."""
 
     wallet_verification: SessionDecisionIdVerificationsWalletVerification | None = None
-    """Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. UAE PASS (`provider` `uae_pass`) is outcome only: the identity fields of this ID verification (`full_name`, `first_name`, `last_name`, `date_of_birth`, `nationality`, the document numbers) stay `null`, `attributes` holds only whether each detail declared in `expected_details` matched, and nothing UAE PASS shared about the person is returned or kept."""
+    """Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. A UAE PASS sign-in (`provider` `uae_pass`) returns the verified identity like every other wallet: the identity fields of this ID verification carry what UAE PASS verified, and `attributes` holds its extra attributes."""
 
     status: Literal["Not Finished", "Approved", "Declined", "In Review", "Expired"] | str | None = (
         None

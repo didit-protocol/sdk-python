@@ -38,6 +38,7 @@ class DigitalIdWalletApiWalletVerificationResult(BaseModel):
     """
 
     error: str | None
+    """Stable machine-readable code when the sign-in did not complete. For UAE PASS, `client_changed` means the application's own UAE PASS client was disabled, deleted or replaced while the person was signing in: the sign-in fails and the workflow's fallback applies."""
 
     interaction: DigitalIdWalletApiInteractionEnum
 
@@ -50,6 +51,7 @@ class DigitalIdWalletApiWalletVerificationResult(BaseModel):
     identity: DigitalIdWalletApiWalletIdentity | None
 
     attributes: dict[str, object] | None
+    """The attributes the wallet shared, keyed as the wallet's catalog entry lists them. A UAE PASS sign-in returns the verified identity attributes `name_ar`, `emirates_id_number` (absent for visitors), `nationality`, `gender`, `document_type`, `document_issue_date`, `document_expiry_date` and `user_type` (`SOP2` or `SOP3`), alongside the normalized `full_name` and `date_of_birth`, and never the UAE PASS UUID."""
 
     level_of_assurance: str | None
 
