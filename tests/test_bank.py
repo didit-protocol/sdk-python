@@ -1,8 +1,15 @@
 """Bank data through the public client: the contract's amount, id and error rules
-(docs/DESIGN.md section 16)."""
+(docs/DESIGN.md section 16), and the ``examples/bank_wait_for_connection.py`` example
+run against recorded responses and signed deliveries."""
 
 from __future__ import annotations
 
+import copy
+import importlib.util
+import json
+import pathlib
+import sys
+from types import ModuleType
 from typing import Any
 
 import httpx
@@ -16,6 +23,33 @@ from didit.types.components.bank_link import BankLink
 from tests.mock_api import API_KEY, MockAPI
 
 CONNECTION = "c0a80104-1111-4111-8111-111111111111"
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SPEC: dict[str, Any] = json.loads((ROOT / "openapi" / "verification.json").read_text("utf-8"))
+DELIVERIES: list[dict[str, Any]] = json.loads(
+    (ROOT / "tests" / "fixtures" / "bank-deliveries.json").read_text("utf-8")
+)
+
+
+def _load_example() -> ModuleType:
+    path = ROOT / "examples" / "bank_wait_for_connection.py"
+    spec = importlib.util.spec_from_file_location("bank_wait_for_connection", path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+EXAMPLE = _load_example()
+
+
+def _spec_example(path: str, name: str) -> dict[str, Any]:
+    """A response example recorded in the OpenAPI document (a deep copy, safe to edit)."""
+    content = SPEC["paths"][path]["get"]["responses"]["200"]["content"]["application/json"]
+    value: dict[str, Any] = content["examples"][name]["value"]
+    return copy.deepcopy(value)
 
 
 def _balance(amount: Any) -> dict[str, Any]:
@@ -176,3 +210,62 @@ def test_a_full_access_key_is_refused_with_the_documented_code() -> None:
     with pytest.raises(didit.PermissionDeniedError) as info:
         client.bank.list_accounts(CONNECTION)
     assert info.value.request_id == "req_full_access"
+
+
+@pytest.mark.parametrize("delivery", DELIVERIES, ids=[d["name"] for d in DELIVERIES])
+def test_the_example_handler_verifies_every_bank_delivery(
+    delivery: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("didit.webhooks._verify.time.time", lambda: float(delivery["now"]))
+    body = json.loads(delivery["body"])
+    connection_id = EXAMPLE.connection_from_webhook(
+        delivery["body"].encode(), delivery["headers"], delivery["secret"]
+    )
+    # Only bank.connection.created hands back a connection id; every other bank.* event
+    # still verifies (no exception) and is ignored.
+    if body["webhook_type"] == "bank.connection.created":
+        assert connection_id == body["connection_id"]
+    else:
+        assert connection_id is None
+
+
+def test_the_example_handler_refuses_a_tampered_delivery(monkeypatch: pytest.MonkeyPatch) -> None:
+    delivery = next(d for d in DELIVERIES if d["name"] == "bank_connection_created")
+    monkeypatch.setattr("didit.webhooks._verify.time.time", lambda: float(delivery["now"]))
+    tampered = delivery["body"].replace("cccccccc-0000", "eeeeeeee-0000").encode()
+    with pytest.raises(didit.webhooks.WebhookVerificationError):
+        EXAMPLE.connection_from_webhook(tampered, delivery["headers"], delivery["secret"])
+
+
+def test_the_example_waits_for_the_link_then_the_first_sync(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(EXAMPLE.time, "sleep", lambda _seconds: None)
+    completed = _spec_example("/v3/bank/links/{id}/", "Completed")
+    pending = {**completed, "status": "pending", "connection_id": None}
+    active = _spec_example("/v3/bank/connections/{id}/", "Active ongoing connection")
+    syncing = copy.deepcopy(active)
+    syncing["status"] = "pending"
+    syncing["sync"]["initial_status"] = "pending"
+    syncing["sync"]["initial_complete"] = False
+    api = MockAPI().json(200, pending).json(200, completed).json(200, syncing).json(200, active)
+
+    connection = EXAMPLE.wait_for_connection(api.client(), completed["id"], interval=0)
+
+    assert isinstance(connection, BankConnection)
+    assert connection.id == completed["connection_id"]
+    assert connection.sync is not None
+    assert connection.sync.initial_complete is True
+    assert [r.url.path for r in api.requests] == [
+        f"/v3/bank/links/{completed['id']}/",
+        f"/v3/bank/links/{completed['id']}/",
+        f"/v3/bank/connections/{completed['connection_id']}/",
+        f"/v3/bank/connections/{completed['connection_id']}/",
+    ]
+
+
+def test_the_example_stops_when_the_link_ends_without_a_connection() -> None:
+    completed = _spec_example("/v3/bank/links/{id}/", "Completed")
+    api = MockAPI().json(200, {**completed, "status": "expired", "connection_id": None})
+    with pytest.raises(RuntimeError, match="ended expired"):
+        EXAMPLE.wait_for_connection(api.client(), completed["id"], interval=0)
