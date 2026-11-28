@@ -1,0 +1,699 @@
+# Changelog
+
+## [1.57.0](https://github.com/didit-protocol/sdk-python/compare/v1.56.0...v1.57.0) (2026-11-28)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-28 ([a8debbc](https://github.com/didit-protocol/sdk-python/commit/a8debbcdd0a769c5d822439215705a5d34ea6000))
+
+## [1.56.0](https://github.com/didit-protocol/sdk-python/compare/v1.55.0...v1.56.0) (2026-11-27)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-27 ([ea90360](https://github.com/didit-protocol/sdk-python/commit/ea90360ca2e1e05b056a20acde679b53c33b20cd))
+
+## [1.55.0](https://github.com/didit-protocol/sdk-python/compare/v1.54.0...v1.55.0) (2026-11-26)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-26 ([7563f80](https://github.com/didit-protocol/sdk-python/commit/7563f80277097b1956e254cd45356a0007d8d31f))
+
+## [1.54.0](https://github.com/didit-protocol/sdk-python/compare/v1.53.0...v1.54.0) (2026-11-26)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-26 ([4f85768](https://github.com/didit-protocol/sdk-python/commit/4f857682c847d1dc7e4ab1c0d9bf0f3160322f7e))
+
+## [1.53.0](https://github.com/didit-protocol/sdk-python/compare/v1.52.0...v1.53.0) (2026-11-26)
+
+
+### Features
+
+* **webhooks:** Bank link and connection event fields (renews_connection_id, status_reason, ends_at, unpaid) in the hand-written webhook events [sdk-python] ([#176](https://github.com/didit-protocol/sdk-python/issues/176)) ([10ccc04](https://github.com/didit-protocol/sdk-python/commit/10ccc04ca089857253409e2466a799511d49a69d))
+
+## [1.52.0](https://github.com/didit-protocol/sdk-python/compare/v1.51.0...v1.52.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+
+
+### API changes that can break typed code
+
+* **spec:** `GET /v1/sandbox/scenarios/` response `sample_identity.documents[].document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+* **spec:** `GET /v3/sessions/` query parameter `document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+* **spec:** `POST /v3/sessions/delete/` request body `filter_document_name`: removed ([db00e30](https://github.com/didit-protocol/sdk-python/commit/db00e30bf62d23eb98709b99021f61c50f4c3ce4))
+
+## [1.51.0](https://github.com/didit-protocol/sdk-python/compare/v1.50.0...v1.51.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([a446ec4](https://github.com/didit-protocol/sdk-python/commit/a446ec42b8663cfa64976b69e58692fae67a3786))
+
+## [1.50.0](https://github.com/didit-protocol/sdk-python/compare/v1.49.0...v1.50.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([70d635f](https://github.com/didit-protocol/sdk-python/commit/70d635f798a57d8c07d822be2683a1f7bc49fb9c))
+
+## [1.49.0](https://github.com/didit-protocol/sdk-python/compare/v1.48.0...v1.49.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([837189b](https://github.com/didit-protocol/sdk-python/commit/837189b981c3e373836f8e03bd5716d092585812))
+
+## [1.48.0](https://github.com/didit-protocol/sdk-python/compare/v1.47.0...v1.48.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([573d9a1](https://github.com/didit-protocol/sdk-python/commit/573d9a11a9fa3bcb8f76a432cd8ef3d6d61f64e4))
+
+## [1.47.0](https://github.com/didit-protocol/sdk-python/compare/v1.46.0...v1.47.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([1aafe0c](https://github.com/didit-protocol/sdk-python/commit/1aafe0cc5e9a05092baad21f09a24c119530bf60))
+
+## [1.46.0](https://github.com/didit-protocol/sdk-python/compare/v1.45.0...v1.46.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([e954d6e](https://github.com/didit-protocol/sdk-python/commit/e954d6e821fe6f4906d2ecfe8d4b0695603efab2))
+
+## [1.45.0](https://github.com/didit-protocol/sdk-python/compare/v1.44.0...v1.45.0) (2026-11-25)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-25 ([096cc98](https://github.com/didit-protocol/sdk-python/commit/096cc98f3ed275a555e418c4a2fefc13a1c9f242))
+
+## [1.44.0](https://github.com/didit-protocol/sdk-python/compare/v1.43.0...v1.44.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([7cd305b](https://github.com/didit-protocol/sdk-python/commit/7cd305bcb769fe90b2df525363fd1fdf7df732ed))
+
+## [1.43.0](https://github.com/didit-protocol/sdk-python/compare/v1.42.0...v1.43.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([46e24c7](https://github.com/didit-protocol/sdk-python/commit/46e24c712478331c6baca56ffa75a2c4b8468369))
+
+## [1.42.0](https://github.com/didit-protocol/sdk-python/compare/v1.41.0...v1.42.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([498b6f5](https://github.com/didit-protocol/sdk-python/commit/498b6f58cab08705c0f3f2ca45f4ee21b0a1b27a))
+
+## [1.41.0](https://github.com/didit-protocol/sdk-python/compare/v1.40.0...v1.41.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([21091fc](https://github.com/didit-protocol/sdk-python/commit/21091fcd3e569c7b0617e379f6f4d7650f20d75d))
+
+## [1.40.0](https://github.com/didit-protocol/sdk-python/compare/v1.39.0...v1.40.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([61f3b31](https://github.com/didit-protocol/sdk-python/commit/61f3b315c6b9d48ab4da609cdfaf59db984e38d5))
+
+## [1.39.0](https://github.com/didit-protocol/sdk-python/compare/v1.38.0...v1.39.0) (2026-11-24)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-24 ([143fe61](https://github.com/didit-protocol/sdk-python/commit/143fe61cb0232f246b23022c6cb350a3dcc166c6))
+
+## [1.38.0](https://github.com/didit-protocol/sdk-python/compare/v1.37.0...v1.38.0) (2026-11-23)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-23 ([38450ac](https://github.com/didit-protocol/sdk-python/commit/38450aceeec18c455b962720e25796ad5e21ae06))
+
+## [1.37.0](https://github.com/didit-protocol/sdk-python/compare/v1.36.0...v1.37.0) (2026-11-23)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-23 ([6c6ff1c](https://github.com/didit-protocol/sdk-python/commit/6c6ff1cc4f2b454aa23415817e452442481cae08))
+
+## [1.36.0](https://github.com/didit-protocol/sdk-python/compare/v1.35.0...v1.36.0) (2026-11-23)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-23 ([258fe8b](https://github.com/didit-protocol/sdk-python/commit/258fe8b8bde017acb7ad3b72b4fb423e24193664))
+
+## [1.35.0](https://github.com/didit-protocol/sdk-python/compare/v1.34.0...v1.35.0) (2026-11-23)
+
+
+### Features
+
+* **bank:** typed bank.* webhook events ([#119](https://github.com/didit-protocol/sdk-python/issues/119)) ([5d21a9a](https://github.com/didit-protocol/sdk-python/commit/5d21a9a783fdededa77379686671cdca71faf224))
+
+## [1.34.0](https://github.com/didit-protocol/sdk-python/compare/v1.33.0...v1.34.0) (2026-11-22)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-22 ([21b4344](https://github.com/didit-protocol/sdk-python/commit/21b43449b3bf9086f9b0ffea742ff6eef5999680))
+
+## [1.33.0](https://github.com/didit-protocol/sdk-python/compare/v1.32.0...v1.33.0) (2026-11-22)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-21 ([43d4f8f](https://github.com/didit-protocol/sdk-python/commit/43d4f8f7b15f71f88fd65c5b5485ac6df607151b))
+* **spec:** sync API spec 2026-11-21 ([9ae8616](https://github.com/didit-protocol/sdk-python/commit/9ae8616905b4d551a7436db4f9fe39c231b4c112))
+* **spec:** sync API spec 2026-11-21 ([72d8a6a](https://github.com/didit-protocol/sdk-python/commit/72d8a6a223782aef743750c124dd6a18e6e2a3a9))
+* **spec:** sync API spec 2026-11-21 ([4123279](https://github.com/didit-protocol/sdk-python/commit/41232799be3b355ebab9e2ac5afd2cd3f79c6d3b))
+* **spec:** sync API spec 2026-11-21 ([4b3344c](https://github.com/didit-protocol/sdk-python/commit/4b3344cea0371b8d2b66673016114d51998b367b))
+* **spec:** sync API spec 2026-11-21 ([3538825](https://github.com/didit-protocol/sdk-python/commit/3538825ff2fc5d48a59d769b20b525b47db21955))
+
+## [1.32.0](https://github.com/didit-protocol/sdk-python/compare/v1.31.0...v1.32.0) (2026-11-21)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-21 ([8a34d0b](https://github.com/didit-protocol/sdk-python/commit/8a34d0b371258e1b233a25333c7223c23e93dd26))
+
+## [1.31.0](https://github.com/didit-protocol/sdk-python/compare/v1.30.1...v1.31.0) (2026-11-21)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-21 ([72d8007](https://github.com/didit-protocol/sdk-python/commit/72d8007541969264bbe3cd1af7cf25d8343419be))
+
+## [1.30.1](https://github.com/didit-protocol/sdk-python/compare/v1.30.0...v1.30.1) (2026-11-21)
+
+
+### Documentation
+
+* **design:** API key on account_base_url for authentication_setup ([#109](https://github.com/didit-protocol/sdk-python/issues/109)) ([4004d1b](https://github.com/didit-protocol/sdk-python/commit/4004d1bbc7847ddba425741126f82a2f323e9055))
+
+## [1.30.0](https://github.com/didit-protocol/sdk-python/compare/v1.29.0...v1.30.0) (2026-11-20)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-20 ([13fd817](https://github.com/didit-protocol/sdk-python/commit/13fd817f2b1c3a1bbae3bf23353f9adce8c8657c))
+
+## [1.29.0](https://github.com/didit-protocol/sdk-python/compare/v1.28.0...v1.29.0) (2026-11-19)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-19 ([33edd92](https://github.com/didit-protocol/sdk-python/commit/33edd927353ebb4fc550a6c1e09e4a03a9aea815))
+
+## [1.28.0](https://github.com/didit-protocol/sdk-python/compare/v1.27.0...v1.28.0) (2026-11-19)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-19 ([3e60b94](https://github.com/didit-protocol/sdk-python/commit/3e60b94db7a5422b6029f3cbd36091d5a5e858f2))
+
+## [1.27.0](https://github.com/didit-protocol/sdk-python/compare/v1.26.0...v1.27.0) (2026-11-18)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-18 ([1834268](https://github.com/didit-protocol/sdk-python/commit/1834268ab10ecfebff3ebed0cca2939c98ecd57a))
+
+## [1.26.0](https://github.com/didit-protocol/sdk-python/compare/v1.25.0...v1.26.0) (2026-11-17)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-17 ([ea56710](https://github.com/didit-protocol/sdk-python/commit/ea56710bf7896b6c38d24a09cefd525e568ae009))
+
+## [1.25.0](https://github.com/didit-protocol/sdk-python/compare/v1.24.0...v1.25.0) (2026-11-16)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-16 ([f564d3b](https://github.com/didit-protocol/sdk-python/commit/f564d3b8321618ad8b711e308b20237fe1a8bd1e))
+
+## [1.24.0](https://github.com/didit-protocol/sdk-python/compare/v1.23.1...v1.24.0) (2026-11-16)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-16 ([64f80d8](https://github.com/didit-protocol/sdk-python/commit/64f80d80d012b69cf6f9f0002b3a7dfba1e7c8c9))
+
+## [1.23.1](https://github.com/didit-protocol/sdk-python/compare/v1.23.0...v1.23.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* an idempotency key neither starts nor ends with a space ([#85](https://github.com/didit-protocol/sdk-python/issues/85)) ([b02e024](https://github.com/didit-protocol/sdk-python/commit/b02e02435ac46ed7d1e82187fb399d8bc0395a74))
+
+## [1.23.0](https://github.com/didit-protocol/sdk-python/compare/v1.22.0...v1.23.0) (2026-11-14)
+
+
+### Features
+
+* per-request idempotency key ([#64](https://github.com/didit-protocol/sdk-python/issues/64)) ([5e05d60](https://github.com/didit-protocol/sdk-python/commit/5e05d60066bbe8623a3f278195aaab1552e5603c))
+
+## [1.22.0](https://github.com/didit-protocol/sdk-python/compare/v1.21.0...v1.22.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([097f2fd](https://github.com/didit-protocol/sdk-python/commit/097f2fde9fad5fed72d9403c0ba9206bf86f25be))
+
+## [1.21.0](https://github.com/didit-protocol/sdk-python/compare/v1.20.0...v1.21.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([f5ad519](https://github.com/didit-protocol/sdk-python/commit/f5ad51963faf6f2023da372c1689c8e885c53d3f))
+
+## [1.20.0](https://github.com/didit-protocol/sdk-python/compare/v1.19.0...v1.20.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([65e6374](https://github.com/didit-protocol/sdk-python/commit/65e63746e2e1d74e5a4b322f6a1bb0739eab5914))
+
+## [1.19.0](https://github.com/didit-protocol/sdk-python/compare/v1.18.0...v1.19.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([3a5ad77](https://github.com/didit-protocol/sdk-python/commit/3a5ad77c3574926669ab405e3bb7d2b02536402d))
+
+
+### Documentation
+
+* add polling and reconciliation examples ([#70](https://github.com/didit-protocol/sdk-python/issues/70)) ([3b6c79a](https://github.com/didit-protocol/sdk-python/commit/3b6c79a7ec57f20ea8e3b2f02acdee57e8df7ede))
+
+## [1.18.0](https://github.com/didit-protocol/sdk-python/compare/v1.17.0...v1.18.0) (2026-11-14)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-14 ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+
+
+### API changes that can break typed code
+
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/networks/` response `networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/settings/` response `networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `GET /v3/travel-rule/workspace/` response `settings.networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/billing/` response `settings.networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/claim/` response `settings.networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/confirm/` response `settings.networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `POST /v3/travel-rule/workspace/domain/dns/` response `settings.networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.gtr.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.sygna.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.trust.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.connected`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.platform_available`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.reason`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.routed_30d`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.state`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+* **spec:** `PUT /v3/travel-rule/settings/` response `networks.verifyvasp.vasps_reachable`: can now be null ([675258d](https://github.com/didit-protocol/sdk-python/commit/675258d98fb5ac398859f239c2804c02dba0340a))
+
+## [1.17.0](https://github.com/didit-protocol/sdk-python/compare/v1.16.0...v1.17.0) (2026-11-13)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-13 ([43624f1](https://github.com/didit-protocol/sdk-python/commit/43624f19a355d5f936a12c7150546159d52f5226))
+
+## [1.16.0](https://github.com/didit-protocol/sdk-python/compare/v1.15.0...v1.16.0) (2026-11-13)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-13 ([d88361a](https://github.com/didit-protocol/sdk-python/commit/d88361aa32db0280680943c3eb0c1b61e61d3783))
+
+## [1.15.0](https://github.com/didit-protocol/sdk-python/compare/v1.14.1...v1.15.0) (2026-11-12)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-12 ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+
+
+### API changes that can break typed code
+
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/` request body `links[].entity_type`: added (required) ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/` request body `links[].entity_uuid`: added (required) ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+* **spec:** `POST /v3/organization/{organization_id}/application/{application_id}/cases/blueprints/{blueprint_uuid}/publish/` response `content_config`: type changed from any to object ([4d3fd44](https://github.com/didit-protocol/sdk-python/commit/4d3fd445dd789d5b24a6954987254014265cec03))
+
+## [1.14.1](https://github.com/didit-protocol/sdk-python/compare/v1.14.0...v1.14.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **authentication:** a body nested past the depth limit is not JSON ([77e8fbb](https://github.com/didit-protocol/sdk-python/commit/77e8fbb883f666c727dd1cf5adf49d06057075f5))
+* **authentication:** a consent validation error is raised outside the except block, so no parser context ([572a62a](https://github.com/didit-protocol/sdk-python/commit/572a62a3c2ed235834af38f883c02053555d264a))
+* **authentication:** a failure to encode a consent request has a fixed message ([dee0b02](https://github.com/didit-protocol/sdk-python/commit/dee0b02bdd3abd76d54fdeef6361f8dead001912))
+* **authentication:** a malformed 2xx consent error keeps no parser exception as its cause ([82ec3ee](https://github.com/didit-protocol/sdk-python/commit/82ec3ee437ff05f9d00283917e52799a544ea0e5))
+* **authentication:** a malformed 2xx consent message reads the content type from the sanitized response ([97ab037](https://github.com/didit-protocol/sdk-python/commit/97ab037fc4d8684c201711016e96a60d5a6462ff))
+* **authentication:** collect consent secrets from the JSON the request carries ([c92755b](https://github.com/didit-protocol/sdk-python/commit/c92755b1cfef53dd5c670e02a093e9bbcc0ae2b9))
+* **authentication:** keep the redacted body on the error response ([df2df88](https://github.com/didit-protocol/sdk-python/commit/df2df881dd16a95ab4e907ce34d34d014a9c22aa))
+* **authentication:** read consent secrets from the bytes that were sent ([28fc93d](https://github.com/didit-protocol/sdk-python/commit/28fc93de9fcdea23e8413b91bb0b57c7c4152f98))
+* **authentication:** redact the parsed agent-consent response structurally ([2c8ccc6](https://github.com/didit-protocol/sdk-python/commit/2c8ccc6819f5f51a05f04534eeb964eea14c28e8))
+* **authentication:** redact the parsed agent-consent response, not its raw text ([bead54b](https://github.com/didit-protocol/sdk-python/commit/bead54bd7d61c5f727a5f67243c3f8988b191271))
+* **authentication:** sanitize the whole consent response once on receipt ([3de0743](https://github.com/didit-protocol/sdk-python/commit/3de07439ef011443ebb46a09445acdbaa5c0eca7))
+* **authentication:** successful consent responses reach the caller unchanged; fold header-name case ([fba4d2c](https://github.com/didit-protocol/sdk-python/commit/fba4d2cf52654bafa8080cdc2c20e2ddb5f1c5c2))
+* **authentication:** the debug log of a consent call never records a raw request id ([83279a3](https://github.com/didit-protocol/sdk-python/commit/83279a39b8584a65a06090bc4b5145ccc217e745))
+* **authentication:** treat only assertion strings of 16+ characters as secrets ([49554e5](https://github.com/didit-protocol/sdk-python/commit/49554e59c54cfcabdd5358911919825c14a4aa51))
+* **authentication:** withhold transport text, redact empty bodies, headers and request id, keep safe key names ([cf51bff](https://github.com/didit-protocol/sdk-python/commit/cf51bff3855c7f9f64e70325ba6a40265448f8cd))
+
+
+### Documentation
+
+* **authentication:** cite why the secret length minimum is 16 ([02063ff](https://github.com/didit-protocol/sdk-python/commit/02063ffe9b8306cbcd9d73bf76c0f1cc985d6794))
+
+## [1.14.0](https://github.com/didit-protocol/sdk-python/compare/v1.13.0...v1.14.0) (2026-11-11)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-11 ([78b9dee](https://github.com/didit-protocol/sdk-python/commit/78b9dee80e49f3828de7e303056481fa73c005ae))
+
+## [1.13.0](https://github.com/didit-protocol/sdk-python/compare/v1.12.0...v1.13.0) (2026-11-11)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-11 ([e9b9d77](https://github.com/didit-protocol/sdk-python/commit/e9b9d77c6d52ebd3a3e9fd8f7d0a340bb0e8b85a))
+
+## [1.12.0](https://github.com/didit-protocol/sdk-python/compare/v1.11.0...v1.12.0) (2026-11-11)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-11 ([1b78ec9](https://github.com/didit-protocol/sdk-python/commit/1b78ec93d97bdfc80cd674dedd808f56c1148762))
+* **spec:** sync API spec 2026-11-11 ([c6b5e05](https://github.com/didit-protocol/sdk-python/commit/c6b5e05bf1ce02ad4cbc04ebbd040c1314c4bfde))
+* **spec:** sync API spec 2026-11-11 ([f9f3b7b](https://github.com/didit-protocol/sdk-python/commit/f9f3b7b80d56ed047b8eb5bc4d76bd8167306daf))
+* **spec:** sync API spec 2026-11-11 ([8c0f3d6](https://github.com/didit-protocol/sdk-python/commit/8c0f3d6cb5967a8c4110d2daa8d52947872970e5))
+* **spec:** sync API spec 2026-11-11 ([6afd5d6](https://github.com/didit-protocol/sdk-python/commit/6afd5d69d337b406ced218d03e9bf2dab34323c8))
+* **spec:** sync API spec 2026-11-11 ([f678c74](https://github.com/didit-protocol/sdk-python/commit/f678c7469143aae112f79f3d15f7f8611431289a))
+* **spec:** sync API spec 2026-11-11 ([e2a48d6](https://github.com/didit-protocol/sdk-python/commit/e2a48d6331b7f9c9536ada78bbee5984994a57b0))
+
+## [1.11.0](https://github.com/didit-protocol/sdk-python/compare/v1.10.0...v1.11.0) (2026-11-11)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([167f81d](https://github.com/didit-protocol/sdk-python/commit/167f81de1f285ff97a7b063a7d02977864c6f59d))
+
+## [1.10.0](https://github.com/didit-protocol/sdk-python/compare/v1.9.0...v1.10.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([c5921a2](https://github.com/didit-protocol/sdk-python/commit/c5921a22d28dda375cd1afe2f785871b647cbdf5))
+
+## [1.9.0](https://github.com/didit-protocol/sdk-python/compare/v1.8.0...v1.9.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([6096396](https://github.com/didit-protocol/sdk-python/commit/60963969c2ad20c34b04b34c065d09638414192f))
+
+## [1.8.0](https://github.com/didit-protocol/sdk-python/compare/v1.7.0...v1.8.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([9072530](https://github.com/didit-protocol/sdk-python/commit/90725308fc022876610f5e6fac127b600a2b0349))
+
+## [1.7.0](https://github.com/didit-protocol/sdk-python/compare/v1.6.0...v1.7.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([3ed25f7](https://github.com/didit-protocol/sdk-python/commit/3ed25f732180093447287be5007b33c628671464))
+
+## [1.6.0](https://github.com/didit-protocol/sdk-python/compare/v1.5.0...v1.6.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([98fcbf0](https://github.com/didit-protocol/sdk-python/commit/98fcbf09fd15d368beb599dde9646d850a552ba9))
+
+## [1.5.0](https://github.com/didit-protocol/sdk-python/compare/v1.4.0...v1.5.0) (2026-11-10)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-10 ([887224a](https://github.com/didit-protocol/sdk-python/commit/887224a2d43af4bdd8da15f971e671ed1e327ca7))
+
+## [1.4.0](https://github.com/didit-protocol/sdk-python/compare/v1.3.0...v1.4.0) (2026-11-09)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-09 ([02e68b7](https://github.com/didit-protocol/sdk-python/commit/02e68b7f2de08dd562268776e5da31dd519057f6))
+
+## [1.3.0](https://github.com/didit-protocol/sdk-python/compare/v1.2.0...v1.3.0) (2026-11-07)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-07 ([f3e55db](https://github.com/didit-protocol/sdk-python/commit/f3e55dbb5bf009106362f4fcd9138210785ee35a))
+
+## [1.2.0](https://github.com/didit-protocol/sdk-python/compare/v1.1.0...v1.2.0) (2026-11-07)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-07 ([e579e0b](https://github.com/didit-protocol/sdk-python/commit/e579e0be6b28600e9a3bd556f1edbaf20e255714))
+
+## [1.1.0](https://github.com/didit-protocol/sdk-python/compare/v1.0.2...v1.1.0) (2026-11-05)
+
+
+### Features
+
+* **spec:** sync API spec 2026-11-05 (application data location) ([7d8d3d0](https://github.com/didit-protocol/sdk-python/commit/7d8d3d0ecb0adcbe865f2bb4cad2a7263b712182))
+
+## [1.0.2](https://github.com/didit-protocol/sdk-python/compare/v1.0.1...v1.0.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **codegen:** array file fields in generated tests, lazy session decision in webhook events ([5ebc470](https://github.com/didit-protocol/sdk-python/commit/5ebc4700c6fe58fc1ab3a366cc196d46e237a08d))
+* **webhooks:** resolve the session decision lazily at schema build ([151b5e6](https://github.com/didit-protocol/sdk-python/commit/151b5e61138656e6bd0c378ce0d89c4b277a8944))
+
+## [1.0.1](https://github.com/didit-protocol/sdk-python/compare/v1.0.0...v1.0.1) (2026-10-29)
+
+
+### Miscellaneous Chores
+
+* release 1.0.1 ([6922b70](https://github.com/didit-protocol/sdk-python/commit/6922b7080f345870855483e367a60ec514957cff))
+
+## [1.0.0](https://github.com/didit-protocol/sdk-python/compare/v0.1.0...v1.0.0) (2026-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **spec:** the API spec sync changes the SDK surface (nullable fields, removed fields, account.organizations.list returns a page, the session decision response is the SessionDecision component).
+
+### Features
+
+* add bank.account_check (POST /v3/bank/account-check/) and bank_verifications on the decision ([5a66ae8](https://github.com/didit-protocol/sdk-python/commit/5a66ae86ba4fa01dfab37dbe8b7427897e21d969))
+* **spec:** sync API spec 2026-10-23 ([#3](https://github.com/didit-protocol/sdk-python/issues/3)) ([9003159](https://github.com/didit-protocol/sdk-python/commit/90031599f86279be5d19e977acc0ff023b9f9f92))
+* **spec:** sync API spec 2026-10-27 ([#9](https://github.com/didit-protocol/sdk-python/issues/9)) ([f17911b](https://github.com/didit-protocol/sdk-python/commit/f17911bd1146cae17ac8a2d638bf39ca5f364c35))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([b1cd3b0](https://github.com/didit-protocol/sdk-python/commit/b1cd3b0c3465a995b4ad3d36c2ac390f2a03a725))
