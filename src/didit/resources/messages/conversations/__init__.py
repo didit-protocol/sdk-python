@@ -131,6 +131,8 @@ class MessagesConversations(SyncAPIResource):
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
 
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
+
         ``PATCH /v3/messages/conversations/{conversation_id}/``
 
         Args:
@@ -254,6 +256,8 @@ class AsyncMessagesConversations(AsyncAPIResource):
         Assign the conversation to a member or unassign it, open or close it, and mark it read up to a message. A field left out keeps its value; closing only takes the thread out of the open list, and opening it puts it back.
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
+
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
 
         ``PATCH /v3/messages/conversations/{conversation_id}/``
 

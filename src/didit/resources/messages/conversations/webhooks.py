@@ -65,6 +65,8 @@ class MessagesConversationsWebhooks(SyncAPIResource):
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
 
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
+
         ``POST /v3/messages/conversations/{conversation_id}/webhooks/``
 
         Args:
@@ -110,6 +112,8 @@ class MessagesConversationsWebhooks(SyncAPIResource):
         Remove one of a conversation's webhook subscriptions: deliveries to its URL stop. Other subscriptions, and the conversation itself, are not touched.
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
+
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
 
         ``DELETE /v3/messages/conversations/{conversation_id}/webhooks/{webhook_id}/``
 
@@ -176,6 +180,8 @@ class AsyncMessagesConversationsWebhooks(AsyncAPIResource):
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
 
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
+
         ``POST /v3/messages/conversations/{conversation_id}/webhooks/``
 
         Args:
@@ -221,6 +227,8 @@ class AsyncMessagesConversationsWebhooks(AsyncAPIResource):
         Remove one of a conversation's webhook subscriptions: deliveries to its URL stop. Other subscriptions, and the conversation itself, are not touched.
 
         A scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.
+
+        The stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.
 
         ``DELETE /v3/messages/conversations/{conversation_id}/webhooks/{webhook_id}/``
 
