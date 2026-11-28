@@ -65600,7 +65600,7 @@
           "auth": "api_key",
           "server": true
         },
-        "description": "UAE PASS (UAE Digital Government Authority; ARE) never returns an identity: it only confirms whether the details you declared for your user (expected_details: name, date of birth, Emirates ID number) match, so it runs only inside a verification session created with expected_details. This endpoint never starts it and always answers 403 wallet_unavailable, sandbox applications included.",
+        "description": "Start a UAE PASS sign-in (UAE Digital Government Authority; ARE) without any workflow. Billed once, only when the identity is verified. The response carries next_action.type=redirect with the URL to send the user's browser to; the user returns to return_url with request_id and result appended. Read the outcome with GET /v3/id-verification/wallets/verifications/{request_id}/ or from the webhook, never from the URL. Sandbox applications get a deterministic simulation (simulated: true) that never contacts the provider. Requires onboarding: UAE PASS signs people in with your own UAE PASS service provider account, which Didit sets up for you; until it is active this endpoint answers 403 wallet_unavailable (sandbox applications are not affected).",
         "summary": "Start UAE PASS verification",
         "parameters": [
           {
@@ -65660,7 +65660,7 @@
                 }
               }
             },
-            "description": "Never returned for UAE PASS: this endpoint always answers 403 wallet_unavailable."
+            "description": ""
           },
           "400": {
             "content": {
@@ -65680,7 +65680,7 @@
                 }
               }
             },
-            "description": "Missing credentials ({detail}), or error wallet_unavailable: always for UAE PASS, which runs only inside a verification session created with expected_details."
+            "description": "Missing credentials ({detail}), or error wallet_unavailable, insufficient_credits or contract_rate_missing. For UAE PASS, wallet_unavailable also means the application is not onboarded yet (sandbox applications are not affected)."
           },
           "409": {
             "content": {
@@ -118371,7 +118371,7 @@
           },
           "config": {
             "type": "object",
-            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `BANK_VERIFICATION`, `bank_countries` is a whitelist: an empty map offers no bank and runs no check; see [Bank Verification](/management-api/workflows/feature-configs#bank-verification) for every key. The node is accepted only on an account where Bank Verification is enabled. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed), `aes` and `qes` (Qualified, an add-on that is refused with `qes_not_available` while `signature_availability.qes` is `false`), and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`.",
+            "description": "Feature-specific settings. For `QUESTIONNAIRE`, include `questionnaire_uuid` with the `questionnaire_id` returned by the questionnaire create endpoint. For `SIGNATURE`, a workflow that goes live needs a document to sign: set `signature_documents_source` to `session` or `both` so each session can bring its own, or send `status: \"draft\"` and add the documents before you publish. `signature_level: \"aes\"` is refused with `aes_not_available` while `signature_availability.aes` is `false` on the workflow. For `BANK_VERIFICATION`, `bank_countries` is a whitelist: an empty map offers no bank and runs no check; see [Bank Verification](/management-api/workflows/feature-configs#bank-verification) for every key. The node is accepted only on an account where Bank Verification is enabled. For `OCR`, `methods` selects which ID Verification methods each country may use (document capture, non-doc lookup against a government or other authoritative source, and digital identity wallets); omit it and every country is document capture only. For `SIGNATURE`, see [E-signature settings](/management-api/workflows/feature-configs#e-signature): `signature_level` accepts `simple` (the default, no ID verification, email or phone needed), `aes` and `qes` (Qualified, an add-on that is refused with `qes_not_available` while `signature_availability.qes` is `false`), and workflow documents and their fields are managed in the console, so through the API send documents and fields per session with `signature_documents_source: \"session\"`. For `OCR`, `methods.<ISO3>.wallet.providers` may list a wallet that requires onboarding (UAE PASS) before Didit activates it for your application, on create and on update: the workflow keeps it as configured and sessions are offered it only while it is active.",
             "additionalProperties": true
           },
           "label": {
@@ -127882,7 +127882,8 @@
           "error": {
             "type": "string",
             "nullable": true,
-            "readOnly": true
+            "readOnly": true,
+            "description": "Stable machine-readable code when the sign-in did not complete. For UAE PASS, `client_changed` means the application's own UAE PASS client was disabled, deleted or replaced while the person was signing in: the sign-in fails and the workflow's fallback applies."
           },
           "interaction": {
             "allOf": [
@@ -127922,7 +127923,8 @@
             "type": "object",
             "additionalProperties": {},
             "nullable": true,
-            "readOnly": true
+            "readOnly": true,
+            "description": "The attributes the wallet shared, keyed as the wallet's catalog entry lists them. A UAE PASS sign-in returns the verified identity attributes `name_ar`, `emirates_id_number` (absent for visitors), `nationality`, `gender`, `document_type`, `document_issue_date`, `document_expiry_date` and `user_type` (`SOP2` or `SOP3`), alongside the normalized `full_name` and `date_of_birth`, and never the UAE PASS UUID."
           },
           "level_of_assurance": {
             "type": "string",
@@ -135009,7 +135011,7 @@
                 "wallet_verification": {
                   "type": "object",
                   "nullable": true,
-                  "description": "Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. UAE PASS (`provider` `uae_pass`) is outcome only: the identity fields of this ID verification (`full_name`, `first_name`, `last_name`, `date_of_birth`, `nationality`, the document numbers) stay `null`, `attributes` holds only whether each detail declared in `expected_details` matched, and nothing UAE PASS shared about the person is returned or kept.",
+                  "description": "Credential evidence. Present only when `verification_method` is `wallet`; `null` otherwise. A UAE PASS sign-in (`provider` `uae_pass`) returns the verified identity like every other wallet: the identity fields of this ID verification carry what UAE PASS verified, and `attributes` holds its extra attributes.",
                   "properties": {
                     "provider": {
                       "type": "string",
@@ -135058,7 +135060,7 @@
                     "attributes": {
                       "type": "object",
                       "additionalProperties": true,
-                      "description": "The attributes the wallet shared, keyed as the wallet's catalog entry lists them. For UAE PASS only the comparison with `expected_details`, one key per declared detail, each `match` or `no_match`: `name_match` (`first_name` / `last_name`), `date_of_birth_match` and `identification_number_match` (the Emirates ID number). A declared detail that does not match also raises the expected-details warning (`FULL_NAME_MISMATCH_WITH_PROVIDED`, `DOB_MISMATCH_WITH_PROVIDED` or `IDENTIFICATION_NUMBER_MISMATCH_WITH_PROVIDED`), handled by the workflow's expected-details mismatch action."
+                      "description": "The attributes the wallet shared, keyed as the wallet's catalog entry lists them. A UAE PASS sign-in returns the verified identity attributes `name_ar`, `emirates_id_number` (absent for visitors), `nationality`, `gender`, `document_type`, `document_issue_date`, `document_expiry_date` and `user_type` (`SOP2` or `SOP3`), alongside the normalized `full_name` and `date_of_birth`, and never the UAE PASS UUID. Declared `expected_details` stay optional: when a session declares them, a verified identity that contradicts them raises the expected-details warning (`FULL_NAME_MISMATCH_WITH_PROVIDED`, `DOB_MISMATCH_WITH_PROVIDED` or `IDENTIFICATION_NUMBER_MISMATCH_WITH_PROVIDED`), handled by the workflow's expected-details mismatch action."
                     },
                     "portrait": {
                       "type": "string",
