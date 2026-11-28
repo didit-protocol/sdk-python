@@ -80,7 +80,7 @@ class SessionsCreateKybPartyDraftParams(TypedDict, total=False):
     """Registration number of a company party."""
 
     email: str
-    """Where the verification link is sent. Required when the party has to complete verification, which depends on the role settings and ownership thresholds of the workflow."""
+    """Where the verification link is sent. Required at submission for a party that must complete verification when the workflow sends links by email. With notifications off, email is optional unless the workflow separately requires the field or distinct addresses are needed to distinguish ambiguous same-name people."""
 
     ownership_percent: float | None
     """Share of the company the party owns."""
