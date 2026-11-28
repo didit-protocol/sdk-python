@@ -28,10 +28,10 @@ class Message(BaseModel):
     to: str | None
     """The recipient of the first attempt. `null` once erased: Didit erases a message's text and recipient `retention_days` after the message's last event (`PATCH /v3/messages/settings/`)."""
 
-    channel: Literal["sms", "whatsapp", "email"] | str
+    channel: Literal["sms", "whatsapp", "telegram", "email"] | str
     """The channel of the latest attempt."""
 
-    channels: list[Literal["sms", "whatsapp", "email"] | str]
+    channels: list[Literal["sms", "whatsapp", "telegram", "email"] | str]
     """The channels of the request, in order: those tried so far, then those still to try."""
 
     body: str | None
@@ -53,7 +53,7 @@ class Message(BaseModel):
     encoding: Literal["GSM-7", "UCS-2"] | str | None
 
     price: MessagePrice | None
-    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost; `fee` is Didit's fee with your plan's discount. Both are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` while the amount is an estimate, before the carrier's delivery report gives the real price."""
+    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost. `fee` is Didit's fee with your plan's discount. When a contract rate card prices a live Telegram message, both are `null`. For all other live Telegram rates, including a negotiated rate, `carrier` is `0.0000` and `fee` equals `amount`. On other channels both fields are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` for an estimate and `true` once the amount is billed."""
 
     error: MessageError | None
     """Why an attempt failed or was skipped. `message` is a sentence for people; read `code` in code."""

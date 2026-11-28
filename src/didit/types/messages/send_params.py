@@ -24,16 +24,16 @@ class MessagesSendParamsVariant1(TypedDict, total=False):
     """Send exactly one of `body` or `template_id`: a request with both, or with neither, returns `400`."""
 
     to: Required[str]
-    """Recipient: an E.164 phone number (`+447700900123`), or an email address for email."""
+    """Recipient: an E.164 phone number (`+447700900123`) for SMS, WhatsApp and Telegram, or an email address for email."""
 
     to_email: str
     """The email address for the `email` channel when `to` is a phone number."""
 
-    channels: Sequence[Literal["sms", "whatsapp", "email"] | str]
+    channels: Sequence[Literal["sms", "whatsapp", "telegram", "email"] | str]
     """Channels to try, in order. The next one is used when a channel cannot take the message (switched off, opted out, no approved WhatsApp template...) or the message fails on it. Default `["sms"]` for a phone number, `["email"]` for an email address."""
 
     body: Required[str]
-    """Free text, sent as written, for SMS and email. On WhatsApp free text goes out only inside a 24-hour reply window (the person wrote to you first); outside it WhatsApp delivers only an approved template, so use `template_id`, or a free-text WhatsApp attempt falls back to the next channel. Limits: SMS 1,000, WhatsApp 4,096, email 10,000 characters."""
+    """Free text, sent as written, for SMS, Telegram and email. On WhatsApp free text goes out only inside a 24-hour reply window (the person wrote to you first); outside it WhatsApp delivers only an approved template, so use `template_id`, or a free-text WhatsApp attempt falls back to the next channel. Limits: SMS 1,000, WhatsApp 4,096, Telegram 4,096, email 10,000 characters. Telegram sends no formatting: the text is what the person reads."""
 
     template_id: Never
 
@@ -70,18 +70,18 @@ class MessagesSendParamsVariant2(TypedDict, total=False):
     """Send exactly one of `body` or `template_id`: a request with both, or with neither, returns `400`."""
 
     to: Required[str]
-    """Recipient: an E.164 phone number (`+447700900123`), or an email address for email."""
+    """Recipient: an E.164 phone number (`+447700900123`) for SMS, WhatsApp and Telegram, or an email address for email."""
 
     to_email: str
     """The email address for the `email` channel when `to` is a phone number."""
 
-    channels: Sequence[Literal["sms", "whatsapp", "email"] | str]
+    channels: Sequence[Literal["sms", "whatsapp", "telegram", "email"] | str]
     """Channels to try, in order. The next one is used when a channel cannot take the message (switched off, opted out, no approved WhatsApp template...) or the message fails on it. Default `["sms"]` for a phone number, `["email"]` for an email address."""
 
     body: Never
 
     template_id: Required[str]
-    """One of your message templates; each channel uses the template's text for that channel."""
+    """One of your message templates; each channel uses the template's text for that channel (Telegram uses its SMS text, without the opt-out line)."""
 
     variables: Mapping[str, str]
     """Values for the template's `{{variables}}`. Every variable of the text used needs one."""
