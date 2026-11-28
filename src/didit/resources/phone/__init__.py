@@ -299,6 +299,7 @@ class Phone(SyncAPIResource):
         self,
         *,
         phone_number: str,
+        tier: Literal["basic", "risk", "social"] | str | NotGiven = NOT_GIVEN,
         country_code: str | NotGiven = NOT_GIVEN,
         signals: RiskSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
@@ -312,13 +313,20 @@ class Phone(SyncAPIResource):
     ) -> PhoneRiskResponse:
         """Risk-score a phone number.
 
-        Resolve a phone number and return carrier, line-type, porting, disposable-number, cross-session match, and normalized risk-intelligence signals without sending an OTP. The endpoint creates an API session and returns its id as `request_id`.
+        Look up a phone number without sending an OTP, at one of three tiers chosen with `tier`. The endpoint creates an API session and returns its id as `request_id`.
+
+        **Tiers.**
+        - `basic` (basic lookup, $0.006): line type (`phone.carrier.type`), current carrier (`phone.carrier.name`), porting status (`phone.is_ported`), country (`phone.country_code`) and validity (`phone.is_valid`). Original carrier (`phone.original_carrier`) and temporary-number status (`phone.is_disposable`) are reported when available. No `phone_intelligence` or `phone_social` block.
+        - `risk` (risk and intelligence, $0.04, the default): everything in the basic lookup plus the `phone_intelligence` block: the 0-100 risk score, phone-type risk, the trust and network-stability indexes, porting signals and `reachability`.
+        - `social` (social profiles, $0.05): everything in the basic lookup plus the `phone_social` block, the online platforms the number is registered on. No `phone_intelligence` block.
 
         **Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.
 
-        **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.
+        **Invalid numbers.** An invalid or unparseable number is not a request error: every tier answers it with `200` and `phone.is_valid: false`, with no `phone_intelligence` or `phone_social` block and nothing billed. Read `phone.is_valid`, not the HTTP status, to tell a refused number from one that was looked up.
 
-        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.
+        **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent on the `basic` and `social` tiers and when no usable intelligence data was returned.
+
+        **Billing.** Each tier bills its own price once: a basic lookup $0.006, a risk and intelligence lookup $0.04, a social profiles lookup $0.05. A number the prefilter rejects - an invalid number, or a fixed line where only mobile is allowed - is answered without a paid lookup and is not billed. A risk and intelligence lookup that returns no intelligence data, and a social profiles lookup whose check could not be completed, are not billed either. Phone lookups are Phone usage, including the `enable_social` add-on on the risk tier: the free credit pays them only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. A request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it.
 
         **Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.
 
@@ -326,17 +334,18 @@ class Phone(SyncAPIResource):
 
         **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
-        **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
+        **Social footprint.** `phone_social` lists the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. Ask for it with `tier: "social"`, or add it to a risk and intelligence lookup with `enable_social: true`, which bills $0.05 on top of the $0.04. The block is absent when it was not requested or the check could not be completed, and it is not billed in that case.
 
         ``POST /v3/phone/risk/``
 
         Args:
-          phone_number: Phone number to score. It is validated and normalized to E.164.
+          phone_number: Phone number to score. Normalized to E.164 when it can be parsed; a number that cannot be parsed or is invalid is accepted and answered with `phone.is_valid: false`, not rejected.
+          tier: Lookup tier. `basic` ($0.006) reports line type, current carrier, porting status, country and validity. It identifies the original carrier and flags temporary numbers when that information is available. `risk` ($0.04, the default) adds the `phone_intelligence` block: the 0-100 risk score, reachability and network intelligence. `social` ($0.05) adds the `phone_social` block instead. An invalid number, or a fixed line where only mobile is allowed, is answered without a paid lookup and is not billed.
           country_code: Optional ISO 3166-1 alpha-2 or alpha-3 country hint for intelligence coverage.
           signals: Optional device and network context observed by your application. All fields are optional. Passing them feeds cross-session match detection in Networks.
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
-          enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
+          enable_social: On the `risk` tier only: when true, also return the `phone_social` block, billed as one `phone_social` unit ($0.05) on top of the $0.04 risk and intelligence lookup. To get the social profiles without the risk lookup, send `tier: "social"` instead.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -352,6 +361,7 @@ class Phone(SyncAPIResource):
                 auth="api_key",
                 body={
                     "phone_number": phone_number,
+                    "tier": tier,
                     "country_code": country_code,
                     "signals": signals,
                     "vendor_data": vendor_data,
@@ -885,6 +895,7 @@ class AsyncPhone(AsyncAPIResource):
         self,
         *,
         phone_number: str,
+        tier: Literal["basic", "risk", "social"] | str | NotGiven = NOT_GIVEN,
         country_code: str | NotGiven = NOT_GIVEN,
         signals: RiskSignals | NotGiven = NOT_GIVEN,
         vendor_data: str | NotGiven = NOT_GIVEN,
@@ -898,13 +909,20 @@ class AsyncPhone(AsyncAPIResource):
     ) -> PhoneRiskResponse:
         """Risk-score a phone number.
 
-        Resolve a phone number and return carrier, line-type, porting, disposable-number, cross-session match, and normalized risk-intelligence signals without sending an OTP. The endpoint creates an API session and returns its id as `request_id`.
+        Look up a phone number without sending an OTP, at one of three tiers chosen with `tier`. The endpoint creates an API session and returns its id as `request_id`.
+
+        **Tiers.**
+        - `basic` (basic lookup, $0.006): line type (`phone.carrier.type`), current carrier (`phone.carrier.name`), porting status (`phone.is_ported`), country (`phone.country_code`) and validity (`phone.is_valid`). Original carrier (`phone.original_carrier`) and temporary-number status (`phone.is_disposable`) are reported when available. No `phone_intelligence` or `phone_social` block.
+        - `risk` (risk and intelligence, $0.04, the default): everything in the basic lookup plus the `phone_intelligence` block: the 0-100 risk score, phone-type risk, the trust and network-stability indexes, porting signals and `reachability`.
+        - `social` (social profiles, $0.05): everything in the basic lookup plus the `phone_social` block, the online platforms the number is registered on. No `phone_intelligence` block.
 
         **Decision.** The top-level `status` mirrors `phone.status`. It is normally `Approved`; the risk evaluation can produce `In Review` or `Declined`.
 
-        **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent when no usable intelligence data was returned.
+        **Invalid numbers.** An invalid or unparseable number is not a request error: every tier answers it with `200` and `phone.is_valid: false`, with no `phone_intelligence` or `phone_social` block and nothing billed. Read `phone.is_valid`, not the HTTP status, to tell a refused number from one that was looked up.
 
-        **Billing.** Live calls use Phone Risk API pricing. The request is billable once the lookup starts, even when some best-effort fields are unavailable. Phone Risk, including the optional `enable_social` add-on, is Phone usage: the free credit pays it only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. The request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it. Phone Risk has no first-top-up requirement; a top-up is needed only when the credit available to Phone (the free $1 or paid credit) cannot cover the lookup.
+        **Compatibility aliases.** Live responses expose the normalized intelligence object as both `phone.phone_intelligence` and `phone.enrichment`. The values are identical. New integrations can read `phone.enrichment`. Both keys are absent on the `basic` and `social` tiers and when no usable intelligence data was returned.
+
+        **Billing.** Each tier bills its own price once: a basic lookup $0.006, a risk and intelligence lookup $0.04, a social profiles lookup $0.05. A number the prefilter rejects - an invalid number, or a fixed line where only mobile is allowed - is answered without a paid lookup and is not billed. A risk and intelligence lookup that returns no intelligence data, and a social profiles lookup whose check could not be completed, are not billed either. Phone lookups are Phone usage, including the `enable_social` add-on on the risk tier: the free credit pays them only up to $1 a month, shared with phone verification codes, messages and the other Phone lookups. On the Free plan, what the $1 does not cover is paid from your top-up balance; Growth and Scale included credit pays for Phone in full. A request is refused with `403` only when the credit available to Phone, including the add-on, cannot cover it.
 
         **Sandbox.** Sandbox keys validate the request and return deterministic approved data without sending an OTP, consuming credits, creating a session, or contributing to Networks.
 
@@ -912,17 +930,18 @@ class AsyncPhone(AsyncAPIResource):
 
         **Rate limit.** Shared write budget of 300 requests per minute per API key across POST/PATCH/DELETE endpoints (transaction creates and event ingestion have a separate budget of 600).
 
-        **Social footprint.** Set `enable_social` to `true` to add a `phone_social` block: the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. The block is absent when the add-on was not requested or the check could not be completed, and it is not billed in that case. Billing adds one `phone_social` unit per request on top of this endpoint's own price.
+        **Social footprint.** `phone_social` lists the online platforms this number is registered on, with per-category counts and any profile details available. `profiles_registered: 0` means the platforms were checked and the number was found on none of them - a valid, billable answer. Ask for it with `tier: "social"`, or add it to a risk and intelligence lookup with `enable_social: true`, which bills $0.05 on top of the $0.04. The block is absent when it was not requested or the check could not be completed, and it is not billed in that case.
 
         ``POST /v3/phone/risk/``
 
         Args:
-          phone_number: Phone number to score. It is validated and normalized to E.164.
+          phone_number: Phone number to score. Normalized to E.164 when it can be parsed; a number that cannot be parsed or is invalid is accepted and answered with `phone.is_valid: false`, not rejected.
+          tier: Lookup tier. `basic` ($0.006) reports line type, current carrier, porting status, country and validity. It identifies the original carrier and flags temporary numbers when that information is available. `risk` ($0.04, the default) adds the `phone_intelligence` block: the 0-100 risk score, reachability and network intelligence. `social` ($0.05) adds the `phone_social` block instead. An invalid number, or a fixed line where only mobile is allowed, is answered without a paid lookup and is not billed.
           country_code: Optional ISO 3166-1 alpha-2 or alpha-3 country hint for intelligence coverage.
           signals: Optional device and network context observed by your application. All fields are optional. Passing them feeds cross-session match detection in Networks.
           vendor_data: Your stable reference for this request. Stored on the API session and echoed in the response.
           metadata: Your non-sensitive JSON metadata. Stored on the API session and echoed in the response.
-          enable_social: When true, also look up the social footprint of the number - the messaging, social, e-commerce and professional platforms it is registered on. Billed as one `phone_social` unit per request in addition to this endpoint's own price.
+          enable_social: On the `risk` tier only: when true, also return the `phone_social` block, billed as one `phone_social` unit ($0.05) on top of the $0.04 risk and intelligence lookup. To get the social profiles without the risk lookup, send `tier: "social"` instead.
           idempotency_key: Sent as the ``Idempotency-Key`` header; a retry with the same key returns the first result instead of acting twice.
           extra_headers: Headers to add to (or, with ``None``, remove from) this request.
           extra_query: Query parameters to add to this request.
@@ -938,6 +957,7 @@ class AsyncPhone(AsyncAPIResource):
                 auth="api_key",
                 body={
                     "phone_number": phone_number,
+                    "tier": tier,
                     "country_code": country_code,
                     "signals": signals,
                     "vendor_data": vendor_data,
