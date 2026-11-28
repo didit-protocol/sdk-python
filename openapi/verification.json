@@ -113250,7 +113250,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Assign the conversation to a member or unassign it, open or close it, and mark it read up to a message. A field left out keeps its value; closing only takes the thread out of the open list, and opening it puts it back.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.",
+        "description": "Assign the conversation to a member or unassign it, open or close it, and mark it read up to a message. A field left out keeps its value; closing only takes the thread out of the open list, and opening it puts it back.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.\n\nThe stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.",
         "parameters": [
           {
             "name": "conversation_id",
@@ -113343,7 +113343,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Subscribe an HTTPS endpoint to one conversation's events: `message.received`, `message.status.updated` and `contact.consent.updated`, all three when `events` is left out. Every delivery is signed with `X-Signature-V2` using the returned `secret`, which this answer shows only once; other conversations keep their own subscriptions and endpoints.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.",
+        "description": "Subscribe an HTTPS endpoint to one conversation's events: `message.received`, `message.status.updated` and `contact.consent.updated`, all three when `events` is left out. Every delivery is signed with `X-Signature-V2` using the returned `secret`, which this answer shows only once; other conversations keep their own subscriptions and endpoints.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.\n\nThe stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.",
         "parameters": [
           {
             "name": "conversation_id",
@@ -113441,7 +113441,7 @@
             "ApiKeyAuth": []
           }
         ],
-        "description": "Remove one of a conversation's webhook subscriptions: deliveries to its URL stop. Other subscriptions, and the conversation itself, are not touched.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.",
+        "description": "Remove one of a conversation's webhook subscriptions: deliveries to its URL stop. Other subscriptions, and the conversation itself, are not touched.\n\nA scoped API key needs write access to messages. It also needs read access to sessions, and its workflow and approved-only session limits apply: a conversation outside them, or one whose session was deleted, answers 404 as another application's would.\n\nThe stored answer is replayed only while the conversation is inside your key's access: once the session was erased the key is refused with `409` `idempotency_key_forgotten`, and a repeat the access no longer reaches answers `404`. Send it again with a new key.",
         "parameters": [
           {
             "name": "conversation_id",
