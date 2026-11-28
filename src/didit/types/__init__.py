@@ -767,6 +767,10 @@ if TYPE_CHECKING:
     )
     from didit.types.components.biometric_retention import BiometricRetention as BiometricRetention
     from didit.types.components.blocklisted_item import BlocklistedItem as BlocklistedItem
+    from didit.types.components.branding_appearance import BrandingAppearance as BrandingAppearance
+    from didit.types.components.branding_appearance_update import (
+        BrandingAppearanceUpdate as BrandingAppearanceUpdate,
+    )
     from didit.types.components.branding_customization import (
         BrandingCustomization as BrandingCustomization,
     )
@@ -1315,6 +1319,9 @@ if TYPE_CHECKING:
         KYBOwnershipStructureOwner as KYBOwnershipStructureOwner,
     )
     from didit.types.components.kyb_registry_address import KYBRegistryAddress as KYBRegistryAddress
+    from didit.types.components.kyb_registry_country_pricing import (
+        KYBRegistryCountryPricing as KYBRegistryCountryPricing,
+    )
     from didit.types.components.kyb_registry_data import KYBRegistryData as KYBRegistryData
     from didit.types.components.kyb_registry_group_company import (
         KYBRegistryGroupCompany as KYBRegistryGroupCompany,
@@ -1331,6 +1338,7 @@ if TYPE_CHECKING:
     from didit.types.components.kyb_registry_ownership import (
         KYBRegistryOwnershipUnresolved as KYBRegistryOwnershipUnresolved,
     )
+    from didit.types.components.kyb_registry_pricing import KYBRegistryPricing as KYBRegistryPricing
     from didit.types.components.kyb_registry_search_results import (
         KYBRegistrySearchResults as KYBRegistrySearchResults,
     )
@@ -1347,6 +1355,12 @@ if TYPE_CHECKING:
         KYBRegistryShareholding as KYBRegistryShareholding,
     )
     from didit.types.components.kyb_registry_source import KYBRegistrySource as KYBRegistrySource
+    from didit.types.components.kyb_registry_tier_price import (
+        KYBRegistryTierPrice as KYBRegistryTierPrice,
+    )
+    from didit.types.components.kyb_registry_tier_prices import (
+        KYBRegistryTierPrices as KYBRegistryTierPrices,
+    )
     from didit.types.components.kyb_registry_ubo_resolution import (
         KYBRegistryUboResolution as KYBRegistryUboResolution,
     )
@@ -4560,6 +4574,8 @@ _MODULES: dict[str, str] = {
     "BlocklistRemoveParams": "blocklist.remove_params",
     "BlocklistRemoveResponse": "blocklist.remove_response",
     "BlocklistedItem": "components.blocklisted_item",
+    "BrandingAppearance": "components.branding_appearance",
+    "BrandingAppearanceUpdate": "components.branding_appearance_update",
     "BrandingCustomization": "components.branding_customization",
     "BusinessDetailItem": "components.business_detail_item",
     "BusinessListItem": "components.business_list_item",
@@ -4927,18 +4943,22 @@ _MODULES: dict[str, str] = {
     "KYBOwnershipStructure": "components.kyb_ownership_structure",
     "KYBOwnershipStructureOwner": "components.kyb_ownership_structure_owner",
     "KYBRegistryAddress": "components.kyb_registry_address",
+    "KYBRegistryCountryPricing": "components.kyb_registry_country_pricing",
     "KYBRegistryData": "components.kyb_registry_data",
     "KYBRegistryGroupCompany": "components.kyb_registry_group_company",
     "KYBRegistryIndustry": "components.kyb_registry_industry",
     "KYBRegistryLiteEnrichment": "components.kyb_registry_lite_enrichment",
     "KYBRegistryOwnership": "components.kyb_registry_ownership",
     "KYBRegistryOwnershipUnresolved": "components.kyb_registry_ownership",
+    "KYBRegistryPricing": "components.kyb_registry_pricing",
     "KYBRegistrySearchResults": "components.kyb_registry_search_results",
     "KYBRegistrySearchResultsCompanies": "components.kyb_registry_search_results",
     "KYBRegistrySearchResultsPagination": "components.kyb_registry_search_results",
     "KYBRegistrySectionError": "components.kyb_registry_section_error",
     "KYBRegistryShareholding": "components.kyb_registry_shareholding",
     "KYBRegistrySource": "components.kyb_registry_source",
+    "KYBRegistryTierPrice": "components.kyb_registry_tier_price",
+    "KYBRegistryTierPrices": "components.kyb_registry_tier_prices",
     "KYBRegistryUboResolution": "components.kyb_registry_ubo_resolution",
     "KYBRegistryUboResolutionUnresolved": "components.kyb_registry_ubo_resolution",
     "KybListShareholdersParams": "kyb.list_shareholders_params",
@@ -6181,6 +6201,8 @@ __all__ = [
     "BlocklistRemoveParams",
     "BlocklistRemoveResponse",
     "BlocklistedItem",
+    "BrandingAppearance",
+    "BrandingAppearanceUpdate",
     "BrandingCustomization",
     "BusinessDetailItem",
     "BusinessListItem",
@@ -6548,18 +6570,22 @@ __all__ = [
     "KYBOwnershipStructure",
     "KYBOwnershipStructureOwner",
     "KYBRegistryAddress",
+    "KYBRegistryCountryPricing",
     "KYBRegistryData",
     "KYBRegistryGroupCompany",
     "KYBRegistryIndustry",
     "KYBRegistryLiteEnrichment",
     "KYBRegistryOwnership",
     "KYBRegistryOwnershipUnresolved",
+    "KYBRegistryPricing",
     "KYBRegistrySearchResults",
     "KYBRegistrySearchResultsCompanies",
     "KYBRegistrySearchResultsPagination",
     "KYBRegistrySectionError",
     "KYBRegistryShareholding",
     "KYBRegistrySource",
+    "KYBRegistryTierPrice",
+    "KYBRegistryTierPrices",
     "KYBRegistryUboResolution",
     "KYBRegistryUboResolutionUnresolved",
     "KybListShareholdersParams",

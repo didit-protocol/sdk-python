@@ -35507,7 +35507,7 @@
     "/v3/customization/": {
       "get": {
         "summary": "Get branding customization",
-        "description": "Returns the white-label branding for the application resolved from the API key: colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.",
+        "description": "Returns the white-label branding for the application resolved from the API key: appearance, colors, fonts, border radii, logo URLs and UI/UX options. Custom domain and white-label email settings are managed only in the Business Console and are not part of this response.",
         "operationId": "get_customization",
         "x-didit-sdk": {
           "resource": "customization",
@@ -35584,6 +35584,7 @@
                       "color_button_text_1": "#FFFFFF",
                       "color_button_text_2": "#000000",
                       "color_pill_text": "#111827",
+                      "appearance": "brand",
                       "border_radius_panel": 10,
                       "border_radius_buttons": 12,
                       "font_family": "Inter",
@@ -35663,7 +35664,7 @@
       },
       "patch": {
         "summary": "Update branding customization",
-        "description": "Partial update of the application's white-label branding. Send `application/json` to change colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint — use the Business Console for those.",
+        "description": "Partial update of the application's white-label branding. Send `application/json` to change appearance, colors, fonts, radii and UI options, or `multipart/form-data` to upload logo images. Only the fields you include are changed. Custom domain and white-label email cannot be set through this endpoint — use the Business Console for those.",
         "operationId": "update_customization",
         "x-didit-sdk": {
           "resource": "customization",
@@ -35689,6 +35690,11 @@
                     "color_button_1": "#2567FF",
                     "font_family": "AR One Sans",
                     "border_radius_buttons": 16
+                  }
+                },
+                "Always dark": {
+                  "value": {
+                    "appearance": "dark"
                   }
                 },
                 "Update UI options": {
@@ -35718,8 +35724,11 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "description": "Use multipart/form-data only to upload logo images. Branding fields above may also be sent as form fields in the same request.",
+                "description": "Send logo files and branding fields as multipart/form-data. An empty `appearance` form field leaves the saved value in place.",
                 "properties": {
+                  "appearance": {
+                    "$ref": "#/components/schemas/BrandingAppearanceMultipartUpdate"
+                  },
                   "image_square": {
                     "type": "string",
                     "format": "binary",
@@ -35821,6 +35830,7 @@
                       "color_button_text_1": "#FFFFFF",
                       "color_button_text_2": "#000000",
                       "color_pill_text": "#111827",
+                      "appearance": "dark",
                       "border_radius_panel": 10,
                       "border_radius_buttons": 16,
                       "font_family": "AR One Sans",
@@ -35843,10 +35853,17 @@
             }
           },
           "400": {
-            "description": "Invalid body. For example: a malformed hex color, an unknown font family or weight, a Business-Console-only field (`domain`, `from_email`, `verify_domain`, `force_remove_domain`, `verify_email_domain`, `force_remove_email_domain`, and their read-only companions), or a logo upload that is not a PNG, JPG or WebP image, is under 512 px on its long side, is over 1 MB, or has the wrong aspect ratio. Also returned when setting `disable_login_with_didit` to `false` while a custom domain is configured.",
+            "description": "Invalid body. For example: a malformed hex color, an unknown font family or weight, a Business-Console-only field (`domain`, `from_email`, `verify_domain`, `force_remove_domain`, `verify_email_domain`, `force_remove_email_domain`, and their read-only companions), or a logo upload that is not a PNG, JPG or WebP image, is under 512 px on its long side, is over 1 MB, or has the wrong aspect ratio. Also returned when setting `disable_login_with_didit` to `false` while a custom domain is configured. Sending an unknown appearance value, an empty string or null in JSON returns 400.",
             "content": {
               "application/json": {
                 "examples": {
+                  "Unknown appearance": {
+                    "value": {
+                      "appearance": [
+                        "\"light\" is not a valid choice."
+                      ]
+                    }
+                  },
                   "Bad color": {
                     "value": {
                       "color_primary": [
@@ -89770,6 +89787,145 @@
         }
       }
     },
+    "/v3/organization/kyb-registry-pricing/": {
+      "get": {
+        "summary": "Get KYB registry prices by country (public, unauthenticated)",
+        "description": "Returns the list price of a KYB registry check in every country, for each data tier: Lite (`basic`), Shareholders (`shareholders`) and UBOs (`ubo`), plus continuous registry monitoring. Use it to quote a registry step before you build a workflow, or to show KYB prices in your own product.\n\nPublic: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.\n\nThe response is an object keyed by country code: every ISO 3166-1 alpha-2 code, plus `XK` for Kosovo, which ISO 3166-1 does not assign. A tier with `available: false` cannot be selected for that country even though it shows a price. Monitoring is priced per company per year and reads `available: false` wherever it is not offered yet.\n\nA company that cannot be found and is entered manually is billed the flat manual entry price on the [KYB registry pricing](/getting-started/kyb-registry-pricing) page, which this feed does not list. These are list prices before your plan discount, which applies to the whole registry price; a negotiated or contract price replaces the list price for your organization.",
+        "operationId": "get_v3_kyb_registry_pricing",
+        "tags": [
+          "Pricing"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "The `ETag` of a KYB price list you already hold: the response is `304 Not Modified`, with no body, when nothing changed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "curl",
+            "source": "curl -fsS https://verification.didit.me/v3/organization/kyb-registry-pricing/"
+          }
+        ],
+        "x-didit-sdk": {
+          "resource": "pricing",
+          "method": "kyb_registry",
+          "auth": "none",
+          "server": true
+        },
+        "responses": {
+          "200": {
+            "description": "KYB registry list prices by country.",
+            "headers": {
+              "ETag": {
+                "description": "A weak validator of the response body, to send back in `If-None-Match`.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Public, cached for one hour.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KYBRegistryPricing"
+                },
+                "examples": {
+                  "Three countries": {
+                    "summary": "Spain, Albania and Kosovo (XK)",
+                    "value": {
+                      "AL": {
+                        "name": "Albania",
+                        "validated": false,
+                        "tiers": {
+                          "basic": {
+                            "available": true,
+                            "price_usd": "2.00"
+                          },
+                          "shareholders": {
+                            "available": true,
+                            "price_usd": "5.00"
+                          },
+                          "ubo": {
+                            "available": true,
+                            "price_usd": "9.00"
+                          }
+                        },
+                        "monitoring": {
+                          "available": false,
+                          "price_usd": "2.00"
+                        }
+                      },
+                      "ES": {
+                        "name": "Spain",
+                        "validated": true,
+                        "tiers": {
+                          "basic": {
+                            "available": true,
+                            "price_usd": "2.00"
+                          },
+                          "shareholders": {
+                            "available": true,
+                            "price_usd": "5.00"
+                          },
+                          "ubo": {
+                            "available": true,
+                            "price_usd": "9.00"
+                          }
+                        },
+                        "monitoring": {
+                          "available": false,
+                          "price_usd": "2.00"
+                        }
+                      },
+                      "XK": {
+                        "name": "Kosovo",
+                        "validated": false,
+                        "tiers": {
+                          "basic": {
+                            "available": true,
+                            "price_usd": "2.00"
+                          },
+                          "shareholders": {
+                            "available": true,
+                            "price_usd": "5.00"
+                          },
+                          "ubo": {
+                            "available": true,
+                            "price_usd": "9.00"
+                          }
+                        },
+                        "monitoring": {
+                          "available": false,
+                          "price_usd": "2.00"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified: the `ETag` you sent in `If-None-Match` still matches. No body."
+          }
+        }
+      }
+    },
     "/v3/session/{sessionId}/simulate/": {
       "post": {
         "summary": "Simulate a sandbox session's status",
@@ -117113,6 +117269,35 @@
           }
         }
       },
+      "BrandingAppearance": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "match_device",
+          "dark"
+        ],
+        "default": "brand",
+        "description": "`brand` (default for new and existing customizations) uses your colors on every device. `match_device` uses your colors on light devices and a dark background with your branding on dark devices. `dark` uses the dark background with your branding on every device. Without custom colors, the default Didit look follows the device for all three values."
+      },
+      "BrandingAppearanceUpdate": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "match_device",
+          "dark"
+        ],
+        "description": "Omit this field to keep the saved appearance."
+      },
+      "BrandingAppearanceMultipartUpdate": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "match_device",
+          "dark",
+          ""
+        ],
+        "description": "Omit this field or send an empty string to keep the saved appearance."
+      },
       "BrandingCustomizationUpdate": {
         "type": "object",
         "description": "Partial branding update body. Provide only the fields you want to change. Hex colors accept `#RRGGBB` or `#RRGGBBAA`. Custom domain and white-label email are not accepted here.",
@@ -117168,6 +117353,9 @@
           "color_pill_text": {
             "type": "string",
             "description": "Text color for pills, inputs and selectors."
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/BrandingAppearanceUpdate"
           },
           "border_radius_panel": {
             "type": "integer",
@@ -117235,6 +117423,9 @@
       "BrandingCustomization": {
         "type": "object",
         "description": "White-label branding for an application: colors, fonts, radii, logo URLs and UI/UX options. Logo URLs are read-only (set them by uploading images). Custom domain and white-label email are not included.",
+        "required": [
+          "appearance"
+        ],
         "properties": {
           "color_primary": {
             "type": "string"
@@ -117274,6 +117465,9 @@
           },
           "color_pill_text": {
             "type": "string"
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/BrandingAppearance"
           },
           "border_radius_panel": {
             "type": "integer"
@@ -164575,6 +164769,100 @@
             }
           }
         ]
+      },
+      "KYBRegistryTierPrice": {
+        "type": "object",
+        "description": "The list price of one KYB registry tier, or of monitoring, in one country.",
+        "required": [
+          "available",
+          "price_usd"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "Whether it can be selected in this country today. When `false`, `price_usd` still shows the configured price, but it cannot be bought."
+          },
+          "price_usd": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d{2}$",
+            "description": "List price in USD, as a decimal string with two decimals.",
+            "example": "2.00"
+          }
+        }
+      },
+      "KYBRegistryTierPrices": {
+        "type": "object",
+        "description": "The price of each data tier in one country.",
+        "required": [
+          "basic",
+          "shareholders",
+          "ubo"
+        ],
+        "properties": {
+          "basic": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KYBRegistryTierPrice"
+              }
+            ],
+            "description": "Lite: the company profile and its officers."
+          },
+          "shareholders": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KYBRegistryTierPrice"
+              }
+            ],
+            "description": "Lite plus the direct shareholders."
+          },
+          "ubo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KYBRegistryTierPrice"
+              }
+            ],
+            "description": "Shareholders plus the ultimate beneficial owners."
+          }
+        }
+      },
+      "KYBRegistryCountryPricing": {
+        "type": "object",
+        "description": "KYB registry prices in one country.",
+        "required": [
+          "name",
+          "validated",
+          "tiers",
+          "monitoring"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "English name of the country.",
+            "example": "Kosovo"
+          },
+          "validated": {
+            "type": "boolean",
+            "description": "Whether Didit has checked the registry search and selection end to end against a real company record in this country."
+          },
+          "tiers": {
+            "$ref": "#/components/schemas/KYBRegistryTierPrices"
+          },
+          "monitoring": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KYBRegistryTierPrice"
+              }
+            ],
+            "description": "Continuous registry monitoring, priced per company per year."
+          }
+        }
+      },
+      "KYBRegistryPricing": {
+        "type": "object",
+        "description": "KYB registry list prices, keyed by country code: every ISO 3166-1 alpha-2 code plus `XK` for Kosovo.",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/KYBRegistryCountryPricing"
+        }
       },
       "PhoneChannel": {
         "type": "string",

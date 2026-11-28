@@ -21,6 +21,7 @@ from didit.types.components.bank_verification_country_coverage import (
 )
 from didit.types.components.bank_verification_coverage import BankVerificationCoverage
 from didit.types.components.bank_verification_pricing import BankVerificationPricing
+from didit.types.components.kyb_registry_pricing import KYBRegistryPricing
 from didit.types.components.public_price_book import PublicPriceBook
 
 __all__ = [
@@ -36,7 +37,7 @@ __all__ = [
 class Pricing(SyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``price_book``.
+    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``kyb_registry``, ``price_book``.
     """
 
     @cached_property
@@ -81,6 +82,46 @@ class Pricing(SyncAPIResource):
                 "get",
                 "/v3/organization/bank-verification-pricing/",
                 cast_to=BankVerificationPricing,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    def kyb_registry(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> KYBRegistryPricing:
+        """Get KYB registry prices by country (public, unauthenticated).
+
+        Returns the list price of a KYB registry check in every country, for each data tier: Lite (`basic`), Shareholders (`shareholders`) and UBOs (`ubo`), plus continuous registry monitoring. Use it to quote a registry step before you build a workflow, or to show KYB prices in your own product.
+
+        Public: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
+
+        The response is an object keyed by country code: every ISO 3166-1 alpha-2 code, plus `XK` for Kosovo, which ISO 3166-1 does not assign. A tier with `available: false` cannot be selected for that country even though it shows a price. Monitoring is priced per company per year and reads `available: false` wherever it is not offered yet.
+
+        A company that cannot be found and is entered manually is billed the flat manual entry price on the [KYB registry pricing](/getting-started/kyb-registry-pricing) page, which this feed does not list. These are list prices before your plan discount, which applies to the whole registry price; a negotiated or contract price replaces the list price for your organization.
+
+        ``GET /v3/organization/kyb-registry-pricing/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "KYBRegistryPricing",
+            self._client.request(
+                "get",
+                "/v3/organization/kyb-registry-pricing/",
+                cast_to=KYBRegistryPricing,
                 auth="none",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -204,7 +245,7 @@ class Pricing(SyncAPIResource):
 class AsyncPricing(AsyncAPIResource):
     """The ``pricing`` resource of the Didit API.
 
-    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``price_book``.
+    Methods: ``bank_verification``, ``bank_verification_country_coverage``, ``bank_verification_coverage``, ``kyb_registry``, ``price_book``.
     """
 
     @cached_property
@@ -249,6 +290,46 @@ class AsyncPricing(AsyncAPIResource):
                 "get",
                 "/v3/organization/bank-verification-pricing/",
                 cast_to=BankVerificationPricing,
+                auth="none",
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
+            ),
+        )
+
+    async def kyb_registry(
+        self,
+        *,
+        extra_headers: Headers | None = None,
+        extra_query: Query | None = None,
+        extra_body: Body | None = None,
+        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    ) -> KYBRegistryPricing:
+        """Get KYB registry prices by country (public, unauthenticated).
+
+        Returns the list price of a KYB registry check in every country, for each data tier: Lite (`basic`), Shareholders (`shareholders`) and UBOs (`ubo`), plus continuous registry monitoring. Use it to quote a registry step before you build a workflow, or to show KYB prices in your own product.
+
+        Public: send no auth header. The response contains no organization data and is the same for every caller. It is cached publicly for one hour and carries an `ETag`, so send `If-None-Match` to get a `304 Not Modified` when nothing changed.
+
+        The response is an object keyed by country code: every ISO 3166-1 alpha-2 code, plus `XK` for Kosovo, which ISO 3166-1 does not assign. A tier with `available: false` cannot be selected for that country even though it shows a price. Monitoring is priced per company per year and reads `available: false` wherever it is not offered yet.
+
+        A company that cannot be found and is entered manually is billed the flat manual entry price on the [KYB registry pricing](/getting-started/kyb-registry-pricing) page, which this feed does not list. These are list prices before your plan discount, which applies to the whole registry price; a negotiated or contract price replaces the list price for your organization.
+
+        ``GET /v3/organization/kyb-registry-pricing/``
+
+        Args:
+          extra_headers: Headers to add to (or, with ``None``, remove from) this request.
+          extra_query: Query parameters to add to this request.
+          extra_body: Top-level JSON fields to add to this request's body.
+          timeout: Overrides the client's timeout for this request, in seconds.
+        """
+        return cast(
+            "KYBRegistryPricing",
+            await self._client.request(
+                "get",
+                "/v3/organization/kyb-registry-pricing/",
+                cast_to=KYBRegistryPricing,
                 auth="none",
                 extra_headers=extra_headers,
                 extra_query=extra_query,
@@ -373,6 +454,7 @@ class PricingWithRawResponse:
     def __init__(self, resource: Pricing) -> None:
         self._resource = resource
         self.bank_verification = to_raw_response_wrapper(resource.bank_verification)
+        self.kyb_registry = to_raw_response_wrapper(resource.kyb_registry)
         self.price_book = to_raw_response_wrapper(resource.price_book)
         self.bank_verification_coverage = to_raw_response_wrapper(
             resource.bank_verification_coverage
@@ -386,6 +468,7 @@ class AsyncPricingWithRawResponse:
     def __init__(self, resource: AsyncPricing) -> None:
         self._resource = resource
         self.bank_verification = async_to_raw_response_wrapper(resource.bank_verification)
+        self.kyb_registry = async_to_raw_response_wrapper(resource.kyb_registry)
         self.price_book = async_to_raw_response_wrapper(resource.price_book)
         self.bank_verification_coverage = async_to_raw_response_wrapper(
             resource.bank_verification_coverage
@@ -399,6 +482,7 @@ class PricingWithStreamingResponse:
     def __init__(self, resource: Pricing) -> None:
         self._resource = resource
         self.bank_verification = to_streamed_response_wrapper(resource.bank_verification)
+        self.kyb_registry = to_streamed_response_wrapper(resource.kyb_registry)
         self.price_book = to_streamed_response_wrapper(resource.price_book)
         self.bank_verification_coverage = to_streamed_response_wrapper(
             resource.bank_verification_coverage
@@ -412,6 +496,7 @@ class AsyncPricingWithStreamingResponse:
     def __init__(self, resource: AsyncPricing) -> None:
         self._resource = resource
         self.bank_verification = async_to_streamed_response_wrapper(resource.bank_verification)
+        self.kyb_registry = async_to_streamed_response_wrapper(resource.kyb_registry)
         self.price_book = async_to_streamed_response_wrapper(resource.price_book)
         self.bank_verification_coverage = async_to_streamed_response_wrapper(
             resource.bank_verification_coverage
