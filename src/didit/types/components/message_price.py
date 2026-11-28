@@ -7,7 +7,7 @@ __all__ = ["MessagePrice"]
 
 
 class MessagePrice(BaseModel):
-    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost; `fee` is Didit's fee with your plan's discount. Both are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` while the amount is an estimate, before the carrier's delivery report gives the real price."""
+    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost. `fee` is Didit's fee with your plan's discount. When a contract rate card prices a live Telegram message, both are `null`. For all other live Telegram rates, including a negotiated rate, `carrier` is `0.0000` and `fee` equals `amount`. On other channels both fields are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` for an estimate and `true` once the amount is billed."""
 
     amount: str
     """Total price, carrier and fee included."""

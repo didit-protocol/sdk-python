@@ -2487,6 +2487,7 @@ if TYPE_CHECKING:
     from didit.types.components.social_footprint_profile import (
         SocialFootprintProfile as SocialFootprintProfile,
     )
+    from didit.types.components.telegram_link import TelegramLink as TelegramLink
     from didit.types.components.transaction_detail import TransactionDetail as TransactionDetail
     from didit.types.components.transaction_detail import (
         TransactionDetailActivities as TransactionDetailActivities,
@@ -3453,6 +3454,9 @@ if TYPE_CHECKING:
     )
     from didit.types.messages.send_params import (
         MessagesSendParamsVariant2Options as MessagesSendParamsVariant2Options,
+    )
+    from didit.types.messages.telegram_links.create_params import (
+        MessagesTelegramLinksCreateParams as MessagesTelegramLinksCreateParams,
     )
     from didit.types.messages.templates.update_params import (
         MessagesTemplatesUpdateParams as MessagesTemplatesUpdateParams,
@@ -5041,6 +5045,7 @@ _MODULES: dict[str, str] = {
     "MessagesSendParamsVariant2": "messages.send_params",
     "MessagesSendParamsVariant2Options": "messages.send_params",
     "MessagesSettings": "components.messages_settings",
+    "MessagesTelegramLinksCreateParams": "messages.telegram_links.create_params",
     "MessagesTemplatesUpdateParams": "messages.templates.update_params",
     "MessagesUpdateSettingsParams": "messages.update_settings_params",
     "MessagingConfiguration": "components.messaging_configuration",
@@ -5652,6 +5657,7 @@ _MODULES: dict[str, str] = {
     "SocialFootprintCategorySummary": "components.social_footprint_category_summary",
     "SocialFootprintPlatform": "components.social_footprint_platform",
     "SocialFootprintProfile": "components.social_footprint_profile",
+    "TelegramLink": "components.telegram_link",
     "TransactionDetail": "components.transaction_detail",
     "TransactionDetailActivities": "components.transaction_detail",
     "TransactionDetailAlerts": "components.transaction_detail",
@@ -6668,6 +6674,7 @@ __all__ = [
     "MessagesSendParamsVariant2",
     "MessagesSendParamsVariant2Options",
     "MessagesSettings",
+    "MessagesTelegramLinksCreateParams",
     "MessagesTemplatesUpdateParams",
     "MessagesUpdateSettingsParams",
     "MessagingConfiguration",
@@ -7279,6 +7286,7 @@ __all__ = [
     "SocialFootprintCategorySummary",
     "SocialFootprintPlatform",
     "SocialFootprintProfile",
+    "TelegramLink",
     "TransactionDetail",
     "TransactionDetailActivities",
     "TransactionDetailAlerts",

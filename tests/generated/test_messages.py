@@ -15,6 +15,7 @@ from didit.types.components.message_prices import MessagePrices
 from didit.types.components.message_template import MessageTemplate
 from didit.types.components.messages_settings import MessagesSettings
 from didit.types.components.messaging_configuration import MessagingConfiguration
+from didit.types.components.telegram_link import TelegramLink
 from didit.types.messages.rules.create_response import MessagesRulesCreateResponse
 from tests.harness import Expect, check_operation
 
@@ -833,6 +834,28 @@ def test_messages_rules_create() -> None:
         ),
         lambda r: isinstance(r, MessagesRulesCreateResponse),
         lambda r: isinstance(r, MessagesRulesCreateResponse),
+    )
+
+
+def test_messages_telegram_links_create() -> None:
+    """``POST /v3/messages/telegram/links/``"""
+    check_operation(
+        Expect(
+            method="POST",
+            path="/v3/messages/telegram/links/",
+            api="verification",
+            auth="api_key",
+            json_body={"to": "+447700900123", "expires_in": 86400},
+            status=201,
+            response_json={
+                "url": "https://example.invalid/example_bot?start=example-token",
+                "expires_at": "2026-11-22T10:00:00Z",
+            },
+        ),
+        lambda c: c.messages.telegram_links.create(to="+447700900123", expires_in=86400),
+        lambda c: c.messages.telegram_links.create(to="+447700900123", expires_in=86400),
+        lambda r: isinstance(r, TelegramLink),
+        lambda r: isinstance(r, TelegramLink),
     )
 
 

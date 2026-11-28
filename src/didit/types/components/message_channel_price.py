@@ -9,7 +9,7 @@ __all__ = ["MessageChannelPrice"]
 
 
 class MessageChannelPrice(BaseModel):
-    channel: Literal["sms", "whatsapp", "email"] | str
+    channel: Literal["sms", "whatsapp", "telegram", "email"] | str
 
     unit: Literal["segment", "message"] | str
 
@@ -17,10 +17,10 @@ class MessageChannelPrice(BaseModel):
     """WhatsApp: the message category priced (`utility`)."""
 
     carrier: str | None
-    """The carrier's or WhatsApp's part, at cost; `0.0000` from your own connected WhatsApp Business account."""
+    """The carrier's or WhatsApp's part, at cost. For standard quotes this is `0.0000` on Telegram and on your own connected WhatsApp Business account. A Telegram quote under a contract rate card returns `null` here."""
 
     fee: str | None
-    """Didit's fee with your plan's discount."""
+    """Didit's fee with your plan's discount. For a standard Telegram quote this equals `price`. A Telegram quote under a contract rate card returns `null` here."""
 
     price: str | None
     """Total per unit."""

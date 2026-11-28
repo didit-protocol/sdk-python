@@ -17,7 +17,7 @@ class MessageAttempt(BaseModel):
     id: str
     """The attempt's own id."""
 
-    channel: Literal["sms", "whatsapp", "email"] | str
+    channel: Literal["sms", "whatsapp", "telegram", "email"] | str
 
     to: str | None = None
     """Where this attempt was addressed (E.164 number or email). Not in webhooks. `null` once erased."""
@@ -33,7 +33,7 @@ class MessageAttempt(BaseModel):
     """Why an attempt failed or was skipped. `message` is a sentence for people; read `code` in code."""
 
     price: MessagePrice | None
-    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost; `fee` is Didit's fee with your plan's discount. Both are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` while the amount is an estimate, before the carrier's delivery report gives the real price."""
+    """What the message costs, in `currency`. `carrier` is the carrier's or WhatsApp's part, passed through at cost. `fee` is Didit's fee with your plan's discount. When a contract rate card prices a live Telegram message, both are `null`. For all other live Telegram rates, including a negotiated rate, `carrier` is `0.0000` and `fee` equals `amount`. On other channels both fields are `null` when one flat amount prices the message (email, or a contract or negotiated rate). `final` is `false` for an estimate and `true` once the amount is billed."""
 
     segments: int
     """SMS segments the text takes; 1 off SMS."""
