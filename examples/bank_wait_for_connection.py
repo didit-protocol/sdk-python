@@ -42,7 +42,11 @@ def wait_for_connection(
     interval: float = 3.0,
 ) -> BankConnection:
     """Poll the link until it completes, then the connection until its first sync is
-    readable. Raises ``TimeoutError`` or ``didit.DiditError``."""
+    readable. Raises ``TimeoutError`` or ``didit.DiditError``.
+
+    Accounts are readable once the first sync ended ``succeeded`` or ``partial`` (the
+    connection is then ``active``); ``initial_complete`` is true only for ``succeeded``.
+    """
     deadline = time.monotonic() + timeout
     link: BankLink = client.bank.get_link(link_id)
     while link.connection_id is None:
@@ -54,7 +58,7 @@ def wait_for_connection(
         link = client.bank.get_link(link_id)
 
     connection = client.bank.get_connection(link.connection_id)
-    while connection.sync is None or not connection.sync.initial_complete:
+    while connection.sync is None or connection.sync.initial_status not in ("succeeded", "partial"):
         if connection.status in ("failed", "revoked", "deleted"):
             raise RuntimeError(f"connection {connection.id} is {connection.status}")
         if time.monotonic() > deadline:
